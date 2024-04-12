@@ -1,0 +1,9 @@
+[package]
+name = "softui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+window = { version = "0.1.0", path = "../window" }
+mini = { version = "0.1.0", path = "../mini", features = ["strip"] }
+fontdue = { version = "0.7.3", features = ["parallel"] }
