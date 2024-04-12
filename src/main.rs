@@ -1,3 +1,4 @@
+use mini::defer_results;
 use softui::*;
 use window::*;
 
@@ -9,11 +10,14 @@ fn main() {
     let mut y: usize = 0;
     let square = 20;
 
+    defer_results!();
+
     loop {
         match event() {
             None => {}
             Some(event) => match event {
                 Event::Quit => break,
+                Event::Escape => break,
                 _ => {}
             },
         }
@@ -32,9 +36,24 @@ fn main() {
         //How do we clear effectively?
         //Tiling is my first thought.
         //Simdeez?
-        // canvas.fill(0x0);
+        //Couldn't SIMD be considered a type of tiling.
+        //Since your splitting say 256 into 16x16.
 
-        canvas.draw_rectangle(x, y, square, square, 0xd2d2d2);
-        canvas.draw()
+        canvas.fill(0x6a8f39);
+        canvas.draw();
+
+        // canvas.fill(0x1f1f1f);
+        // canvas.draw();
+
+        // canvas.fillsimd16(0xa813ad);
+        // canvas.draw_simd16();
+
+        // canvas.fillsimd32(0xa61188);
+        // canvas.draw_simd32();
+
+        // canvas.fillsimd64(0xff00b3);
+        // canvas.draw_simd64();
+
+        // canvas.draw_rectangle(x, y, square, square, 0xd2d2d2);
     }
 }

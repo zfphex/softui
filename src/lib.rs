@@ -1,4 +1,10 @@
-use std::{ops::Range, path::Path};
+#![feature(portable_simd)]
+use mini::profile;
+use std::{
+    ops::Range,
+    path::Path,
+    simd::{u8x16, u8x32, u8x64},
+};
 use window::*;
 
 // pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
@@ -127,7 +133,12 @@ impl Buffer {
 // }
 
 pub struct Canvas {
+    //size is width * height * 4.
     pub buffer: Vec<u8>,
+    //(width * height) / 4
+    pub simd16: Vec<u8x16>,
+    pub simd32: Vec<u8x32>,
+    pub simd64: Vec<u8x64>,
     pub area: Rect,
     pub width: usize,
     pub height: usize,
@@ -150,11 +161,18 @@ impl Canvas {
             width: width as usize,
             height: height as usize,
             buffer: vec![0; width as usize * height as usize * std::mem::size_of::<RGBQUAD>()],
+            //4 RGBQUADS in u8x16 -> 16 / 4 = 4
+            simd16: vec![u8x16::splat(0); ((width * height) as f32 / 4.0).ceil() as usize],
+            //8 RGBQUADS in u8x64 -> 32 / 4 = 8
+            simd32: vec![u8x32::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
+            //16 RGBQUADS in u8x64 -> 64 / 4 = 16
+            simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
             bitmap: create_bitmap(width, height),
         }
     }
 
-    pub fn draw(&mut self) {
+    #[inline(always)]
+    pub fn resize(&mut self) {
         let area = self.window.area();
 
         if self.area != area {
@@ -166,7 +184,12 @@ impl Canvas {
                 .resize(self.width * self.height * std::mem::size_of::<RGBQUAD>(), 0);
             self.bitmap = create_bitmap(self.width as i32, self.height as i32);
         }
+    }
 
+    pub fn draw(&mut self) {
+        profile!();
+
+        self.resize();
         unsafe {
             StretchDIBits(
                 self.context,
@@ -186,9 +209,78 @@ impl Canvas {
         }
     }
 
+    #[inline(always)]
+    pub fn strech_di(&mut self, input: *mut u8) {
+        unsafe {
+            StretchDIBits(
+                self.context,
+                0,
+                0,
+                self.width as i32,
+                self.height as i32,
+                0,
+                0,
+                self.width as i32,
+                self.height as i32,
+                input as *const VOID,
+                &self.bitmap,
+                0,
+                SRCCOPY,
+            );
+        }
+    }
+
+    pub fn draw_simd16(&mut self) {
+        profile!();
+        self.resize();
+        let slice = self.simd16.as_mut_slice();
+        let flattened: &mut [u8] = unsafe { std::mem::transmute(slice) };
+        self.strech_di(flattened.as_mut_ptr());
+    }
+
+    pub fn draw_simd32(&mut self) {
+        profile!();
+        self.resize();
+        let slice = self.simd32.as_mut_slice();
+        let flattened: &mut [u8] = unsafe { std::mem::transmute(slice) };
+        self.strech_di(flattened.as_mut_ptr());
+    }
+
+    pub fn draw_simd64(&mut self) {
+        profile!();
+        self.resize();
+        let slice = self.simd64.as_mut_slice();
+        let flattened: &mut [u8] = unsafe { std::mem::transmute(slice) };
+        self.strech_di(flattened.as_mut_ptr());
+    }
+
     //This is essentially just a memset.
+    //This is incorrect. It should set r/g/b seperately.
+    //hmmmm.
     pub fn fill(&mut self, color: u32) {
+        profile!();
         self.buffer.fill(color as u8);
+    }
+
+    pub fn fillsimd16(&mut self, color: u32) {
+        profile!();
+        for tile in &mut self.simd16 {
+            *tile = u8x16::splat(color as u8);
+        }
+    }
+
+    pub fn fillsimd32(&mut self, color: u32) {
+        profile!();
+        for tile in &mut self.simd32 {
+            *tile = u8x32::splat(color as u8);
+        }
+    }
+
+    pub fn fillsimd64(&mut self, color: u32) {
+        profile!();
+        for tile in &mut self.simd64 {
+            *tile = u8x64::splat(color as u8);
+        }
     }
 
     ///Note color order is BGR_. The last byte is reserved.
