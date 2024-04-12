@@ -1,8 +1,8 @@
 use std::{ops::Range, path::Path};
 use window::*;
 
-pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
-pub const CHAR: char = 'g';
+// pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
+// pub const CHAR: char = 'g';
 
 //https://freetype.org/freetype2/docs/glyphs/glyphs-3.html
 
@@ -29,102 +29,102 @@ impl Buffer {
         }
     }
 
-    pub fn draw(&self, atlas: &mut Atlas, canvas: &mut Canvas) {
-        //TODO: How do I draw only part of a line?
-        //Maybe this can help? https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-scrollwindow
-        //https://github.com/rxi/lite/blob/38bd9b3326c02e43f244623f97a622b11f074415/data/core/view.lua#L20C21-L20C21
-        let mut y = atlas.font_size as usize;
-        // let mut y = atlas.font_size as usize - 10;
-        for line in self.text.lines() {
-            atlas.draw_text(canvas, line, 0, y);
-            y += atlas.font_size as usize;
-        }
-    }
+    // pub fn draw(&self, atlas: &mut Atlas, canvas: &mut Canvas) {
+    //     //TODO: How do I draw only part of a line?
+    //     //Maybe this can help? https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-scrollwindow
+    //     //https://github.com/rxi/lite/blob/38bd9b3326c02e43f244623f97a622b11f074415/data/core/view.lua#L20C21-L20C21
+    //     let mut y = atlas.font_size as usize;
+    //     // let mut y = atlas.font_size as usize - 10;
+    //     for line in self.text.lines() {
+    //         atlas.draw_text(canvas, line, 0, y);
+    //         y += atlas.font_size as usize;
+    //     }
+    // }
 }
 
-pub struct Atlas {
-    pub glyphs: [(fontdue::Metrics, Vec<u8>); 128],
-    pub font_size: f32,
-}
+// pub struct Atlas {
+//     pub glyphs: [(fontdue::Metrics, Vec<u8>); 128],
+//     pub font_size: f32,
+// }
 
-impl Atlas {
-    pub fn new(font_size: f32) -> Self {
-        let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
+// impl Atlas {
+//     pub fn new(font_size: f32) -> Self {
+//         let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
 
-        #[allow(invalid_value)]
-        let mut glyphs: [(fontdue::Metrics, Vec<u8>); 128] = unsafe { std::mem::zeroed() };
+//         #[allow(invalid_value)]
+//         let mut glyphs: [(fontdue::Metrics, Vec<u8>); 128] = unsafe { std::mem::zeroed() };
 
-        // use std::mem::MaybeUninit;
-        // let mut glyphs: [MaybeUninit<(fontdue::Metrics, Vec<u8>)>; 127] = MaybeUninit::uninit_array();
+//         // use std::mem::MaybeUninit;
+//         // let mut glyphs: [MaybeUninit<(fontdue::Metrics, Vec<u8>)>; 127] = MaybeUninit::uninit_array();
 
-        //https://www.ascii-code.com/
-        for char in 32..127u8 {
-            let (metrics, bitmap) = font.rasterize(char as char, font_size);
-            // glyphs[char as usize].write((metrics, bitmap));
-            glyphs[char as usize] = (metrics, bitmap);
-        }
+//         //https://www.ascii-code.com/
+//         for char in 32..127u8 {
+//             let (metrics, bitmap) = font.rasterize(char as char, font_size);
+//             // glyphs[char as usize].write((metrics, bitmap));
+//             glyphs[char as usize] = (metrics, bitmap);
+//         }
 
-        Self { glyphs, font_size }
-    }
+//         Self { glyphs, font_size }
+//     }
 
-    //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
-    //or maybe the buffer should just include all the text related code and the metrics should be static.
-    //TODO: If the text is longer than canvas width it needs to be clipped.
-    pub fn draw_text(&self, canvas: &mut Canvas, text: &str, x: usize, y: usize) {
-        let mut glyph_x = x;
+//     //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
+//     //or maybe the buffer should just include all the text related code and the metrics should be static.
+//     //TODO: If the text is longer than canvas width it needs to be clipped.
+//     pub fn draw_text(&self, canvas: &mut Canvas, text: &str, x: usize, y: usize) {
+//         let mut glyph_x = x;
 
-        for char in text.chars() {
-            let (metrics, bitmap) = &self.glyphs[char as usize];
-            let glyph_y = (y as f32
-                - (metrics.height as f32 - metrics.advance_height)
-                - metrics.ymin as f32) as usize;
+//         for char in text.chars() {
+//             let (metrics, bitmap) = &self.glyphs[char as usize];
+//             let glyph_y = (y as f32
+//                 - (metrics.height as f32 - metrics.advance_height)
+//                 - metrics.ymin as f32) as usize;
 
-            for y in 0..metrics.height {
-                for x in 0..metrics.width {
-                    let color = bitmap[x + y * metrics.width];
-                    let i = 4 * (x + glyph_x + canvas.width * (y + glyph_y));
+//             for y in 0..metrics.height {
+//                 for x in 0..metrics.width {
+//                     let color = bitmap[x + y * metrics.width];
+//                     let i = 4 * (x + glyph_x + canvas.width * (y + glyph_y));
 
-                    if i >= canvas.buffer.len() {
-                        return;
-                    }
+//                     if i >= canvas.buffer.len() {
+//                         return;
+//                     }
 
-                    canvas.buffer[i] = color;
-                    canvas.buffer[i + 1] = color;
-                    canvas.buffer[i + 2] = color;
-                    canvas.buffer[i + 3] = 0;
-                }
-            }
+//                     canvas.buffer[i] = color;
+//                     canvas.buffer[i + 1] = color;
+//                     canvas.buffer[i + 2] = color;
+//                     canvas.buffer[i + 3] = 0;
+//                 }
+//             }
 
-            glyph_x += metrics.advance_width as usize;
+//             glyph_x += metrics.advance_width as usize;
 
-            //TODO: Still not enough.
-            if glyph_x >= canvas.width {
-                return;
-            }
-        }
-    }
-}
+//             //TODO: Still not enough.
+//             if glyph_x >= canvas.width {
+//                 return;
+//             }
+//         }
+//     }
+// }
 
-pub fn fontdue_subpixel(canvas: &mut Canvas, x: usize, y: usize) {
-    let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-    let (metrics, bitmap) = font.rasterize_subpixel(CHAR, 50.0);
+// pub fn fontdue_subpixel(canvas: &mut Canvas, x: usize, y: usize) {
+//     let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
+//     let (metrics, bitmap) = font.rasterize_subpixel(CHAR, 50.0);
 
-    let start_x = x;
-    let start_y = y;
+//     let start_x = x;
+//     let start_y = y;
 
-    for y in 0..metrics.height {
-        for x in 0..metrics.width {
-            let i = ((start_y + y) * canvas.width + start_x + x) * 4;
-            let j = (y * metrics.width + x) * 3;
+//     for y in 0..metrics.height {
+//         for x in 0..metrics.width {
+//             let i = ((start_y + y) * canvas.width + start_x + x) * 4;
+//             let j = (y * metrics.width + x) * 3;
 
-            //Bitmap is BGR_ not RGB.
-            canvas.buffer[i] = bitmap[j + 2];
-            canvas.buffer[i + 1] = bitmap[j + 1];
-            canvas.buffer[i + 2] = bitmap[j];
-            canvas.buffer[i + 3] = 0;
-        }
-    }
-}
+//             //Bitmap is BGR_ not RGB.
+//             canvas.buffer[i] = bitmap[j + 2];
+//             canvas.buffer[i + 1] = bitmap[j + 1];
+//             canvas.buffer[i + 2] = bitmap[j];
+//             canvas.buffer[i + 3] = 0;
+//         }
+//     }
+// }
 
 pub struct Canvas {
     pub buffer: Vec<u8>,
@@ -154,8 +154,9 @@ impl Canvas {
         }
     }
 
-    fn update_area(&mut self) {
+    pub fn draw(&mut self) {
         let area = self.window.area();
+
         if self.area != area {
             self.area = area;
             self.width = self.area.width() as usize;
@@ -165,11 +166,8 @@ impl Canvas {
                 .resize(self.width * self.height * std::mem::size_of::<RGBQUAD>(), 0);
             self.bitmap = create_bitmap(self.width as i32, self.height as i32);
         }
-    }
 
-    pub fn draw(&mut self) {
         unsafe {
-            self.update_area();
             StretchDIBits(
                 self.context,
                 0,
