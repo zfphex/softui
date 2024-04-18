@@ -3,7 +3,7 @@ use mini::profile;
 use std::{
     ops::Range,
     path::Path,
-    simd::{u8x16, u8x32, u8x64},
+    simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64},
 };
 use window::*;
 
@@ -259,27 +259,31 @@ impl Canvas {
     //hmmmm.
     pub fn fill(&mut self, color: u32) {
         profile!();
-        self.buffer.fill(color as u8);
+        let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
+        buffer.fill(color);
     }
 
     pub fn fillsimd16(&mut self, color: u32) {
         profile!();
         for tile in &mut self.simd16 {
-            *tile = u8x16::splat(color as u8);
+            //Convert u32x4 into u8x16
+            *tile = unsafe { std::mem::transmute(u32x4::splat(color)) };
         }
     }
 
     pub fn fillsimd32(&mut self, color: u32) {
         profile!();
         for tile in &mut self.simd32 {
-            *tile = u8x32::splat(color as u8);
+            //Convert u32x8 into u8x32
+            *tile = unsafe { std::mem::transmute(u32x8::splat(color)) };
         }
     }
 
     pub fn fillsimd64(&mut self, color: u32) {
         profile!();
         for tile in &mut self.simd64 {
-            *tile = u8x64::splat(color as u8);
+            //Convert u32x16 into u8x64
+            *tile = unsafe { std::mem::transmute(u32x16::splat(color)) };
         }
     }
 

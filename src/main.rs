@@ -39,20 +39,17 @@ fn main() {
         //Couldn't SIMD be considered a type of tiling.
         //Since your splitting say 256 into 16x16.
 
-        canvas.fill(0x6a8f39);
+        canvas.fill(0x8cdcfe);
         canvas.draw();
 
-        // canvas.fill(0x1f1f1f);
-        // canvas.draw();
+        canvas.fillsimd16(0x8cdcfe);
+        canvas.draw_simd16();
 
-        // canvas.fillsimd16(0xa813ad);
-        // canvas.draw_simd16();
+        canvas.fillsimd32(0x8cdcfe);
+        canvas.draw_simd32();
 
-        // canvas.fillsimd32(0xa61188);
-        // canvas.draw_simd32();
-
-        // canvas.fillsimd64(0xff00b3);
-        // canvas.draw_simd64();
+        canvas.fillsimd64(0x8cdcfe);
+        canvas.draw_simd64();
 
         // canvas.draw_rectangle(x, y, square, square, 0xd2d2d2);
     }
