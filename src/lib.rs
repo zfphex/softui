@@ -133,12 +133,12 @@ impl Buffer {
 // }
 
 pub struct Canvas {
-    //size is width * height * 4.
-    pub buffer: Vec<u8>,
+    //size is width * height.
+    pub buffer: Vec<u32>,
     //(width * height) / 4
     pub simd16: Vec<u8x16>,
     pub simd32: Vec<u8x32>,
-    pub simd64: Vec<u8x64>,
+    pub simd64: Vec<u32x16>,
     pub area: Rect,
     pub width: usize,
     pub height: usize,
@@ -154,19 +154,22 @@ impl Canvas {
         let width = area.width();
         let height = area.height();
 
+        dbg!(((width * height) as f32 / 16.0).ceil() as usize);
+
         Self {
             window,
             context,
             area,
             width: width as usize,
             height: height as usize,
-            buffer: vec![0; width as usize * height as usize * std::mem::size_of::<RGBQUAD>()],
+            buffer: vec![0; width as usize * height as usize],
             //4 RGBQUADS in u8x16 -> 16 / 4 = 4
             simd16: vec![u8x16::splat(0); ((width * height) as f32 / 4.0).ceil() as usize],
             //8 RGBQUADS in u8x64 -> 32 / 4 = 8
             simd32: vec![u8x32::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
+            simd64: vec![u32x16::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
             //16 RGBQUADS in u8x64 -> 64 / 4 = 16
-            simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
+            // simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
             bitmap: create_bitmap(width, height),
         }
     }
@@ -255,12 +258,9 @@ impl Canvas {
     }
 
     //This is essentially just a memset.
-    //This is incorrect. It should set r/g/b seperately.
-    //hmmmm.
     pub fn fill(&mut self, color: u32) {
         profile!();
-        let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
-        buffer.fill(color);
+        self.buffer.fill(color);
     }
 
     pub fn fillsimd16(&mut self, color: u32) {
@@ -295,7 +295,8 @@ impl Canvas {
 
     #[track_caller]
     pub fn draw_rectangle(&mut self, x: usize, y: usize, width: usize, height: usize, color: u32) {
-        let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
+        // let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
+
         let canvas_width = self.width;
 
         #[cfg(debug_assertions)]
@@ -311,10 +312,48 @@ impl Canvas {
             }
         }
 
+        println!("{}", self.buffer.len());
+
         for i in y..y + height {
             let pos = x + canvas_width * i;
-            for px in &mut buffer[pos..pos + width] {
+            for px in &mut self.buffer[pos..pos + width] {
                 *px = color;
+            }
+        }
+    }
+
+    #[track_caller]
+    pub fn draw_rectangle64(
+        &mut self,
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+        color: u32,
+    ) {
+        let canvas_width = self.width;
+
+        #[cfg(debug_assertions)]
+        {
+            let canvas_height = self.height;
+            if x + width >= canvas_width {
+                panic!("x: {x} + width: {width} cannot be >= to the canvas width: {canvas_width}");
+            }
+            if y + height >= canvas_height {
+                panic!(
+                    "y: {y} + height: {height} cannot be >= to the canvas height: {canvas_height}"
+                );
+            }
+        }
+
+        let buffer = self.simd64.as_mut_slice();
+
+        for j in 0..buffer.len() {
+            for i in y..y + height {
+                let pos = x + canvas_width * i;
+                // tile[pos..pos + width] = color;
+                //TODO: How can I calculate the tile position in the buffer to
+                //correctly fill the rectange.
             }
         }
     }
