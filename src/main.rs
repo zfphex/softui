@@ -1,4 +1,3 @@
-use mini::defer_results;
 use softui::*;
 use window::*;
 
@@ -10,12 +9,16 @@ fn main() {
     let mut y: usize = 0;
     let square = 20;
 
-    defer_results!();
-
     loop {
         match event() {
             None => {}
             Some(event) => match event {
+                Event::Mouse(x, y) => {
+                    canvas.mouse_pos = Rect::new(x as i32, y as i32, 0, 0);
+                }
+                Event::LeftMouseDown => {
+                    canvas.mouse = true;
+                }
                 Event::Quit => break,
                 Event::Escape => break,
                 _ => {}
@@ -39,9 +42,9 @@ fn main() {
         //Couldn't SIMD be considered a type of tiling.
         //Since your splitting say 256 into 16x16.
 
-        canvas.fill(0x8cdcfe);
-        canvas.draw_rectangle(0, 0, 100, 100, 0xff);
-        canvas.draw();
+        // canvas.fill(0x8cdcfe);
+        // canvas.draw_rectangle(0, 0, 100, 100, 0xff);
+        // canvas.draw();
 
         // canvas.fillsimd16(0x8cdcfe);
         // canvas.draw_simd16();
@@ -49,10 +52,20 @@ fn main() {
         // canvas.fillsimd32(0x8cdcfe);
         // canvas.draw_simd32();
 
-        canvas.fillsimd64(0x8cdcfe);
-        canvas.draw_rectangle64(0, 0, 100, 100, 0xff);
-        canvas.draw_simd64();
+        // canvas.fillsimd64(0x8cdcfe);
+        // canvas.draw_rectangle64(0, 0, 100, 100, 0xff);
+        // canvas.draw_simd64();
 
         // canvas.draw_rectangle(x, y, square, square, 0xd2d2d2);
+        // canvas.draw();
+
+        canvas.fill(0x8cdcfe);
+
+        if button(&mut canvas) {
+            return;
+        }
+
+        canvas.draw();
+        canvas.mouse = false;
     }
 }

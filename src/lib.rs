@@ -132,6 +132,23 @@ impl Buffer {
 //     }
 // }
 
+pub struct Button {
+    pub area: Rect,
+}
+
+pub fn button(ctx: &mut Canvas) -> bool {
+    let area = Rect::new(0, 0, 10, 10);
+    ctx.draw_rectangle(
+        area.left as usize,
+        area.top as usize,
+        area.right as usize,
+        area.bottom as usize,
+        0xff,
+    );
+
+    ctx.mouse_pos.intersects(area) && ctx.mouse
+}
+
 pub struct Canvas {
     //size is width * height.
     pub buffer: Vec<u32>,
@@ -145,6 +162,12 @@ pub struct Canvas {
     pub window: Window,
     pub context: *mut VOID,
     pub bitmap: BITMAPINFO,
+    //This should really be a Vec2 or (usize, usize), but this makes checking
+    //rectangle intersections really easy.
+    pub mouse_pos: Rect,
+
+    //Temp
+    pub mouse: bool,
 }
 
 impl Canvas {
@@ -154,7 +177,7 @@ impl Canvas {
         let width = area.width();
         let height = area.height();
 
-        dbg!(((width * height) as f32 / 16.0).ceil() as usize);
+        // dbg!(((width * height) as f32 / 16.0).ceil() as usize);
 
         Self {
             window,
@@ -171,6 +194,8 @@ impl Canvas {
             //16 RGBQUADS in u8x64 -> 64 / 4 = 16
             // simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
             bitmap: create_bitmap(width, height),
+            mouse_pos: Rect::default(),
+            mouse: false,
         }
     }
 
@@ -312,7 +337,7 @@ impl Canvas {
             }
         }
 
-        println!("{}", self.buffer.len());
+        // println!("{}", self.buffer.len());
 
         for i in y..y + height {
             let pos = x + canvas_width * i;
