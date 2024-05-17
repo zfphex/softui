@@ -17,7 +17,10 @@ fn main() {
                     canvas.mouse_pos = Rect::new(x as i32, y as i32, 0, 0);
                 }
                 Event::LeftMouseDown => {
-                    canvas.mouse = true;
+                    canvas.left_mouse = MouseState::pressed();
+                }
+                Event::LeftMouseUp => {
+                    canvas.left_mouse = MouseState::released();
                 }
                 Event::Quit => break,
                 Event::Escape => break,
@@ -61,11 +64,15 @@ fn main() {
 
         canvas.fill(0x8cdcfe);
 
-        if button(&mut canvas) {
+        // button(&mut canvas).centered();
+
+        // centered(button());
+
+        if button(&mut canvas).clicked() {
             return;
         }
 
         canvas.draw();
-        canvas.mouse = false;
+        canvas.left_mouse = MouseState::new();
     }
 }

@@ -19,6 +19,13 @@ use window::*;
 //         y += atlas.font_size as usize;
 //     }
 // }
+pub trait Input {
+    fn clicked(&self) -> bool;
+}
+
+pub trait Layout {
+    fn centered(self) -> Self;
+}
 
 pub struct Buffer {
     //TODO: Swap to mmap.
@@ -132,12 +139,136 @@ impl Buffer {
 //     }
 // }
 
-pub struct Button {
-    pub area: Rect,
+pub struct MouseState {
+    pub pressed: bool,
+    pub released: bool,
 }
 
-pub fn button(ctx: &mut Canvas) -> bool {
-    let area = Rect::new(0, 0, 10, 10);
+impl MouseState {
+    pub const fn new() -> Self {
+        Self {
+            pressed: false,
+            released: false,
+        }
+    }
+    pub const fn pressed() -> Self {
+        Self {
+            pressed: true,
+            released: false,
+        }
+    }
+    pub const fn released() -> Self {
+        Self {
+            pressed: false,
+            released: true,
+        }
+    }
+}
+
+pub struct Button<'a> {
+    pub area: Rect,
+    pub ctx: &'a Canvas,
+}
+
+// impl<'a> Button<'a> {
+//     pub fn draw(&self) {
+//         self.ctx.draw_rectangle(
+//             self.area.left as usize,
+//             self.area.top as usize,
+//             self.area.right as usize,
+//             self.area.bottom as usize,
+//             0xff,
+//         );
+//     }
+// }
+
+impl<'a> Input for Button<'a> {
+    fn clicked(&self) -> bool {
+        self.ctx.mouse_pos.intersects(self.area.clone()) && self.ctx.left_mouse.released
+    }
+}
+
+//TODO: How do we draw this?
+//We can't hold mutiple mutable references at once right?
+//Even if we could draw here. This will cause the widget to draw twice,
+//the previous function `button()` would create and draw
+//a button in it's default state, then centered would move the layout and redraw.
+//Not good...
+//I could work backwards instead centered((button(), button()))
+//Not a big fan of that.
+//Xilem essentially returns the entire ui and then draws everything at once vs immediate which would be drawn on call.
+
+//I have some ideas that are similar.
+//This shouldn't any less efficient, but I'm not really sure.
+/*
+fn app<W: impl Into<Widget>>(ctx: &mut Context) -> W
+{
+    vbox(
+        (
+        button().centered(),
+        button().left()
+        )
+    )
+}
+
+fn main() {
+    loop {
+       let app = app(&mut ctx);
+       app.draw(&mut ctx);
+    }
+}
+*/
+
+//What are widgets in this context?
+//They have a `Rect` which describes the area/position.
+//They should have some internal data like text that needs to be drawn.
+//They have a style for the `Rect` and the text.
+
+//My primary focus is to make the code really easy to write.
+//let button = button("test").centered().bold().x(10);
+//This seems like such a nice way to express writing ui.
+//Now that I'm thinking about it, this is exactly what I used for winter.
+//The only problem with winter is all of the manual draw calls.
+//You would always need to run button.draw();
+//Maybe it's not so bad?
+//The layouting was awful with winter, hopefully that is something that I can avoid.
+
+// impl<'a> Layout for Button<'a> {
+//     fn centered(mut self) -> Self {
+//         let area = self.ctx.area.clone();
+
+//         let v = area.width() / 2;
+//         let h = area.height() / 2;
+
+//         let button_width = 10;
+//         let button_height = 10;
+
+//         let x = v.saturating_sub(button_width / 2);
+//         let y = h.saturating_sub(button_height / 2);
+
+//         let area = Rect::new(x, y, button_width, button_height);
+
+//         self.area = area;
+//         self
+//     }
+// }
+
+// pub fn centered<W>(ctx: &mut Canvas, widgets: W) {
+
+// }
+
+pub fn button(ctx: &mut Canvas) -> Button {
+    let area = ctx.area.clone();
+    let v = area.width() / 2;
+    let h = area.height() / 2;
+
+    let button_width = 10;
+    let button_height = 10;
+
+    let x = v - button_width / 2;
+    let y = h - button_height / 2;
+    let area = Rect::new(x, y, button_width, button_height);
+    // let area = Rect::new(0, 0, 10, 10);
     ctx.draw_rectangle(
         area.left as usize,
         area.top as usize,
@@ -146,7 +277,7 @@ pub fn button(ctx: &mut Canvas) -> bool {
         0xff,
     );
 
-    ctx.mouse_pos.intersects(area) && ctx.mouse
+    Button { area, ctx }
 }
 
 pub struct Canvas {
@@ -166,8 +297,11 @@ pub struct Canvas {
     //rectangle intersections really easy.
     pub mouse_pos: Rect,
 
-    //Temp
-    pub mouse: bool,
+    pub left_mouse: MouseState,
+    pub right_mouse: MouseState,
+    pub middle_mouse: MouseState,
+    pub mouse_4: MouseState,
+    pub mouse_5: MouseState,
 }
 
 impl Canvas {
@@ -195,7 +329,11 @@ impl Canvas {
             // simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
             bitmap: create_bitmap(width, height),
             mouse_pos: Rect::default(),
-            mouse: false,
+            left_mouse: MouseState::new(),
+            right_mouse: MouseState::new(),
+            middle_mouse: MouseState::new(),
+            mouse_4: MouseState::new(),
+            mouse_5: MouseState::new(),
         }
     }
 
@@ -317,6 +455,12 @@ impl Canvas {
         let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
         buffer[y * self.width + x] = color;
     }
+
+    //I think the way things are drawn should be changed.
+    //This is not thread safe which is cringe.
+    //We could use a lock free queue and have something equivalent to draw calls.
+    //We mearly append what we want and then it's drawn later on.
+    //Doesn't that mean renderer would be on a seperate thread?
 
     #[track_caller]
     pub fn draw_rectangle(&mut self, x: usize, y: usize, width: usize, height: usize, color: u32) {
