@@ -27,6 +27,35 @@ pub trait Layout {
     fn centered(self) -> Self;
 }
 
+//The user will want to define their own colors.
+//There should probably be a color trait.
+//
+pub enum Color {
+    Red,
+    Blue,
+    Green,
+    White,
+    Black,
+    Hex(u32),
+}
+
+impl Color {
+    pub const fn as_u32(&self) -> u32 {
+        match self {
+            Color::Red => todo!(),
+            Color::Blue => todo!(),
+            Color::Green => todo!(),
+            Color::White => 0xFFFFFF,
+            Color::Black => 0,
+            Color::Hex(color) => *color,
+        }
+    }
+}
+
+pub trait Style {
+    fn bg(self, color: Color) -> Self;
+}
+
 pub struct Buffer {
     //TODO: Swap to mmap.
     pub text: String,
@@ -165,29 +194,6 @@ impl MouseState {
     }
 }
 
-pub struct Button<'a> {
-    pub area: Rect,
-    pub ctx: &'a Canvas,
-}
-
-// impl<'a> Button<'a> {
-//     pub fn draw(&self) {
-//         self.ctx.draw_rectangle(
-//             self.area.left as usize,
-//             self.area.top as usize,
-//             self.area.right as usize,
-//             self.area.bottom as usize,
-//             0xff,
-//         );
-//     }
-// }
-
-impl<'a> Input for Button<'a> {
-    fn clicked(&self) -> bool {
-        self.ctx.mouse_pos.intersects(self.area.clone()) && self.ctx.left_mouse.released
-    }
-}
-
 //TODO: How do we draw this?
 //We can't hold mutiple mutable references at once right?
 //Even if we could draw here. This will cause the widget to draw twice,
@@ -252,32 +258,84 @@ fn main() {
 //         self
 //     }
 // }
+use crossbeam_queue::SegQueue;
 
-// pub fn centered<W>(ctx: &mut Canvas, widgets: W) {
+pub enum Command {
+    ///(x, y, width, height, color)
+    Rectangle(usize, usize, usize, usize, u32),
+}
 
+pub static mut COMMAND_QUEUE: SegQueue<Command> = SegQueue::new();
+
+pub struct Button<'a> {
+    pub area: Rect,
+    pub ctx: &'a Canvas,
+    bg: Color,
+}
+
+// impl<'a> Button<'a> {
+//     pub fn draw(&self) {
+//         self.ctx.draw_rectangle(
+//             self.area.left as usize,
+//             self.area.top as usize,
+//             self.area.right as usize,
+//             self.area.bottom as usize,
+//             0xff,
+//         );
+//     }
 // }
 
-pub fn button(ctx: &mut Canvas) -> Button {
-    let area = ctx.area.clone();
-    let v = area.width() / 2;
-    let h = area.height() / 2;
+impl<'a> Drop for Button<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            COMMAND_QUEUE.push(Command::Rectangle(
+                self.area.left as usize,
+                self.area.top as usize,
+                self.area.right as usize,
+                self.area.bottom as usize,
+                self.bg.as_u32(),
+            ));
+        }
+    }
+}
 
-    let button_width = 10;
-    let button_height = 10;
+pub fn button(ctx: &Canvas) -> Button {
+    Button {
+        area: Rect::new(0, 0, 10, 10),
+        bg: Color::White,
+        ctx,
+    }
+}
 
-    let x = v - button_width / 2;
-    let y = h - button_height / 2;
-    let area = Rect::new(x, y, button_width, button_height);
-    // let area = Rect::new(0, 0, 10, 10);
-    ctx.draw_rectangle(
-        area.left as usize,
-        area.top as usize,
-        area.right as usize,
-        area.bottom as usize,
-        0xff,
-    );
+impl<'a> Style for Button<'a> {
+    fn bg(mut self, color: Color) -> Self {
+        self.bg = color;
+        self
+    }
+}
 
-    Button { area, ctx }
+impl<'a> Layout for Button<'a> {
+    fn centered(mut self) -> Self {
+        let area = self.ctx.area.clone();
+        let v = area.width() / 2;
+        let h = area.height() / 2;
+
+        let button_width = 10;
+        let button_height = 10;
+
+        let x = v - button_width / 2;
+        let y = h - button_height / 2;
+        let area = Rect::new(x, y, button_width, button_height);
+
+        self.area = area;
+        self
+    }
+}
+
+impl<'a> Input for Button<'a> {
+    fn clicked(&self) -> bool {
+        self.ctx.mouse_pos.intersects(self.area.clone()) && self.ctx.left_mouse.released
+    }
 }
 
 pub struct Canvas {
@@ -352,8 +410,16 @@ impl Canvas {
         }
     }
 
-    pub fn draw(&mut self) {
+    pub fn draw_frame(&mut self) {
         profile!();
+
+        while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
+            match cmd {
+                Command::Rectangle(x, y, width, height, color) => {
+                    self.draw_rectangle(x, y, width, height, color);
+                }
+            }
+        }
 
         self.resize();
         unsafe {
@@ -373,6 +439,13 @@ impl Canvas {
                 SRCCOPY,
             );
         }
+
+        //Reset the important state at the end of a frame.
+        self.left_mouse = MouseState::new();
+        self.right_mouse = MouseState::new();
+        self.middle_mouse = MouseState::new();
+        self.mouse_4 = MouseState::new();
+        self.mouse_5 = MouseState::new();
     }
 
     #[inline(always)]

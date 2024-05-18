@@ -64,15 +64,13 @@ fn main() {
 
         canvas.fill(0x8cdcfe);
 
-        // button(&mut canvas).centered();
-
-        // centered(button());
-
-        if button(&mut canvas).clicked() {
-            return;
+        {
+            if button(&mut canvas).bg(Color::Black).centered().clicked() {
+                return;
+            }
         }
 
-        canvas.draw();
-        canvas.left_mouse = MouseState::new();
+        //Note: All UI elements must be dropped before rendering.
+        canvas.draw_frame();
     }
 }
