@@ -19,6 +19,12 @@ use window::*;
 //         y += atlas.font_size as usize;
 //     }
 // }
+
+pub trait Draw {
+    fn draw(&self);
+    fn no_draw(&mut self);
+}
+
 pub trait Input {
     fn clicked(&self) -> bool;
 }
@@ -268,10 +274,12 @@ pub enum Command {
 
 pub static mut COMMAND_QUEUE: SegQueue<Command> = SegQueue::new();
 
+//TODO: missing `draw()` and `no_draw()` functions
 pub struct Button<'a> {
     pub area: Rect,
     pub ctx: &'a Canvas,
     bg: Color,
+    skip_draw: bool,
 }
 
 // impl<'a> Button<'a> {
@@ -286,8 +294,8 @@ pub struct Button<'a> {
 //     }
 // }
 
-impl<'a> Drop for Button<'a> {
-    fn drop(&mut self) {
+impl<'a> Draw for Button<'a> {
+    fn draw(&self) {
         unsafe {
             COMMAND_QUEUE.push(Command::Rectangle(
                 self.area.left as usize,
@@ -298,6 +306,18 @@ impl<'a> Drop for Button<'a> {
             ));
         }
     }
+
+    fn no_draw(&mut self) {
+        self.skip_draw = true;
+    }
+}
+
+impl<'a> Drop for Button<'a> {
+    fn drop(&mut self) {
+        if !self.skip_draw {
+            self.draw()
+        }
+    }
 }
 
 pub fn button(ctx: &Canvas) -> Button {
@@ -305,6 +325,7 @@ pub fn button(ctx: &Canvas) -> Button {
         area: Rect::new(0, 0, 10, 10),
         bg: Color::White,
         ctx,
+        skip_draw: false,
     }
 }
 
