@@ -62,10 +62,17 @@ fn main() {
         // canvas.draw_rectangle(x, y, square, square, 0xd2d2d2);
         // canvas.draw();
 
-        canvas.fill(0x8cdcfe);
+        canvas.fill(Color::Black);
 
         {
-            if button(&mut canvas).bg(Color::Black).centered().clicked() {
+            let btn = button(&canvas).bg(Color::Hex(0xd2d2d2)).centered();
+            let btn2 = button(&canvas).bg(Color::Hex(0xff));
+
+            if btn.clicked() {
+                println!("Clicked center button!");
+            }
+
+            if btn2.clicked() {
                 return;
             }
         }

@@ -30,6 +30,7 @@ pub trait Layout {
 //The user will want to define their own colors.
 //There should probably be a color trait.
 //
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Color {
     Red,
     Blue,
@@ -39,15 +40,15 @@ pub enum Color {
     Hex(u32),
 }
 
-impl Color {
-    pub const fn as_u32(&self) -> u32 {
+impl Into<u32> for Color {
+    fn into(self) -> u32 {
         match self {
             Color::Red => todo!(),
             Color::Blue => todo!(),
             Color::Green => todo!(),
             Color::White => 0xFFFFFF,
             Color::Black => 0,
-            Color::Hex(color) => *color,
+            Color::Hex(color) => color,
         }
     }
 }
@@ -293,7 +294,7 @@ impl<'a> Drop for Button<'a> {
                 self.area.top as usize,
                 self.area.right as usize,
                 self.area.bottom as usize,
-                self.bg.as_u32(),
+                self.bg.into(),
             ));
         }
     }
@@ -494,9 +495,9 @@ impl Canvas {
     }
 
     //This is essentially just a memset.
-    pub fn fill(&mut self, color: u32) {
+    pub fn fill<C: Into<u32>>(&mut self, color: C) {
         profile!();
-        self.buffer.fill(color);
+        self.buffer.fill(color.into());
     }
 
     pub fn fillsimd16(&mut self, color: u32) {
