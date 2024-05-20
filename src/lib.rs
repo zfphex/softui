@@ -7,6 +7,10 @@ use std::{
 };
 use window::*;
 
+pub mod button;
+
+pub use button::*;
+
 // pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
 // pub const CHAR: char = 'g';
 
@@ -20,13 +24,26 @@ use window::*;
 //     }
 // }
 
+pub enum MouseButton {
+    Left,
+    Right,
+    Middle,
+    ///Mouse4
+    Back,
+    ///Mouse5
+    Forward,
+}
+
 pub trait Draw {
     fn draw(&self);
     fn no_draw(&mut self);
 }
 
 pub trait Input {
+    /// The user's cusor has been clicked and released on top of a widget.
     fn clicked(&self) -> bool;
+    fn up(&self, button: MouseButton) -> bool;
+    fn down(&self, button: MouseButton) -> bool;
 }
 
 pub trait Layout {
@@ -175,9 +192,11 @@ impl Buffer {
 //     }
 // }
 
+#[derive(Debug)]
 pub struct MouseState {
     pub pressed: bool,
     pub released: bool,
+    pub inital_position: Rect,
 }
 
 impl MouseState {
@@ -185,86 +204,24 @@ impl MouseState {
         Self {
             pressed: false,
             released: false,
+            inital_position: Rect::new(0, 0, 0, 0),
         }
     }
-    pub const fn pressed() -> Self {
-        Self {
-            pressed: true,
-            released: false,
-        }
+    pub fn reset(&mut self) {
+        self.pressed = false;
+        self.released = false;
     }
-    pub const fn released() -> Self {
-        Self {
-            pressed: false,
-            released: true,
-        }
+    pub fn pressed(&mut self, pos: Rect) {
+        self.pressed = true;
+        self.released = false;
+        self.inital_position = pos;
+    }
+    pub fn released(&mut self) {
+        self.pressed = false;
+        self.released = true;
     }
 }
 
-//TODO: How do we draw this?
-//We can't hold mutiple mutable references at once right?
-//Even if we could draw here. This will cause the widget to draw twice,
-//the previous function `button()` would create and draw
-//a button in it's default state, then centered would move the layout and redraw.
-//Not good...
-//I could work backwards instead centered((button(), button()))
-//Not a big fan of that.
-//Xilem essentially returns the entire ui and then draws everything at once vs immediate which would be drawn on call.
-
-//I have some ideas that are similar.
-//This shouldn't any less efficient, but I'm not really sure.
-/*
-fn app<W: impl Into<Widget>>(ctx: &mut Context) -> W
-{
-    vbox(
-        (
-        button().centered(),
-        button().left()
-        )
-    )
-}
-
-fn main() {
-    loop {
-       let app = app(&mut ctx);
-       app.draw(&mut ctx);
-    }
-}
-*/
-
-//What are widgets in this context?
-//They have a `Rect` which describes the area/position.
-//They should have some internal data like text that needs to be drawn.
-//They have a style for the `Rect` and the text.
-
-//My primary focus is to make the code really easy to write.
-//let button = button("test").centered().bold().x(10);
-//This seems like such a nice way to express writing ui.
-//Now that I'm thinking about it, this is exactly what I used for winter.
-//The only problem with winter is all of the manual draw calls.
-//You would always need to run button.draw();
-//Maybe it's not so bad?
-//The layouting was awful with winter, hopefully that is something that I can avoid.
-
-// impl<'a> Layout for Button<'a> {
-//     fn centered(mut self) -> Self {
-//         let area = self.ctx.area.clone();
-
-//         let v = area.width() / 2;
-//         let h = area.height() / 2;
-
-//         let button_width = 10;
-//         let button_height = 10;
-
-//         let x = v.saturating_sub(button_width / 2);
-//         let y = h.saturating_sub(button_height / 2);
-
-//         let area = Rect::new(x, y, button_width, button_height);
-
-//         self.area = area;
-//         self
-//     }
-// }
 use crossbeam_queue::SegQueue;
 
 pub enum Command {
@@ -273,92 +230,6 @@ pub enum Command {
 }
 
 pub static mut COMMAND_QUEUE: SegQueue<Command> = SegQueue::new();
-
-//TODO: missing `draw()` and `no_draw()` functions
-pub struct Button<'a> {
-    pub area: Rect,
-    pub ctx: &'a Canvas,
-    bg: Color,
-    skip_draw: bool,
-}
-
-// impl<'a> Button<'a> {
-//     pub fn draw(&self) {
-//         self.ctx.draw_rectangle(
-//             self.area.left as usize,
-//             self.area.top as usize,
-//             self.area.right as usize,
-//             self.area.bottom as usize,
-//             0xff,
-//         );
-//     }
-// }
-
-impl<'a> Draw for Button<'a> {
-    fn draw(&self) {
-        unsafe {
-            COMMAND_QUEUE.push(Command::Rectangle(
-                self.area.left as usize,
-                self.area.top as usize,
-                self.area.right as usize,
-                self.area.bottom as usize,
-                self.bg.into(),
-            ));
-        }
-    }
-
-    fn no_draw(&mut self) {
-        self.skip_draw = true;
-    }
-}
-
-impl<'a> Drop for Button<'a> {
-    fn drop(&mut self) {
-        if !self.skip_draw {
-            self.draw()
-        }
-    }
-}
-
-pub fn button(ctx: &Canvas) -> Button {
-    Button {
-        area: Rect::new(0, 0, 10, 10),
-        bg: Color::White,
-        ctx,
-        skip_draw: false,
-    }
-}
-
-impl<'a> Style for Button<'a> {
-    fn bg(mut self, color: Color) -> Self {
-        self.bg = color;
-        self
-    }
-}
-
-impl<'a> Layout for Button<'a> {
-    fn centered(mut self) -> Self {
-        let area = self.ctx.area.clone();
-        let v = area.width() / 2;
-        let h = area.height() / 2;
-
-        let button_width = 10;
-        let button_height = 10;
-
-        let x = v - button_width / 2;
-        let y = h - button_height / 2;
-        let area = Rect::new(x, y, button_width, button_height);
-
-        self.area = area;
-        self
-    }
-}
-
-impl<'a> Input for Button<'a> {
-    fn clicked(&self) -> bool {
-        self.ctx.mouse_pos.intersects(self.area.clone()) && self.ctx.left_mouse.released
-    }
-}
 
 pub struct Canvas {
     //size is width * height.
@@ -463,11 +334,11 @@ impl Canvas {
         }
 
         //Reset the important state at the end of a frame.
-        self.left_mouse = MouseState::new();
-        self.right_mouse = MouseState::new();
-        self.middle_mouse = MouseState::new();
-        self.mouse_4 = MouseState::new();
-        self.mouse_5 = MouseState::new();
+        self.left_mouse.reset();
+        self.right_mouse.reset();
+        self.middle_mouse.reset();
+        self.mouse_4.reset();
+        self.mouse_5.reset();
     }
 
     #[inline(always)]

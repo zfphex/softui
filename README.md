@@ -5,7 +5,7 @@ pub enum Unit {
     Px(usize),
     ///Relative to the font-size of the element
     ///https://en.wikipedia.org/wiki/Em_(typography)
-    /// https://www.w3schools.com/cssref/css_units.php
+    ///https://www.w3schools.com/cssref/css_units.php
     Em(usize)
     Percentage(usize)
     Float(f32),
@@ -61,5 +61,40 @@ pub trait Text, {
     fn bold(self) -> Self;
     fn italic(self) -> Self;
     fn underlined(self) -> Self;
+}
+```
+
+```rs
+pub enum Button {
+    Left,
+    Right,
+    Middle,
+    Forward,
+    Back,
+}
+
+pub trait Input {
+    fn up(&self, button: Button) -> bool;
+    fn down(&self, button: Button) -> bool;
+    fn double_click(&self, button: Button) -> bool;
+
+    // fn left_up(&self) -> bool;
+    // fn left_down(&self) -> bool;
+    // fn right_up(&self) -> bool;
+    // fn right_down(&self) -> bool;
+    // fn middle_up(&self) -> bool;
+    // fn middle_down(&self) -> bool;
+    // fn mouse4_up(&self) -> bool;
+    // fn mouse4_down(&self) -> bool;
+    // fn mouse5_up(&self) -> bool;
+    // fn mouse5_down(&self) -> bool;
+
+    fn scroll_up(&self) -> bool;
+    fn scroll_down(&self) -> bool;
+
+    fn hovered(&self) -> bool;
+    fn lost_focus(&self) -> bool;
+    fn gained_focus(&self) -> bool;
+    fn has_focus(&self) -> bool;
 }
 ```
