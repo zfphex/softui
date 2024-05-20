@@ -1,4 +1,10 @@
-Trait Definitions
+### TODO
+
+- [ ] Rectangle with rounded corners
+- [ ] Gradients
+
+
+### Trait Definitions
 
 ```rs
 pub enum Unit {
@@ -8,11 +14,20 @@ pub enum Unit {
     ///https://www.w3schools.com/cssref/css_units.php
     Em(usize)
     Percentage(usize)
-    Float(f32),
 }
 
 pub trait Layout {
     fn centered(self) -> Self;
+
+    //Everything that takes in a unit should really be Into<Unit>.
+    //That way button().left(10) would be converted to Unit::Px(10).
+    //Explicit and implicit paramaters both be viable options.
+    //buton().left(0.5) -> Unit::Percentage(50)
+    //techinically a macro could be used.
+    //left(unit!(30em));
+    //Not sure if I like that.
+    fn left<U: Into<Unit>(self, length: U) -> Self;
+
     fn left(self, length: Unit) -> Self;
     fn right(self, length: Unit) -> Self;
     fn top(self, length: Unit) -> Self;
@@ -74,9 +89,13 @@ pub enum Button {
 }
 
 pub trait Input {
+    ///Clicked and released on the UI element.
+    fn clicked(&self, button: Button) -> bool;
+    ///Double clicked and released on the UI element.
+    fn double_click(&self, button: Button) -> bool;
+
     fn up(&self, button: Button) -> bool;
     fn down(&self, button: Button) -> bool;
-    fn double_click(&self, button: Button) -> bool;
 
     // fn left_up(&self) -> bool;
     // fn left_down(&self) -> bool;
@@ -98,3 +117,47 @@ pub trait Input {
     fn has_focus(&self) -> bool;
 }
 ```
+
+
+### Layout System
+
+```rs
+//Area will use the largest widget size unless wrapped. 
+//So here width: 50, height: 100
+v((button("width, height", 50, 100), button("button2", 10, 10)));
+
+//Max width of 20
+h((button("width, height", 50, 100), button("button2", 10, 10))).wrap(20, 20);
+
+h((button(), button())).padding(10).margin(2)
+
+struct Vertical<W> {
+    widgets: W
+    area: Rect,
+    wrap: bool,
+    //xyzw
+    //top, bottom, left, right
+    padding: Vec4
+    margin: Vec4
+}
+
+struct Horizontal<W> {
+    //... same as above
+}
+
+struct Flex {}
+
+flex((button(), button())).direction(Direction::Vertical)
+```
+
+### Widgets
+
+Container
+Text
+Button
+Radio Menu
+Check Box
+Input
+Image
+Svg
+Flexbox

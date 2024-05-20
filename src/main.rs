@@ -88,6 +88,9 @@ fn main() {
 
         canvas.fill(Color::Black);
 
+        canvas.draw_circle(100, 100, 50, Color::Blue.into());
+        canvas.draw_pixel(100, 100, Color::Blue.into());
+
         // canvas.draw_rectangle(x, y, square, square, 0xd2d2d2);
 
         {

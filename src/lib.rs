@@ -34,6 +34,31 @@ pub enum MouseButton {
     Forward,
 }
 
+//The user will want to define their own colors.
+//There should probably be a color trait.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Color {
+    Red,
+    Blue,
+    Green,
+    White,
+    Black,
+    Hex(u32),
+}
+
+impl Into<u32> for Color {
+    fn into(self) -> u32 {
+        match self {
+            Color::Red => 0xFF0000,
+            Color::Blue => 0x0000FF,
+            Color::Green => 0x00FF00,
+            Color::White => 0xFFFFFF,
+            Color::Black => 0,
+            Color::Hex(color) => color,
+        }
+    }
+}
+
 pub trait Draw {
     fn draw(&self);
     fn no_draw(&mut self);
@@ -48,32 +73,6 @@ pub trait Input {
 
 pub trait Layout {
     fn centered(self) -> Self;
-}
-
-//The user will want to define their own colors.
-//There should probably be a color trait.
-//
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Color {
-    Red,
-    Blue,
-    Green,
-    White,
-    Black,
-    Hex(u32),
-}
-
-impl Into<u32> for Color {
-    fn into(self) -> u32 {
-        match self {
-            Color::Red => todo!(),
-            Color::Blue => todo!(),
-            Color::Green => todo!(),
-            Color::White => 0xFFFFFF,
-            Color::Black => 0,
-            Color::Hex(color) => color,
-        }
-    }
 }
 
 pub trait Style {
@@ -420,6 +419,40 @@ impl Canvas {
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
         let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
         buffer[y * self.width + x] = color;
+    }
+    //TODO: https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
+    //https://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
+    //Is it worth having a 2D projection matrix to convert top left orgin
+    //into a center origin cartesian plane
+    pub fn draw_circle(&mut self, x: i32, y: i32, r: i32, color: u32) {
+        if r < 0 {
+            return;
+        }
+
+        //TODO: Bounds checking.
+        //Bresenham algorithm
+        let mut x1: i32 = -r;
+        let mut y1: i32 = 0;
+        let mut err: i32 = 2 - 2 * r;
+
+        loop {
+            self.draw_pixel((x - x1) as usize, (y + y1) as usize, color);
+            self.draw_pixel((x - y1) as usize, (y - x1) as usize, color);
+            self.draw_pixel((x + x1) as usize, (y - y1) as usize, color);
+            self.draw_pixel((x + y1) as usize, (y + x1) as usize, color);
+            let r = err;
+            if r > x1 {
+                x1 += 1;
+                err += x1 * 2 + 1;
+            }
+            if r <= y1 {
+                y1 += 1;
+                err += y1 * 2 + 1;
+            }
+            if x1 >= 0 {
+                break;
+            }
+        }
     }
 
     //I think the way things are drawn should be changed.
