@@ -88,21 +88,26 @@ fn main() {
 
         canvas.fill(Color::Black);
 
+        //TODO: This doesn't fill with color
         canvas.draw_circle(100, 100, 50, Color::Blue.into());
+        canvas.draw_rectangle_outline(100, 180, 20, 20, Color::Red.into());
+        canvas.draw_rectangle(100, 220, 20, 20, Color::Red.into());
+
         canvas.draw_pixel(100, 100, Color::Blue.into());
 
         // canvas.draw_rectangle(x, y, square, square, 0xd2d2d2);
 
         {
             let btn = button(&canvas).bg(Color::Hex(0xd2d2d2)).centered();
-            let btn2 = button(&canvas).bg(Color::Hex(0xff));
+            // let btn2 = button(&canvas).bg(Color::Hex(0xff)).x(500).y(500);
+            let btn2 = button(&canvas).bg(Color::Hex(0xff)).x(0.5).y(300);
 
             if btn.clicked() {
                 println!("Clicked center button!");
             }
 
             if btn2.clicked() {
-                return;
+                println!("Clicked blue button!");
             }
         }
 

@@ -71,8 +71,37 @@ pub trait Input {
     fn down(&self, button: MouseButton) -> bool;
 }
 
+pub enum Unit {
+    Px(usize),
+    ///Relative to the font-size of the element
+    ///https://en.wikipedia.org/wiki/Em_(typography)
+    ///https://www.w3schools.com/cssref/css_units.php
+    Em(usize),
+    Percentage(usize),
+}
+
+impl Into<Unit> for usize {
+    fn into(self) -> Unit {
+        Unit::Px(self)
+    }
+}
+
+impl Into<Unit> for f32 {
+    fn into(self) -> Unit {
+        Unit::Percentage((self * 100.0) as usize)
+    }
+}
+
 pub trait Layout {
     fn centered(self) -> Self;
+
+    fn x<U: Into<Unit>>(self, length: U) -> Self;
+    fn y<U: Into<Unit>>(self, length: U) -> Self;
+
+    fn left<U: Into<Unit>>(self, length: U) -> Self;
+    fn right<U: Into<Unit>>(self, length: U) -> Self;
+    fn top<U: Into<Unit>>(self, length: U) -> Self;
+    fn bottom<U: Into<Unit>>(self, length: U) -> Self;
 }
 
 pub trait Style {
@@ -420,20 +449,17 @@ impl Canvas {
         let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
         buffer[y * self.width + x] = color;
     }
+
     //TODO: https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
     //https://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
     //Is it worth having a 2D projection matrix to convert top left orgin
     //into a center origin cartesian plane
-    pub fn draw_circle(&mut self, x: i32, y: i32, r: i32, color: u32) {
-        if r < 0 {
-            return;
-        }
-
+    pub fn draw_circle(&mut self, x: i32, y: i32, r: usize, color: u32) {
         //TODO: Bounds checking.
         //Bresenham algorithm
-        let mut x1: i32 = -r;
+        let mut x1: i32 = -(r as i32);
         let mut y1: i32 = 0;
-        let mut err: i32 = 2 - 2 * r;
+        let mut err: i32 = 2 - 2 * (r as i32);
 
         loop {
             self.draw_pixel((x - x1) as usize, (y + y1) as usize, color);

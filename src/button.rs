@@ -4,6 +4,7 @@ pub fn button(ctx: &Canvas) -> Button {
     Button {
         area: Rect::new(0, 0, 10, 10),
         bg: Color::White,
+        parent_area: &ctx.area,
         ctx,
         skip_draw: false,
     }
@@ -13,8 +14,10 @@ pub fn button(ctx: &Canvas) -> Button {
 pub struct Button<'a> {
     pub area: Rect,
     pub ctx: &'a Canvas,
-    bg: Color,
+    //Not sure about this yet.
+    pub parent_area: &'a Rect,
 
+    bg: Color,
     skip_draw: bool,
 }
 
@@ -53,7 +56,8 @@ impl<'a> Style for Button<'a> {
 
 impl<'a> Layout for Button<'a> {
     fn centered(mut self) -> Self {
-        let area = self.ctx.area.clone();
+        let area = self.parent_area.clone();
+
         let v = area.width() / 2;
         let h = area.height() / 2;
 
@@ -66,6 +70,70 @@ impl<'a> Layout for Button<'a> {
 
         self.area = area;
         self
+    }
+
+    //TODO: Layout should be based on the parent.
+    //It don't have the mechanisms in place to handle this.
+    //I think each widget should probably hold a Parent<'a>
+    //Current we use the canvas which is kind of like the body.
+    //But it handles input and whatnot aswell.
+    //Hmmmm
+    fn left<U: Into<Unit>>(mut self, length: U) -> Self {
+        match length.into() {
+            Unit::Px(px) => {
+                self.area.left = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(p) => {
+                let px = self.parent_area.width() as f32 * (p as f32 / 100.0);
+                let half_width = self.area.width() as f32 / 2.0;
+                self.area.left = (px - half_width) as i32;
+            }
+        }
+        self
+    }
+
+    fn right<U: Into<Unit>>(mut self, length: U) -> Self {
+        match length.into() {
+            Unit::Px(px) => {
+                // self.area.right = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+
+    fn top<U: Into<Unit>>(mut self, length: U) -> Self {
+        match length.into() {
+            Unit::Px(px) => {
+                self.area.top = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+
+    fn bottom<U: Into<Unit>>(mut self, length: U) -> Self {
+        match length.into() {
+            Unit::Px(px) => {
+                // self.area.bottom -= px as i32;
+                todo!()
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+    
+
+    fn x<U: Into<Unit>>(self, length: U) -> Self {
+        self.left(length)
+    }
+    
+    fn y<U: Into<Unit>>(self, length: U) -> Self {
+        self.top(length)
     }
 }
 
