@@ -11,6 +11,96 @@ pub mod button;
 
 pub use button::*;
 
+/// Requires a widget to have two struct fields
+/// `area` and `ctx`
+/// Still on the fence about this shortcut.
+/// There must be a better way to implement this.
+#[macro_export]
+macro_rules! input {
+    ($($widget:ty),*) => {
+        $(
+        impl<'a> Input for $widget {
+            fn clicked(&self, button: MouseButton) -> bool {
+                if !self.ctx.mouse_pos.intersects(self.area.clone()) {
+                    return false;
+                }
+
+                match button {
+                    MouseButton::Left => {
+                        self.ctx.left_mouse.released == true
+                            && self
+                                .ctx
+                                .left_mouse
+                                .inital_position
+                                .intersects(self.area.clone())
+                    }
+                    MouseButton::Right => {
+                        self.ctx.right_mouse.released == true
+                            && self
+                                .ctx
+                                .right_mouse
+                                .inital_position
+                                .intersects(self.area.clone())
+                    }
+                    MouseButton::Middle => {
+                        self.ctx.middle_mouse.released == true
+                            && self
+                                .ctx
+                                .middle_mouse
+                                .inital_position
+                                .intersects(self.area.clone())
+                    }
+                    MouseButton::Back => {
+                        self.ctx.mouse_4.released == true
+                            && self
+                                .ctx
+                                .mouse_4
+                                .inital_position
+                                .intersects(self.area.clone())
+                    }
+                    MouseButton::Forward => {
+                        self.ctx.mouse_5.released == true
+                            && self
+                                .ctx
+                                .mouse_5
+                                .inital_position
+                                .intersects(self.area.clone())
+                    }
+                }
+            }
+
+            fn up(&self, button: MouseButton) -> bool {
+                if !self.ctx.mouse_pos.intersects(self.area.clone()) {
+                    return false;
+                }
+
+                match button {
+                    MouseButton::Left => self.ctx.left_mouse.released == true,
+                    MouseButton::Right => self.ctx.right_mouse.released == true,
+                    MouseButton::Middle => self.ctx.middle_mouse.released == true,
+                    MouseButton::Back => self.ctx.mouse_4.released == true,
+                    MouseButton::Forward => self.ctx.mouse_5.released == true,
+                }
+            }
+
+            fn down(&self, button: MouseButton) -> bool {
+                if !self.ctx.mouse_pos.intersects(self.area.clone()) {
+                    return false;
+                }
+
+                match button {
+                    MouseButton::Left => self.ctx.left_mouse.pressed == true,
+                    MouseButton::Right => self.ctx.right_mouse.pressed == true,
+                    MouseButton::Middle => self.ctx.middle_mouse.pressed == true,
+                    MouseButton::Back => self.ctx.mouse_4.pressed == true,
+                    MouseButton::Forward => self.ctx.mouse_5.pressed == true,
+                }
+            }
+        }
+        )*
+    };
+}
+
 // pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
 // pub const CHAR: char = 'g';
 
@@ -66,7 +156,8 @@ pub trait Draw {
 
 pub trait Input {
     /// The user's cusor has been clicked and released on top of a widget.
-    fn clicked(&self) -> bool;
+    // fn clicked(&self) -> bool;
+    fn clicked(&self, button: MouseButton) -> bool;
     fn up(&self, button: MouseButton) -> bool;
     fn down(&self, button: MouseButton) -> bool;
 }
@@ -259,7 +350,9 @@ pub enum Command {
 
 pub static mut COMMAND_QUEUE: SegQueue<Command> = SegQueue::new();
 
-pub struct Canvas {
+/// Holds the framebuffer and input state.
+/// Also handles rendering.
+pub struct Context {
     //size is width * height.
     pub buffer: Vec<u32>,
     //(width * height) / 4
@@ -283,7 +376,7 @@ pub struct Canvas {
     pub mouse_5: MouseState,
 }
 
-impl Canvas {
+impl Context {
     pub fn new(window: Window) -> Self {
         let context = unsafe { GetDC(window.hwnd) };
         let area = window.area();

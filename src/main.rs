@@ -3,7 +3,7 @@ use window::*;
 
 fn main() {
     let window = create_window("god", 800, 600);
-    let mut canvas = Canvas::new(window);
+    let mut ctx = Context::new(window);
 
     let mut x: usize = 0;
     let mut y: usize = 0;
@@ -14,37 +14,37 @@ fn main() {
             None => {}
             Some(event) => match event {
                 Event::Mouse(x, y) => {
-                    canvas.mouse_pos = Rect::new(x as i32, y as i32, 1, 1);
+                    ctx.mouse_pos = Rect::new(x as i32, y as i32, 1, 1);
                 }
                 Event::LeftMouseDown => {
-                    canvas.left_mouse.pressed(canvas.mouse_pos.clone());
+                    ctx.left_mouse.pressed(ctx.mouse_pos.clone());
                 }
                 Event::LeftMouseUp => {
-                    canvas.left_mouse.released();
+                    ctx.left_mouse.released();
                 }
                 Event::RightMouseDown => {
-                    canvas.right_mouse.pressed(canvas.mouse_pos.clone());
+                    ctx.right_mouse.pressed(ctx.mouse_pos.clone());
                 }
                 Event::RightMouseUp => {
-                    canvas.right_mouse.released();
+                    ctx.right_mouse.released();
                 }
                 Event::MiddleMouseDown => {
-                    canvas.middle_mouse.pressed(canvas.mouse_pos.clone());
+                    ctx.middle_mouse.pressed(ctx.mouse_pos.clone());
                 }
                 Event::MiddleMouseUp => {
-                    canvas.middle_mouse.released();
+                    ctx.middle_mouse.released();
                 }
                 Event::Mouse4Down => {
-                    canvas.mouse_4.pressed(canvas.mouse_pos.clone());
+                    ctx.mouse_4.pressed(ctx.mouse_pos.clone());
                 }
                 Event::Mouse4Up => {
-                    canvas.mouse_4.released();
+                    ctx.mouse_4.released();
                 }
                 Event::Mouse5Down => {
-                    canvas.mouse_5.pressed(canvas.mouse_pos.clone());
+                    ctx.mouse_5.pressed(ctx.mouse_pos.clone());
                 }
                 Event::Mouse5Up => {
-                    canvas.mouse_5.released();
+                    ctx.mouse_5.released();
                 }
                 Event::Quit => break,
                 Event::Escape => break,
@@ -52,7 +52,7 @@ fn main() {
             },
         }
 
-        let area = &canvas.area;
+        let area = &ctx.area;
 
         x += 1;
         if x > (area.width() as usize) - square - 1 {
@@ -86,32 +86,32 @@ fn main() {
             // canvas.draw_simd64();
         }
 
-        canvas.fill(Color::Black);
+        ctx.fill(Color::Black);
 
         //TODO: This doesn't fill with color
-        canvas.draw_circle(100, 100, 50, Color::Blue.into());
-        canvas.draw_rectangle_outline(100, 180, 20, 20, Color::Red.into());
-        canvas.draw_rectangle(100, 220, 20, 20, Color::Red.into());
+        ctx.draw_circle(100, 100, 50, Color::Blue.into());
+        ctx.draw_rectangle_outline(100, 180, 20, 20, Color::Red.into());
+        ctx.draw_rectangle(100, 220, 20, 20, Color::Red.into());
 
-        canvas.draw_pixel(100, 100, Color::Blue.into());
+        ctx.draw_pixel(100, 100, Color::Blue.into());
 
         // canvas.draw_rectangle(x, y, square, square, 0xd2d2d2);
 
         {
-            let btn = button(&canvas).bg(Color::Hex(0xd2d2d2)).centered();
             // let btn2 = button(&canvas).bg(Color::Hex(0xff)).x(500).y(500);
-            let btn2 = button(&canvas).bg(Color::Hex(0xff)).x(0.5).y(300);
+            let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(300);
+            let btn2 = button(&ctx).bg(Color::Hex(0xd2d2d2)).centered();
 
-            if btn.clicked() {
-                println!("Clicked center button!");
+            if btn.clicked(MouseButton::Left) {
+                println!("Clicked blue button!");
             }
 
-            if btn2.clicked() {
-                println!("Clicked blue button!");
+            if btn2.clicked(MouseButton::Middle) {
+                println!("Clicked white button!");
             }
         }
 
         //Note: All UI elements must be dropped before rendering.
-        canvas.draw_frame();
+        ctx.draw_frame();
     }
 }

@@ -1,6 +1,6 @@
 use crate::*;
 
-pub fn button(ctx: &Canvas) -> Button {
+pub fn button(ctx: &Context) -> Button {
     Button {
         area: Rect::new(0, 0, 10, 10),
         bg: Color::White,
@@ -13,7 +13,7 @@ pub fn button(ctx: &Canvas) -> Button {
 //TODO: missing `draw()` and `no_draw()` functions
 pub struct Button<'a> {
     pub area: Rect,
-    pub ctx: &'a Canvas,
+    pub ctx: &'a Context,
     //Not sure about this yet.
     pub parent_area: &'a Rect,
 
@@ -126,53 +126,102 @@ impl<'a> Layout for Button<'a> {
         }
         self
     }
-    
 
     fn x<U: Into<Unit>>(self, length: U) -> Self {
         self.left(length)
     }
-    
+
     fn y<U: Into<Unit>>(self, length: U) -> Self {
         self.top(length)
     }
 }
 
-impl<'a> Input for Button<'a> {
-    fn clicked(&self) -> bool {
-        self.ctx.left_mouse.released
-            && self.ctx.mouse_pos.intersects(self.area.clone())
-            && self
-                .ctx
-                .left_mouse
-                .inital_position
-                .intersects(self.area.clone())
-    }
+input!(Button<'a>);
 
-    fn up(&self, button: MouseButton) -> bool {
-        if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-            return false;
-        }
+// impl<'a> Input for Button<'a> {
+// fn clicked(&self) -> bool {
+//     self.ctx.left_mouse.released
+//         && self.ctx.mouse_pos.intersects(self.area.clone())
+//         && self
+//             .ctx
+//             .left_mouse
+//             .inital_position
+//             .intersects(self.area.clone())
+// }
+//     fn clicked(&self, button: MouseButton) -> bool {
+//         if !self.ctx.mouse_pos.intersects(self.area.clone()) {
+//             return false;
+//         }
 
-        match button {
-            MouseButton::Left => self.ctx.left_mouse.released == true,
-            MouseButton::Right => self.ctx.right_mouse.released == true,
-            MouseButton::Middle => self.ctx.middle_mouse.released == true,
-            MouseButton::Back => self.ctx.mouse_4.released == true,
-            MouseButton::Forward => self.ctx.mouse_5.released == true,
-        }
-    }
+//         match button {
+//             MouseButton::Left => {
+//                 self.ctx.left_mouse.released == true
+//                     && self
+//                         .ctx
+//                         .left_mouse
+//                         .inital_position
+//                         .intersects(self.area.clone())
+//             }
+//             MouseButton::Right => {
+//                 self.ctx.right_mouse.released == true
+//                     && self
+//                         .ctx
+//                         .right_mouse
+//                         .inital_position
+//                         .intersects(self.area.clone())
+//             }
+//             MouseButton::Middle => {
+//                 self.ctx.middle_mouse.released == true
+//                     && self
+//                         .ctx
+//                         .middle_mouse
+//                         .inital_position
+//                         .intersects(self.area.clone())
+//             }
+//             MouseButton::Back => {
+//                 self.ctx.mouse_4.released == true
+//                     && self
+//                         .ctx
+//                         .mouse_4
+//                         .inital_position
+//                         .intersects(self.area.clone())
+//             }
+//             MouseButton::Forward => {
+//                 self.ctx.mouse_5.released == true
+//                     && self
+//                         .ctx
+//                         .mouse_5
+//                         .inital_position
+//                         .intersects(self.area.clone())
+//             }
+//         }
+//     }
 
-    fn down(&self, button: MouseButton) -> bool {
-        if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-            return false;
-        }
+//     fn up(&self, button: MouseButton) -> bool {
+//         if !self.ctx.mouse_pos.intersects(self.area.clone()) {
+//             return false;
+//         }
 
-        match button {
-            MouseButton::Left => self.ctx.left_mouse.pressed == true,
-            MouseButton::Right => self.ctx.right_mouse.pressed == true,
-            MouseButton::Middle => self.ctx.middle_mouse.pressed == true,
-            MouseButton::Back => self.ctx.mouse_4.pressed == true,
-            MouseButton::Forward => self.ctx.mouse_5.pressed == true,
-        }
-    }
-}
+//         match button {
+//             MouseButton::Left => self.ctx.left_mouse.released == true,
+//             MouseButton::Right => self.ctx.right_mouse.released == true,
+//             MouseButton::Middle => self.ctx.middle_mouse.released == true,
+//             MouseButton::Back => self.ctx.mouse_4.released == true,
+//             MouseButton::Forward => self.ctx.mouse_5.released == true,
+//         }
+//     }
+
+//     fn down(&self, button: MouseButton) -> bool {
+//         if !self.ctx.mouse_pos.intersects(self.area.clone()) {
+//             return false;
+//         }
+
+//         match button {
+//             MouseButton::Left => self.ctx.left_mouse.pressed == true,
+//             MouseButton::Right => self.ctx.right_mouse.pressed == true,
+//             MouseButton::Middle => self.ctx.middle_mouse.pressed == true,
+//             MouseButton::Back => self.ctx.mouse_4.pressed == true,
+//             MouseButton::Forward => self.ctx.mouse_5.pressed == true,
+//         }
+//     }
+// }

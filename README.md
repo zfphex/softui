@@ -19,42 +19,41 @@ pub enum Unit {
 pub trait Layout {
     fn centered(self) -> Self;
 
-    //Everything that takes in a unit should really be Into<Unit>.
-    //That way button().left(10) would be converted to Unit::Px(10).
-    //Explicit and implicit paramaters both be viable options.
-    //buton().left(0.5) -> Unit::Percentage(50)
+    /// Distance from the left side of parent area.
     fn left<U: Into<Unit>(self, length: U) -> Self;
-
-    fn left<U: Into<Unit>>(self, length: U) -> Self;
+    /// Distance from the right side of parent area to the right side of widget.
     fn right<U: Into<Unit>>(self, length: U) -> Self;
+    /// Distance from the top of parent area.
     fn top<U: Into<Unit>>(self, length: U) -> Self;
+    /// Distance from the bottom of parent area to the bottom of widget.
     fn bottom<U: Into<Unit>>(self, length: U) -> Self;
 
     fn width<U: Into<Unit>>(self, length: U) -> Self;
     fn height<U: Into<Unit>>(self, length: U) -> Self;
-
-    //TODO: What happens if the user defines both?
-    //I like the idea of compile time errors for styling, css could use that.
-    ///Determine the width or height automatically
-    fn aspect_ratio(self, ratio: f32) -> Self;
-
-    fn max_width<U: Into<Unit>>(self, length: U) -> Self;
-    fn max_height<U: Into<Unit>>(self, length: U) -> Self;
     fn min_width<U: Into<Unit>>(self, length: U) -> Self;
     fn min_height<U: Into<Unit>>(self, length: U) -> Self;
+    fn max_width<U: Into<Unit>>(self, length: U) -> Self;
+    fn max_height<U: Into<Unit>>(self, length: U) -> Self;
+
     fn padding<U: Into<Unit>>(self, length: U) -> Self;
     fn padding_left<U: Into<Unit>>(self, length: U) -> Self;
     fn padding_right<U: Into<Unit>>(self, length: U) -> Self;
     fn padding_top<U: Into<Unit>>(self, length: U) -> Self;
     fn padding_bottom<U: Into<Unit>>(self, length: U) -> Self;
+
+    fn margin<U: Into<Unit>>(self, length: U) -> Self;
     fn margin_left<U: Into<Unit>>(self, length: U) -> Self;
     fn margin_right<U: Into<Unit>>(self, length: U) -> Self;
     fn margin_top<U: Into<Unit>>(self, length: U) -> Self;
     fn margin_bottom<U: Into<Unit>>(self, length: U) -> Self;
-    //TODO: z-index, what if the user wants to render something on top or bottom?
 
+    //TODO: What happens if the user defines both?
+    //I like the idea of compile time errors for styling, css could use that.
+    ///Determine the width or height automatically
+    fn aspect_ratio(self, ratio: f32) -> Self;
     fn rotate(self) -> Self;
     fn transform(self) -> Self;
+    //TODO: z-index, what if the user wants to render something on top or bottom?
 }
 ```
 
@@ -88,6 +87,8 @@ pub enum Button {
     Back,
 }
 
+//TODO: This shouldn't be a trait. It should be a context function that is called with the desired area.
+
 pub trait Input {
     ///Clicked and released on the UI element.
     fn clicked(&self, button: Button) -> bool;
@@ -96,17 +97,6 @@ pub trait Input {
 
     fn up(&self, button: Button) -> bool;
     fn down(&self, button: Button) -> bool;
-
-    // fn left_up(&self) -> bool;
-    // fn left_down(&self) -> bool;
-    // fn right_up(&self) -> bool;
-    // fn right_down(&self) -> bool;
-    // fn middle_up(&self) -> bool;
-    // fn middle_down(&self) -> bool;
-    // fn mouse4_up(&self) -> bool;
-    // fn mouse4_down(&self) -> bool;
-    // fn mouse5_up(&self) -> bool;
-    // fn mouse5_down(&self) -> bool;
 
     fn scroll_up(&self) -> bool;
     fn scroll_down(&self) -> bool;
@@ -155,9 +145,12 @@ flex((button(), button())).direction(Direction::Vertical)
 Container
 Text
 Button
+Slider/Progress Bar
 Radio Menu
 Check Box
+Modal Menu
 Input
 Image
 Svg
 Flexbox
+Color Picker
