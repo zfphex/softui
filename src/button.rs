@@ -1,5 +1,7 @@
 use crate::*;
 
+//TODO: Really this should take any parent.
+//We don't have layout widgets yet.
 pub fn button(ctx: &Context) -> Button {
     Button {
         area: Rect::new(0, 0, 10, 10),

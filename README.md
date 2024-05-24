@@ -61,6 +61,13 @@ pub trait Layout {
 pub trait Style {
     ///Background Color
     fn color(self, color: Color) -> Self;
+    fn hex(self, hex: u32) -> Self;
+
+    //I want the user to be able to add their own color functions to every widget.
+    fn red(self) -> Self;
+    fn green(self) -> Self;
+    fn blue(self) -> Self;
+
     //TODO: I'm not really sure what I want here. Maybe gradients?
 }
 ```

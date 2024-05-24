@@ -9,6 +9,13 @@ fn main() {
     let mut y: usize = 0;
     let square = 20;
 
+    //https://magcius.github.io/xplain/article/rast1.html
+    dbg!(lerp_rgb(
+        Rgb { r: 255, g: 0, b: 0 },
+        Rgb { r: 0, g: 255, b: 0 },
+        1,
+    ));
+
     loop {
         match event() {
             None => {}
@@ -102,11 +109,11 @@ fn main() {
             let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(300);
             let btn2 = button(&ctx).bg(Color::Hex(0xd2d2d2)).centered();
 
-            if btn.clicked(MouseButton::Left) {
+            if btn.clicked(Left) {
                 println!("Clicked blue button!");
             }
 
-            if btn2.clicked(MouseButton::Middle) {
+            if btn2.clicked(Middle) {
                 println!("Clicked white button!");
             }
         }

@@ -11,6 +11,8 @@ pub mod button;
 
 pub use button::*;
 
+pub use MouseButton::*;
+
 /// Requires a widget to have two struct fields
 /// `area` and `ctx`
 /// Still on the fence about this shortcut.
@@ -101,6 +103,31 @@ macro_rules! input {
     };
 }
 
+// use std::ops::{Add, Div, Mul, Sub};
+
+// pub fn lerp<T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default + Copy>(
+//     a: T,
+//     b: T,
+//     t: T,
+// ) -> T {
+//     (a * (1 - t)) + (b * t)
+// }
+
+pub fn lerp(a: u64, b: u64, t: u64) -> u64 {
+    (a * (1 - t)) + (b * t)
+}
+
+pub fn lerp_rgb(color1: Rgb, color2: Rgb, t: u64) -> Rgb {
+    let r = lerp(color1.r as u64, color2.r as u64, t);
+    let g = lerp(color1.g as u64, color2.g as u64, t);
+    let b = lerp(color1.b as u64, color2.b as u64, t);
+    Rgb {
+        r: r as u8,
+        g: g as u8,
+        b: b as u8,
+    }
+}
+
 // pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
 // pub const CHAR: char = 'g';
 
@@ -114,6 +141,7 @@ macro_rules! input {
 //     }
 // }
 
+#[derive(Debug)]
 pub enum MouseButton {
     Left,
     Right,
@@ -122,6 +150,13 @@ pub enum MouseButton {
     Back,
     ///Mouse5
     Forward,
+}
+
+#[derive(Debug)]
+pub struct Rgb {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
 }
 
 //The user will want to define their own colors.
