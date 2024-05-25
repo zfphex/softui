@@ -68,6 +68,12 @@ fn main() {
             y = 0;
         }
 
+        ctx.fillsimd32(0x0);
+        //Doesn't work unless x and y are 0 for now.
+        ctx.draw_rectangle32(0, 0, 3, 3, 0xff);
+        ctx.draw_simd32();
+        // continue;
+
         {
             //How do we clear effectively?
             //Tiling is my first thought.
@@ -126,6 +132,7 @@ fn main() {
         }
 
         //Note: All UI elements must be dropped before rendering.
-        ctx.draw_frame();
+        // ctx.draw_frame();
+        // ctx.draw_frame_32();
     }
 }

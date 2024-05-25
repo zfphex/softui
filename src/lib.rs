@@ -1,4 +1,5 @@
 #![feature(portable_simd)]
+use core::panic;
 use mini::profile;
 use std::{
     ops::Range,
@@ -413,7 +414,7 @@ pub struct Context {
     pub buffer: Vec<u32>,
     //(width * height) / 4
     pub simd16: Vec<u8x16>,
-    pub simd32: Vec<u8x32>,
+    pub simd32: Vec<u32x8>,
     pub simd64: Vec<u32x16>,
     pub area: Rect,
     pub width: usize,
@@ -451,7 +452,8 @@ impl Context {
             //4 RGBQUADS in u8x16 -> 16 / 4 = 4
             simd16: vec![u8x16::splat(0); ((width * height) as f32 / 4.0).ceil() as usize],
             //8 RGBQUADS in u8x64 -> 32 / 4 = 8
-            simd32: vec![u8x32::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
+            // simd32: vec![u8x32::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
+            simd32: vec![u32x8::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
             simd64: vec![u32x16::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
             //16 RGBQUADS in u8x64 -> 64 / 4 = 16
             // simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
@@ -555,6 +557,13 @@ impl Context {
         self.strech_di(flattened.as_mut_ptr());
     }
 
+    pub fn fillsimd32(&mut self, color: u32) {
+        profile!();
+        for tile in &mut self.simd32 {
+            *tile = u32x8::splat(color);
+        }
+    }
+
     pub fn draw_simd64(&mut self) {
         profile!();
         self.resize();
@@ -574,14 +583,6 @@ impl Context {
         for tile in &mut self.simd16 {
             //Convert u32x4 into u8x16
             *tile = unsafe { std::mem::transmute(u32x4::splat(color)) };
-        }
-    }
-
-    pub fn fillsimd32(&mut self, color: u32) {
-        profile!();
-        for tile in &mut self.simd32 {
-            //Convert u32x8 into u8x32
-            *tile = unsafe { std::mem::transmute(u32x8::splat(color)) };
         }
     }
 
@@ -701,8 +702,9 @@ impl Context {
         }
     }
 
+    //8 * u32
     #[track_caller]
-    pub fn draw_rectangle64(
+    pub fn draw_rectangle32(
         &mut self,
         x: usize,
         y: usize,
@@ -725,14 +727,61 @@ impl Context {
             }
         }
 
-        let buffer = self.simd64.as_mut_slice();
+        let buffer = self.simd32.as_mut_slice();
 
-        for j in 0..buffer.len() {
-            for i in y..y + height {
-                let pos = x + canvas_width * i;
-                // tile[pos..pos + width] = color;
-                //TODO: How can I calculate the tile position in the buffer to
-                //correctly fill the rectange.
+        for y in y..y + height {
+            let start = x + (canvas_width / 8) * y;
+            let end = start + (width / 8);
+            let total_pixels = end - start;
+            let simd_end = start + total_pixels;
+            let rem = width % 8;
+
+            // println!(
+            //     "y: {} width: {} width/8: {} rem: {} start: {} end: {} simd_end: {}",
+            //     y,
+            //     width,
+            //     width / 8,
+            //     width % 8,
+            //     start,
+            //     end,
+            //     simd_end,
+            // );
+
+            for slice in &mut buffer[start..simd_end] {
+                *slice = u32x8::splat(color)
+            }
+
+            if rem != 0 {
+                for px in &mut buffer[simd_end].as_mut_array()[0..rem] {
+                    *px = color;
+                }
+            }
+        }
+    }
+
+    //Should really be called draw_rectangle16.
+    //Since it's 16 u32's; which is what we care about.
+    #[track_caller]
+    pub fn draw_rectangle64(
+        &mut self,
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+        color: u32,
+    ) {
+        let canvas_width = self.width;
+
+        #[cfg(debug_assertions)]
+        {
+            let canvas_height = self.height;
+            if x + width >= canvas_width {
+                panic!("x: {x} + width: {width} cannot be >= to the canvas width: {canvas_width}");
+            }
+            if y + height >= canvas_height {
+                panic!(
+                    "y: {y} + height: {height} cannot be >= to the canvas height: {canvas_height}"
+                );
             }
         }
     }
