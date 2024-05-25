@@ -92,8 +92,17 @@ fn main() {
 
         ctx.fill(Color::Black);
 
-        ctx.draw_linear_gradient(500, 500, 100, 100, 0x00ff00, 0xfffff);
-        ctx.draw_rectangle(x, y, square, square, lerp_hex(0x5e9955, 0x4ec1ff, t.sin()));
+        ctx.draw_linear_gradient(500, 200, 100, 100, 0x00ff00, 0xfffff);
+        ctx.draw_linear_gradient(
+            500,
+            500,
+            100,
+            100,
+            0x773ec7,
+            lerp_hex(0xe317be, 0x773ec7, t.sin()),
+        );
+
+        // ctx.draw_rectangle(x, y, square, square, lerp_hex(0x5e9955, 0x4ec1ff, t.sin()));
         t += 0.01;
 
         //TODO: This doesn't fill with color
