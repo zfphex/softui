@@ -1,8 +1,8 @@
 ### TODO
 
 - [ ] Rectangle with rounded corners
-- [ ] Gradients
-
+- [x] Linear gradients
+- [ ] The window changes framerate when resizing, not sure why?
 
 ### Trait Definitions
 

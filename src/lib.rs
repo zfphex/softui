@@ -103,29 +103,50 @@ macro_rules! input {
     };
 }
 
-// use std::ops::{Add, Div, Mul, Sub};
-
-// pub fn lerp<T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Default + Copy>(
-//     a: T,
-//     b: T,
-//     t: T,
-// ) -> T {
-//     (a * (1 - t)) + (b * t)
-// }
-
-pub fn lerp(a: u64, b: u64, t: u64) -> u64 {
-    (a * (1 - t)) + (b * t)
+pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
+    (a * (1.0 - t)) + (b * t)
 }
 
-pub fn lerp_rgb(color1: Rgb, color2: Rgb, t: u64) -> Rgb {
-    let r = lerp(color1.r as u64, color2.r as u64, t);
-    let g = lerp(color1.g as u64, color2.g as u64, t);
-    let b = lerp(color1.b as u64, color2.b as u64, t);
+#[inline(always)]
+pub const fn r(color: u32) -> u8 {
+    (color >> 16 & 0xFF) as u8
+}
+
+#[inline(always)]
+pub const fn g(color: u32) -> u8 {
+    (color >> 8 & 0xFF) as u8
+}
+
+#[inline(always)]
+pub const fn b(color: u32) -> u8 {
+    (color & 0xFF) as u8
+}
+
+pub fn rgb_to_hex(color: Rgb) -> u32 {
+    (color.r as u32) << 16 | (color.g as u32) << 8 | (color.b as u32)
+}
+
+pub fn hex_to_rgb(color: u32) -> Rgb {
+    let r = (color >> 16 & 0xFF) as u8;
+    let g = (color >> 8 & 0xFF) as u8;
+    let b = (color & 0xFF) as u8;
+    Rgb { r, g, b }
+}
+
+pub fn lerp_rgb(color1: Rgb, color2: Rgb, t: f32) -> Rgb {
     Rgb {
-        r: r as u8,
-        g: g as u8,
-        b: b as u8,
+        r: lerp(color1.r as f32, color2.r as f32, t) as u8,
+        g: lerp(color1.g as f32, color2.g as f32, t) as u8,
+        b: lerp(color1.b as f32, color2.b as f32, t) as u8,
     }
+}
+
+pub fn lerp_hex(color1: u32, color2: u32, t: f32) -> u32 {
+    let r = lerp(r(color1) as f32, r(color2) as f32, t) as u8;
+    let g = lerp(g(color1) as f32, g(color2) as f32, t) as u8;
+    let b = lerp(b(color1) as f32, b(color2) as f32, t) as u8;
+
+    (r as u32) << 16 | (g as u32) << 8 | (b as u32)
 }
 
 // pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
@@ -152,7 +173,7 @@ pub enum MouseButton {
     Forward,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Rgb {
     pub r: u8,
     pub g: u8,
@@ -640,6 +661,42 @@ impl Context {
             let pos = x + canvas_width * i;
             for px in &mut self.buffer[pos..pos + width] {
                 *px = color;
+            }
+        }
+    }
+
+    #[track_caller]
+    pub fn draw_linear_gradient(
+        &mut self,
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+        color1: u32,
+        color2: u32,
+    ) {
+        let canvas_width = self.width;
+
+        #[cfg(debug_assertions)]
+        {
+            let canvas_height = self.height;
+            if x + width >= canvas_width {
+                panic!("x: {x} + width: {width} cannot be >= to the canvas width: {canvas_width}");
+            }
+            if y + height >= canvas_height {
+                panic!(
+                    "y: {y} + height: {height} cannot be >= to the canvas height: {canvas_height}"
+                );
+            }
+        }
+
+        for i in y..y + height {
+            let start = x + canvas_width * i;
+            let end = start + width;
+
+            for (x, px) in self.buffer[start..end].iter_mut().enumerate() {
+                let t = (x as f32) / (end as f32 - start as f32);
+                *px = lerp_hex(color1, color2, t);
             }
         }
     }

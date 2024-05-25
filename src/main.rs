@@ -7,14 +7,11 @@ fn main() {
 
     let mut x: usize = 0;
     let mut y: usize = 0;
+    let mut t: f32 = 0.0;
+
     let square = 20;
 
     //https://magcius.github.io/xplain/article/rast1.html
-    dbg!(lerp_rgb(
-        Rgb { r: 255, g: 0, b: 0 },
-        Rgb { r: 0, g: 255, b: 0 },
-        1,
-    ));
 
     loop {
         match event() {
@@ -95,6 +92,10 @@ fn main() {
 
         ctx.fill(Color::Black);
 
+        ctx.draw_linear_gradient(500, 500, 100, 100, 0x00ff00, 0xfffff);
+        ctx.draw_rectangle(x, y, square, square, lerp_hex(0x5e9955, 0x4ec1ff, t.sin()));
+        t += 0.01;
+
         //TODO: This doesn't fill with color
         ctx.draw_circle(100, 100, 50, Color::Blue.into());
         ctx.draw_rectangle_outline(100, 180, 20, 20, Color::Red.into());
@@ -102,10 +103,7 @@ fn main() {
 
         ctx.draw_pixel(100, 100, Color::Blue.into());
 
-        // canvas.draw_rectangle(x, y, square, square, 0xd2d2d2);
-
         {
-            // let btn2 = button(&canvas).bg(Color::Hex(0xff)).x(500).y(500);
             let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(300);
             let btn2 = button(&ctx).bg(Color::Hex(0xd2d2d2)).centered();
 
