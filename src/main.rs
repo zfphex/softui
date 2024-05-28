@@ -68,10 +68,10 @@ fn main() {
             y = 0;
         }
 
-        ctx.fillsimd32(0x0);
+        // ctx.fillsimd32(0x0);
         //Doesn't work unless x and y are 0 for now.
-        ctx.draw_rectangle32(0, 0, 3, 3, 0xff);
-        ctx.draw_simd32();
+        // ctx.draw_rectangle32(0, 0, 3, 3, 0xff);
+        // ctx.draw_simd32();
         // continue;
 
         {
@@ -112,11 +112,19 @@ fn main() {
         t += 0.01;
 
         //TODO: This doesn't fill with color
-        ctx.draw_circle(100, 100, 50, Color::Blue.into());
+        ctx.draw_circle(300, 100, 50, Color::Blue.into());
         ctx.draw_rectangle_outline(100, 180, 20, 20, Color::Red.into());
         ctx.draw_rectangle(100, 220, 20, 20, Color::Red.into());
 
         ctx.draw_pixel(100, 100, Color::Blue.into());
+
+        ctx.draw_line((20, 20), (200, 20), Color::Green.into());
+        ctx.draw_line((20, 20), (200, 25), Color::Green.into());
+        ctx.draw_line((20, 20), (200, 50), Color::Green.into());
+        ctx.draw_line((20, 20), (200, 100), Color::Green.into());
+        ctx.draw_line((20, 20), (200, 200), Color::Green.into());
+
+        // ctx.draw_line((200, 50), (190, 52), Color::Green.into());
 
         {
             let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(300);
@@ -132,7 +140,7 @@ fn main() {
         }
 
         //Note: All UI elements must be dropped before rendering.
-        // ctx.draw_frame();
+        ctx.draw_frame();
         // ctx.draw_frame_32();
     }
 }

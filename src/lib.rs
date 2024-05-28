@@ -631,6 +631,33 @@ impl Context {
         }
     }
 
+    //Only works when the slope is >= 0 & <=1
+    pub fn draw_line(&mut self, (x0, y0): (usize, usize), (x1, y1): (usize, usize), color: u32) {
+        let mut error = 0.0;
+        let dx = x1 as f32 - x0 as f32;
+        let dy = y1 as f32 - y0 as f32;
+        let m = dy / dx;
+
+        let mut x = x0;
+        let mut y = y0;
+
+        while x < x1 {
+            self.draw_pixel(x, y, color);
+
+            if x1 > x0 {
+                x += 1;
+            } else {
+                x -= 1;
+            }
+
+            error += m;
+            if error > 0.5 {
+                y += 1;
+                error -= 1.0;
+            }
+        }
+    }
+
     //I think the way things are drawn should be changed.
     //This is not thread safe which is cringe.
     //We could use a lock free queue and have something equivalent to draw calls.
