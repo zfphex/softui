@@ -643,13 +643,7 @@ impl Context {
 
         while x < x1 {
             self.draw_pixel(x, y, color);
-
-            if x1 > x0 {
-                x += 1;
-            } else {
-                x -= 1;
-            }
-
+            x += 1;
             error += m;
             if error > 0.5 {
                 y += 1;
