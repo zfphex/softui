@@ -11,6 +11,8 @@ fn main() {
 
     let square = 20;
 
+    let atlas = Atlas::new(32.0);
+
     //https://magcius.github.io/xplain/article/rast1.html
 
     loop {
@@ -111,6 +113,14 @@ fn main() {
         // ctx.draw_rectangle(x, y, square, square, lerp_hex(0x5e9955, 0x4ec1ff, t.sin()));
         t += 0.01;
 
+        fontdue_subpixel(&mut ctx, 0, 0);
+        // atlas.draw_text(
+        //     &mut ctx,
+        //     "qwertyuiopasdfghjkl;zxcvbnm,../'[]|+_=-87612345(*&^$%#@!",
+        //     0,
+        //     400,
+        // );
+
         //TODO: This doesn't fill with color
         ctx.draw_circle(300, 100, 50, Color::Blue.into());
         ctx.draw_rectangle_outline(100, 180, 20, 20, Color::Red.into());
@@ -118,13 +128,27 @@ fn main() {
 
         ctx.draw_pixel(100, 100, Color::Blue.into());
 
-        ctx.draw_line((20, 20), (200, 20), Color::Green.into());
-        ctx.draw_line((20, 20), (200, 25), Color::Green.into());
-        ctx.draw_line((20, 20), (200, 50), Color::Green.into());
-        ctx.draw_line((20, 20), (200, 100), Color::Green.into());
-        ctx.draw_line((20, 20), (200, 200), Color::Green.into());
+        //Alpha blending
+        {
+            ctx.draw_rectangle(
+                305,
+                305,
+                10,
+                10,
+                // alpha_blend(0x0000ff.into(), 0x6a9955.into()).into(),
+                alpha_blend(0x6a9955.into(), 0x0000ff.into()).into(),
+            );
+            ctx.draw_rectangle(300, 300, 10, 10, 0x6a9955);
+        }
 
+        // ctx.draw_line((20, 20), (200, 20), Color::Green.into());
+        // ctx.draw_line((20, 20), (200, 25), Color::Green.into());
+        // ctx.draw_line((20, 20), (200, 50), Color::Green.into());
+        // ctx.draw_line((20, 20), (200, 100), Color::Green.into());
+        // ctx.draw_line((20, 20), (200, 200), Color::Green.into());
         // ctx.draw_line((200, 50), (190, 52), Color::Green.into());
+
+        // ctx.draw_text();
 
         {
             let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(300);

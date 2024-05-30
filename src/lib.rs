@@ -1,17 +1,15 @@
+#![allow(unused)]
 #![feature(portable_simd)]
 use core::panic;
 use mini::profile;
-use std::{
-    ops::Range,
-    path::Path,
-    simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64},
-};
+use std::simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64};
 use window::*;
 
 pub mod button;
+pub mod text;
 
 pub use button::*;
-
+pub use text::*;
 pub use MouseButton::*;
 
 /// Requires a widget to have two struct fields
@@ -108,6 +106,19 @@ pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
     (a * (1.0 - t)) + (b * t)
 }
 
+//This does not work.
+pub fn alpha_blend(src: Rgb, dst: Rgb) -> Rgb {
+    let src_a_f = src.a as f32 / 255.0;
+    let inv_src_a_f = 1.0 - src_a_f;
+
+    let r = (src.r as f32 * src_a_f + dst.r as f32 * inv_src_a_f) as u8;
+    let g = (src.g as f32 * src_a_f + dst.g as f32 * inv_src_a_f) as u8;
+    let b = (src.b as f32 * src_a_f + dst.b as f32 * inv_src_a_f) as u8;
+    let a = (src.a as f32 * src_a_f + 255.0 * inv_src_a_f) as u8;
+
+    Rgb { r, g, b, a }
+}
+
 #[inline(always)]
 pub const fn r(color: u32) -> u8 {
     (color >> 16 & 0xFF) as u8
@@ -123,7 +134,8 @@ pub const fn b(color: u32) -> u8 {
     (color & 0xFF) as u8
 }
 
-pub fn rgb_to_hex(color: Rgb) -> u32 {
+pub fn rgb_to_hex<R: Into<Rgb>>(color: R) -> u32 {
+    let color = color.into();
     (color.r as u32) << 16 | (color.g as u32) << 8 | (color.b as u32)
 }
 
@@ -131,7 +143,12 @@ pub fn hex_to_rgb(color: u32) -> Rgb {
     let r = (color >> 16 & 0xFF) as u8;
     let g = (color >> 8 & 0xFF) as u8;
     let b = (color & 0xFF) as u8;
-    Rgb { r, g, b }
+    Rgb {
+        r,
+        g,
+        b,
+        a: u8::MAX,
+    }
 }
 
 pub fn lerp_rgb(color1: Rgb, color2: Rgb, t: f32) -> Rgb {
@@ -139,6 +156,7 @@ pub fn lerp_rgb(color1: Rgb, color2: Rgb, t: f32) -> Rgb {
         r: lerp(color1.r as f32, color2.r as f32, t) as u8,
         g: lerp(color1.g as f32, color2.g as f32, t) as u8,
         b: lerp(color1.b as f32, color2.b as f32, t) as u8,
+        a: u8::MAX,
     }
 }
 
@@ -149,19 +167,6 @@ pub fn lerp_hex(color1: u32, color2: u32, t: f32) -> u32 {
 
     (r as u32) << 16 | (g as u32) << 8 | (b as u32)
 }
-
-// pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
-// pub const CHAR: char = 'g';
-
-//https://freetype.org/freetype2/docs/glyphs/glyphs-3.html
-
-// pub fn draw_buffer(buffer: &mut text_buffer::Buffer, atlas: &mut Atlas, canvas: &mut Canvas) {
-//     let mut y = atlas.font_size as usize;
-//     for line in buffer.as_str().lines() {
-//         atlas.draw_text(canvas, line, 0, y);
-//         y += atlas.font_size as usize;
-//     }
-// }
 
 #[derive(Debug)]
 pub enum MouseButton {
@@ -179,6 +184,38 @@ pub struct Rgb {
     pub r: u8,
     pub g: u8,
     pub b: u8,
+    pub a: u8,
+}
+
+impl Into<Rgb> for (u8, u8, u8) {
+    fn into(self) -> Rgb {
+        Rgb {
+            r: self.0,
+            g: self.1,
+            b: self.2,
+            a: u8::MAX,
+        }
+    }
+}
+
+impl Into<u32> for Rgb {
+    fn into(self) -> u32 {
+        rgb_to_hex(self)
+    }
+}
+
+impl Into<Rgb> for u32 {
+    fn into(self) -> Rgb {
+        let r = (self >> 16 & 0xFF) as u8;
+        let g = (self >> 8 & 0xFF) as u8;
+        let b = (self & 0xFF) as u8;
+        Rgb {
+            r,
+            g,
+            b,
+            a: u8::MAX,
+        }
+    }
 }
 
 //The user will want to define their own colors.
@@ -256,118 +293,6 @@ pub trait Style {
     fn bg(self, color: Color) -> Self;
 }
 
-pub struct Buffer {
-    //TODO: Swap to mmap.
-    pub text: String,
-    //TODO: Scrolling.
-    pub window: Range<usize>,
-}
-
-impl Buffer {
-    pub fn new<P: AsRef<Path>>(path: P) -> Self {
-        Self {
-            text: std::fs::read_to_string(path).unwrap(),
-            window: 0..100,
-        }
-    }
-
-    // pub fn draw(&self, atlas: &mut Atlas, canvas: &mut Canvas) {
-    //     //TODO: How do I draw only part of a line?
-    //     //Maybe this can help? https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-scrollwindow
-    //     //https://github.com/rxi/lite/blob/38bd9b3326c02e43f244623f97a622b11f074415/data/core/view.lua#L20C21-L20C21
-    //     let mut y = atlas.font_size as usize;
-    //     // let mut y = atlas.font_size as usize - 10;
-    //     for line in self.text.lines() {
-    //         atlas.draw_text(canvas, line, 0, y);
-    //         y += atlas.font_size as usize;
-    //     }
-    // }
-}
-
-// pub struct Atlas {
-//     pub glyphs: [(fontdue::Metrics, Vec<u8>); 128],
-//     pub font_size: f32,
-// }
-
-// impl Atlas {
-//     pub fn new(font_size: f32) -> Self {
-//         let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-
-//         #[allow(invalid_value)]
-//         let mut glyphs: [(fontdue::Metrics, Vec<u8>); 128] = unsafe { std::mem::zeroed() };
-
-//         // use std::mem::MaybeUninit;
-//         // let mut glyphs: [MaybeUninit<(fontdue::Metrics, Vec<u8>)>; 127] = MaybeUninit::uninit_array();
-
-//         //https://www.ascii-code.com/
-//         for char in 32..127u8 {
-//             let (metrics, bitmap) = font.rasterize(char as char, font_size);
-//             // glyphs[char as usize].write((metrics, bitmap));
-//             glyphs[char as usize] = (metrics, bitmap);
-//         }
-
-//         Self { glyphs, font_size }
-//     }
-
-//     //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
-//     //or maybe the buffer should just include all the text related code and the metrics should be static.
-//     //TODO: If the text is longer than canvas width it needs to be clipped.
-//     pub fn draw_text(&self, canvas: &mut Canvas, text: &str, x: usize, y: usize) {
-//         let mut glyph_x = x;
-
-//         for char in text.chars() {
-//             let (metrics, bitmap) = &self.glyphs[char as usize];
-//             let glyph_y = (y as f32
-//                 - (metrics.height as f32 - metrics.advance_height)
-//                 - metrics.ymin as f32) as usize;
-
-//             for y in 0..metrics.height {
-//                 for x in 0..metrics.width {
-//                     let color = bitmap[x + y * metrics.width];
-//                     let i = 4 * (x + glyph_x + canvas.width * (y + glyph_y));
-
-//                     if i >= canvas.buffer.len() {
-//                         return;
-//                     }
-
-//                     canvas.buffer[i] = color;
-//                     canvas.buffer[i + 1] = color;
-//                     canvas.buffer[i + 2] = color;
-//                     canvas.buffer[i + 3] = 0;
-//                 }
-//             }
-
-//             glyph_x += metrics.advance_width as usize;
-
-//             //TODO: Still not enough.
-//             if glyph_x >= canvas.width {
-//                 return;
-//             }
-//         }
-//     }
-// }
-
-// pub fn fontdue_subpixel(canvas: &mut Canvas, x: usize, y: usize) {
-//     let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-//     let (metrics, bitmap) = font.rasterize_subpixel(CHAR, 50.0);
-
-//     let start_x = x;
-//     let start_y = y;
-
-//     for y in 0..metrics.height {
-//         for x in 0..metrics.width {
-//             let i = ((start_y + y) * canvas.width + start_x + x) * 4;
-//             let j = (y * metrics.width + x) * 3;
-
-//             //Bitmap is BGR_ not RGB.
-//             canvas.buffer[i] = bitmap[j + 2];
-//             canvas.buffer[i + 1] = bitmap[j + 1];
-//             canvas.buffer[i + 2] = bitmap[j];
-//             canvas.buffer[i + 3] = 0;
-//         }
-//     }
-// }
-
 #[derive(Debug)]
 pub struct MouseState {
     pub pressed: bool,
@@ -398,14 +323,12 @@ impl MouseState {
     }
 }
 
-use crossbeam_queue::SegQueue;
-
 pub enum Command {
     ///(x, y, width, height, color)
     Rectangle(usize, usize, usize, usize, u32),
 }
 
-pub static mut COMMAND_QUEUE: SegQueue<Command> = SegQueue::new();
+pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
 
 /// Holds the framebuffer and input state.
 /// Also handles rendering.
