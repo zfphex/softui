@@ -20,7 +20,7 @@ fn main() {
             None => {}
             Some(event) => match event {
                 Event::Mouse(x, y) => {
-                    ctx.mouse_pos = Rect::new(x as i32, y as i32, 1, 1);
+                    ctx.mouse_pos = Rect::new(x, y, 1, 1);
                 }
                 Event::LeftMouseDown => {
                     ctx.left_mouse.pressed(ctx.mouse_pos.clone());
@@ -128,25 +128,26 @@ fn main() {
 
         ctx.draw_pixel(100, 100, Color::Blue.into());
 
+        //TODO: These shapes should blend into the background.
+
         //Alpha blending
         {
-            ctx.draw_rectangle(
-                305,
-                305,
-                10,
-                10,
-                // alpha_blend(0x0000ff.into(), 0x6a9955.into()).into(),
-                alpha_blend(0x6a9955.into(), 0x0000ff.into()).into(),
-            );
-            ctx.draw_rectangle(300, 300, 10, 10, 0x6a9955);
+            let red = Rgb::new(255, 0, 0, 255);
+            let blue = Rgb::new(0, 0, 255, 255);
+            let blend = lerp_rgb(red, blue, 0.5);
+            ctx.draw_rectangle(300, 300, 50, 50, red.into());
+            ctx.draw_rectangle(300, 350, 50, 10, blend.into());
+            ctx.draw_rectangle(300, 360, 50, 40, blue.into());
+            // let hex = ctx.get_pixel(300, 300).unwrap();
+            // dbg!(Rgb::from(*hex));
         }
 
-        // ctx.draw_line((20, 20), (200, 20), Color::Green.into());
-        // ctx.draw_line((20, 20), (200, 25), Color::Green.into());
-        // ctx.draw_line((20, 20), (200, 50), Color::Green.into());
-        // ctx.draw_line((20, 20), (200, 100), Color::Green.into());
-        // ctx.draw_line((20, 20), (200, 200), Color::Green.into());
-        // ctx.draw_line((200, 50), (190, 52), Color::Green.into());
+        ctx.draw_line((20, 20), (200, 20), Color::Green.into());
+        ctx.draw_line((20, 20), (200, 25), Color::Green.into());
+        ctx.draw_line((20, 20), (200, 50), Color::Green.into());
+        ctx.draw_line((20, 20), (200, 100), Color::Green.into());
+        ctx.draw_line((20, 20), (200, 200), Color::Green.into());
+        ctx.draw_line((200, 50), (190, 52), Color::Green.into());
 
         // ctx.draw_text();
 

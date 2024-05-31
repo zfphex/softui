@@ -6,11 +6,24 @@ use std::simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64};
 use window::*;
 
 pub mod button;
+pub mod color;
 pub mod text;
 
 pub use button::*;
+pub use color::*;
 pub use text::*;
 pub use MouseButton::*;
+
+#[derive(Debug)]
+pub enum MouseButton {
+    Left,
+    Right,
+    Middle,
+    ///Mouse4
+    Back,
+    ///Mouse5
+    Forward,
+}
 
 /// Requires a widget to have two struct fields
 /// `area` and `ctx`
@@ -102,147 +115,6 @@ macro_rules! input {
     };
 }
 
-pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
-    (a * (1.0 - t)) + (b * t)
-}
-
-//This does not work.
-pub fn alpha_blend(src: Rgb, dst: Rgb) -> Rgb {
-    let src_a_f = src.a as f32 / 255.0;
-    let inv_src_a_f = 1.0 - src_a_f;
-
-    let r = (src.r as f32 * src_a_f + dst.r as f32 * inv_src_a_f) as u8;
-    let g = (src.g as f32 * src_a_f + dst.g as f32 * inv_src_a_f) as u8;
-    let b = (src.b as f32 * src_a_f + dst.b as f32 * inv_src_a_f) as u8;
-    let a = (src.a as f32 * src_a_f + 255.0 * inv_src_a_f) as u8;
-
-    Rgb { r, g, b, a }
-}
-
-#[inline(always)]
-pub const fn r(color: u32) -> u8 {
-    (color >> 16 & 0xFF) as u8
-}
-
-#[inline(always)]
-pub const fn g(color: u32) -> u8 {
-    (color >> 8 & 0xFF) as u8
-}
-
-#[inline(always)]
-pub const fn b(color: u32) -> u8 {
-    (color & 0xFF) as u8
-}
-
-pub fn rgb_to_hex<R: Into<Rgb>>(color: R) -> u32 {
-    let color = color.into();
-    (color.r as u32) << 16 | (color.g as u32) << 8 | (color.b as u32)
-}
-
-pub fn hex_to_rgb(color: u32) -> Rgb {
-    let r = (color >> 16 & 0xFF) as u8;
-    let g = (color >> 8 & 0xFF) as u8;
-    let b = (color & 0xFF) as u8;
-    Rgb {
-        r,
-        g,
-        b,
-        a: u8::MAX,
-    }
-}
-
-pub fn lerp_rgb(color1: Rgb, color2: Rgb, t: f32) -> Rgb {
-    Rgb {
-        r: lerp(color1.r as f32, color2.r as f32, t) as u8,
-        g: lerp(color1.g as f32, color2.g as f32, t) as u8,
-        b: lerp(color1.b as f32, color2.b as f32, t) as u8,
-        a: u8::MAX,
-    }
-}
-
-pub fn lerp_hex(color1: u32, color2: u32, t: f32) -> u32 {
-    let r = lerp(r(color1) as f32, r(color2) as f32, t) as u8;
-    let g = lerp(g(color1) as f32, g(color2) as f32, t) as u8;
-    let b = lerp(b(color1) as f32, b(color2) as f32, t) as u8;
-
-    (r as u32) << 16 | (g as u32) << 8 | (b as u32)
-}
-
-#[derive(Debug)]
-pub enum MouseButton {
-    Left,
-    Right,
-    Middle,
-    ///Mouse4
-    Back,
-    ///Mouse5
-    Forward,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Rgb {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-    pub a: u8,
-}
-
-impl Into<Rgb> for (u8, u8, u8) {
-    fn into(self) -> Rgb {
-        Rgb {
-            r: self.0,
-            g: self.1,
-            b: self.2,
-            a: u8::MAX,
-        }
-    }
-}
-
-impl Into<u32> for Rgb {
-    fn into(self) -> u32 {
-        rgb_to_hex(self)
-    }
-}
-
-impl Into<Rgb> for u32 {
-    fn into(self) -> Rgb {
-        let r = (self >> 16 & 0xFF) as u8;
-        let g = (self >> 8 & 0xFF) as u8;
-        let b = (self & 0xFF) as u8;
-        Rgb {
-            r,
-            g,
-            b,
-            a: u8::MAX,
-        }
-    }
-}
-
-//The user will want to define their own colors.
-//There should probably be a color trait.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Color {
-    Red,
-    Blue,
-    Green,
-    White,
-    Black,
-    Hex(u32),
-}
-
-impl Into<u32> for Color {
-    fn into(self) -> u32 {
-        match self {
-            Color::Red => 0xFF0000,
-            Color::Blue => 0x0000FF,
-            Color::Green => 0x00FF00,
-            Color::White => 0xFFFFFF,
-            Color::Black => 0,
-            Color::Hex(color) => color,
-        }
-    }
-}
-
 pub trait Draw {
     fn draw(&self);
     fn no_draw(&mut self);
@@ -265,15 +137,15 @@ pub enum Unit {
     Percentage(usize),
 }
 
-impl Into<Unit> for usize {
-    fn into(self) -> Unit {
-        Unit::Px(self)
+impl From<usize> for Unit {
+    fn from(val: usize) -> Self {
+        Unit::Px(val)
     }
 }
 
-impl Into<Unit> for f32 {
-    fn into(self) -> Unit {
-        Unit::Percentage((self * 100.0) as usize)
+impl From<f32> for Unit {
+    fn from(val: f32) -> Self {
+        Unit::Percentage((val * 100.0) as usize)
     }
 }
 
@@ -464,6 +336,11 @@ impl Context {
         }
     }
 
+    pub fn get_pixel(&mut self, x: usize, y: usize) -> Option<&mut u32> {
+        let pos = x + (self.width * y);
+        self.buffer.get_mut(pos)
+    }
+
     pub fn draw_simd16(&mut self) {
         profile!();
         self.resize();
@@ -513,7 +390,7 @@ impl Context {
         profile!();
         for tile in &mut self.simd64 {
             //Convert u32x16 into u8x64
-            *tile = unsafe { std::mem::transmute(u32x16::splat(color)) };
+            *tile = u32x16::splat(color);
         }
     }
 
