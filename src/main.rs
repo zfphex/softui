@@ -114,12 +114,12 @@ fn main() {
         t += 0.01;
 
         fontdue_subpixel(&mut ctx, 0, 0);
-        // atlas.draw_text(
-        //     &mut ctx,
-        //     "qwertyuiopasdfghjkl;zxcvbnm,../'[]|+_=-87612345(*&^$%#@!",
-        //     0,
-        //     400,
-        // );
+        atlas.draw_text(
+            &mut ctx,
+            "qwertyuiopasdfghjkl;zxcvbnm,../'[]|+_=-87612345(*&^$%#@!",
+            0,
+            420,
+        );
 
         //TODO: This doesn't fill with color
         ctx.draw_circle(300, 100, 50, Color::Blue.into());
@@ -142,11 +142,11 @@ fn main() {
             // dbg!(Rgb::from(*hex));
         }
 
-        ctx.draw_line((20, 20), (200, 20), Color::Green.into());
-        ctx.draw_line((20, 20), (200, 25), Color::Green.into());
-        ctx.draw_line((20, 20), (200, 50), Color::Green.into());
-        ctx.draw_line((20, 20), (200, 100), Color::Green.into());
-        ctx.draw_line((20, 20), (200, 200), Color::Green.into());
+        ctx.draw_line((40, 20), (200, 20), Color::Green.into());
+        ctx.draw_line((40, 20), (200, 25), Color::Green.into());
+        ctx.draw_line((40, 20), (200, 50), Color::Green.into());
+        ctx.draw_line((40, 20), (200, 100), Color::Green.into());
+        ctx.draw_line((40, 20), (200, 200), Color::Green.into());
         ctx.draw_line((200, 50), (190, 52), Color::Green.into());
 
         // ctx.draw_text();
@@ -162,6 +162,15 @@ fn main() {
             if btn2.clicked(Middle) {
                 println!("Clicked white button!");
             }
+        }
+
+        //Layout
+        {
+            let mut b1 = button(&ctx).width(20).height(10);
+            let mut b2 = button(&ctx).width(20).height(10);
+            let mut b3 = button(&ctx).width(10).height(10);
+            // vertical!(&mut ctx, b1, b2)
+            vertical((b1, b2, b3))
         }
 
         //Note: All UI elements must be dropped before rendering.

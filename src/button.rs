@@ -23,6 +23,18 @@ pub struct Button<'a> {
     skip_draw: bool,
 }
 
+impl<'a> View for Button<'a> {
+    fn area(&mut self) -> &mut Rect {
+        &mut self.area
+    }
+}
+
+// impl<'a> Widget for Button<'a> {
+//     fn area(&mut self) -> &mut Rect {
+//         &mut self.area
+//     }
+// }
+
 impl<'a> Draw for Button<'a> {
     fn draw(&self) {
         unsafe {
@@ -135,6 +147,28 @@ impl<'a> Layout for Button<'a> {
 
     fn y<U: Into<Unit>>(self, length: U) -> Self {
         self.top(length)
+    }
+
+    fn width<U: Into<Unit>>(mut self, length: U) -> Self {
+        match length.into() {
+            Unit::Px(px) => {
+                self.area.right = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+
+    fn height<U: Into<Unit>>(mut self, length: U) -> Self {
+        match length.into() {
+            Unit::Px(px) => {
+                self.area.bottom = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
     }
 }
 

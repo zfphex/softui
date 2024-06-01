@@ -7,12 +7,20 @@ use window::*;
 
 pub mod button;
 pub mod color;
+pub mod layout;
 pub mod text;
+pub mod view;
 
 pub use button::*;
 pub use color::*;
+pub use layout::*;
 pub use text::*;
+pub use view::*;
 pub use MouseButton::*;
+
+pub trait Widget {
+    fn area(&mut self) -> &mut Rect;
+}
 
 #[derive(Debug)]
 pub enum MouseButton {
@@ -159,6 +167,9 @@ pub trait Layout {
     fn right<U: Into<Unit>>(self, length: U) -> Self;
     fn top<U: Into<Unit>>(self, length: U) -> Self;
     fn bottom<U: Into<Unit>>(self, length: U) -> Self;
+
+    fn width<U: Into<Unit>>(self, length: U) -> Self;
+    fn height<U: Into<Unit>>(self, length: U) -> Self;
 }
 
 pub trait Style {
