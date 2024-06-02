@@ -94,36 +94,11 @@ impl<'a> Layout for Button<'a> {
     //Current we use the canvas which is kind of like the body.
     //But it handles input and whatnot aswell.
     //Hmmmm
-    fn left<U: Into<Unit>>(mut self, length: U) -> Self {
-        match length.into() {
-            Unit::Px(px) => {
-                self.area.x = px as i32;
-            }
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(p) => {
-                let px = self.parent_area.width as f32 * (p as f32 / 100.0);
-                let half_width = self.area.width as f32 / 2.0;
-                self.area.x = (px - half_width) as i32;
-            }
-        }
-        self
-    }
 
     fn right<U: Into<Unit>>(mut self, length: U) -> Self {
         match length.into() {
             Unit::Px(px) => {
                 // self.area.right = px as i32;
-            }
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(_) => todo!(),
-        }
-        self
-    }
-
-    fn top<U: Into<Unit>>(mut self, length: U) -> Self {
-        match length.into() {
-            Unit::Px(px) => {
-                self.area.y = px as i32;
             }
             Unit::Em(_) => todo!(),
             Unit::Percentage(_) => todo!(),
@@ -143,12 +118,30 @@ impl<'a> Layout for Button<'a> {
         self
     }
 
-    fn x<U: Into<Unit>>(self, length: U) -> Self {
-        self.left(length)
+    fn x<U: Into<Unit>>(mut self, x: U) -> Self {
+        match x.into() {
+            Unit::Px(px) => {
+                self.area.x = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(p) => {
+                let px = self.parent_area.width as f32 * (p as f32 / 100.0);
+                let half_width = self.area.width as f32 / 2.0;
+                self.area.x = (px - half_width) as i32;
+            }
+        }
+        self
     }
 
-    fn y<U: Into<Unit>>(self, length: U) -> Self {
-        self.top(length)
+    fn y<U: Into<Unit>>(mut self, y: U) -> Self {
+        match y.into() {
+            Unit::Px(px) => {
+                self.area.y = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
     }
 
     fn width<U: Into<Unit>>(mut self, length: U) -> Self {
@@ -171,10 +164,6 @@ impl<'a> Layout for Button<'a> {
             Unit::Percentage(_) => todo!(),
         }
         self
-    }
-
-    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self {
-        self.x(x).y(y).width(width).height(height)
     }
 }
 

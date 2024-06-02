@@ -111,7 +111,7 @@ fn main() {
         );
 
         // ctx.draw_rectangle(x, y, square, square, lerp_hex(0x5e9955, 0x4ec1ff, t.sin()));
-        t += 0.01;
+        t += 0.1;
 
         fontdue_subpixel(&mut ctx, 0, 0);
         atlas.draw_text(&mut ctx, "abcdefg!@#$%1234", 0, 420);
@@ -161,18 +161,15 @@ fn main() {
 
         //Layout
         {
-            vertical((
+            v((
                 button(&ctx).pos(40, 120, 20, 20),
                 button(&ctx).width(20).height(20),
             ))
             .padding(6)
+            //TODO: Margin errors are too hard to track down.
             .margin(2);
 
-            vertical((
-                button(&ctx).pos(40, 180, 20, 20),
-                button(&ctx).width(20).height(20),
-            ))
-            .padding(6);
+            v((button(&ctx).pos(40, 180, 20, 20), button(&ctx).w(20).h(20))).padding(6);
         }
 
         //Note: All UI elements must be dropped before rendering.

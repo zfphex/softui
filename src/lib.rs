@@ -157,21 +157,52 @@ impl From<f32> for Unit {
     }
 }
 
+//TODO: This is a complete mess :/
 pub trait Layout {
     fn centered(self) -> Self;
 
     fn x<U: Into<Unit>>(self, x: U) -> Self;
     fn y<U: Into<Unit>>(self, y: U) -> Self;
-
-    fn left<U: Into<Unit>>(self, left: U) -> Self;
-    fn right<U: Into<Unit>>(self, right: U) -> Self;
-    fn top<U: Into<Unit>>(self, top: U) -> Self;
-    fn bottom<U: Into<Unit>>(self, bottom: U) -> Self;
-
     fn width<U: Into<Unit>>(self, width: U) -> Self;
     fn height<U: Into<Unit>>(self, height: U) -> Self;
 
-    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self;
+    fn right<U: Into<Unit>>(self, right: U) -> Self;
+    fn bottom<U: Into<Unit>>(self, bottom: U) -> Self;
+
+    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.x(x).y(y).width(width).height(height)
+    }
+
+    fn left<U: Into<Unit>>(self, left: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.x(left)
+    }
+
+    fn top<U: Into<Unit>>(self, top: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.y(top)
+    }
+
+    fn w<U: Into<Unit>>(self, width: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.width(width)
+    }
+
+    fn h<U: Into<Unit>>(self, width: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.height(width)
+    }
 }
 
 pub trait Style {
