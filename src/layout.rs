@@ -1,3 +1,5 @@
+use mini::info;
+
 use crate::Tuple;
 
 struct Vertical {
@@ -29,16 +31,23 @@ macro_rules! vertical {
 }
 
 pub fn vertical<T: Tuple>(mut widgets: T) {
-    let mut y: i32 = 0;
-    let padding = 2;
+    let mut y: i32 = -1;
+    let mut x: i32 = -1;
+    let padding = 6;
 
     widgets.for_each(&mut |f| {
-        //TODO: Rect is *not working quite right*.
         let area = f.area();
-        area.top = y;
-        area.bottom += (y - padding).clamp(0, i32::MAX);
+        let height = area.height;
 
-        y += area.height() + padding;
+        if y < 0 || x < 0 {
+            x = area.x;
+            y = area.y;
+        } else {
+            area.x = x;
+            area.y = y;
+        }
+
+        y += height + padding;
     });
 
     // panic!();

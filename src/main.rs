@@ -61,12 +61,12 @@ fn main() {
         let area = &ctx.area;
 
         x += 1;
-        if x > (area.width() as usize) - square - 1 {
+        if x > (area.width as usize) - square - 1 {
             x = 0;
         }
 
         y += 1;
-        if y > (area.height() as usize) - square - 1 {
+        if y > (area.height as usize) - square - 1 {
             y = 0;
         }
 
@@ -114,12 +114,7 @@ fn main() {
         t += 0.01;
 
         fontdue_subpixel(&mut ctx, 0, 0);
-        atlas.draw_text(
-            &mut ctx,
-            "qwertyuiopasdfghjkl;zxcvbnm,../'[]|+_=-87612345(*&^$%#@!",
-            0,
-            420,
-        );
+        atlas.draw_text(&mut ctx, "abcdefg!@#$%1234", 0, 420);
 
         //TODO: This doesn't fill with color
         ctx.draw_circle(300, 100, 50, Color::Blue.into());
@@ -166,11 +161,12 @@ fn main() {
 
         //Layout
         {
-            let mut b1 = button(&ctx).width(20).height(10);
-            let mut b2 = button(&ctx).width(20).height(10);
-            let mut b3 = button(&ctx).width(10).height(10);
+            let b1 = button(&ctx).pos(40, 120, 20, 20);
+            // let b2 = button(&ctx).pos(40, 160, 20, 20);
+
+            // let mut b3 = button(&ctx).width(10).height(10);
             // vertical!(&mut ctx, b1, b2)
-            vertical((b1, b2, b3))
+            vertical((b1, button(&ctx), button(&ctx)))
         }
 
         //Note: All UI elements must be dropped before rendering.

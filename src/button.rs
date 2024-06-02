@@ -1,3 +1,5 @@
+use mini::info;
+
 use crate::*;
 
 //TODO: Really this should take any parent.
@@ -39,10 +41,10 @@ impl<'a> Draw for Button<'a> {
     fn draw(&self) {
         unsafe {
             COMMAND_QUEUE.push(Command::Rectangle(
-                self.area.left as usize,
-                self.area.top as usize,
-                self.area.right as usize,
-                self.area.bottom as usize,
+                self.area.x as usize,
+                self.area.y as usize,
+                self.area.width as usize,
+                self.area.height as usize,
                 self.bg.into(),
             ));
         }
@@ -72,8 +74,8 @@ impl<'a> Layout for Button<'a> {
     fn centered(mut self) -> Self {
         let area = self.parent_area.clone();
 
-        let v = area.width() / 2;
-        let h = area.height() / 2;
+        let v = area.width / 2;
+        let h = area.height / 2;
 
         let button_width = 10;
         let button_height = 10;
@@ -95,13 +97,13 @@ impl<'a> Layout for Button<'a> {
     fn left<U: Into<Unit>>(mut self, length: U) -> Self {
         match length.into() {
             Unit::Px(px) => {
-                self.area.left = px as i32;
+                self.area.x = px as i32;
             }
             Unit::Em(_) => todo!(),
             Unit::Percentage(p) => {
-                let px = self.parent_area.width() as f32 * (p as f32 / 100.0);
-                let half_width = self.area.width() as f32 / 2.0;
-                self.area.left = (px - half_width) as i32;
+                let px = self.parent_area.width as f32 * (p as f32 / 100.0);
+                let half_width = self.area.width as f32 / 2.0;
+                self.area.x = (px - half_width) as i32;
             }
         }
         self
@@ -121,7 +123,7 @@ impl<'a> Layout for Button<'a> {
     fn top<U: Into<Unit>>(mut self, length: U) -> Self {
         match length.into() {
             Unit::Px(px) => {
-                self.area.top = px as i32;
+                self.area.y = px as i32;
             }
             Unit::Em(_) => todo!(),
             Unit::Percentage(_) => todo!(),
@@ -152,7 +154,7 @@ impl<'a> Layout for Button<'a> {
     fn width<U: Into<Unit>>(mut self, length: U) -> Self {
         match length.into() {
             Unit::Px(px) => {
-                self.area.right = px as i32;
+                self.area.width = px as i32;
             }
             Unit::Em(_) => todo!(),
             Unit::Percentage(_) => todo!(),
@@ -163,12 +165,16 @@ impl<'a> Layout for Button<'a> {
     fn height<U: Into<Unit>>(mut self, length: U) -> Self {
         match length.into() {
             Unit::Px(px) => {
-                self.area.bottom = px as i32;
+                self.area.height = px as i32;
             }
             Unit::Em(_) => todo!(),
             Unit::Percentage(_) => todo!(),
         }
         self
+    }
+
+    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self {
+        self.x(x).y(y).width(width).height(height)
     }
 }
 

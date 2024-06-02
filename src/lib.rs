@@ -1,4 +1,4 @@
-#![allow(unused)]
+#![allow(unused, static_mut_refs)]
 #![feature(portable_simd)]
 use core::panic;
 use mini::profile;
@@ -160,16 +160,18 @@ impl From<f32> for Unit {
 pub trait Layout {
     fn centered(self) -> Self;
 
-    fn x<U: Into<Unit>>(self, length: U) -> Self;
-    fn y<U: Into<Unit>>(self, length: U) -> Self;
+    fn x<U: Into<Unit>>(self, x: U) -> Self;
+    fn y<U: Into<Unit>>(self, y: U) -> Self;
 
-    fn left<U: Into<Unit>>(self, length: U) -> Self;
-    fn right<U: Into<Unit>>(self, length: U) -> Self;
-    fn top<U: Into<Unit>>(self, length: U) -> Self;
-    fn bottom<U: Into<Unit>>(self, length: U) -> Self;
+    fn left<U: Into<Unit>>(self, left: U) -> Self;
+    fn right<U: Into<Unit>>(self, right: U) -> Self;
+    fn top<U: Into<Unit>>(self, top: U) -> Self;
+    fn bottom<U: Into<Unit>>(self, bottom: U) -> Self;
 
-    fn width<U: Into<Unit>>(self, length: U) -> Self;
-    fn height<U: Into<Unit>>(self, length: U) -> Self;
+    fn width<U: Into<Unit>>(self, width: U) -> Self;
+    fn height<U: Into<Unit>>(self, height: U) -> Self;
+
+    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self;
 }
 
 pub trait Style {
@@ -243,8 +245,8 @@ impl Context {
     pub fn new(window: Window) -> Self {
         let context = unsafe { GetDC(window.hwnd) };
         let area = window.area();
-        let width = area.width();
-        let height = area.height();
+        let width = area.width;
+        let height = area.height;
 
         // dbg!(((width * height) as f32 / 16.0).ceil() as usize);
 
@@ -279,8 +281,8 @@ impl Context {
 
         if self.area != area {
             self.area = area;
-            self.width = self.area.width() as usize;
-            self.height = self.area.height() as usize;
+            self.width = self.area.width as usize;
+            self.height = self.area.height as usize;
             self.buffer.clear();
             self.buffer
                 .resize(self.width * self.height * std::mem::size_of::<RGBQUAD>(), 0);
