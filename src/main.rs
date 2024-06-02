@@ -161,12 +161,18 @@ fn main() {
 
         //Layout
         {
-            let b1 = button(&ctx).pos(40, 120, 20, 20);
-            // let b2 = button(&ctx).pos(40, 160, 20, 20);
+            vertical((
+                button(&ctx).pos(40, 120, 20, 20),
+                button(&ctx).width(20).height(20),
+            ))
+            .padding(6)
+            .margin(2);
 
-            // let mut b3 = button(&ctx).width(10).height(10);
-            // vertical!(&mut ctx, b1, b2)
-            vertical((b1, button(&ctx), button(&ctx)))
+            vertical((
+                button(&ctx).pos(40, 180, 20, 20),
+                button(&ctx).width(20).height(20),
+            ))
+            .padding(6);
         }
 
         //Note: All UI elements must be dropped before rendering.
