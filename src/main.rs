@@ -169,7 +169,15 @@ fn main() {
             //TODO: Margin errors are too hard to track down.
             .margin(2);
 
-            v((button(&ctx).pos(40, 180, 20, 20), button(&ctx).w(20).h(20))).padding(6);
+            v((button(&ctx).pos(40, 180, 20, 20), button(&ctx).w(20).h(40))).padding(6);
+
+            h((
+                button(&ctx).pos(400, 20, 20, 20),
+                button(&ctx).w(40).h(20),
+                button(&ctx).w(40).h(20),
+                button(&ctx).w(40).h(20),
+            ))
+            .padding(10);
         }
 
         //Note: All UI elements must be dropped before rendering.
