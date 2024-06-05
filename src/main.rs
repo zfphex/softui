@@ -117,7 +117,9 @@ fn main() {
         atlas.draw_text(&mut ctx, "abcdefg!@#$%1234", 0, 420);
 
         //TODO: This doesn't fill with color
-        ctx.draw_circle(300, 100, 50, Color::Blue.into());
+        ctx.draw_circle_outline(300, 100, 50, Color::Blue.into());
+        ctx.draw_circle(300, 220, 50, Color::Blue.into());
+
         ctx.draw_rectangle_outline(100, 180, 20, 20, Color::Red.into());
         ctx.draw_rectangle(100, 220, 20, 20, Color::Red.into());
 

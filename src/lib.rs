@@ -448,7 +448,7 @@ impl Context {
     //https://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
     //Is it worth having a 2D projection matrix to convert top left orgin
     //into a center origin cartesian plane
-    pub fn draw_circle(&mut self, x: i32, y: i32, r: usize, color: u32) {
+    pub fn draw_circle_outline(&mut self, x: i32, y: i32, r: usize, color: u32) {
         //TODO: Bounds checking.
         //Bresenham algorithm
         let mut x1: i32 = -(r as i32);
@@ -471,6 +471,22 @@ impl Context {
             }
             if x1 >= 0 {
                 break;
+            }
+        }
+    }
+
+    pub fn draw_circle(&mut self, cx: usize, cy: usize, radius: usize, color: u32) {
+        let (x1, y1) = (cx - radius, cy - radius);
+        let (x2, y2) = (cx + radius, cy + radius);
+
+        for y in y1..y2 {
+            for x in x1..x2 {
+                let dist_x = x as f32 - cx as f32 + 0.5;
+                let dist_y = y as f32 - cy as f32 + 0.5;
+                let distance = (dist_x * dist_x + dist_y * dist_y).sqrt();
+                if distance <= radius as f32 {
+                    self.draw_pixel(x, y, color);
+                }
             }
         }
     }
