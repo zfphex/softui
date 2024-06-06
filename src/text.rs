@@ -51,16 +51,11 @@ impl Atlas {
     pub fn new(font_size: f32) -> Self {
         let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
 
-        #[allow(invalid_value)]
-        let mut glyphs: [(fontdue::Metrics, Vec<u8>); 128] = unsafe { std::mem::zeroed() };
+        let mut glyphs: [(fontdue::Metrics, Vec<u8>); 128] =
+            core::array::from_fn(|f| (fontdue::Metrics::default(), Vec::new()));
 
-        // use std::mem::MaybeUninit;
-        // let mut glyphs: [MaybeUninit<(fontdue::Metrics, Vec<u8>)>; 127] = MaybeUninit::uninit_array();
-
-        //https://www.ascii-code.com/
         for char in 32..127u8 {
             let (metrics, bitmap) = font.rasterize(char as char, font_size);
-            // glyphs[char as usize].write((metrics, bitmap));
             glyphs[char as usize] = (metrics, bitmap);
         }
 

@@ -123,6 +123,8 @@ fn main() {
         ctx.draw_rectangle_outline(100, 180, 20, 20, Color::Red.into());
         ctx.draw_rectangle(100, 220, 20, 20, Color::Red.into());
 
+        // ctx.draw_rectangle_rounded(400, 400, 20, 20, 12, 0x519a9a);
+
         ctx.draw_pixel(100, 100, Color::Blue.into());
 
         //TODO: These shapes should blend into the background.

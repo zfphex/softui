@@ -1,5 +1,5 @@
 #![allow(unused, static_mut_refs)]
-#![feature(portable_simd)]
+#![feature(portable_simd, test)]
 use core::panic;
 use mini::profile;
 use std::simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64};
@@ -17,6 +17,36 @@ pub use layout::*;
 pub use text::*;
 pub use view::*;
 pub use MouseButton::*;
+
+#[cfg(test)]
+mod tests {
+    extern crate test;
+
+    use super::*;
+    use test::black_box;
+
+    #[bench]
+    fn atlas(b: &mut test::bench::Bencher) {
+        let atlas = Atlas::new(32.0);
+        b.iter(|| {
+            for _ in 0..1000 {
+                let (metrics, bitmap) = &atlas.glyphs[black_box(b'a' as usize)];
+                assert_eq!(metrics.width, 15);
+            }
+        });
+    }
+
+    #[bench]
+    fn rasterize(b: &mut test::bench::Bencher) {
+        let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
+        b.iter(|| {
+            for _ in 0..1000 {
+                let (metrics, bitmap) = font.rasterize(black_box('a'), 32.0);
+                assert_eq!(metrics.width, 15);
+            }
+        });
+    }
+}
 
 pub trait Widget {
     fn area(&mut self) -> &mut Rect;
@@ -491,6 +521,7 @@ impl Context {
         }
     }
 
+    //https://github.com/ssloy/tinyrenderer/wiki/Lesson-1:-Bresenham%E2%80%99s-Line-Drawing-Algorithm
     //Only works when the slope is >= 0 & <=1
     pub fn draw_line(&mut self, (x0, y0): (usize, usize), (x1, y1): (usize, usize), color: u32) {
         let mut error = 0.0;
@@ -704,5 +735,19 @@ impl Context {
                 }
             }
         }
+    }
+
+    //https://en.wikipedia.org/wiki/Superellipse
+    //https://en.wikipedia.org/wiki/Squircle
+    pub fn draw_rectangle_rounded(
+        &mut self,
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+        radius: usize,
+        color: u32,
+    ) {
+        todo!()
     }
 }
