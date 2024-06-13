@@ -236,8 +236,8 @@ impl Context {
     //https://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
     //Is it worth having a 2D projection matrix to convert top left orgin
     //into a center origin cartesian plane
-    pub fn draw_circle_outline(&mut self, x: i32, y: i32, r: usize, color: u32) {
-        //TODO: Bounds checking.
+    //FIXME: Disallow negative numbers, this can crash easily.
+    pub unsafe fn draw_circle_outline(&mut self, x: i32, y: i32, r: usize, color: u32) {
         //Bresenham algorithm
         let mut x1: i32 = -(r as i32);
         let mut y1: i32 = 0;

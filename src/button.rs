@@ -116,9 +116,10 @@ impl<'a> Layout for Button<'a> {
             }
             Unit::Em(_) => todo!(),
             Unit::Percentage(p) => {
-                let px = self.parent_area.width as f32 * (p as f32 / 100.0);
-                let half_width = self.area.width as f32 / 2.0;
-                self.area.x = (px - half_width) as i32;
+                let percentage = p as f32 / 100.0;
+                self.area.x = ((self.parent_area.width as f32 * percentage)
+                    - (self.area.width as f32 / 2.0))
+                    .round() as i32;
             }
         }
         self

@@ -11,10 +11,10 @@ pub struct Rect {
 impl From<WinRect> for Rect {
     fn from(rect: WinRect) -> Self {
         Rect {
-            x: rect.left,
-            y: rect.top,
-            width: rect.right - rect.left,
-            height: rect.bottom - rect.top,
+            x: 0,
+            y: 0,
+            width: rect.width(),
+            height: rect.height(),
         }
     }
 }

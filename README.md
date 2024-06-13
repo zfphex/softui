@@ -1,8 +1,9 @@
 ### TODO
 
+- [ ] Allow drawing outside of the window area without crashing. Allow for clipping.
 - [ ] Rectangle with rounded corners
 - [x] Linear gradients
-- [ ] The window changes framerate when resizing, not sure why?
+- [x] The window changes framerate when resizing, not sure why?
 
 ### Trait Definitions
 
@@ -145,6 +146,17 @@ struct Horizontal<W> {
 struct Flex {}
 
 flex((button(), button())).direction(Direction::Vertical)
+```
+
+Immediate mode style layout
+
+```rs
+//ui is a Context here.
+ui.vertical(|ui| {
+    if button(ui).clicked() {
+        println!("Clicked button!");
+    }
+});
 ```
 
 ### Widgets
