@@ -48,6 +48,84 @@ mod tests {
     }
 }
 
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct Rect {
+    pub x: i32,
+    pub y: i32,
+    pub width: i32,
+    pub height: i32,
+}
+
+impl From<WinRect> for Rect {
+    fn from(rect: WinRect) -> Self {
+        Rect {
+            x: rect.left,
+            y: rect.top,
+            width: rect.right - rect.left,
+            height: rect.bottom - rect.top,
+        }
+    }
+}
+
+impl Rect {
+    pub const fn new(x: i32, y: i32, width: i32, height: i32) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+    pub const fn right(&self) -> i32 {
+        self.x + self.width
+    }
+    pub const fn bottom(&self) -> i32 {
+        self.y + self.height
+    }
+    // pub const fn centered(&self, width: u16, height: u16) -> Rect {
+    //     let v = self.width() / 2;
+    //     let h = self.height() / 2;
+
+    //     todo!();
+    // }
+    pub const fn area(&self) -> i32 {
+        self.width * self.height
+    }
+
+    //TODO: Write some tests.
+    pub const fn intersects(&self, other: Rect) -> bool {
+        self.x < other.x + other.width
+            && self.x + self.width > other.x
+            && self.y < other.y + other.height
+            && self.y + self.height > other.y
+    }
+
+    //TODO: Bounds checking
+    pub const fn inner(&self, w: i32, h: i32) -> Rect {
+        Rect {
+            x: self.x + w,
+            y: self.y + h,
+            width: self.width - 2 * w,
+            height: self.height - 2 * h,
+        }
+    }
+
+    // pub const fn inner(self, w: u16, h: u16) -> Result<Rect, &'static str> {
+    //     if self.width < 2 * w {
+    //         Err("Inner area exceeded outside area. Reduce margin width.")
+    //     } else if self.height < 2 * h {
+    //         Err("Inner area exceeded outside area. Reduce margin height.")
+    //     } else {
+    //         Ok(Rect {
+    //             x: self.x + w,
+    //             y: self.y + h,
+    //             width: self.width - 2 * w,
+    //             height: self.height - 2 * h,
+    //         })
+    //     }
+    // }
+}
+
 pub trait Widget {
     fn area(&mut self) -> &mut Rect;
 }
@@ -67,91 +145,92 @@ pub enum MouseButton {
 /// `area` and `ctx`
 /// Still on the fence about this shortcut.
 /// There must be a better way to implement this.
-#[macro_export]
-macro_rules! input {
-    ($($widget:ty),*) => {
-        $(
-        impl<'a> Input for $widget {
-            fn clicked(&self, button: MouseButton) -> bool {
-                if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-                    return false;
-                }
 
-                match button {
-                    MouseButton::Left => {
-                        self.ctx.left_mouse.released == true
-                            && self
-                                .ctx
-                                .left_mouse
-                                .inital_position
-                                .intersects(self.area.clone())
-                    }
-                    MouseButton::Right => {
-                        self.ctx.right_mouse.released == true
-                            && self
-                                .ctx
-                                .right_mouse
-                                .inital_position
-                                .intersects(self.area.clone())
-                    }
-                    MouseButton::Middle => {
-                        self.ctx.middle_mouse.released == true
-                            && self
-                                .ctx
-                                .middle_mouse
-                                .inital_position
-                                .intersects(self.area.clone())
-                    }
-                    MouseButton::Back => {
-                        self.ctx.mouse_4.released == true
-                            && self
-                                .ctx
-                                .mouse_4
-                                .inital_position
-                                .intersects(self.area.clone())
-                    }
-                    MouseButton::Forward => {
-                        self.ctx.mouse_5.released == true
-                            && self
-                                .ctx
-                                .mouse_5
-                                .inital_position
-                                .intersects(self.area.clone())
-                    }
-                }
-            }
+// #[macro_export]
+// macro_rules! input {
+//     ($($widget:ty),*) => {
+//         $(
+//         impl<'a> Input for $widget {
+//             fn clicked(&self, button: MouseButton) -> bool {
+//                 if !self.ctx.mouse_pos.intersects(self.area.clone()) {
+//                     return false;
+//                 }
 
-            fn up(&self, button: MouseButton) -> bool {
-                if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-                    return false;
-                }
+//                 match button {
+//                     MouseButton::Left => {
+//                         self.ctx.left_mouse.released
+//                             && self
+//                                 .ctx
+//                                 .left_mouse
+//                                 .inital_position
+//                                 .intersects(self.area.clone())
+//                     }
+//                     MouseButton::Right => {
+//                         self.ctx.right_mouse.released
+//                             && self
+//                                 .ctx
+//                                 .right_mouse
+//                                 .inital_position
+//                                 .intersects(self.area.clone())
+//                     }
+//                     MouseButton::Middle => {
+//                         self.ctx.middle_mouse.released
+//                             && self
+//                                 .ctx
+//                                 .middle_mouse
+//                                 .inital_position
+//                                 .intersects(self.area.clone())
+//                     }
+//                     MouseButton::Back => {
+//                         self.ctx.mouse_4.released
+//                             && self
+//                                 .ctx
+//                                 .mouse_4
+//                                 .inital_position
+//                                 .intersects(self.area.clone())
+//                     }
+//                     MouseButton::Forward => {
+//                         self.ctx.mouse_5.released
+//                             && self
+//                                 .ctx
+//                                 .mouse_5
+//                                 .inital_position
+//                                 .intersects(self.area.clone())
+//                     }
+//                 }
+//             }
 
-                match button {
-                    MouseButton::Left => self.ctx.left_mouse.released == true,
-                    MouseButton::Right => self.ctx.right_mouse.released == true,
-                    MouseButton::Middle => self.ctx.middle_mouse.released == true,
-                    MouseButton::Back => self.ctx.mouse_4.released == true,
-                    MouseButton::Forward => self.ctx.mouse_5.released == true,
-                }
-            }
+//             fn up(&self, button: MouseButton) -> bool {
+//                 if !self.ctx.mouse_pos.intersects(self.area.clone()) {
+//                     return false;
+//                 }
 
-            fn down(&self, button: MouseButton) -> bool {
-                if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-                    return false;
-                }
+//                 match button {
+//                     MouseButton::Left => self.ctx.left_mouse.released ,
+//                     MouseButton::Right => self.ctx.right_mouse.released ,
+//                     MouseButton::Middle => self.ctx.middle_mouse.released ,
+//                     MouseButton::Back => self.ctx.mouse_4.released ,
+//                     MouseButton::Forward => self.ctx.mouse_5.released ,
+//                 }
+//             }
 
-                match button {
-                    MouseButton::Left => self.ctx.left_mouse.pressed == true,
-                    MouseButton::Right => self.ctx.right_mouse.pressed == true,
-                    MouseButton::Middle => self.ctx.middle_mouse.pressed == true,
-                    MouseButton::Back => self.ctx.mouse_4.pressed == true,
-                    MouseButton::Forward => self.ctx.mouse_5.pressed == true,
-                }
-            }
-        }
-        )*
-    };
-}
+//             fn down(&self, button: MouseButton) -> bool {
+//                 if !self.ctx.mouse_pos.intersects(self.area.clone()) {
+//                     return false;
+//                 }
+
+//                 match button {
+//                     MouseButton::Left => self.ctx.left_mouse.pressed ,
+//                     MouseButton::Right => self.ctx.right_mouse.pressed ,
+//                     MouseButton::Middle => self.ctx.middle_mouse.pressed ,
+//                     MouseButton::Back => self.ctx.mouse_4.pressed ,
+//                     MouseButton::Forward => self.ctx.mouse_5.pressed ,
+//                 }
+//             }
+//         }
+//         )*
+//     };
+// }
 
 pub trait Draw {
     fn draw(&self);
@@ -160,7 +239,6 @@ pub trait Draw {
 
 pub trait Input {
     /// The user's cusor has been clicked and released on top of a widget.
-    // fn clicked(&self) -> bool;
     fn clicked(&self, button: MouseButton) -> bool;
     fn up(&self, button: MouseButton) -> bool;
     fn down(&self, button: MouseButton) -> bool;
@@ -195,22 +273,17 @@ pub trait Layout {
     fn y<U: Into<Unit>>(self, y: U) -> Self;
     fn width<U: Into<Unit>>(self, width: U) -> Self;
     fn height<U: Into<Unit>>(self, height: U) -> Self;
-
-    fn right<U: Into<Unit>>(self, right: U) -> Self;
-    fn bottom<U: Into<Unit>>(self, bottom: U) -> Self;
-
-    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self
+    fn w<U: Into<Unit>>(self, width: U) -> Self
     where
         Self: Sized,
     {
-        self.x(x).y(y).width(width).height(height)
+        self.width(width)
     }
-
-    fn left<U: Into<Unit>>(self, left: U) -> Self
+    fn h<U: Into<Unit>>(self, width: U) -> Self
     where
         Self: Sized,
     {
-        self.x(left)
+        self.height(width)
     }
 
     fn top<U: Into<Unit>>(self, top: U) -> Self
@@ -219,19 +292,20 @@ pub trait Layout {
     {
         self.y(top)
     }
-
-    fn w<U: Into<Unit>>(self, width: U) -> Self
+    fn left<U: Into<Unit>>(self, left: U) -> Self
     where
         Self: Sized,
     {
-        self.width(width)
+        self.x(left)
     }
+    fn right<U: Into<Unit>>(self, right: U) -> Self;
+    fn bottom<U: Into<Unit>>(self, bottom: U) -> Self;
 
-    fn h<U: Into<Unit>>(self, width: U) -> Self
+    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self
     where
         Self: Sized,
     {
-        self.height(width)
+        self.x(x).y(y).width(width).height(height)
     }
 }
 
@@ -305,11 +379,10 @@ pub struct Context {
 impl Context {
     pub fn new(window: Window) -> Self {
         let context = unsafe { GetDC(window.hwnd) };
-        let area = window.area();
+        //Convert top, left, right, bottom to x, y, width, height.
+        let area = Rect::from(window.area());
         let width = area.width;
         let height = area.height;
-
-        // dbg!(((width * height) as f32 / 16.0).ceil() as usize);
 
         Self {
             window,
@@ -338,8 +411,7 @@ impl Context {
 
     #[inline(always)]
     pub fn resize(&mut self) {
-        let area = self.window.area();
-
+        let area = Rect::from(self.window.area());
         if self.area != area {
             self.area = area;
             self.width = self.area.width as usize;

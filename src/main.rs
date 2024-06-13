@@ -1,8 +1,10 @@
+#![allow(unused)]
+use mini::*;
 use softui::*;
 use window::*;
 
 fn main() {
-    let window = create_window("god", 800, 600);
+    let window = create_window("god", 600, 600);
     let mut ctx = Context::new(window);
 
     let mut x: usize = 0;
@@ -100,71 +102,71 @@ fn main() {
 
         ctx.fill(Color::Black);
 
-        ctx.draw_linear_gradient(500, 200, 100, 100, 0x00ff00, 0xfffff);
-        ctx.draw_linear_gradient(
-            500,
-            500,
-            100,
-            100,
-            0x773ec7,
-            lerp_hex(0xe317be, 0x773ec7, t.sin()),
-        );
+        // ctx.draw_linear_gradient(500, 200, 100, 100, 0x00ff00, 0xfffff);
+        // ctx.draw_linear_gradient(
+        //     500,
+        //     500,
+        //     100,
+        //     100,
+        //     0x773ec7,
+        //     lerp_hex(0xe317be, 0x773ec7, t.sin()),
+        // );
 
         // ctx.draw_rectangle(x, y, square, square, lerp_hex(0x5e9955, 0x4ec1ff, t.sin()));
         t += 0.1;
 
-        fontdue_subpixel(&mut ctx, 0, 0);
-        atlas.draw_text(&mut ctx, "abcdefg!@#$%1234", 0, 420);
+        // fontdue_subpixel(&mut ctx, 0, 0);
+        // atlas.draw_text(&mut ctx, "abcdefg!@#$%1234", 0, 420);
 
         //TODO: This doesn't fill with color
-        ctx.draw_circle_outline(300, 100, 50, Color::Blue.into());
-        ctx.draw_circle(300, 220, 50, Color::Blue.into());
+        // ctx.draw_circle_outline(300, 100, 50, Color::Blue.into());
+        // ctx.draw_circle(300, 220, 50, Color::Blue.into());
 
-        ctx.draw_rectangle_outline(100, 180, 20, 20, Color::Red.into());
-        ctx.draw_rectangle(100, 220, 20, 20, Color::Red.into());
+        // ctx.draw_rectangle_outline(100, 180, 20, 20, Color::Red.into());
+        // ctx.draw_rectangle(100, 220, 20, 20, Color::Red.into());
 
         // ctx.draw_rectangle_rounded(400, 400, 20, 20, 12, 0x519a9a);
 
-        ctx.draw_pixel(100, 100, Color::Blue.into());
+        // ctx.draw_pixel(100, 100, Color::Blue.into());
 
         //TODO: These shapes should blend into the background.
 
         //Alpha blending
         {
-            let red = Rgb::new(255, 0, 0, 255);
-            let blue = Rgb::new(0, 0, 255, 255);
-            let blend = lerp_rgb(red, blue, 0.5);
-            ctx.draw_rectangle(300, 300, 50, 50, red.into());
-            ctx.draw_rectangle(300, 350, 50, 10, blend.into());
-            ctx.draw_rectangle(300, 360, 50, 40, blue.into());
+            // let red = Rgb::new(255, 0, 0, 255);
+            // let blue = Rgb::new(0, 0, 255, 255);
+            // let blend = lerp_rgb(red, blue, 0.5);
+            // ctx.draw_rectangle(300, 300, 50, 50, red.into());
+            // ctx.draw_rectangle(300, 350, 50, 10, blend.into());
+            // ctx.draw_rectangle(300, 360, 50, 40, blue.into());
             // let hex = ctx.get_pixel(300, 300).unwrap();
             // dbg!(Rgb::from(*hex));
         }
 
-        ctx.draw_line((40, 20), (200, 20), Color::Green.into());
-        ctx.draw_line((40, 20), (200, 25), Color::Green.into());
-        ctx.draw_line((40, 20), (200, 50), Color::Green.into());
-        ctx.draw_line((40, 20), (200, 100), Color::Green.into());
-        ctx.draw_line((40, 20), (200, 200), Color::Green.into());
-        ctx.draw_line((200, 50), (190, 52), Color::Green.into());
+        // ctx.draw_line((40, 20), (200, 20), Color::Green.into());
+        // ctx.draw_line((40, 20), (200, 25), Color::Green.into());
+        // ctx.draw_line((40, 20), (200, 50), Color::Green.into());
+        // ctx.draw_line((40, 20), (200, 100), Color::Green.into());
+        // ctx.draw_line((40, 20), (200, 200), Color::Green.into());
+        // ctx.draw_line((200, 50), (190, 52), Color::Green.into());
 
         // ctx.draw_text();
 
         {
-            let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(300);
-            let btn2 = button(&ctx).bg(Color::Hex(0xd2d2d2)).centered();
+            // let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(300);
+            // if btn.clicked(Left) {
+            //     println!("Clicked blue button!");
+            // }
 
-            if btn.clicked(Left) {
-                println!("Clicked blue button!");
-            }
-
-            if btn2.clicked(Middle) {
+            //I don't know why this isn't centered.
+            if button(&ctx).centered().clicked(Middle) {
                 println!("Clicked white button!");
             }
         }
 
         //Layout
-        {
+        'a: {
+            break 'a;
             v((
                 button(&ctx).pos(40, 120, 20, 20),
                 button(&ctx).width(20).height(20),

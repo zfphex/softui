@@ -100,9 +100,9 @@ pub enum Color {
     Hex(u32),
 }
 
-impl Into<u32> for Color {
-    fn into(self) -> u32 {
-        match self {
+impl From<Color> for u32 {
+    fn from(val: Color) -> Self {
+        match val {
             Color::Red => 0xFF0000,
             Color::Blue => 0x0000FF,
             Color::Green => 0x00FF00,
