@@ -1,6 +1,5 @@
-use mini::info;
-
 use crate::*;
+use mini::info;
 
 //TODO: Really this should take any parent.
 //We don't have layout widgets yet.
@@ -14,7 +13,6 @@ pub fn button(ctx: &Context) -> Button {
     }
 }
 
-//TODO: missing `draw()` and `no_draw()` functions
 pub struct Button<'a> {
     pub area: Rect,
     pub ctx: &'a Context,
@@ -32,12 +30,6 @@ impl<'a> View for Button<'a> {
         &mut self.area
     }
 }
-
-// impl<'a> Widget for Button<'a> {
-//     fn area(&mut self) -> &mut Rect {
-//         &mut self.area
-//     }
-// }
 
 impl<'a> Draw for Button<'a> {
     fn draw(&self) {

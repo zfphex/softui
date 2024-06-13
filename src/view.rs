@@ -1,22 +1,10 @@
 use crate::*;
 
-pub trait View {
-    fn area(&mut self) -> &mut Rect;
-}
-
 pub trait Tuple {
     fn for_each<F: FnMut(&mut dyn View)>(&mut self, f: &mut F);
     fn for_each_rev<F: FnMut(&mut dyn View)>(&mut self, f: &mut F);
     fn len(&self) -> usize;
     fn first(&mut self) -> &mut dyn View;
-}
-
-static mut VOID_RECT: Rect = Rect::new(0, 0, 0, 0);
-
-impl View for () {
-    fn area(&mut self) -> &mut Rect {
-        unsafe { &mut VOID_RECT }
-    }
 }
 
 //https://github.com/audulus/rui/blob/main/src/Tuple.rs

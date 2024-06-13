@@ -6,341 +6,27 @@ use std::simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64};
 use window::*;
 
 pub mod button;
-pub mod color;
+pub mod input;
 pub mod layout;
+pub mod style;
 pub mod text;
 pub mod view;
 
 pub use button::*;
-pub use color::*;
+pub use input::*;
 pub use layout::*;
+pub use style::*;
 pub use text::*;
 pub use view::*;
 pub use MouseButton::*;
 
-#[cfg(test)]
-mod tests {
-    extern crate test;
-
-    use super::*;
-    use test::black_box;
-
-    #[bench]
-    fn atlas(b: &mut test::bench::Bencher) {
-        let atlas = Atlas::new(32.0);
-        b.iter(|| {
-            for _ in 0..1000 {
-                let (metrics, bitmap) = &atlas.glyphs[black_box(b'a' as usize)];
-                assert_eq!(metrics.width, 15);
-            }
-        });
-    }
-
-    #[bench]
-    fn rasterize(b: &mut test::bench::Bencher) {
-        let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-        b.iter(|| {
-            for _ in 0..1000 {
-                let (metrics, bitmap) = font.rasterize(black_box('a'), 32.0);
-                assert_eq!(metrics.width, 15);
-            }
-        });
-    }
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct Rect {
-    pub x: i32,
-    pub y: i32,
-    pub width: i32,
-    pub height: i32,
-}
-
-impl From<WinRect> for Rect {
-    fn from(rect: WinRect) -> Self {
-        Rect {
-            x: rect.left,
-            y: rect.top,
-            width: rect.right - rect.left,
-            height: rect.bottom - rect.top,
-        }
-    }
-}
-
-impl Rect {
-    pub const fn new(x: i32, y: i32, width: i32, height: i32) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
-    }
-    pub const fn right(&self) -> i32 {
-        self.x + self.width
-    }
-    pub const fn bottom(&self) -> i32 {
-        self.y + self.height
-    }
-    // pub const fn centered(&self, width: u16, height: u16) -> Rect {
-    //     let v = self.width() / 2;
-    //     let h = self.height() / 2;
-
-    //     todo!();
-    // }
-    pub const fn area(&self) -> i32 {
-        self.width * self.height
-    }
-
-    //TODO: Write some tests.
-    pub const fn intersects(&self, other: Rect) -> bool {
-        self.x < other.x + other.width
-            && self.x + self.width > other.x
-            && self.y < other.y + other.height
-            && self.y + self.height > other.y
-    }
-
-    //TODO: Bounds checking
-    pub const fn inner(&self, w: i32, h: i32) -> Rect {
-        Rect {
-            x: self.x + w,
-            y: self.y + h,
-            width: self.width - 2 * w,
-            height: self.height - 2 * h,
-        }
-    }
-
-    // pub const fn inner(self, w: u16, h: u16) -> Result<Rect, &'static str> {
-    //     if self.width < 2 * w {
-    //         Err("Inner area exceeded outside area. Reduce margin width.")
-    //     } else if self.height < 2 * h {
-    //         Err("Inner area exceeded outside area. Reduce margin height.")
-    //     } else {
-    //         Ok(Rect {
-    //             x: self.x + w,
-    //             y: self.y + h,
-    //             width: self.width - 2 * w,
-    //             height: self.height - 2 * h,
-    //         })
-    //     }
-    // }
-}
-
-pub trait Widget {
+pub trait View {
     fn area(&mut self) -> &mut Rect;
 }
-
-#[derive(Debug)]
-pub enum MouseButton {
-    Left,
-    Right,
-    Middle,
-    ///Mouse4
-    Back,
-    ///Mouse5
-    Forward,
-}
-
-/// Requires a widget to have two struct fields
-/// `area` and `ctx`
-/// Still on the fence about this shortcut.
-/// There must be a better way to implement this.
-
-// #[macro_export]
-// macro_rules! input {
-//     ($($widget:ty),*) => {
-//         $(
-//         impl<'a> Input for $widget {
-//             fn clicked(&self, button: MouseButton) -> bool {
-//                 if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-//                     return false;
-//                 }
-
-//                 match button {
-//                     MouseButton::Left => {
-//                         self.ctx.left_mouse.released
-//                             && self
-//                                 .ctx
-//                                 .left_mouse
-//                                 .inital_position
-//                                 .intersects(self.area.clone())
-//                     }
-//                     MouseButton::Right => {
-//                         self.ctx.right_mouse.released
-//                             && self
-//                                 .ctx
-//                                 .right_mouse
-//                                 .inital_position
-//                                 .intersects(self.area.clone())
-//                     }
-//                     MouseButton::Middle => {
-//                         self.ctx.middle_mouse.released
-//                             && self
-//                                 .ctx
-//                                 .middle_mouse
-//                                 .inital_position
-//                                 .intersects(self.area.clone())
-//                     }
-//                     MouseButton::Back => {
-//                         self.ctx.mouse_4.released
-//                             && self
-//                                 .ctx
-//                                 .mouse_4
-//                                 .inital_position
-//                                 .intersects(self.area.clone())
-//                     }
-//                     MouseButton::Forward => {
-//                         self.ctx.mouse_5.released
-//                             && self
-//                                 .ctx
-//                                 .mouse_5
-//                                 .inital_position
-//                                 .intersects(self.area.clone())
-//                     }
-//                 }
-//             }
-
-//             fn up(&self, button: MouseButton) -> bool {
-//                 if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-//                     return false;
-//                 }
-
-//                 match button {
-//                     MouseButton::Left => self.ctx.left_mouse.released ,
-//                     MouseButton::Right => self.ctx.right_mouse.released ,
-//                     MouseButton::Middle => self.ctx.middle_mouse.released ,
-//                     MouseButton::Back => self.ctx.mouse_4.released ,
-//                     MouseButton::Forward => self.ctx.mouse_5.released ,
-//                 }
-//             }
-
-//             fn down(&self, button: MouseButton) -> bool {
-//                 if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-//                     return false;
-//                 }
-
-//                 match button {
-//                     MouseButton::Left => self.ctx.left_mouse.pressed ,
-//                     MouseButton::Right => self.ctx.right_mouse.pressed ,
-//                     MouseButton::Middle => self.ctx.middle_mouse.pressed ,
-//                     MouseButton::Back => self.ctx.mouse_4.pressed ,
-//                     MouseButton::Forward => self.ctx.mouse_5.pressed ,
-//                 }
-//             }
-//         }
-//         )*
-//     };
-// }
 
 pub trait Draw {
     fn draw(&self);
     fn no_draw(&mut self);
-}
-
-pub trait Input {
-    /// The user's cusor has been clicked and released on top of a widget.
-    fn clicked(&self, button: MouseButton) -> bool;
-    fn up(&self, button: MouseButton) -> bool;
-    fn down(&self, button: MouseButton) -> bool;
-}
-
-pub enum Unit {
-    Px(usize),
-    ///Relative to the font-size of the element
-    ///https://en.wikipedia.org/wiki/Em_(typography)
-    ///https://www.w3schools.com/cssref/css_units.php
-    Em(usize),
-    Percentage(usize),
-}
-
-impl From<usize> for Unit {
-    fn from(val: usize) -> Self {
-        Unit::Px(val)
-    }
-}
-
-impl From<f32> for Unit {
-    fn from(val: f32) -> Self {
-        Unit::Percentage((val * 100.0) as usize)
-    }
-}
-
-//TODO: This is a complete mess :/
-pub trait Layout {
-    fn centered(self) -> Self;
-
-    fn x<U: Into<Unit>>(self, x: U) -> Self;
-    fn y<U: Into<Unit>>(self, y: U) -> Self;
-    fn width<U: Into<Unit>>(self, width: U) -> Self;
-    fn height<U: Into<Unit>>(self, height: U) -> Self;
-    fn w<U: Into<Unit>>(self, width: U) -> Self
-    where
-        Self: Sized,
-    {
-        self.width(width)
-    }
-    fn h<U: Into<Unit>>(self, width: U) -> Self
-    where
-        Self: Sized,
-    {
-        self.height(width)
-    }
-
-    fn top<U: Into<Unit>>(self, top: U) -> Self
-    where
-        Self: Sized,
-    {
-        self.y(top)
-    }
-    fn left<U: Into<Unit>>(self, left: U) -> Self
-    where
-        Self: Sized,
-    {
-        self.x(left)
-    }
-    fn right<U: Into<Unit>>(self, right: U) -> Self;
-    fn bottom<U: Into<Unit>>(self, bottom: U) -> Self;
-
-    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self
-    where
-        Self: Sized,
-    {
-        self.x(x).y(y).width(width).height(height)
-    }
-}
-
-pub trait Style {
-    fn bg(self, color: Color) -> Self;
-}
-
-#[derive(Debug)]
-pub struct MouseState {
-    pub pressed: bool,
-    pub released: bool,
-    pub inital_position: Rect,
-}
-
-impl MouseState {
-    pub const fn new() -> Self {
-        Self {
-            pressed: false,
-            released: false,
-            inital_position: Rect::new(0, 0, 0, 0),
-        }
-    }
-    pub fn reset(&mut self) {
-        self.pressed = false;
-        self.released = false;
-    }
-    pub fn pressed(&mut self, pos: Rect) {
-        self.pressed = true;
-        self.released = false;
-        self.inital_position = pos;
-    }
-    pub fn released(&mut self) {
-        self.pressed = false;
-        self.released = true;
-    }
 }
 
 pub enum Command {
@@ -821,5 +507,35 @@ impl Context {
         color: u32,
     ) {
         todo!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    extern crate test;
+
+    use super::*;
+    use test::black_box;
+
+    #[bench]
+    fn atlas(b: &mut test::bench::Bencher) {
+        let atlas = Atlas::new(32.0);
+        b.iter(|| {
+            for _ in 0..1000 {
+                let (metrics, bitmap) = &atlas.glyphs[black_box(b'a' as usize)];
+                assert_eq!(metrics.width, 15);
+            }
+        });
+    }
+
+    #[bench]
+    fn rasterize(b: &mut test::bench::Bencher) {
+        let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
+        b.iter(|| {
+            for _ in 0..1000 {
+                let (metrics, bitmap) = font.rasterize(black_box('a'), 32.0);
+                assert_eq!(metrics.width, 15);
+            }
+        });
     }
 }
