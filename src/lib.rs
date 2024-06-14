@@ -109,6 +109,57 @@ impl Context {
         }
     }
 
+    //TODO: Cleanup and remove.
+    pub fn event(&mut self) -> Option<Event> {
+        match event() {
+            None => None,
+            Some(event) => {
+                let mut passthrough_event = false;
+                match event {
+                    Event::Mouse(x, y) => {
+                        self.mouse_pos = Rect::new(x, y, 1, 1);
+                    }
+                    Event::LeftMouseDown => {
+                        self.left_mouse.pressed(self.mouse_pos.clone());
+                    }
+                    Event::LeftMouseUp => {
+                        self.left_mouse.released();
+                    }
+                    Event::RightMouseDown => {
+                        self.right_mouse.pressed(self.mouse_pos.clone());
+                    }
+                    Event::RightMouseUp => {
+                        self.right_mouse.released();
+                    }
+                    Event::MiddleMouseDown => {
+                        self.middle_mouse.pressed(self.mouse_pos.clone());
+                    }
+                    Event::MiddleMouseUp => {
+                        self.middle_mouse.released();
+                    }
+                    Event::Mouse4Down => {
+                        self.mouse_4.pressed(self.mouse_pos.clone());
+                    }
+                    Event::Mouse4Up => {
+                        self.mouse_4.released();
+                    }
+                    Event::Mouse5Down => {
+                        self.mouse_5.pressed(self.mouse_pos.clone());
+                    }
+                    Event::Mouse5Up => {
+                        self.mouse_5.released();
+                    }
+                    _ => passthrough_event = true,
+                }
+
+                match passthrough_event {
+                    true => Some(event),
+                    false => None,
+                }
+            }
+        }
+    }
+
     pub fn draw_frame(&mut self) {
         profile!();
 

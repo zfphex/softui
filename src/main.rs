@@ -18,47 +18,13 @@ fn main() {
     //https://magcius.github.io/xplain/article/rast1.html
 
     loop {
-        // dbg!(ctx.window.area().width());
-        match event() {
+        //Context handles mouse events.
+        //Don't really like the way this works.
+        match ctx.event() {
             None => {}
-            Some(event) => match event {
-                Event::Mouse(x, y) => {
-                    ctx.mouse_pos = Rect::new(x, y, 1, 1);
-                }
-                Event::LeftMouseDown => {
-                    ctx.left_mouse.pressed(ctx.mouse_pos.clone());
-                }
-                Event::LeftMouseUp => {
-                    ctx.left_mouse.released();
-                }
-                Event::RightMouseDown => {
-                    ctx.right_mouse.pressed(ctx.mouse_pos.clone());
-                }
-                Event::RightMouseUp => {
-                    ctx.right_mouse.released();
-                }
-                Event::MiddleMouseDown => {
-                    ctx.middle_mouse.pressed(ctx.mouse_pos.clone());
-                }
-                Event::MiddleMouseUp => {
-                    ctx.middle_mouse.released();
-                }
-                Event::Mouse4Down => {
-                    ctx.mouse_4.pressed(ctx.mouse_pos.clone());
-                }
-                Event::Mouse4Up => {
-                    ctx.mouse_4.released();
-                }
-                Event::Mouse5Down => {
-                    ctx.mouse_5.pressed(ctx.mouse_pos.clone());
-                }
-                Event::Mouse5Up => {
-                    ctx.mouse_5.released();
-                }
-                Event::Quit => break,
-                Event::Escape => break,
-                _ => {}
-            },
+            Some(Event::Quit) => break,
+            Some(Event::Escape) => break,
+            _ => {}
         }
 
         let area = &ctx.area;
@@ -159,7 +125,7 @@ fn main() {
         }
 
         'layout: {
-            v((
+            h((
                 button(&ctx).pos(40, 120, 20, 20),
                 button(&ctx).width(20).height(20),
             ))
