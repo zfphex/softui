@@ -4,7 +4,7 @@ use softui::*;
 use window::*;
 
 fn main() {
-    let window = create_window("god", 600, 600);
+    let window = create_window("god", 800, 600);
     let mut ctx = Context::new(window);
 
     let mut x: usize = 0;
@@ -31,12 +31,12 @@ fn main() {
 
         t += 0.02;
         x += 1;
-        if x > (area.width as usize) - square - 1 {
+        if x as i32 > (area.width) - square as i32 - 1 {
             x = 0;
         }
 
         y += 1;
-        if y > (area.height as usize) - square - 1 {
+        if y as i32 > (area.height) - square as i32 - 1 {
             y = 0;
         }
 
@@ -71,10 +71,10 @@ fn main() {
         ctx.fill(Color::Black);
 
         'gradient: {
-            ctx.draw_linear_gradient(500, 200, 100, 100, 0x00ff00, 0xfffff);
+            ctx.draw_linear_gradient(400, 200, 100, 100, 0x00ff00, 0xfffff);
             ctx.draw_linear_gradient(
-                500,
-                500,
+                400,
+                400,
                 100,
                 100,
                 0x773ec7,
@@ -82,7 +82,7 @@ fn main() {
             );
         }
 
-        // ctx.draw_rectangle(x, y, square, square, lerp_hex(0x5e9955, 0x4ec1ff, t.sin()));
+        ctx.draw_rectangle(x, y, square, square, lerp_hex(0x5e9955, 0x4ec1ff, t.sin()));
 
         'text: {
             atlas.draw_text(&mut ctx, "abcdefg!@#$%1234", 0, 525);
@@ -105,12 +105,12 @@ fn main() {
         }
 
         'line: {
-            ctx.draw_line((40, 20), (200, 20), Color::Green.into());
-            ctx.draw_line((40, 20), (200, 25), Color::Green.into());
-            ctx.draw_line((40, 20), (200, 50), Color::Green.into());
-            ctx.draw_line((40, 20), (200, 100), Color::Green.into());
-            ctx.draw_line((40, 20), (200, 200), Color::Green.into());
-            ctx.draw_line((200, 50), (190, 52), Color::Green.into());
+            ctx.draw_line(40, 20, 200, 20, Color::Green.into());
+            ctx.draw_line(40, 20, 200, 25, Color::Green.into());
+            ctx.draw_line(40, 20, 200, 50, Color::Green.into());
+            ctx.draw_line(40, 20, 200, 100, Color::Green.into());
+            ctx.draw_line(40, 20, 200, 200, Color::Green.into());
+            ctx.draw_line(200, 50, 190, 52, Color::Green.into());
         }
 
         'button: {

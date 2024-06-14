@@ -1,7 +1,7 @@
 #![allow(unused, static_mut_refs)]
 #![feature(portable_simd, test)]
 use core::panic;
-use mini::profile;
+use mini::{info, profile};
 use std::simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64};
 use window::*;
 
@@ -191,6 +191,7 @@ impl Context {
         }
 
         //Reset the important state at the end of a frame.
+        //Does this break dragging?
         self.left_mouse.reset();
         self.right_mouse.reset();
         self.middle_mouse.reset();
@@ -332,7 +333,7 @@ impl Context {
 
     //https://github.com/ssloy/tinyrenderer/wiki/Lesson-1:-Bresenham%E2%80%99s-Line-Drawing-Algorithm
     //Only works when the slope is >= 0 & <=1
-    pub fn draw_line(&mut self, (x0, y0): (usize, usize), (x1, y1): (usize, usize), color: u32) {
+    pub fn draw_line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, color: u32) {
         let mut error = 0.0;
         let dx = x1 as f32 - x0 as f32;
         let dy = y1 as f32 - y0 as f32;

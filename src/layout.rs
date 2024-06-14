@@ -8,8 +8,8 @@ pub struct Rect {
     pub height: i32,
 }
 
-impl From<WinRect> for Rect {
-    fn from(rect: WinRect) -> Self {
+impl From<&WinRect> for Rect {
+    fn from(rect: &WinRect) -> Self {
         Rect {
             x: 0,
             y: 0,
