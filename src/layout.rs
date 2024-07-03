@@ -1,5 +1,32 @@
 use crate::*;
 
+use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
+
+#[derive(Debug, Default)]
+pub struct AtomicRect {
+    x: AtomicI32,
+    y: AtomicI32,
+    width: AtomicI32,
+    height: AtomicI32,
+}
+
+impl AtomicRect {
+    pub const fn new(x: i32, y: i32, width: i32, height: i32) -> Self {
+        Self {
+            x: AtomicI32::new(x),
+            y: AtomicI32::new(y),
+            width: AtomicI32::new(width),
+            height: AtomicI32::new(height),
+        }
+    }
+    pub fn right(&self) -> i32 {
+        self.x.load(SeqCst) + self.width.load(SeqCst)
+    }
+    pub fn bottom(&self) -> i32 {
+        self.y.load(SeqCst) + self.height.load(SeqCst)
+    }
+}
+
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Rect {
     pub x: i32,
@@ -8,8 +35,8 @@ pub struct Rect {
     pub height: i32,
 }
 
-impl From<&WinRect> for Rect {
-    fn from(rect: &WinRect) -> Self {
+impl From<RECT> for Rect {
+    fn from(rect: RECT) -> Self {
         Rect {
             x: 0,
             y: 0,
@@ -40,9 +67,9 @@ impl Rect {
 
     //     todo!();
     // }
-    pub const fn area(&self) -> i32 {
-        self.width * self.height
-    }
+    // pub const fn area(&self) -> i32 {
+    //     self.width * self.height
+    // }
 
     //TODO: Write some tests.
     pub const fn intersects(&self, other: Rect) -> bool {

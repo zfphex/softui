@@ -4,8 +4,7 @@ use softui::*;
 use window::*;
 
 fn main() {
-    let window = create_window("god", 800, 600);
-    let mut ctx = Context::new(window);
+    let mut ctx = Context::new("Softui", 800, 600);
 
     let mut x: usize = 0;
     let mut y: usize = 0;
@@ -22,8 +21,7 @@ fn main() {
         //Don't really like the way this works.
         match ctx.event() {
             None => {}
-            Some(Event::Quit) => break,
-            Some(Event::Escape) => break,
+            Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
 

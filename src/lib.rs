@@ -2,7 +2,10 @@
 #![feature(portable_simd, test)]
 use core::panic;
 use mini::{info, profile};
-use std::simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64};
+use std::{
+    pin::Pin,
+    simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64},
+};
 use window::*;
 
 pub mod button;
@@ -48,13 +51,12 @@ pub struct Context {
     pub area: Rect,
     pub width: usize,
     pub height: usize,
-    pub window: Window,
+    pub window: Pin<Box<Window>>,
     pub context: *mut VOID,
     pub bitmap: BITMAPINFO,
     //This should really be a Vec2 or (usize, usize), but this makes checking
     //rectangle intersections really easy.
     pub mouse_pos: Rect,
-
     pub left_mouse: MouseState,
     pub right_mouse: MouseState,
     pub middle_mouse: MouseState,
@@ -63,10 +65,11 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(window: Window) -> Self {
+    pub fn new(title: &str, width: usize, height: usize) -> Self {
+        let window = unsafe { create_window(title, width as i32, height as i32) };
         let context = unsafe { GetDC(window.hwnd) };
         //Convert top, left, right, bottom to x, y, width, height.
-        let area = Rect::from(window.area());
+        let area = Rect::from(window.client_area());
         let width = area.width;
         let height = area.height;
 
@@ -97,21 +100,20 @@ impl Context {
 
     #[inline(always)]
     pub fn resize(&mut self) {
-        let area = Rect::from(self.window.area());
+        let area = Rect::from(self.window.client_area());
         if self.area != area {
             self.area = area;
             self.width = self.area.width as usize;
             self.height = self.area.height as usize;
             self.buffer.clear();
-            self.buffer
-                .resize(self.width * self.height * std::mem::size_of::<RGBQUAD>(), 0);
+            self.buffer.resize(self.width * self.height, 0);
             self.bitmap = create_bitmap(self.width as i32, self.height as i32);
         }
     }
 
     //TODO: Cleanup and remove.
     pub fn event(&mut self) -> Option<Event> {
-        match event() {
+        match event(None) {
             None => None,
             Some(event) => {
                 let mut passthrough_event = false;
@@ -119,34 +121,34 @@ impl Context {
                     Event::Mouse(x, y) => {
                         self.mouse_pos = Rect::new(x, y, 1, 1);
                     }
-                    Event::LeftMouseDown => {
+                    Event::Input(Key::LeftMouseDown, _) => {
                         self.left_mouse.pressed(self.mouse_pos.clone());
                     }
-                    Event::LeftMouseUp => {
+                    Event::Input(Key::LeftMouseUp, _) => {
                         self.left_mouse.released();
                     }
-                    Event::RightMouseDown => {
+                    Event::Input(Key::RightMouseDown, _) => {
                         self.right_mouse.pressed(self.mouse_pos.clone());
                     }
-                    Event::RightMouseUp => {
+                    Event::Input(Key::RightMouseUp, _) => {
                         self.right_mouse.released();
                     }
-                    Event::MiddleMouseDown => {
+                    Event::Input(Key::MiddleMouseDown, _) => {
                         self.middle_mouse.pressed(self.mouse_pos.clone());
                     }
-                    Event::MiddleMouseUp => {
+                    Event::Input(Key::MiddleMouseUp, _) => {
                         self.middle_mouse.released();
                     }
-                    Event::Mouse4Down => {
+                    Event::Input(Key::Mouse4Down, _) => {
                         self.mouse_4.pressed(self.mouse_pos.clone());
                     }
-                    Event::Mouse4Up => {
+                    Event::Input(Key::Mouse4Up, _) => {
                         self.mouse_4.released();
                     }
-                    Event::Mouse5Down => {
+                    Event::Input(Key::Mouse5Down, _) => {
                         self.mouse_5.pressed(self.mouse_pos.clone());
                     }
-                    Event::Mouse5Up => {
+                    Event::Input(Key::Mouse5Up, _) => {
                         self.mouse_5.released();
                     }
                     _ => passthrough_event = true,
