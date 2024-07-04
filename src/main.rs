@@ -21,12 +21,27 @@ fn main() {
             //This is bad because () has no area?
             // let v = v((button(&ctx), ()));
 
-            //This needs some tinkering. I'm not quite at a solution yet.
+            //This error is a nightmare to read.
+            // let v = v(button(&ctx));
+
             let mut _parent = v((
-                button(&ctx).wh(10),
-                h((button(&ctx).wh(20), button(&ctx).wh(20))).padding(4),
+                button(&ctx).wh(20),
+                h((button(&ctx).wh(20), button(&ctx).wh(20))).p(10),
+                h((
+                    button(&ctx).wh(20),
+                    button(&ctx).wh(20),
+                    button(&ctx).wh(20),
+                ))
+                .p(10),
+                h((
+                    button(&ctx).wh(20),
+                    button(&ctx).wh(20),
+                    button(&ctx).wh(20),
+                    v((button(&ctx).w(20).h(8), button(&ctx).w(20).h(8))).p(4),
+                ))
+                .p(10),
             ))
-            .padding(0);
+            .p(10);
             // dbg!(_parent.area());
         }
 

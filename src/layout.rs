@@ -266,6 +266,7 @@ impl<T: Tuple> Container<T> {
         self.widgets.for_each(&mut |f| {
             //If the widget is a container calculate the area.
             f.calculate(x, y);
+
             if let Some(area) = f.area() {
                 let height = area.height;
                 let width = area.width;
@@ -293,6 +294,13 @@ impl<T: Tuple> Container<T> {
                     *area = area.inner(margin, margin);
                 }
 
+                //Recalculate the child area
+                f.calculate(x, y);
+
+                //Note that since we don't know which item is last.
+                //We add some too much area and remove it after the loop.
+                //It's a shame we can't use traditional iterators with
+                //the the Tuple trait. I'm looking into fixing this.
                 match direction {
                     Direction::Vertical => {
                         root_area.height += height + padding;
@@ -303,9 +311,6 @@ impl<T: Tuple> Container<T> {
                         x += width + padding;
                     }
                 }
-
-                //Recalculate the child area
-                f.calculate(x, y);
             }
         });
 
@@ -330,7 +335,15 @@ impl<T: Tuple> Container<T> {
         self.padding = padding;
         self
     }
+    pub fn p(mut self, padding: usize) -> Self {
+        self.padding = padding;
+        self
+    }
     pub fn margin(mut self, margin: usize) -> Self {
+        self.margin = margin;
+        self
+    }
+    pub fn m(mut self, margin: usize) -> Self {
         self.margin = margin;
         self
     }
