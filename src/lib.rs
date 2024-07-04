@@ -1,10 +1,10 @@
 #![allow(unused, static_mut_refs)]
 #![feature(portable_simd, test)]
-use core::panic;
 use mini::{info, profile};
 use std::{
     pin::Pin,
     simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64},
+    sync::LazyLock,
 };
 use window::*;
 
@@ -24,7 +24,14 @@ pub use view::*;
 pub use MouseButton::*;
 
 pub trait View {
-    fn area(&mut self) -> &mut Rect;
+    fn area(&mut self) -> Option<&mut Rect>;
+    fn calculate(&mut self, x: i32, y: i32) {}
+}
+
+impl View for () {
+    fn area(&mut self) -> Option<&mut Rect> {
+        None
+    }
 }
 
 pub trait Draw {
@@ -38,6 +45,8 @@ pub enum Command {
 }
 
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
+
+// pub static mut CTX: LazyLock<Context> = LazyLock::new(|| Context::new("test", 800, 600));
 
 /// Holds the framebuffer and input state.
 /// Also handles rendering.

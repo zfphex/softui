@@ -13,6 +13,7 @@ pub fn button(ctx: &Context) -> Button {
     }
 }
 
+#[derive(Clone)]
 pub struct Button<'a> {
     pub area: Rect,
     pub ctx: &'a Context,
@@ -26,8 +27,8 @@ pub struct Button<'a> {
 impl<'a> Button<'a> {}
 
 impl<'a> View for Button<'a> {
-    fn area(&mut self) -> &mut Rect {
-        &mut self.area
+    fn area(&mut self) -> Option<&mut Rect> {
+        Some(&mut self.area)
     }
 }
 

@@ -1,5 +1,4 @@
 use crate::*;
-
 use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
 
 #[derive(Debug, Default)]
@@ -105,13 +104,38 @@ impl Rect {
     // }
 }
 
+pub trait Metrics {
+    fn em(self) -> Unit;
+    fn vh(self) -> Self;
+    fn vw(self) -> Self;
+}
+
+/// 10.vh() will be 10% of viewport height.
+impl Metrics for usize {
+    fn em(self) -> Unit {
+        Unit::Em(self)
+    }
+    fn vh(self) -> Self {
+        todo!()
+    }
+    fn vw(self) -> Self {
+        todo!()
+    }
+}
+
 pub enum Unit {
     Px(usize),
     ///Relative to the font-size of the element
     ///https://en.wikipedia.org/wiki/Em_(typography)
     ///https://www.w3schools.com/cssref/css_units.php
     Em(usize),
+    //Percentage relative to what?
     Percentage(usize),
+}
+
+pub enum Position {
+    Relative(Rect),
+    Absolute(Rect),
 }
 
 impl From<usize> for Unit {
@@ -145,6 +169,14 @@ pub trait Layout {
         Self: Sized,
     {
         self.height(width)
+    }
+
+    //Swizzle 😏
+    fn wh<U: Into<Unit> + Copy>(self, value: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.width(value).height(value)
     }
 
     fn top<U: Into<Unit>>(self, top: U) -> Self
@@ -196,6 +228,7 @@ pub enum Direction {
     Horizontal,
 }
 
+#[derive(Clone)]
 pub struct Container<T: Tuple> {
     pub widgets: T,
     pub direction: Direction,
@@ -206,12 +239,21 @@ pub struct Container<T: Tuple> {
     pub margin: usize,
 }
 
+impl<T: Tuple> View for Container<T> {
+    fn area(&mut self) -> Option<&mut Rect> {
+        self.area.as_mut()
+    }
+    fn calculate(&mut self, x: i32, y: i32) {
+        self.calculate(Some(x), Some(y));
+    }
+}
+
 //TODO: Should the inital position be based on the first widget.
 //Or should the user define that themselves.
 impl<T: Tuple> Container<T> {
-    pub fn calculate(&mut self) {
-        let mut y: i32 = -1;
-        let mut x: i32 = -1;
+    pub fn calculate(&mut self, x: Option<i32>, y: Option<i32>) {
+        let mut x = x.unwrap_or(-1);
+        let mut y = y.unwrap_or(-1);
 
         let padding = self.padding as i32;
         let margin = self.margin as i32;
@@ -222,42 +264,48 @@ impl<T: Tuple> Container<T> {
         let mut max_height = 0;
 
         self.widgets.for_each(&mut |f| {
-            let area = f.area();
-            let height = area.height;
-            let width = area.width;
+            //If the widget is a container calculate the area.
+            f.calculate(x, y);
+            if let Some(area) = f.area() {
+                let height = area.height;
+                let width = area.width;
 
-            if width > max_width {
-                max_width = width;
-            }
-
-            if height > max_height {
-                max_height = height;
-            }
-
-            if y < 0 || x < 0 {
-                x = area.x;
-                y = area.y;
-
-                root_area.x = x;
-                root_area.y = y;
-            } else {
-                area.x = x;
-                area.y = y;
-            }
-
-            if margin != 0 {
-                *area = area.inner(margin, margin);
-            }
-
-            match direction {
-                Direction::Vertical => {
-                    root_area.height += height + padding;
-                    y += height + padding;
+                if width > max_width {
+                    max_width = width;
                 }
-                Direction::Horizontal => {
-                    root_area.width += width + padding;
-                    x += width + padding;
+
+                if height > max_height {
+                    max_height = height;
                 }
+
+                if y < 0 || x < 0 {
+                    x = area.x;
+                    y = area.y;
+
+                    root_area.x = x;
+                    root_area.y = y;
+                } else {
+                    area.x = x;
+                    area.y = y;
+                }
+
+                if margin != 0 {
+                    *area = area.inner(margin, margin);
+                }
+
+                match direction {
+                    Direction::Vertical => {
+                        root_area.height += height + padding;
+                        y += height + padding;
+                    }
+                    Direction::Horizontal => {
+                        root_area.width += width + padding;
+                        x += width + padding;
+                    }
+                }
+
+                //Recalculate the child area
+                f.calculate(x, y);
             }
         });
 
@@ -275,7 +323,7 @@ impl<T: Tuple> Container<T> {
         self.area = Some(root_area);
     }
     pub fn area(&mut self) -> Rect {
-        self.calculate();
+        self.calculate(None, None);
         self.area.as_ref().unwrap().clone()
     }
     pub fn padding(mut self, padding: usize) -> Self {
@@ -291,17 +339,6 @@ impl<T: Tuple> Container<T> {
 impl<T: Tuple> Drop for Container<T> {
     // Calculate the widget layout.
     fn drop(&mut self) {
-        self.calculate();
+        self.calculate(None, None);
     }
 }
-
-// #[macro_export]
-// macro_rules! vertical {
-//     ($parent:expr, $($widget:expr),*) => {{
-//         let mut y = 0;
-//         $(
-//             $widget.area.top = y;
-//             y += $widget.area.height();
-//         )*
-//     }};
-// }
