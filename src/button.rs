@@ -27,8 +27,12 @@ pub struct Button<'a> {
 impl<'a> Button<'a> {}
 
 impl<'a> View for Button<'a> {
-    fn area(&mut self) -> Option<&mut Rect> {
+    fn area_mut(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
+    }
+
+    fn area(&self) -> Option<&Rect> {
+        Some(&self.area)
     }
 }
 
@@ -160,81 +164,17 @@ impl<'a> Layout for Button<'a> {
     }
 }
 
+//TODO: Simplify this down even more.
 impl<'a> Input for Button<'a> {
     fn clicked(&self, button: MouseButton) -> bool {
-        if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-            return false;
-        }
-
-        match button {
-            MouseButton::Left => {
-                self.ctx.left_mouse.released
-                    && self
-                        .ctx
-                        .left_mouse
-                        .inital_position
-                        .intersects(self.area.clone())
-            }
-            MouseButton::Right => {
-                self.ctx.right_mouse.released
-                    && self
-                        .ctx
-                        .right_mouse
-                        .inital_position
-                        .intersects(self.area.clone())
-            }
-            MouseButton::Middle => {
-                self.ctx.middle_mouse.released
-                    && self
-                        .ctx
-                        .middle_mouse
-                        .inital_position
-                        .intersects(self.area.clone())
-            }
-            MouseButton::Back => {
-                self.ctx.mouse_4.released
-                    && self
-                        .ctx
-                        .mouse_4
-                        .inital_position
-                        .intersects(self.area.clone())
-            }
-            MouseButton::Forward => {
-                self.ctx.mouse_5.released
-                    && self
-                        .ctx
-                        .mouse_5
-                        .inital_position
-                        .intersects(self.area.clone())
-            }
-        }
+        clicked(self.ctx, self, button)
     }
 
     fn up(&self, button: MouseButton) -> bool {
-        if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-            return false;
-        }
-
-        match button {
-            MouseButton::Left => self.ctx.left_mouse.released,
-            MouseButton::Right => self.ctx.right_mouse.released,
-            MouseButton::Middle => self.ctx.middle_mouse.released,
-            MouseButton::Back => self.ctx.mouse_4.released,
-            MouseButton::Forward => self.ctx.mouse_5.released,
-        }
+        up(self.ctx, self, button)
     }
 
     fn down(&self, button: MouseButton) -> bool {
-        if !self.ctx.mouse_pos.intersects(self.area.clone()) {
-            return false;
-        }
-
-        match button {
-            MouseButton::Left => self.ctx.left_mouse.pressed,
-            MouseButton::Right => self.ctx.right_mouse.pressed,
-            MouseButton::Middle => self.ctx.middle_mouse.pressed,
-            MouseButton::Back => self.ctx.mouse_4.pressed,
-            MouseButton::Forward => self.ctx.mouse_5.pressed,
-        }
+        down(self.ctx, self, button)
     }
 }

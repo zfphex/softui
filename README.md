@@ -148,15 +148,22 @@ struct Flex {}
 flex((button(), button())).direction(Direction::Vertical)
 ```
 
-Immediate mode style layout
+Immediate mode style
 
 ```rs
-//ui is a Context here.
 ui.vertical(|ui| {
     if button(ui).clicked() {
         println!("Clicked button!");
     }
 });
+```
+
+Xilem style
+
+```rs
+vertical(
+    button().clicked(|| println!("Clicked button!"))
+)
 ```
 
 ### Widgets

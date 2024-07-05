@@ -24,12 +24,16 @@ pub use view::*;
 pub use MouseButton::*;
 
 pub trait View {
-    fn area(&mut self) -> Option<&mut Rect>;
+    fn area(&self) -> Option<&Rect>;
+    fn area_mut(&mut self) -> Option<&mut Rect>;
     fn calculate(&mut self, x: i32, y: i32) {}
 }
 
 impl View for () {
-    fn area(&mut self) -> Option<&mut Rect> {
+    fn area(&self) -> Option<&Rect> {
+        None
+    }
+    fn area_mut(&mut self) -> Option<&mut Rect> {
         None
     }
 }

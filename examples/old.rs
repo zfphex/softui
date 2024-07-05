@@ -140,30 +140,6 @@ fn main() {
                 button(&ctx).w(40).h(20),
             ))
             .padding(10);
-
-            //TODO: The padding here is a little odd.
-            //There is padding between each element.
-            //But none on the left, right, top or bottom.
-            //It's more of a gap than padding.
-            let area = {
-                v((
-                    button(&ctx).pos(0, 0, 40, 100),
-                    button(&ctx).w(20).h(5),
-                    button(&ctx).w(35).h(20),
-                ))
-                .padding(20)
-                .area()
-            };
-
-            ctx.draw_rectangle_outline(
-                area.x as usize,
-                area.y as usize,
-                area.width as usize,
-                area.height as usize,
-                0xf14c4c,
-            );
-
-            // panic!("{:?}", test.area());
         }
 
         //Note: All UI elements must be dropped before rendering.

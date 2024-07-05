@@ -240,7 +240,10 @@ pub struct Container<T: Tuple> {
 }
 
 impl<T: Tuple> View for Container<T> {
-    fn area(&mut self) -> Option<&mut Rect> {
+    fn area(&self) -> Option<&Rect> {
+        self.area.as_ref()
+    }
+    fn area_mut(&mut self) -> Option<&mut Rect> {
         self.area.as_mut()
     }
     fn calculate(&mut self, x: i32, y: i32) {
@@ -267,7 +270,7 @@ impl<T: Tuple> Container<T> {
             //If the widget is a container calculate the area.
             f.calculate(x, y);
 
-            if let Some(area) = f.area() {
+            if let Some(area) = f.area_mut() {
                 let height = area.height;
                 let width = area.width;
 

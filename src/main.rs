@@ -23,6 +23,10 @@ fn main() {
             //I'll probably need to write both..
             // v((button(&ctx), ()));
 
+            if button(&ctx).clicked(Left) {
+                println!("Clicked");
+            }
+
             let mut _parent = v((
                 button(&ctx).wh(20),
                 h((button(&ctx).wh(20), button(&ctx).wh(20))).p(10),
