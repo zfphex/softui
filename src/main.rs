@@ -15,14 +15,13 @@ fn main() {
         ctx.fill(Color::Black);
 
         {
-            //This doesn't work because it's not a tuple.
-            // let v = v((button(&ctx)));
-
-            //This is bad because () has no area?
-            // let v = v((button(&ctx), ()));
-
-            //This error is a nightmare to read.
-            // let v = v(button(&ctx));
+            //It took me a while to realize that state
+            //will not work with this type of code.
+            //How can I call button().clicked()?
+            //Either clicked needs to be a closure,
+            //or containers need to have a closure.
+            //I'll probably need to write both..
+            // v((button(&ctx), ()));
 
             let mut _parent = v((
                 button(&ctx).wh(20),
@@ -42,6 +41,7 @@ fn main() {
                 .p(10),
             ))
             .p(10);
+
             // dbg!(_parent.area());
         }
 

@@ -36,6 +36,21 @@ macro_rules! impl_view_tuple {
     }
 }
 
+impl<V: View> Tuple for V {
+    fn for_each<F: FnMut(&mut dyn View)>(&mut self, f: &mut F) {
+        f(self);
+    }
+    fn for_each_rev<F: FnMut(&mut dyn View)>(&mut self, f: &mut F) {
+        f(self);
+    }
+    fn len(&self) -> usize {
+        1
+    }
+    fn first(&mut self) -> &mut dyn View {
+        self as &mut dyn View
+    }
+}
+
 //Limit tuples to 10 items long. Helps with compile times.
 impl_view_tuple!(1; V0; 0; 0);
 impl_view_tuple!(2; V0, V1; 0, 1; 1, 0);
