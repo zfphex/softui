@@ -166,14 +166,24 @@ impl<'a> Layout for Button<'a> {
 
 //TODO: Simplify this down even more.
 impl<'a> Input for Button<'a> {
+    fn on_clicked<F: FnMut(&Context) -> ()>(self, button: MouseButton, mut function: F) -> Self {
+        if clicked(self.ctx, &self, button) {
+            function(self.ctx);
+        }
+        self
+    }
+
+    #[inline]
     fn clicked(&self, button: MouseButton) -> bool {
         clicked(self.ctx, self, button)
     }
 
+    #[inline]
     fn up(&self, button: MouseButton) -> bool {
         up(self.ctx, self, button)
     }
 
+    #[inline]
     fn down(&self, button: MouseButton) -> bool {
         down(self.ctx, self, button)
     }

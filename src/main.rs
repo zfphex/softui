@@ -5,6 +5,8 @@ fn main() {
     let mut ctx = Context::new("Softui", 800, 600);
     let _atlas = Atlas::new(32.0);
 
+    let mut size = 20;
+
     loop {
         match ctx.event() {
             None => {}
@@ -21,19 +23,41 @@ fn main() {
             //Either clicked needs to be a closure,
             //or containers need to have a closure.
             //I'll probably need to write both..
-            // v((button(&ctx), ()));
+            // v(button(&ctx).clicked_2(Left, || println!("Clicked")));
 
-            if button(&ctx).clicked(Left) {
-                println!("Clicked");
-            }
+            // if button(&ctx).clicked(Left) {
+            //     println!("Clicked");
+            // }
+
+            //TODO
+            // ctx.vertical(|ctx| {
+            //     if button(&ctx).clicked(Left) {
+            //         println!("Clicked button im");
+            //     };
+            // });
 
             let mut _parent = v((
-                button(&ctx).wh(20),
+                button(&ctx)
+                    .wh(20)
+                    .on_clicked(Middle, |_| {
+                        if size >= 30 {
+                            size = 20;
+                        } else {
+                            size = 30;
+                        }
+                    })
+                    .on_clicked(Left, |_| {
+                        if size >= 30 {
+                            size = 20;
+                        } else {
+                            size = 40;
+                        }
+                    }),
                 h((button(&ctx).wh(20), button(&ctx).wh(20))).p(10),
                 h((
-                    button(&ctx).wh(20),
-                    button(&ctx).wh(20),
-                    button(&ctx).wh(20),
+                    button(&ctx).wh(size),
+                    button(&ctx).wh(size),
+                    button(&ctx).wh(size),
                 ))
                 .p(10),
                 h((

@@ -575,6 +575,11 @@ impl Context {
     ) {
         todo!()
     }
+
+    //TODO
+    pub fn vertical<F: FnMut(&Self) -> ()>(&self, mut function: F) {
+        function(self)
+    }
 }
 
 #[cfg(test)]

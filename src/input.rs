@@ -1,6 +1,7 @@
 use crate::*;
 
 pub trait Input {
+    fn on_clicked<F: FnMut(&Context) -> ()>(self, button: MouseButton, function: F) -> Self;
     /// The user's cusor has been clicked and released on top of a widget.
     fn clicked(&self, button: MouseButton) -> bool;
     fn up(&self, button: MouseButton) -> bool;
