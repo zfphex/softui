@@ -1,5 +1,6 @@
 #![allow(unused, static_mut_refs)]
 #![feature(portable_simd, test)]
+use core::ffi::c_void;
 use mini::{info, profile};
 use std::{
     pin::Pin,
@@ -65,7 +66,7 @@ pub struct Context {
     pub width: usize,
     pub height: usize,
     pub window: Pin<Box<Window>>,
-    pub context: *mut VOID,
+    pub context: *mut c_void,
     pub bitmap: BITMAPINFO,
     //This should really be a Vec2 or (usize, usize), but this makes checking
     //rectangle intersections really easy.
@@ -101,7 +102,7 @@ impl Context {
             simd64: vec![u32x16::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
             //16 RGBQUADS in u8x64 -> 64 / 4 = 16
             // simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
-            bitmap: create_bitmap(width, height),
+            bitmap: BITMAPINFOHEADER::new(width, height),
             mouse_pos: Rect::default(),
             left_mouse: MouseState::new(),
             right_mouse: MouseState::new(),
@@ -120,13 +121,13 @@ impl Context {
             self.height = self.area.height as usize;
             self.buffer.clear();
             self.buffer.resize(self.width * self.height, 0);
-            self.bitmap = create_bitmap(self.width as i32, self.height as i32);
+            self.bitmap = BITMAPINFOHEADER::new(self.width as i32, self.height as i32);
         }
     }
 
     //TODO: Cleanup and remove.
     pub fn event(&mut self) -> Option<Event> {
-        match event(None) {
+        match self.window.event() {
             None => None,
             Some(event) => {
                 let mut passthrough_event = false;
@@ -198,7 +199,7 @@ impl Context {
                 0,
                 self.width as i32,
                 self.height as i32,
-                self.buffer.as_mut_ptr() as *const VOID,
+                self.buffer.as_mut_ptr() as *const c_void,
                 &self.bitmap,
                 0,
                 SRCCOPY,
@@ -227,7 +228,7 @@ impl Context {
                 0,
                 self.width as i32,
                 self.height as i32,
-                input as *const VOID,
+                input as *const c_void,
                 &self.bitmap,
                 0,
                 SRCCOPY,

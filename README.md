@@ -2,6 +2,7 @@
 
 - [ ] Allow drawing outside of the window area without crashing. Allow for clipping.
 - [ ] Rectangle with rounded corners
+- [ ] Framerate limiter
 - [x] Linear gradients
 - [x] The window changes framerate when resizing, not sure why?
 
@@ -168,15 +169,15 @@ vertical(
 
 ### Widgets
 
-Container
-Text
-Button
-Slider/Progress Bar
-Radio Menu
-Check Box
-Modal Menu
-Input
-Image
-Svg
-Flexbox
-Color Picker
+- Container
+- Text
+- Button
+- Slider/Progress Bar
+- Radio Menu
+- Check Box
+- Modal Menu
+- Input
+- Image
+- Svg
+- Flexbox
+- Color Picker

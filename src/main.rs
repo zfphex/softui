@@ -9,8 +9,8 @@ fn main() {
 
     loop {
         match ctx.event() {
-            None => {}
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
+            None => {}
             _ => {}
         }
 
@@ -36,10 +36,10 @@ fn main() {
             //     };
             // });
 
-            let mut _parent = v((
+            v((
                 button(&ctx)
                     .wh(20)
-                    .on_clicked(Middle, |_| {
+                    .on_clicked(Forward, |_| {
                         if size >= 30 {
                             size = 20;
                         } else {
@@ -69,8 +69,6 @@ fn main() {
                 .p(10),
             ))
             .p(10);
-
-            // dbg!(_parent.area());
         }
 
         ctx.draw_frame();
