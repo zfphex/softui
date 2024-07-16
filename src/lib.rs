@@ -1,9 +1,13 @@
 #![allow(unused, static_mut_refs)]
-#![feature(portable_simd, test)]
+#![feature(portable_simd, test, unsafe_cell_from_mut)]
 use core::ffi::c_void;
+use crossbeam_queue::SegQueue;
 use mini::{info, profile};
 use std::{
+    cell::UnsafeCell,
+    mem::MaybeUninit,
     pin::Pin,
+    ptr::NonNull,
     simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64},
     sync::LazyLock,
 };
@@ -51,7 +55,28 @@ pub enum Command {
 
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
 
-// pub static mut CTX: LazyLock<Context> = LazyLock::new(|| Context::new("test", 800, 600));
+// pub static mut CONTEXT: Context = Context {
+//     buffer: Vec::new(),
+//     area: Rect::default(),
+//     width: 0,
+//     height: 0,
+//     // window: Pin::new(Box::new(Window {
+//     //     hwnd: 0,
+//     //     screen_mouse_pos: (0, 0),
+//     //     queue: SegQueue::new(),
+//     // })),
+//     window: todo!(),
+//     context: None,
+//     bitmap: BITMAPINFO::new(0, 0),
+//     mouse_pos: Rect::default(),
+//     left_mouse: MouseState::new(),
+//     right_mouse: MouseState::new(),
+//     middle_mouse: MouseState::new(),
+//     mouse_4: MouseState::new(),
+//     mouse_5: MouseState::new(),
+// };
+
+pub static mut CONTEXT: Option<Context> = None;
 
 /// Holds the framebuffer and input state.
 /// Also handles rendering.
@@ -59,14 +84,14 @@ pub struct Context {
     //size is width * height.
     pub buffer: Vec<u32>,
     //(width * height) / 4
-    pub simd16: Vec<u8x16>,
-    pub simd32: Vec<u32x8>,
-    pub simd64: Vec<u32x16>,
+    // pub simd16: Vec<u8x16>,
+    // pub simd32: Vec<u32x8>,
+    // pub simd64: Vec<u32x16>,
     pub area: Rect,
     pub width: usize,
     pub height: usize,
     pub window: Pin<Box<Window>>,
-    pub context: *mut c_void,
+    pub context: Option<*mut c_void>,
     pub bitmap: BITMAPINFO,
     //This should really be a Vec2 or (usize, usize), but this makes checking
     //rectangle intersections really easy.
@@ -80,7 +105,7 @@ pub struct Context {
 
 impl Context {
     pub fn new(title: &str, width: usize, height: usize) -> Self {
-        let window = unsafe { create_window(title, width as i32, height as i32) };
+        let mut window = unsafe { create_window(title, width as i32, height as i32) };
         let context = unsafe { GetDC(window.hwnd) };
         //Convert top, left, right, bottom to x, y, width, height.
         let area = Rect::from(window.client_area());
@@ -89,20 +114,20 @@ impl Context {
 
         Self {
             window,
-            context,
+            context: Some(context),
             area,
             width: width as usize,
             height: height as usize,
             buffer: vec![0; width as usize * height as usize],
             //4 RGBQUADS in u8x16 -> 16 / 4 = 4
-            simd16: vec![u8x16::splat(0); ((width * height) as f32 / 4.0).ceil() as usize],
+            // simd16: vec![u8x16::splat(0); ((width * height) as f32 / 4.0).ceil() as usize],
             //8 RGBQUADS in u8x64 -> 32 / 4 = 8
             // simd32: vec![u8x32::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
-            simd32: vec![u32x8::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
-            simd64: vec![u32x16::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
+            // simd32: vec![u32x8::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
+            // simd64: vec![u32x16::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
             //16 RGBQUADS in u8x64 -> 64 / 4 = 16
             // simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
-            bitmap: BITMAPINFOHEADER::new(width, height),
+            bitmap: BITMAPINFO::new(width, height),
             mouse_pos: Rect::default(),
             left_mouse: MouseState::new(),
             right_mouse: MouseState::new(),
@@ -121,7 +146,7 @@ impl Context {
             self.height = self.area.height as usize;
             self.buffer.clear();
             self.buffer.resize(self.width * self.height, 0);
-            self.bitmap = BITMAPINFOHEADER::new(self.width as i32, self.height as i32);
+            self.bitmap = BITMAPINFO::new(self.width as i32, self.height as i32);
         }
     }
 
@@ -190,7 +215,7 @@ impl Context {
         self.resize();
         unsafe {
             StretchDIBits(
-                self.context,
+                self.context.unwrap(),
                 0,
                 0,
                 self.width as i32,
@@ -219,7 +244,7 @@ impl Context {
     pub fn strech_di(&mut self, input: *mut u8) {
         unsafe {
             StretchDIBits(
-                self.context,
+                self.context.unwrap(),
                 0,
                 0,
                 self.width as i32,
@@ -241,57 +266,10 @@ impl Context {
         self.buffer.get_mut(pos)
     }
 
-    pub fn draw_simd16(&mut self) {
-        profile!();
-        self.resize();
-        let slice = self.simd16.as_mut_slice();
-        let flattened: &mut [u8] = unsafe { std::mem::transmute(slice) };
-        self.strech_di(flattened.as_mut_ptr());
-    }
-
-    pub fn draw_simd32(&mut self) {
-        profile!();
-        self.resize();
-        let slice = self.simd32.as_mut_slice();
-        let flattened: &mut [u8] = unsafe { std::mem::transmute(slice) };
-        self.strech_di(flattened.as_mut_ptr());
-    }
-
-    pub fn fillsimd32(&mut self, color: u32) {
-        profile!();
-        for tile in &mut self.simd32 {
-            *tile = u32x8::splat(color);
-        }
-    }
-
-    pub fn draw_simd64(&mut self) {
-        profile!();
-        self.resize();
-        let slice = self.simd64.as_mut_slice();
-        let flattened: &mut [u8] = unsafe { std::mem::transmute(slice) };
-        self.strech_di(flattened.as_mut_ptr());
-    }
-
     //This is essentially just a memset.
     pub fn fill<C: Into<u32>>(&mut self, color: C) {
         profile!();
         self.buffer.fill(color.into());
-    }
-
-    pub fn fillsimd16(&mut self, color: u32) {
-        profile!();
-        for tile in &mut self.simd16 {
-            //Convert u32x4 into u8x16
-            *tile = unsafe { std::mem::transmute(u32x4::splat(color)) };
-        }
-    }
-
-    pub fn fillsimd64(&mut self, color: u32) {
-        profile!();
-        for tile in &mut self.simd64 {
-            //Convert u32x16 into u8x64
-            *tile = u32x16::splat(color);
-        }
     }
 
     ///Note color order is BGR_. The last byte is reserved.
@@ -436,90 +414,6 @@ impl Context {
             for (x, px) in self.buffer[start..end].iter_mut().enumerate() {
                 let t = (x as f32) / (end as f32 - start as f32);
                 *px = lerp_hex(color1, color2, t);
-            }
-        }
-    }
-
-    //8 * u32
-    #[track_caller]
-    pub fn draw_rectangle32(
-        &mut self,
-        x: usize,
-        y: usize,
-        width: usize,
-        height: usize,
-        color: u32,
-    ) {
-        let canvas_width = self.width;
-
-        #[cfg(debug_assertions)]
-        {
-            let canvas_height = self.height;
-            if x + width >= canvas_width {
-                panic!("x: {x} + width: {width} cannot be >= to the canvas width: {canvas_width}");
-            }
-            if y + height >= canvas_height {
-                panic!(
-                    "y: {y} + height: {height} cannot be >= to the canvas height: {canvas_height}"
-                );
-            }
-        }
-
-        let buffer = self.simd32.as_mut_slice();
-
-        for y in y..y + height {
-            let start = x + (canvas_width / 8) * y;
-            let end = start + (width / 8);
-            let total_pixels = end - start;
-            let simd_end = start + total_pixels;
-            let rem = width % 8;
-
-            // println!(
-            //     "y: {} width: {} width/8: {} rem: {} start: {} end: {} simd_end: {}",
-            //     y,
-            //     width,
-            //     width / 8,
-            //     width % 8,
-            //     start,
-            //     end,
-            //     simd_end,
-            // );
-
-            for slice in &mut buffer[start..simd_end] {
-                *slice = u32x8::splat(color)
-            }
-
-            if rem != 0 {
-                for px in &mut buffer[simd_end].as_mut_array()[0..rem] {
-                    *px = color;
-                }
-            }
-        }
-    }
-
-    //Should really be called draw_rectangle16.
-    //Since it's 16 u32's; which is what we care about.
-    #[track_caller]
-    pub fn draw_rectangle64(
-        &mut self,
-        x: usize,
-        y: usize,
-        width: usize,
-        height: usize,
-        color: u32,
-    ) {
-        let canvas_width = self.width;
-
-        #[cfg(debug_assertions)]
-        {
-            let canvas_height = self.height;
-            if x + width >= canvas_width {
-                panic!("x: {x} + width: {width} cannot be >= to the canvas width: {canvas_width}");
-            }
-            if y + height >= canvas_height {
-                panic!(
-                    "y: {y} + height: {height} cannot be >= to the canvas height: {canvas_height}"
-                );
             }
         }
     }

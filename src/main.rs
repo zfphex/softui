@@ -2,7 +2,11 @@ use softui::*;
 use window::*;
 
 fn main() {
+    // unsafe { CONTEXT = Some(Context::new("Softui", 800, 600)) };
+    // let ctx = unsafe { CONTEXT.as_mut().unwrap() };
+
     let mut ctx = Context::new("Softui", 800, 600);
+
     let _atlas = Atlas::new(32.0);
 
     let mut size = 20;
@@ -17,19 +21,8 @@ fn main() {
         ctx.fill(Color::Black);
 
         {
-            //It took me a while to realize that state
-            //will not work with this type of code.
-            //How can I call button().clicked()?
-            //Either clicked needs to be a closure,
-            //or containers need to have a closure.
-            //I'll probably need to write both..
-            // v(button(&ctx).clicked_2(Left, || println!("Clicked")));
-
-            // if button(&ctx).clicked(Left) {
-            //     println!("Clicked");
-            // }
-
-            //TODO
+            //TODO: I'm not liking draw on drop.
+            //It works for an immediate style of code but falls apart everywhere else.
             // ctx.vertical(|ctx| {
             //     if button(&ctx).clicked(Left) {
             //         println!("Clicked button im");

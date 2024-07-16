@@ -3,6 +3,8 @@
 - [ ] Allow drawing outside of the window area without crashing. Allow for clipping.
 - [ ] Rectangle with rounded corners
 - [ ] Framerate limiter
+- [ ] Remove draw on drop and require that everything be placed into a container.
+- [ ] Empty non vetrical/horizontal container for edge cases.
 - [x] Linear gradients
 - [x] The window changes framerate when resizing, not sure why?
 
