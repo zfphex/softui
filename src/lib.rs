@@ -1,5 +1,5 @@
 #![allow(unused, static_mut_refs)]
-#![feature(portable_simd, test, unsafe_cell_from_mut)]
+#![feature(portable_simd, test, const_float_bits_conv)]
 use core::ffi::c_void;
 use crossbeam_queue::SegQueue;
 use mini::{info, profile};
@@ -13,6 +13,7 @@ use std::{
 };
 use window::*;
 
+pub mod atomic_float;
 pub mod button;
 pub mod input;
 pub mod layout;
@@ -26,7 +27,7 @@ pub use layout::*;
 pub use style::*;
 pub use text::*;
 pub use view::*;
-pub use MouseButton::*;
+pub use Mouse::*;
 
 pub trait View {
     fn area(&self) -> Option<&Rect>;
@@ -76,7 +77,21 @@ pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_que
 //     mouse_5: MouseState::new(),
 // };
 
-pub static mut CONTEXT: Option<Context> = None;
+//This is definitely 100% thread safe.
+//No issues here at all.
+pub static mut CTX: Option<Context> = None;
+
+#[inline(always)]
+pub fn ctx() -> &'static mut Context {
+    unsafe { CTX.as_mut().unwrap() }
+}
+
+pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Context {
+    unsafe {
+        CTX = Some(Context::new(title, width, height));
+        CTX.as_mut().unwrap()
+    }
+}
 
 /// Holds the framebuffer and input state.
 /// Also handles rendering.
@@ -474,35 +489,5 @@ impl Context {
     //TODO
     pub fn vertical<F: FnMut(&Self) -> ()>(&self, mut function: F) {
         function(self)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    extern crate test;
-
-    use super::*;
-    use test::black_box;
-
-    #[bench]
-    fn atlas(b: &mut test::bench::Bencher) {
-        let atlas = Atlas::new(32.0);
-        b.iter(|| {
-            for _ in 0..1000 {
-                let (metrics, bitmap) = &atlas.glyphs[black_box(b'a' as usize)];
-                assert_eq!(metrics.width, 15);
-            }
-        });
-    }
-
-    #[bench]
-    fn rasterize(b: &mut test::bench::Bencher) {
-        let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-        b.iter(|| {
-            for _ in 0..1000 {
-                let (metrics, bitmap) = font.rasterize(black_box('a'), 32.0);
-                assert_eq!(metrics.width, 15);
-            }
-        });
     }
 }

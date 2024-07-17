@@ -1,70 +1,70 @@
 use crate::*;
 
 pub trait Input {
-    fn on_clicked<F: FnMut(&Context) -> ()>(self, button: MouseButton, function: F) -> Self;
+    fn on_clicked<F: FnMut(&Context) -> ()>(self, button: Mouse, function: F) -> Self;
     /// The user's cusor has been clicked and released on top of a widget.
-    fn clicked(&self, button: MouseButton) -> bool;
-    fn up(&self, button: MouseButton) -> bool;
-    fn down(&self, button: MouseButton) -> bool;
+    fn clicked(&self, button: Mouse) -> bool;
+    fn up(&self, button: Mouse) -> bool;
+    fn down(&self, button: Mouse) -> bool;
 }
 
-pub fn clicked<T: View>(ctx: &Context, widget: &T, button: MouseButton) -> bool {
+pub fn clicked<T: View>(ctx: &Context, widget: &T, button: Mouse) -> bool {
     let area = widget.area().unwrap();
     if !ctx.mouse_pos.intersects(area.clone()) {
         return false;
     }
 
     match button {
-        MouseButton::Left => {
+        Mouse::Left => {
             ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area.clone())
         }
-        MouseButton::Right => {
+        Mouse::Right => {
             ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area.clone())
         }
-        MouseButton::Middle => {
+        Mouse::Middle => {
             ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area.clone())
         }
-        MouseButton::Back => {
+        Mouse::Back => {
             ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area.clone())
         }
-        MouseButton::Forward => {
+        Mouse::Forward => {
             ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area.clone())
         }
     }
 }
 
-pub fn up<T: View>(ctx: &Context, widget: &T, button: MouseButton) -> bool {
+pub fn up<T: View>(ctx: &Context, widget: &T, button: Mouse) -> bool {
     let area = widget.area().unwrap();
     if !ctx.mouse_pos.intersects(area.clone()) {
         return false;
     }
 
     match button {
-        MouseButton::Left => ctx.left_mouse.released,
-        MouseButton::Right => ctx.right_mouse.released,
-        MouseButton::Middle => ctx.middle_mouse.released,
-        MouseButton::Back => ctx.mouse_4.released,
-        MouseButton::Forward => ctx.mouse_5.released,
+        Mouse::Left => ctx.left_mouse.released,
+        Mouse::Right => ctx.right_mouse.released,
+        Mouse::Middle => ctx.middle_mouse.released,
+        Mouse::Back => ctx.mouse_4.released,
+        Mouse::Forward => ctx.mouse_5.released,
     }
 }
 
-pub fn down<T: View>(ctx: &Context, widget: &T, button: MouseButton) -> bool {
+pub fn down<T: View>(ctx: &Context, widget: &T, button: Mouse) -> bool {
     let area = widget.area().unwrap();
     if !ctx.mouse_pos.intersects(area.clone()) {
         return false;
     }
 
     match button {
-        MouseButton::Left => ctx.left_mouse.pressed,
-        MouseButton::Right => ctx.right_mouse.pressed,
-        MouseButton::Middle => ctx.middle_mouse.pressed,
-        MouseButton::Back => ctx.mouse_4.pressed,
-        MouseButton::Forward => ctx.mouse_5.pressed,
+        Mouse::Left => ctx.left_mouse.pressed,
+        Mouse::Right => ctx.right_mouse.pressed,
+        Mouse::Middle => ctx.middle_mouse.pressed,
+        Mouse::Back => ctx.mouse_4.pressed,
+        Mouse::Forward => ctx.mouse_5.pressed,
     }
 }
 
 #[derive(Debug)]
-pub enum MouseButton {
+pub enum Mouse {
     Left,
     Right,
     Middle,

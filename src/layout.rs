@@ -160,21 +160,98 @@ impl From<f32> for Unit {
 
 //TODO: This is a complete mess :/
 pub trait Layout {
-    fn centered(self) -> Self;
+    fn centered(mut self, parent: Rect) -> Self
+    where
+        Self: Sized + View,
+    {
+        let parent_area = parent.clone();
+        let area = self.area_mut().unwrap();
+        let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
+        let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);
 
-    fn x<U: Into<Unit>>(self, x: U) -> Self;
-    fn y<U: Into<Unit>>(self, y: U) -> Self;
-    fn width<U: Into<Unit>>(self, width: U) -> Self;
-    fn height<U: Into<Unit>>(self, height: U) -> Self;
+        *area = Rect::new(
+            x.round() as i32,
+            y.round() as i32,
+            area.width,
+            area.height,
+        );
+
+        self
+    }
+
+    fn x<U: Into<Unit>>(mut self, x: U) -> Self
+    where
+        Self: Sized + View,
+    {
+        let area = self.area_mut().unwrap();
+        match x.into() {
+            Unit::Px(px) => {
+                area.x = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(p) => {
+                todo!();
+                // let percentage = p as f32 / 100.0;
+                // area.x = ((self.parent_area.width as f32 * percentage)
+                //     - (self.area.width as f32 / 2.0))
+                //     .round() as i32;
+            }
+        }
+        self
+    }
+
+    fn y<U: Into<Unit>>(mut self, y: U) -> Self
+    where
+        Self: Sized + View,
+    {
+        let area = self.area_mut().unwrap();
+        match y.into() {
+            Unit::Px(px) => {
+                self.area_mut().unwrap().y = px as i32;
+                // self.area.y = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+    fn width<U: Into<Unit>>(mut self, length: U) -> Self
+    where
+        Self: Sized + View,
+    {
+        let area = self.area_mut().unwrap();
+        match length.into() {
+            Unit::Px(px) => {
+                area.width = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+    fn height<U: Into<Unit>>(mut self, length: U) -> Self
+    where
+        Self: Sized + View,
+    {
+        let area = self.area_mut().unwrap();
+        match length.into() {
+            Unit::Px(px) => {
+                area.height = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
     fn w<U: Into<Unit>>(self, width: U) -> Self
     where
-        Self: Sized,
+        Self: Sized + View,
     {
         self.width(width)
     }
     fn h<U: Into<Unit>>(self, width: U) -> Self
     where
-        Self: Sized,
+        Self: Sized + View,
     {
         self.height(width)
     }
@@ -182,29 +259,50 @@ pub trait Layout {
     //Swizzle 😏
     fn wh<U: Into<Unit> + Copy>(self, value: U) -> Self
     where
-        Self: Sized,
+        Self: Sized + View,
     {
         self.width(value).height(value)
     }
 
     fn top<U: Into<Unit>>(self, top: U) -> Self
     where
-        Self: Sized,
+        Self: Sized + View,
     {
         self.y(top)
     }
     fn left<U: Into<Unit>>(self, left: U) -> Self
     where
-        Self: Sized,
+        Self: Sized + View,
     {
         self.x(left)
     }
-    fn right<U: Into<Unit>>(self, right: U) -> Self;
-    fn bottom<U: Into<Unit>>(self, bottom: U) -> Self;
+
+    fn right<U: Into<Unit>>(mut self, length: U) -> Self
+    where
+        Self: Sized + View,
+    {
+        match length.into() {
+            Unit::Px(px) => todo!(),
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+    fn bottom<U: Into<Unit>>(mut self, length: U) -> Self
+    where
+        Self: Sized + View,
+    {
+        match length.into() {
+            Unit::Px(px) => todo!(),
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
 
     fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self
     where
-        Self: Sized,
+        Self: Sized + View,
     {
         self.x(x).y(y).width(width).height(height)
     }

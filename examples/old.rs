@@ -112,12 +112,13 @@ fn main() {
         }
 
         'button: {
-            let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(200);
+            // let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(200);
+            let btn = button(&ctx).bg(Color::Hex(0xff)).centered(ctx.area.clone()).y(200);
             if btn.clicked(Left) {
                 println!("Clicked blue button!");
             }
 
-            if button(&ctx).centered().clicked(Middle) {
+            if button(&ctx).centered(ctx.area.clone()).clicked(Middle) {
                 println!("Clicked white button!");
             }
         }

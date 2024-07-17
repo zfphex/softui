@@ -1,4 +1,6 @@
 use crate::*;
+use atomic_float::AtomicF32;
+use fontdue::*;
 use std::{ops::Range, path::Path};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
@@ -6,11 +8,73 @@ pub const CHAR: char = 'g';
 
 //https://freetype.org/freetype2/docs/glyphs/glyphs-3.html
 
-// pub fn draw_buffer(buffer: &mut text_buffer::Buffer, atlas: &mut Atlas, canvas: &mut Canvas) {
-//     let mut y = atlas.font_size as usize;
-//     for line in buffer.as_str().lines() {
-//         atlas.draw_text(canvas, line, 0, y);
-//         y += atlas.font_size as usize;
+pub static mut DEFAULT_FONT_SIZE: AtomicF32 = AtomicF32::new(18.0);
+
+pub fn default_font_size() -> f32 {
+    unsafe { DEFAULT_FONT_SIZE.get() }
+}
+
+pub fn set_font_size(font_size: f32) {
+    unsafe { DEFAULT_FONT_SIZE.set(font_size) }
+}
+
+pub fn text(text: &str) -> Text {
+    Text {
+        font: Font::from_bytes(FONT, FontSettings::default()).unwrap(),
+        area: Rect::default(),
+        text,
+        font_size: default_font_size(),
+    }
+}
+
+pub struct Text<'a> {
+    pub font: fontdue::Font,
+    pub area: Rect,
+    pub text: &'a str,
+    font_size: f32,
+}
+
+impl<'a> Text<'a> {
+    pub fn font_size(mut self, font_size: f32) -> Self {
+        self.font_size = font_size;
+        self
+    }
+    pub fn draw(&self) {
+        let mut y: usize = self.area.y.try_into().unwrap();
+        for line in self.text.lines() {
+            //TODO: This should mutate the area, following the text bounds.
+            draw_text(
+                ctx(),
+                line,
+                &self.font,
+                self.font_size,
+                self.area.x.try_into().unwrap(),
+                y,
+            );
+            y += self.font_size as usize;
+        }
+    }
+}
+
+impl<'a> View for Text<'a> {
+    fn area(&self) -> Option<&Rect> {
+        Some(&self.area)
+    }
+
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        Some(&mut self.area)
+    }
+}
+
+impl<'a> Layout for Text<'a> {
+    fn centered(self, parent: Rect) -> Self {
+        todo!()
+    }
+}
+
+// impl<'a> Drop for Text<'a> {
+//     fn drop(&mut self) {
+//         self.draw();
 //     }
 // }
 
@@ -37,13 +101,57 @@ impl Buffer {
         // let mut y = atlas.font_size as usize - 10;
         for line in self.text.lines() {
             atlas.draw_text(ctx, line, 0, y);
+
             y += atlas.font_size as usize;
+        }
+    }
+}
+
+pub fn draw_text(ctx: &mut Context, text: &str, font: &Font, font_size: f32, x: usize, y: usize) {
+    let mut glyph_x = x;
+
+    for char in text.chars() {
+        let (metrics, bitmap) = font.rasterize(char, font_size);
+
+        let glyph_y =
+            y as f32 - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
+
+        for y in 0..metrics.height {
+            for x in 0..metrics.width {
+                let color = bitmap[x + y * metrics.width];
+
+                //Should the text really be offset by the font size?
+                //This allows the user to draw text at (0, 0).
+                let offset = font_size + glyph_y + y as f32;
+
+                //We can't render off of the screen, mkay?
+                if offset < 0.0 {
+                    continue;
+                }
+
+                let i = x + glyph_x + ctx.width * offset as usize;
+
+                if i >= ctx.buffer.len() {
+                    return;
+                }
+
+                //Set the R, G and B values to the correct color.
+                ctx.buffer[i] = (color as u32) << 16 | (color as u32) << 8 | (color as u32);
+            }
+        }
+
+        glyph_x += metrics.advance_width as usize;
+
+        //TODO: Still not enough.
+        if glyph_x >= ctx.width {
+            return;
         }
     }
 }
 
 pub struct Atlas {
     pub glyphs: [(fontdue::Metrics, Vec<u8>); 128],
+    // pub glyphs: [(fontdue::Metrics, &'static mut [u8]); 128],
     pub font_size: f32,
 }
 
@@ -53,9 +161,12 @@ impl Atlas {
 
         let mut glyphs: [(fontdue::Metrics, Vec<u8>); 128] =
             core::array::from_fn(|f| (fontdue::Metrics::default(), Vec::new()));
+        // let mut glyphs: [(fontdue::Metrics, &'static mut [u8]); 128] =
+        //     core::array::from_fn(|f| (fontdue::Metrics::default(), Default::default()));
 
         for char in 32..127u8 {
             let (metrics, bitmap) = font.rasterize(char as char, font_size);
+            // let bitmap: &'static mut [u8] = Box::leak(bitmap.into_boxed_slice());
             glyphs[char as usize] = (metrics, bitmap);
         }
 
@@ -150,5 +261,35 @@ pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
 
             // ctx.buffer[i] = (r as u32) << 16 | (g as u32) << 8 | (b as u32)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    extern crate test;
+
+    use super::*;
+    use test::black_box;
+
+    #[bench]
+    fn atlas(b: &mut test::bench::Bencher) {
+        let atlas = Atlas::new(32.0);
+        b.iter(|| {
+            for _ in 0..1000 {
+                let (metrics, bitmap) = &atlas.glyphs[black_box(b'a' as usize)];
+                assert_eq!(metrics.width, 15);
+            }
+        });
+    }
+
+    #[bench]
+    fn rasterize(b: &mut test::bench::Bencher) {
+        let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
+        b.iter(|| {
+            for _ in 0..1000 {
+                let (metrics, bitmap) = font.rasterize(black_box('a'), 32.0);
+                assert_eq!(metrics.width, 15);
+            }
+        });
     }
 }

@@ -4,6 +4,7 @@
 - [ ] Rectangle with rounded corners
 - [ ] Framerate limiter
 - [ ] Remove draw on drop and require that everything be placed into a container.
+- [ ] Remove skip_draw from button
 - [ ] Empty non vetrical/horizontal container for edge cases.
 - [x] Linear gradients
 - [x] The window changes framerate when resizing, not sure why?
