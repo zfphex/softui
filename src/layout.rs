@@ -162,26 +162,21 @@ impl From<f32> for Unit {
 pub trait Layout {
     fn centered(mut self, parent: Rect) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         let parent_area = parent.clone();
         let area = self.area_mut().unwrap();
         let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
         let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);
 
-        *area = Rect::new(
-            x.round() as i32,
-            y.round() as i32,
-            area.width,
-            area.height,
-        );
+        *area = Rect::new(x.round() as i32, y.round() as i32, area.width, area.height);
 
         self
     }
 
     fn x<U: Into<Unit>>(mut self, x: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         let area = self.area_mut().unwrap();
         match x.into() {
@@ -202,7 +197,7 @@ pub trait Layout {
 
     fn y<U: Into<Unit>>(mut self, y: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         let area = self.area_mut().unwrap();
         match y.into() {
@@ -217,7 +212,7 @@ pub trait Layout {
     }
     fn width<U: Into<Unit>>(mut self, length: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         let area = self.area_mut().unwrap();
         match length.into() {
@@ -231,7 +226,7 @@ pub trait Layout {
     }
     fn height<U: Into<Unit>>(mut self, length: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         let area = self.area_mut().unwrap();
         match length.into() {
@@ -245,13 +240,13 @@ pub trait Layout {
     }
     fn w<U: Into<Unit>>(self, width: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         self.width(width)
     }
     fn h<U: Into<Unit>>(self, width: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         self.height(width)
     }
@@ -259,27 +254,27 @@ pub trait Layout {
     //Swizzle 😏
     fn wh<U: Into<Unit> + Copy>(self, value: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         self.width(value).height(value)
     }
 
     fn top<U: Into<Unit>>(self, top: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         self.y(top)
     }
     fn left<U: Into<Unit>>(self, left: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         self.x(left)
     }
 
     fn right<U: Into<Unit>>(mut self, length: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         match length.into() {
             Unit::Px(px) => todo!(),
@@ -290,7 +285,7 @@ pub trait Layout {
     }
     fn bottom<U: Into<Unit>>(mut self, length: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         match length.into() {
             Unit::Px(px) => todo!(),
@@ -302,7 +297,7 @@ pub trait Layout {
 
     fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self
     where
-        Self: Sized + View,
+        Self: Sized + Widget,
     {
         self.x(x).y(y).width(width).height(height)
     }
@@ -345,7 +340,7 @@ pub struct Container<T: Tuple> {
     pub margin: usize,
 }
 
-impl<T: Tuple> View for Container<T> {
+impl<T: Tuple> Widget for Container<T> {
     fn area(&self) -> Option<&Rect> {
         self.area.as_ref()
     }

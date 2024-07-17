@@ -5,49 +5,49 @@ pub trait Tuple {
     // const LEN: usize;
     // fn array(&mut self) -> [&mut dyn View; Self::LEN];
 
-    fn for_each<F: FnMut(&mut dyn View)>(&mut self, f: &mut F);
-    fn for_each_rev<F: FnMut(&mut dyn View)>(&mut self, f: &mut F);
+    fn for_each<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F);
+    fn for_each_rev<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F);
     fn len(&self) -> usize;
-    fn first(&mut self) -> &mut dyn View;
+    fn first(&mut self) -> &mut dyn Widget;
 }
 
 //https://github.com/audulus/rui/blob/main/src/Tuple.rs
 macro_rules! impl_view_tuple {
     ($n: tt; $($t:ident),*; $($s:tt),*; $($s_rev:tt),*) => {
-        impl< $( $t: View, )* > Tuple for ( $( $t, )* ) {
+        impl< $( $t: Widget, )* > Tuple for ( $( $t, )* ) {
             // const LEN: usize = $n;
 
             // fn array(&mut self) -> [&mut dyn View; Self::LEN] {
             //     [$(&mut self.$s,)*]
             // }
-            fn for_each<F: FnMut(&mut dyn View)>(&mut self, f: &mut F) {
+            fn for_each<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
                 $( f(&mut self.$s); )*
             }
-            fn for_each_rev<F: FnMut(&mut dyn View)>(&mut self, f: &mut F) {
+            fn for_each_rev<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
                 $( f(&mut self.$s_rev); )*
             }
             fn len(&self) -> usize {
                 $n
             }
-            fn first(&mut self) -> &mut dyn View {
-                &mut self.0 as &mut dyn View
+            fn first(&mut self) -> &mut dyn Widget {
+                &mut self.0 as &mut dyn Widget
             }
         }
     }
 }
 
-impl<V: View> Tuple for V {
-    fn for_each<F: FnMut(&mut dyn View)>(&mut self, f: &mut F) {
+impl<V: Widget> Tuple for V {
+    fn for_each<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
         f(self);
     }
-    fn for_each_rev<F: FnMut(&mut dyn View)>(&mut self, f: &mut F) {
+    fn for_each_rev<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
         f(self);
     }
     fn len(&self) -> usize {
         1
     }
-    fn first(&mut self) -> &mut dyn View {
-        self as &mut dyn View
+    fn first(&mut self) -> &mut dyn Widget {
+        self as &mut dyn Widget
     }
 }
 

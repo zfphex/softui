@@ -8,7 +8,7 @@ pub trait Input {
     fn down(&self, button: Mouse) -> bool;
 }
 
-pub fn clicked<T: View>(ctx: &Context, widget: &T, button: Mouse) -> bool {
+pub fn clicked<T: Widget>(ctx: &Context, widget: &T, button: Mouse) -> bool {
     let area = widget.area().unwrap();
     if !ctx.mouse_pos.intersects(area.clone()) {
         return false;
@@ -33,7 +33,7 @@ pub fn clicked<T: View>(ctx: &Context, widget: &T, button: Mouse) -> bool {
     }
 }
 
-pub fn up<T: View>(ctx: &Context, widget: &T, button: Mouse) -> bool {
+pub fn up<T: Widget>(ctx: &Context, widget: &T, button: Mouse) -> bool {
     let area = widget.area().unwrap();
     if !ctx.mouse_pos.intersects(area.clone()) {
         return false;
@@ -48,7 +48,7 @@ pub fn up<T: View>(ctx: &Context, widget: &T, button: Mouse) -> bool {
     }
 }
 
-pub fn down<T: View>(ctx: &Context, widget: &T, button: Mouse) -> bool {
+pub fn down<T: Widget>(ctx: &Context, widget: &T, button: Mouse) -> bool {
     let area = widget.area().unwrap();
     if !ctx.mouse_pos.intersects(area.clone()) {
         return false;

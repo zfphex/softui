@@ -31,17 +31,7 @@ pub struct Button<'a> {
 
 impl<'a> Button<'a> {}
 
-impl<'a> View for Button<'a> {
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.area)
-    }
-
-    fn area(&self) -> Option<&Rect> {
-        Some(&self.area)
-    }
-}
-
-impl<'a> Draw for Button<'a> {
+impl<'a> Widget for Button<'a> {
     fn draw(&self) {
         unsafe {
             COMMAND_QUEUE.push(Command::Rectangle(
@@ -54,8 +44,12 @@ impl<'a> Draw for Button<'a> {
         }
     }
 
-    fn no_draw(&mut self) {
-        self.skip_draw = true;
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        Some(&mut self.area)
+    }
+
+    fn area(&self) -> Option<&Rect> {
+        Some(&self.area)
     }
 }
 

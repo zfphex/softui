@@ -56,11 +56,16 @@ impl<'a> Text<'a> {
     }
 }
 
-impl<'a> View for Text<'a> {
+impl<'a> Widget for Text<'a> {
+    fn draw(&self) {
+        //TODO: Make this thread safe, by sending a draw call.
+
+        self.draw();
+        // todo!();
+    }
     fn area(&self) -> Option<&Rect> {
         Some(&self.area)
     }
-
     fn area_mut(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }

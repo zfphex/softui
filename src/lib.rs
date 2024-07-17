@@ -19,23 +19,24 @@ pub mod input;
 pub mod layout;
 pub mod style;
 pub mod text;
-pub mod view;
+pub mod tuple;
 
 pub use button::*;
 pub use input::*;
 pub use layout::*;
 pub use style::*;
 pub use text::*;
-pub use view::*;
+pub use tuple::*;
 pub use Mouse::*;
 
-pub trait View {
+pub trait Widget {
+    fn draw(&self) {}
     fn area(&self) -> Option<&Rect>;
     fn area_mut(&mut self) -> Option<&mut Rect>;
     fn calculate(&mut self, x: i32, y: i32) {}
 }
 
-impl View for () {
+impl Widget for () {
     fn area(&self) -> Option<&Rect> {
         None
     }
@@ -44,14 +45,13 @@ impl View for () {
     }
 }
 
-pub trait Draw {
-    fn draw(&self);
-    fn no_draw(&mut self);
-}
-
 pub enum Command {
-    ///(x, y, width, height, color)
+    /// (x, y, width, height, color)
     Rectangle(usize, usize, usize, usize, u32),
+    /// (text, font_size, x, y)
+    /// This needs to include the desired font.
+    /// Not sure how to do that yet.
+    Text(&'static str, f32, usize, usize),
 }
 
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
@@ -223,6 +223,9 @@ impl Context {
             match cmd {
                 Command::Rectangle(x, y, width, height, color) => {
                     self.draw_rectangle(x, y, width, height, color);
+                }
+                Command::Text(text, size, x, y) => {
+                    todo!();
                 }
             }
         }
