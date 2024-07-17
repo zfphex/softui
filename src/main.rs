@@ -1,3 +1,4 @@
+// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use softui::*;
 use window::*;
 
@@ -21,7 +22,7 @@ fn main() {
         ctx.fill(Color::Black);
 
         {
-            let text = text("hello\nyipee!").font_size(32.0).x(100).y(300);
+            let text = text("hello\nyipee!").font_size(32.0);
             text.draw();
         }
 

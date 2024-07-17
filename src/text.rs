@@ -6,8 +6,6 @@ use std::{ops::Range, path::Path};
 pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
 pub const CHAR: char = 'g';
 
-//https://freetype.org/freetype2/docs/glyphs/glyphs-3.html
-
 pub static mut DEFAULT_FONT_SIZE: AtomicF32 = AtomicF32::new(18.0);
 
 pub fn default_font_size() -> f32 {
@@ -20,6 +18,9 @@ pub fn set_font_size(font_size: f32) {
 
 pub fn text(text: &str) -> Text {
     Text {
+        //TODO: This font loading is very slow :/.
+        //If rendering is done on a seperate thread
+        //and fonts are loaded asynchronously; 👍
         font: Font::from_bytes(FONT, FontSettings::default()).unwrap(),
         area: Rect::default(),
         text,
@@ -251,7 +252,7 @@ pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
             // ctx.buffer[i - 1] = color;
             // ctx.buffer[i + 1] = color;
 
-            //https://github.com/godotengine/godot-proposals/issues/1258#issuecomment-663832678
+            //https://github.com/godotengine/godot-proposals/issues/1258
 
             // for c in bitmap[j..j + 3].iter().rev() {
             //     print!("{} ", c);
