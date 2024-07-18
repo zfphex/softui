@@ -6,7 +6,7 @@ use std::{ops::Range, path::Path};
 pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
 pub const CHAR: char = 'g';
 
-pub static mut DEFAULT_FONT_SIZE: AtomicF32 = AtomicF32::new(18.0);
+static mut DEFAULT_FONT_SIZE: AtomicF32 = AtomicF32::new(18.0);
 
 pub fn default_font_size() -> f32 {
     unsafe { DEFAULT_FONT_SIZE.get() }
@@ -40,25 +40,86 @@ impl<'a> Text<'a> {
         self.font_size = font_size;
         self
     }
-    pub fn draw(&self) {
+
+    //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
+    //or maybe the buffer should just include all the text related code and the metrics should be static.
+    //TODO: If the text is longer than canvas width it needs to be clipped.
+    pub fn draw(&mut self) {
         let mut y: usize = self.area.y.try_into().unwrap();
-        for line in self.text.lines() {
-            //TODO: This should mutate the area, following the text bounds.
-            draw_text(
-                ctx(),
-                line,
-                &self.font,
-                self.font_size,
-                self.area.x.try_into().unwrap(),
-                y,
-            );
+        let x = self.area.x as usize;
+        let ctx = ctx();
+
+        let mut max_x = 0;
+        let mut max_y = 0;
+
+        'line: for line in self.text.lines() {
+            let mut glyph_x = x;
+
+            'char: for char in line.chars() {
+                let (metrics, bitmap) = self.font.rasterize(char, self.font_size);
+
+                let glyph_y = y as f32
+                    - (metrics.height as f32 - metrics.advance_height)
+                    - metrics.ymin as f32;
+
+                for y in 0..metrics.height {
+                    for x in 0..metrics.width {
+                        let color = bitmap[x + y * metrics.width];
+
+                        //Should the text really be offset by the font size?
+                        //This allows the user to draw text at (0, 0).
+                        let offset = self.font_size + glyph_y + y as f32;
+
+                        //We can't render off of the screen, mkay?
+                        if offset < 0.0 {
+                            continue;
+                        }
+
+                        if max_x < x + glyph_x {
+                            max_x = x + glyph_x;
+                        }
+
+                        if max_y < offset as usize {
+                            max_y = offset as usize;
+                        }
+
+                        let i = x + glyph_x + ctx.width * offset as usize;
+
+                        if i >= ctx.buffer.len() {
+                            break 'char;
+                        }
+
+                        //Set the R, G and B values to the correct color.
+                        ctx.buffer[i] = (color as u32) << 16 | (color as u32) << 8 | (color as u32);
+                    }
+                }
+
+                glyph_x += metrics.advance_width as usize;
+
+                //TODO: Still not enough.
+                if glyph_x >= ctx.width {
+                    break 'line;
+                }
+            }
+
             y += self.font_size as usize;
         }
+
+        self.area.height = max_y as i32 + 1;
+        self.area.width = max_x as i32 + 1;
+
+        ctx.draw_rectangle_outline(
+            0,
+            0,
+            self.area.width as usize,
+            self.area.height as usize,
+            Color::Red.into(),
+        );
     }
 }
 
 impl<'a> Widget for Text<'a> {
-    fn draw(&self) {
+    fn draw(&mut self) {
         //TODO: Make this thread safe, by sending a draw call.
 
         self.draw();
@@ -78,151 +139,41 @@ impl<'a> Layout for Text<'a> {
     }
 }
 
-// impl<'a> Drop for Text<'a> {
-//     fn drop(&mut self) {
-//         self.draw();
-//     }
-// }
-
-pub struct Buffer {
-    //TODO: Swap to mmap.
-    pub text: String,
-    //TODO: Scrolling.
-    pub window: Range<usize>,
-}
-
-impl Buffer {
-    pub fn new<P: AsRef<Path>>(path: P) -> Self {
-        Self {
-            text: std::fs::read_to_string(path).unwrap(),
-            window: 0..100,
-        }
-    }
-
-    pub fn draw(&self, atlas: &mut Atlas, ctx: &mut Context) {
-        //TODO: How do I draw only part of a line?
-        //Maybe this can help? https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-scrollwindow
-        //https://github.com/rxi/lite/blob/38bd9b3326c02e43f244623f97a622b11f074415/data/core/view.lua#L20C21-L20C21
-        let mut y = atlas.font_size as usize;
-        // let mut y = atlas.font_size as usize - 10;
-        for line in self.text.lines() {
-            atlas.draw_text(ctx, line, 0, y);
-
-            y += atlas.font_size as usize;
-        }
-    }
-}
-
-pub fn draw_text(ctx: &mut Context, text: &str, font: &Font, font_size: f32, x: usize, y: usize) {
-    let mut glyph_x = x;
-
-    for char in text.chars() {
-        let (metrics, bitmap) = font.rasterize(char, font_size);
-
-        let glyph_y =
-            y as f32 - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
-
-        for y in 0..metrics.height {
-            for x in 0..metrics.width {
-                let color = bitmap[x + y * metrics.width];
-
-                //Should the text really be offset by the font size?
-                //This allows the user to draw text at (0, 0).
-                let offset = font_size + glyph_y + y as f32;
-
-                //We can't render off of the screen, mkay?
-                if offset < 0.0 {
-                    continue;
-                }
-
-                let i = x + glyph_x + ctx.width * offset as usize;
-
-                if i >= ctx.buffer.len() {
-                    return;
-                }
-
-                //Set the R, G and B values to the correct color.
-                ctx.buffer[i] = (color as u32) << 16 | (color as u32) << 8 | (color as u32);
-            }
-        }
-
-        glyph_x += metrics.advance_width as usize;
-
-        //TODO: Still not enough.
-        if glyph_x >= ctx.width {
-            return;
-        }
-    }
-}
-
 pub struct Atlas {
     pub glyphs: [(fontdue::Metrics, Vec<u8>); 128],
-    // pub glyphs: [(fontdue::Metrics, &'static mut [u8]); 128],
+    // pub glyphs: [MaybeUninit<(fontdue::Metrics, Vec<u8>)>; 128],
     pub font_size: f32,
 }
 
 impl Atlas {
     pub fn new(font_size: f32) -> Self {
         let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-
         let mut glyphs: [(fontdue::Metrics, Vec<u8>); 128] =
-            core::array::from_fn(|f| (fontdue::Metrics::default(), Vec::new()));
-        // let mut glyphs: [(fontdue::Metrics, &'static mut [u8]); 128] =
-        //     core::array::from_fn(|f| (fontdue::Metrics::default(), Default::default()));
+            core::array::from_fn(|_| (fontdue::Metrics::default(), Vec::new()));
+
+        // let mut glyphs: [MaybeUninit<(fontdue::Metrics, Vec<u8>)>; 128] =
+        //     core::array::from_fn(|_| MaybeUninit::uninit());
 
         for char in 32..127u8 {
             let (metrics, bitmap) = font.rasterize(char as char, font_size);
-            // let bitmap: &'static mut [u8] = Box::leak(bitmap.into_boxed_slice());
             glyphs[char as usize] = (metrics, bitmap);
+            // glyphs[char as usize].write((metrics, bitmap));
         }
+
+        //This would leave some of the data uninitialised. Should probably just shrink the array down.
+        // let glyphs: [(fontdue::Metrics, Vec<u8>); 128] = unsafe { core::mem::transmute(glyphs) };
 
         Self { glyphs, font_size }
     }
 
-    //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
-    //or maybe the buffer should just include all the text related code and the metrics should be static.
-    //TODO: If the text is longer than canvas width it needs to be clipped.
-    pub fn draw_text(&self, ctx: &mut Context, text: &str, x: usize, y: usize) {
-        let mut glyph_x = x;
-
-        for char in text.chars() {
-            let (metrics, bitmap) = &self.glyphs[char as usize];
-
-            let glyph_y =
-                y as f32 - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
-
-            for y in 0..metrics.height {
-                for x in 0..metrics.width {
-                    let color = bitmap[x + y * metrics.width];
-
-                    //Should the text really be offset by the font size?
-                    //This allows the user to draw text at (0, 0).
-                    let offset = self.font_size + glyph_y + y as f32;
-
-                    //We can't render off of the screen, mkay?
-                    if offset < 0.0 {
-                        continue;
-                    }
-
-                    let i = x + glyph_x + ctx.width * offset as usize;
-
-                    if i >= ctx.buffer.len() {
-                        return;
-                    }
-
-                    //Set the R, G and B values to the correct color.
-                    ctx.buffer[i] = (color as u32) << 16 | (color as u32) << 8 | (color as u32);
-                }
-            }
-
-            glyph_x += metrics.advance_width as usize;
-
-            //TODO: Still not enough.
-            if glyph_x >= ctx.width {
-                return;
-            }
-        }
-    }
+    //32 <-> 126
+    // [(_, _) ;95]
+    // #[inline]
+    // pub fn get_glyph(&self, char: char) -> (fontdue::Metrics, &[u8]) {
+    //     todo!();
+    //     let glyph = &self.glyphs[char as usize - 32];
+    //     (glyph.0, &glyph.1)
+    // }
 }
 
 pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {

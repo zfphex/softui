@@ -8,7 +8,6 @@ fn main() {
     // let ctx = ctx();
 
     let ctx = create_ctx("Softui", 800, 600);
-    let _atlas = Atlas::new(32.0);
 
     // let mut size = 20;
 
@@ -22,7 +21,7 @@ fn main() {
         ctx.fill(Color::Black);
 
         {
-            let text = text("hello\nyipee!").font_size(32.0);
+            let mut text = text("hello\nyipee!").font_size(32.0);
             text.draw();
         }
 

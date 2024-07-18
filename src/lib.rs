@@ -30,7 +30,7 @@ pub use tuple::*;
 pub use Mouse::*;
 
 pub trait Widget {
-    fn draw(&self) {}
+    fn draw(&mut self) {}
     fn area(&self) -> Option<&Rect>;
     fn area_mut(&mut self) -> Option<&mut Rect>;
     fn calculate(&mut self, x: i32, y: i32) {}
@@ -216,11 +216,13 @@ impl Context {
         }
     }
 
+    //TODO: There is no support for depth.
     pub fn draw_frame(&mut self) {
         profile!();
 
         while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
             match cmd {
+                //This should idealy have a z index/depth parameter.
                 Command::Rectangle(x, y, width, height, color) => {
                     self.draw_rectangle(x, y, width, height, color);
                 }

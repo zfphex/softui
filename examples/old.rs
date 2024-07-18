@@ -83,7 +83,7 @@ fn main() {
         ctx.draw_rectangle(x, y, square, square, lerp_hex(0x5e9955, 0x4ec1ff, t.sin()));
 
         'text: {
-            atlas.draw_text(&mut ctx, "abcdefg!@#$%1234", 0, 525);
+            // atlas.draw_text(&mut ctx, "abcdefg!@#$%1234", 0, 525);
         }
 
         'circle: {

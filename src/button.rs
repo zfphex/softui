@@ -32,7 +32,7 @@ pub struct Button<'a> {
 impl<'a> Button<'a> {}
 
 impl<'a> Widget for Button<'a> {
-    fn draw(&self) {
+    fn draw(&mut self) {
         unsafe {
             COMMAND_QUEUE.push(Command::Rectangle(
                 self.area.x as usize,
