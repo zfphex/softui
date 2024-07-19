@@ -45,27 +45,22 @@ pub trait Widget {
         let ctx = ctx();
         let area = self.calculate().unwrap();
 
-        if !ctx.mouse_pos.intersects(area.clone()) {
+        if !ctx.mouse_pos.intersects(area) {
             return self;
         }
 
         let clicked = match button {
             Mouse::Left => {
-                ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area.clone())
+                ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
             }
             Mouse::Right => {
-                ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area.clone())
+                ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
             }
             Mouse::Middle => {
-                ctx.middle_mouse.released
-                    && ctx.middle_mouse.inital_position.intersects(area.clone())
+                ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
             }
-            Mouse::Back => {
-                ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area.clone())
-            }
-            Mouse::Forward => {
-                ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area.clone())
-            }
+            Mouse::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
+            Mouse::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
         };
 
         if clicked {
@@ -81,27 +76,22 @@ pub trait Widget {
     {
         let ctx = ctx();
         let area = self.calculate().unwrap();
-        if !ctx.mouse_pos.intersects(area.clone()) {
+        if !ctx.mouse_pos.intersects(area) {
             return false;
         }
 
         match button {
             Mouse::Left => {
-                ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area.clone())
+                ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
             }
             Mouse::Right => {
-                ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area.clone())
+                ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
             }
             Mouse::Middle => {
-                ctx.middle_mouse.released
-                    && ctx.middle_mouse.inital_position.intersects(area.clone())
+                ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
             }
-            Mouse::Back => {
-                ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area.clone())
-            }
-            Mouse::Forward => {
-                ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area.clone())
-            }
+            Mouse::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
+            Mouse::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
         }
     }
     fn up(&self, button: Mouse) -> bool
@@ -110,7 +100,7 @@ pub trait Widget {
     {
         let ctx = ctx();
         let area = self.area().unwrap();
-        if !ctx.mouse_pos.intersects(area.clone()) {
+        if !ctx.mouse_pos.intersects(area) {
             return false;
         }
 
@@ -128,7 +118,7 @@ pub trait Widget {
     {
         let ctx = ctx();
         let area = self.area().unwrap();
-        if !ctx.mouse_pos.intersects(area.clone()) {
+        if !ctx.mouse_pos.intersects(area) {
             return false;
         }
 
@@ -143,9 +133,11 @@ pub trait Widget {
 }
 
 impl Widget for () {
+    #[inline]
     fn area(&self) -> Option<Rect> {
         None
     }
+    #[inline]
     fn area_mut(&mut self) -> Option<&mut Rect> {
         None
     }
@@ -258,19 +250,6 @@ impl Context {
         }
     }
 
-    #[inline(always)]
-    pub fn resize(&mut self) {
-        let area = Rect::from(self.window.client_area());
-        if self.area != area {
-            self.area = area;
-            self.width = self.area.width as usize;
-            self.height = self.area.height as usize;
-            self.buffer.clear();
-            self.buffer.resize(self.width * self.height, 0);
-            self.bitmap = BITMAPINFO::new(self.width as i32, self.height as i32);
-        }
-    }
-
     //TODO: Cleanup and remove.
     pub fn event(&mut self) -> Option<Event> {
         match self.window.event() {
@@ -338,7 +317,17 @@ impl Context {
             }
         }
 
-        self.resize();
+        //Resize the window if needed.
+        let area = Rect::from(self.window.client_area());
+        if self.area != area {
+            self.area = area;
+            self.width = self.area.width as usize;
+            self.height = self.area.height as usize;
+            self.buffer.clear();
+            self.buffer.resize(self.width * self.height, 0);
+            self.bitmap = BITMAPINFO::new(self.width as i32, self.height as i32);
+        }
+
         unsafe {
             StretchDIBits(
                 self.context.unwrap(),
@@ -364,27 +353,6 @@ impl Context {
         self.middle_mouse.reset();
         self.mouse_4.reset();
         self.mouse_5.reset();
-    }
-
-    #[inline(always)]
-    pub fn strech_di(&mut self, input: *mut u8) {
-        unsafe {
-            StretchDIBits(
-                self.context.unwrap(),
-                0,
-                0,
-                self.width as i32,
-                self.height as i32,
-                0,
-                0,
-                self.width as i32,
-                self.height as i32,
-                input as *const c_void,
-                &self.bitmap,
-                0,
-                SRCCOPY,
-            );
-        }
     }
 
     pub fn get_pixel(&mut self, x: usize, y: usize) -> Option<&mut u32> {

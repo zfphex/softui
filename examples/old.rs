@@ -4,7 +4,7 @@ use softui::*;
 use window::*;
 
 fn main() {
-    let mut ctx = Context::new("Softui", 800, 600);
+    let ctx = create_ctx("Softui", 800, 600);
 
     let mut x: usize = 0;
     let mut y: usize = 0;
@@ -113,15 +113,12 @@ fn main() {
 
         'button: {
             // let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(200);
-            let b = btn(&ctx)
-                .bg(Color::Hex(0xff))
-                .centered(ctx.area.clone())
-                .y(200);
+            let b = btn(&ctx).bg(Color::Hex(0xff)).centered(ctx.area).y(200);
             if b.clicked(Left) {
                 println!("Clicked blue button!");
             }
 
-            if btn(&ctx).centered(ctx.area.clone()).clicked(Middle) {
+            if btn(&ctx).centered(ctx.area).clicked(Middle) {
                 println!("Clicked white button!");
             }
         }

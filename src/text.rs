@@ -213,7 +213,7 @@ impl<'a> Widget for Text<'a> {
             y += self.font_size + line_height;
         }
 
-        let mut rect = self.area.clone();
+        let mut rect = self.area;
         //Not sure why these are one off.
         rect.height = (max_y as i32 + 1 - self.area.y);
         rect.width = (max_x as i32 + 1 - self.area.x);
