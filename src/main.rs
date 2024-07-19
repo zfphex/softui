@@ -36,6 +36,37 @@ fn main() {
             button().on_clicked(Left, |_| println!("hi"));
         }
 
+        //Dragging example.
+        if ctx.left_mouse.inital_position != Rect::default() {
+            let inital = ctx.left_mouse.inital_position;
+            let end = ctx.left_mouse.release_position.unwrap_or(ctx.mouse_pos);
+            let mut drag = Rect::default();
+
+            if end.x > inital.x {
+                drag.x = inital.x;
+                drag.width = end.x - inital.x;
+            } else {
+                drag.x = end.x;
+                drag.width = inital.x - end.x;
+            }
+
+            if end.y > inital.y {
+                drag.y = inital.y;
+                drag.height = end.y - inital.y;
+            } else {
+                drag.y = end.y;
+                drag.height = inital.y - end.y;
+            }
+
+            ctx.draw_rectangle(
+                drag.x as usize,
+                drag.y as usize,
+                drag.width as usize,
+                drag.height as usize,
+                Color::Red.into(),
+            );
+        }
+
         {
             //TODO: I'm not liking draw on drop.
             //It works for an immediate style of code but falls apart everywhere else.

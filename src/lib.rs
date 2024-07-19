@@ -261,34 +261,34 @@ impl Context {
                         self.mouse_pos = Rect::new(x, y, 1, 1);
                     }
                     Event::Input(Key::LeftMouseDown, _) => {
-                        self.left_mouse.pressed(self.mouse_pos.clone());
+                        self.left_mouse.pressed(self.mouse_pos);
                     }
                     Event::Input(Key::LeftMouseUp, _) => {
-                        self.left_mouse.released();
+                        self.left_mouse.released(self.mouse_pos);
                     }
                     Event::Input(Key::RightMouseDown, _) => {
-                        self.right_mouse.pressed(self.mouse_pos.clone());
+                        self.right_mouse.pressed(self.mouse_pos);
                     }
                     Event::Input(Key::RightMouseUp, _) => {
-                        self.right_mouse.released();
+                        self.right_mouse.released(self.mouse_pos);
                     }
                     Event::Input(Key::MiddleMouseDown, _) => {
-                        self.middle_mouse.pressed(self.mouse_pos.clone());
+                        self.middle_mouse.pressed(self.mouse_pos);
                     }
                     Event::Input(Key::MiddleMouseUp, _) => {
-                        self.middle_mouse.released();
+                        self.middle_mouse.released(self.mouse_pos);
                     }
                     Event::Input(Key::Mouse4Down, _) => {
-                        self.mouse_4.pressed(self.mouse_pos.clone());
+                        self.mouse_4.pressed(self.mouse_pos);
                     }
                     Event::Input(Key::Mouse4Up, _) => {
-                        self.mouse_4.released();
+                        self.mouse_4.released(self.mouse_pos);
                     }
                     Event::Input(Key::Mouse5Down, _) => {
-                        self.mouse_5.pressed(self.mouse_pos.clone());
+                        self.mouse_5.pressed(self.mouse_pos);
                     }
                     Event::Input(Key::Mouse5Up, _) => {
-                        self.mouse_5.released();
+                        self.mouse_5.released(self.mouse_pos);
                     }
                     _ => passthrough_event = true,
                 }

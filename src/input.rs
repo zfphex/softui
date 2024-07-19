@@ -65,6 +65,7 @@ pub struct MouseState {
     pub pressed: bool,
     pub released: bool,
     pub inital_position: Rect,
+    pub release_position: Option<Rect>,
 }
 
 impl MouseState {
@@ -72,7 +73,8 @@ impl MouseState {
         Self {
             pressed: false,
             released: false,
-            inital_position: Rect::new(0, 0, 0, 0),
+            inital_position: Rect::default(),
+            release_position: None,
         }
     }
     pub fn reset(&mut self) {
@@ -83,9 +85,11 @@ impl MouseState {
         self.pressed = true;
         self.released = false;
         self.inital_position = pos;
+        self.release_position = None;
     }
-    pub fn released(&mut self) {
+    pub fn released(&mut self, pos: Rect) {
         self.pressed = false;
         self.released = true;
+        self.release_position = Some(pos);
     }
 }
