@@ -31,13 +31,119 @@ pub use Mouse::*;
 
 pub trait Widget {
     fn draw(&mut self) {}
-    fn area(&self) -> Option<&Rect>;
+    fn area(&self) -> Option<Rect>;
     fn area_mut(&mut self) -> Option<&mut Rect>;
-    fn calculate(&mut self, x: i32, y: i32) {}
+    fn calculate_mut(&mut self, x: i32, y: i32) {}
+    #[inline]
+    fn calculate(&self) -> Option<Rect> {
+        self.area()
+    }
+    fn on_clicked<F: FnMut(&Context) -> ()>(mut self, button: Mouse, mut function: F) -> Self
+    where
+        Self: Sized,
+    {
+        let ctx = ctx();
+        let area = self.calculate().unwrap();
+
+        if !ctx.mouse_pos.intersects(area.clone()) {
+            return self;
+        }
+
+        let clicked = match button {
+            Mouse::Left => {
+                ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area.clone())
+            }
+            Mouse::Right => {
+                ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area.clone())
+            }
+            Mouse::Middle => {
+                ctx.middle_mouse.released
+                    && ctx.middle_mouse.inital_position.intersects(area.clone())
+            }
+            Mouse::Back => {
+                ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area.clone())
+            }
+            Mouse::Forward => {
+                ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area.clone())
+            }
+        };
+
+        if clicked {
+            function(ctx);
+        }
+
+        self
+    }
+    /// The user's cusor has been clicked and released on top of a widget.
+    fn clicked(&self, button: Mouse) -> bool
+    where
+        Self: Sized,
+    {
+        let ctx = ctx();
+        let area = self.calculate().unwrap();
+        if !ctx.mouse_pos.intersects(area.clone()) {
+            return false;
+        }
+
+        match button {
+            Mouse::Left => {
+                ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area.clone())
+            }
+            Mouse::Right => {
+                ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area.clone())
+            }
+            Mouse::Middle => {
+                ctx.middle_mouse.released
+                    && ctx.middle_mouse.inital_position.intersects(area.clone())
+            }
+            Mouse::Back => {
+                ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area.clone())
+            }
+            Mouse::Forward => {
+                ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area.clone())
+            }
+        }
+    }
+    fn up(&self, button: Mouse) -> bool
+    where
+        Self: Sized,
+    {
+        let ctx = ctx();
+        let area = self.area().unwrap();
+        if !ctx.mouse_pos.intersects(area.clone()) {
+            return false;
+        }
+
+        match button {
+            Mouse::Left => ctx.left_mouse.released,
+            Mouse::Right => ctx.right_mouse.released,
+            Mouse::Middle => ctx.middle_mouse.released,
+            Mouse::Back => ctx.mouse_4.released,
+            Mouse::Forward => ctx.mouse_5.released,
+        }
+    }
+    fn down(&self, button: Mouse) -> bool
+    where
+        Self: Sized,
+    {
+        let ctx = ctx();
+        let area = self.area().unwrap();
+        if !ctx.mouse_pos.intersects(area.clone()) {
+            return false;
+        }
+
+        match button {
+            Mouse::Left => ctx.left_mouse.pressed,
+            Mouse::Right => ctx.right_mouse.pressed,
+            Mouse::Middle => ctx.middle_mouse.pressed,
+            Mouse::Back => ctx.mouse_4.pressed,
+            Mouse::Forward => ctx.mouse_5.pressed,
+        }
+    }
 }
 
 impl Widget for () {
-    fn area(&self) -> Option<&Rect> {
+    fn area(&self) -> Option<Rect> {
         None
     }
     fn area_mut(&mut self) -> Option<&mut Rect> {

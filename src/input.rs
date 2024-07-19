@@ -1,14 +1,6 @@
 use crate::*;
 
-pub trait Input {
-    fn on_clicked<F: FnMut(&Context) -> ()>(self, button: Mouse, function: F) -> Self;
-    /// The user's cusor has been clicked and released on top of a widget.
-    fn clicked(&self, button: Mouse) -> bool;
-    fn up(&self, button: Mouse) -> bool;
-    fn down(&self, button: Mouse) -> bool;
-}
-
-pub fn clicked<T: Widget>(ctx: &Context, widget: &T, button: Mouse) -> bool {
+pub fn clicked<T: Widget + Sized>(ctx: &Context, widget: &T, button: Mouse) -> bool {
     let area = widget.area().unwrap();
     if !ctx.mouse_pos.intersects(area.clone()) {
         return false;
@@ -24,9 +16,7 @@ pub fn clicked<T: Widget>(ctx: &Context, widget: &T, button: Mouse) -> bool {
         Mouse::Middle => {
             ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area.clone())
         }
-        Mouse::Back => {
-            ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area.clone())
-        }
+        Mouse::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area.clone()),
         Mouse::Forward => {
             ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area.clone())
         }

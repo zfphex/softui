@@ -26,7 +26,7 @@ impl AtomicRect {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Rect {
     pub x: i32,
     pub y: i32,
@@ -333,8 +333,7 @@ pub struct Empty<T: Tuple> {
 
 impl<T: Tuple> Drop for Empty<T> {
     fn drop(&mut self) {
-        self.widgets
-            .for_each(&mut |widget| widget.draw());
+        self.widgets.for_each(&mut |widget| widget.draw());
     }
 }
 
@@ -356,13 +355,13 @@ pub struct Container<T: Tuple> {
 }
 
 impl<T: Tuple> Widget for Container<T> {
-    fn area(&self) -> Option<&Rect> {
-        self.area.as_ref()
+    fn area(&self) -> Option<Rect> {
+        self.area
     }
     fn area_mut(&mut self) -> Option<&mut Rect> {
         self.area.as_mut()
     }
-    fn calculate(&mut self, x: i32, y: i32) {
+    fn calculate_mut(&mut self, x: i32, y: i32) {
         self.calculate(Some(x), Some(y));
     }
 }
@@ -384,7 +383,7 @@ impl<T: Tuple> Container<T> {
 
         self.widgets.for_each(&mut |f| {
             //If the widget is a container calculate the area.
-            f.calculate(x, y);
+            f.calculate_mut(x, y);
 
             if let Some(area) = f.area_mut() {
                 let height = area.height;
@@ -414,7 +413,7 @@ impl<T: Tuple> Container<T> {
                 }
 
                 //Recalculate the child area
-                f.calculate(x, y);
+                f.calculate_mut(x, y);
 
                 //Note that since we don't know which item is last.
                 //We add some too much area and remove it after the loop.

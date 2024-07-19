@@ -25,8 +25,15 @@ fn main() {
         {
             // text("test").y(20).draw();
             // empty((text("hi"), text("Tesing").y(30)));
-            let mut text = text("hello\nyipee!\ntesting testing testing\none two three four five six\n1 2 3 4 5 6 7").font_size(32);
+            let str = "hello\nyipee!\ntesting testing testing\none two three four five six\n1 2 3 4 5 6 7";
+            let mut text = text(str)
+                .font_size(32)
+                .on_clicked(Left, |_| println!("Clicked text {:?}", ctx.area));
+            // if text.clicked(Left) {
+            //     println!("Clicked text {:?}", ctx.area);
+            // }
             text.draw();
+            button().on_clicked(Left, |_| println!("hi"));
         }
 
         {

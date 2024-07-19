@@ -137,17 +137,88 @@ impl<'a> Text<'a> {
 }
 
 impl<'a> Widget for Text<'a> {
+    #[inline]
     fn draw(&mut self) {
         //TODO: Make this thread safe, by sending a draw call.
 
         self.draw();
         // todo!();
     }
-    fn area(&self) -> Option<&Rect> {
-        Some(&self.area)
+    #[inline]
+    fn area(&self) -> Option<Rect> {
+        Some(self.area)
     }
+    #[inline]
     fn area_mut(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
+    }
+    //TODO: These x, y parameters aren't even used.
+    fn calculate(&self) -> Option<Rect> {
+        let ctx = ctx();
+        let mut y: usize = self.area.y.try_into().unwrap();
+        let x = self.area.x as usize;
+
+        let mut max_x = 0;
+        let mut max_y = 0;
+        let line_height = self.line_height.unwrap_or_default();
+
+        'line: for line in self.text.lines() {
+            let mut glyph_x = x;
+
+            'char: for char in line.chars() {
+                let (metrics, bitmap) = self.font.rasterize(char, self.font_size as f32);
+
+                let glyph_y = y as f32
+                    - (metrics.height as f32 - metrics.advance_height)
+                    - metrics.ymin as f32;
+
+                for y in 0..metrics.height {
+                    for x in 0..metrics.width {
+                        //Should the text really be offset by the font size?
+                        //This allows the user to draw text at (0, 0).
+                        let offset = self.font_size as f32 + glyph_y + y as f32;
+
+                        //We can't render off of the screen, mkay?
+                        if offset < 0.0 {
+                            continue;
+                        }
+
+                        if max_x < x + glyph_x {
+                            max_x = x + glyph_x;
+                        }
+
+                        if max_y < offset as usize {
+                            max_y = offset as usize;
+                        }
+
+                        let i = x + glyph_x + ctx.width * offset as usize;
+
+                        if i >= ctx.buffer.len() {
+                            break 'char;
+                        }
+                    }
+                }
+
+                glyph_x += metrics.advance_width as usize;
+
+                //TODO: Still not enough.
+                if glyph_x >= ctx.width {
+                    break 'line;
+                }
+            }
+
+            //CSS is probably line height * font size.
+            //1.2 is the default line height
+            //I'm guessing 1.0 is probably just adding the font size.
+            y += self.font_size + line_height;
+        }
+
+        let mut rect = self.area.clone();
+        //Not sure why these are one off.
+        rect.height = (max_y as i32 + 1 - self.area.y);
+        rect.width = (max_x as i32 + 1 - self.area.x);
+
+        Some(rect)
     }
 }
 

@@ -113,32 +113,35 @@ fn main() {
 
         'button: {
             // let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(200);
-            let btn = button(&ctx).bg(Color::Hex(0xff)).centered(ctx.area.clone()).y(200);
-            if btn.clicked(Left) {
+            let b = btn(&ctx)
+                .bg(Color::Hex(0xff))
+                .centered(ctx.area.clone())
+                .y(200);
+            if b.clicked(Left) {
                 println!("Clicked blue button!");
             }
 
-            if button(&ctx).centered(ctx.area.clone()).clicked(Middle) {
+            if btn(&ctx).centered(ctx.area.clone()).clicked(Middle) {
                 println!("Clicked white button!");
             }
         }
 
         'layout: {
             h((
-                button(&ctx).pos(40, 120, 20, 20),
-                button(&ctx).width(20).height(20),
+                btn(&ctx).pos(40, 120, 20, 20),
+                btn(&ctx).width(20).height(20),
             ))
             .padding(6)
             //TODO: Margin errors are too hard to track down.
             .margin(2);
 
-            v((button(&ctx).pos(40, 180, 20, 20), button(&ctx).w(20).h(40))).padding(6);
+            v((btn(&ctx).pos(40, 180, 20, 20), btn(&ctx).w(20).h(40))).padding(6);
 
             h((
-                button(&ctx).pos(400, 20, 20, 20),
-                button(&ctx).w(40).h(20),
-                button(&ctx).w(40).h(20),
-                button(&ctx).w(40).h(20),
+                btn(&ctx).pos(400, 20, 20, 20),
+                btn(&ctx).w(40).h(20),
+                btn(&ctx).w(40).h(20),
+                btn(&ctx).w(40).h(20),
             ))
             .padding(10);
         }
