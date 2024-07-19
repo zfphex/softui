@@ -323,6 +323,21 @@ pub const fn h<T: Tuple>(mut widgets: T) -> Container<T> {
     }
 }
 
+pub fn empty<T: Tuple>(widgets: T) -> Empty<T> {
+    Empty { widgets }
+}
+
+pub struct Empty<T: Tuple> {
+    widgets: T,
+}
+
+impl<T: Tuple> Drop for Empty<T> {
+    fn drop(&mut self) {
+        self.widgets
+            .for_each(&mut |widget| widget.draw());
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum Direction {
     Vertical,

@@ -10,6 +10,8 @@ fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
     // let mut size = 20;
+    let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
+    set_default_font(font);
 
     loop {
         match ctx.event() {
@@ -21,7 +23,9 @@ fn main() {
         ctx.fill(Color::Black);
 
         {
-            let mut text = text("hello\nyipee!").font_size(32.0);
+            // text("test").y(20).draw();
+            // empty((text("hi"), text("Tesing").y(30)));
+            let mut text = text("hello\nyipee!\ntesting testing testing\none two three four five six\n1 2 3 4 5 6 7").font_size(32);
             text.draw();
         }
 

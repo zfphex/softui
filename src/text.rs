@@ -1,43 +1,56 @@
 use crate::*;
 use atomic_float::AtomicF32;
 use fontdue::*;
-use std::{ops::Range, path::Path};
+use std::{ops::Range, path::Path, sync::atomic::AtomicUsize};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
 pub const CHAR: char = 'g';
 
-static mut DEFAULT_FONT_SIZE: AtomicF32 = AtomicF32::new(18.0);
+static mut DEFAULT_FONT_SIZE: AtomicUsize = AtomicUsize::new(18);
+static mut DEFAULT_FONT: Option<Font> = None;
 
-pub fn default_font_size() -> f32 {
-    unsafe { DEFAULT_FONT_SIZE.get() }
+pub fn default_font() -> Option<&'static Font> {
+    unsafe { DEFAULT_FONT.as_ref() }
 }
 
-pub fn set_font_size(font_size: f32) {
-    unsafe { DEFAULT_FONT_SIZE.set(font_size) }
+pub fn set_default_font(font: Font) {
+    unsafe { DEFAULT_FONT = Some(font) };
+}
+
+pub fn default_font_size() -> usize {
+    unsafe { DEFAULT_FONT_SIZE.load(Ordering::Relaxed) }
+}
+
+pub fn set_font_size(font_size: usize) {
+    unsafe { DEFAULT_FONT_SIZE.store(font_size, Ordering::Relaxed) }
 }
 
 pub fn text(text: &str) -> Text {
     Text {
-        //TODO: This font loading is very slow :/.
-        //If rendering is done on a seperate thread
-        //and fonts are loaded asynchronously; 👍
-        font: Font::from_bytes(FONT, FontSettings::default()).unwrap(),
+        //TODO: Compile time fonts.
+        font: default_font().unwrap(),
         area: Rect::default(),
         text,
         font_size: default_font_size(),
+        line_height: None,
     }
 }
 
 pub struct Text<'a> {
-    pub font: fontdue::Font,
+    pub font: &'a fontdue::Font,
     pub area: Rect,
     pub text: &'a str,
-    font_size: f32,
+    font_size: usize,
+    line_height: Option<usize>,
 }
 
 impl<'a> Text<'a> {
-    pub fn font_size(mut self, font_size: f32) -> Self {
+    pub fn font_size(mut self, font_size: usize) -> Self {
         self.font_size = font_size;
+        self
+    }
+    pub fn line_heigth(mut self, line_height: usize) -> Self {
+        self.line_height = Some(line_height);
         self
     }
 
@@ -51,12 +64,13 @@ impl<'a> Text<'a> {
 
         let mut max_x = 0;
         let mut max_y = 0;
+        let line_height = self.line_height.unwrap_or_default();
 
         'line: for line in self.text.lines() {
             let mut glyph_x = x;
 
             'char: for char in line.chars() {
-                let (metrics, bitmap) = self.font.rasterize(char, self.font_size);
+                let (metrics, bitmap) = self.font.rasterize(char, self.font_size as f32);
 
                 let glyph_y = y as f32
                     - (metrics.height as f32 - metrics.advance_height)
@@ -68,7 +82,7 @@ impl<'a> Text<'a> {
 
                         //Should the text really be offset by the font size?
                         //This allows the user to draw text at (0, 0).
-                        let offset = self.font_size + glyph_y + y as f32;
+                        let offset = self.font_size as f32 + glyph_y + y as f32;
 
                         //We can't render off of the screen, mkay?
                         if offset < 0.0 {
@@ -102,15 +116,19 @@ impl<'a> Text<'a> {
                 }
             }
 
-            y += self.font_size as usize;
+            //CSS is probably line height * font size.
+            //1.2 is the default line height
+            //I'm guessing 1.0 is probably just adding the font size.
+            y += self.font_size + line_height;
         }
 
-        self.area.height = max_y as i32 + 1;
-        self.area.width = max_x as i32 + 1;
+        //Not sure why these are one off.
+        self.area.height = (max_y as i32 + 1 - self.area.y);
+        self.area.width = (max_x as i32 + 1 - self.area.x);
 
         ctx.draw_rectangle_outline(
-            0,
-            0,
+            self.area.x as usize,
+            self.area.y as usize,
             self.area.width as usize,
             self.area.height as usize,
             Color::Red.into(),
