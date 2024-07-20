@@ -51,12 +51,6 @@ impl<'a> Widget for Button<'a> {
     }
 }
 
-impl<'a> Drop for Button<'a> {
-    fn drop(&mut self) {
-        self.draw()
-    }
-}
-
 impl<'a> Style for Button<'a> {
     fn bg(mut self, color: Color) -> Self {
         self.bg = color;

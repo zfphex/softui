@@ -9,3 +9,4 @@ mini = { version = "0.1.0", path = "../mini" }
 crossbeam-queue = "0.3.11"
 # fontdue = { version = "0.7.3", features = ["parallel"] }
 fontdue = { version = "0.9.0" }
+resvg = "0.42.0"

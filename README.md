@@ -1,9 +1,10 @@
 ### TODO
 
 - [ ] Allow drawing outside of the window area without crashing. Allow for clipping.
-- [x] Rectangle with rounded corners
+- [ ] SVG & Image support
 - [ ] Framerate limiter
 - [ ] Remove draw on drop and require that everything be placed into a container.
+- [x] Rectangle with rounded corners
 
 ### Trait Definitions
 

@@ -2,6 +2,22 @@
 use softui::*;
 use window::*;
 
+fn svg<P: AsRef<std::path::Path>>(path: P) -> resvg::tiny_skia::Pixmap {
+    let ctx = ctx();
+    let tree = resvg::usvg::Tree::from_data(
+        &std::fs::read(path).unwrap(),
+        &resvg::usvg::Options::default(),
+    )
+    .unwrap();
+    let mut pixmap = resvg::tiny_skia::Pixmap::new(ctx.width as u32, ctx.height as u32).unwrap();
+    resvg::render(
+        &tree,
+        resvg::tiny_skia::Transform::from_scale(0.5, 0.5),
+        &mut pixmap.as_mut(),
+    );
+    pixmap
+}
+
 fn main() {
     // let mut ctx = Context::new("Softui", 800, 600);
     // unsafe { CTX = Some(Context::new("Softui", 800, 600)) };
@@ -13,6 +29,8 @@ fn main() {
     let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
     set_default_font(font);
 
+    let ferris = svg("img/ferris.svg");
+
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
@@ -20,19 +38,58 @@ fn main() {
             _ => {}
         }
 
-        ctx.fill(Color::Black);
+        ctx.fill(Color::White);
+
+        //SVG
+        {
+            let mut x = 0;
+            let mut y = 0;
+            for pixel in ferris.pixels() {
+                if y >= ferris.height() {
+                    break;
+                }
+
+                let color = (pixel.red() as u32) << 16
+                    | (pixel.green() as u32) << 8
+                    | (pixel.blue() as u32);
+                ctx.draw_pixel(x as usize, y as usize, color);
+
+                x += 1;
+                if x >= ferris.width() {
+                    y += 1;
+                    x = 0;
+                    continue;
+                }
+            }
+            // for x in 0..pixmap.width() {
+            //     if x >= ctx.width as u32 {
+            //         continue;
+            //     }
+            //     for y in 0..pixmap.height() {
+            //         if y >= ctx.height as u32 {
+            //             continue;
+            //         }
+            //         let pixel = pixmap.pixel(x, y).unwrap();
+            //         let color = (pixel.red() as u32) << 16
+            //             | (pixel.green() as u32) << 8
+            //             | (pixel.blue() as u32);
+            //         ctx.draw_pixel(x as usize, y as usize, color);
+            //     }
+            // }
+        }
 
         {
-            // text("test").y(20).draw();
-            // empty((text("hi"), text("Tesing").y(30)));
-            let str = "yipeee!\n1234567890\n!@#$%^&*()";
+            // empty((text("epic"), text("epic").y(30)));
+            let str = "yipeee!\nabcdefghijklmnopqrstuvwxyz\n1234567890!@#$%^&*()\n";
             let mut text = text(str)
+                .y(40 + 32)
                 .font_size(32)
                 .on_clicked(Left, |_| println!("Clicked text {:?}", ctx.area));
             // if text.clicked(Left) {
             //     println!("Clicked text {:?}", ctx.area);
             // }
-            text.draw();
+            // text.draw();
+
             // button().on_clicked(Left, |_| println!("hi"));
         }
 
@@ -68,12 +125,8 @@ fn main() {
             .unwrap();
         }
 
-        // ctx.draw_circle(300, 30, 20, Color::Blue.into());
-
-        // ctx.draw_rectangle_rounded(300, 300, 100, 50, 10, Color::White.into())
+        // ctx.draw_rectangle_rounded(300, 300, 300, 200, 25, Color::White.into())
         //     .unwrap();
-        ctx.draw_rectangle_rounded(300, 300, 300, 200, 50, Color::White.into())
-            .unwrap();
 
         {
             //TODO: I'm not liking draw on drop.
