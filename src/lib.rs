@@ -191,6 +191,13 @@ pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Cont
     }
 }
 
+pub enum Quadrant {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+}
+
 /// Holds the framebuffer and input state.
 /// Also handles rendering.
 pub struct Context {
@@ -204,7 +211,7 @@ pub struct Context {
     pub width: usize,
     pub height: usize,
     pub window: Pin<Box<Window>>,
-    pub context: Option<*mut c_void>,
+    pub dc: Option<*mut c_void>,
     pub bitmap: BITMAPINFO,
     //This should really be a Vec2 or (usize, usize), but this makes checking
     //rectangle intersections really easy.
@@ -219,7 +226,7 @@ pub struct Context {
 impl Context {
     pub fn new(title: &str, width: usize, height: usize) -> Self {
         let mut window = unsafe { create_window(title, width as i32, height as i32) };
-        let context = unsafe { GetDC(window.hwnd) };
+        let dc = unsafe { GetDC(window.hwnd) };
         //Convert top, left, right, bottom to x, y, width, height.
         let area = Rect::from(window.client_area());
         let width = area.width;
@@ -227,7 +234,7 @@ impl Context {
 
         Self {
             window,
-            context: Some(context),
+            dc: Some(dc),
             area,
             width: width as usize,
             height: height as usize,
@@ -255,7 +262,6 @@ impl Context {
         match self.window.event() {
             None => None,
             Some(event) => {
-                let mut passthrough_event = false;
                 match event {
                     Event::Mouse(x, y) => {
                         self.mouse_pos = Rect::new(x, y, 1, 1);
@@ -290,13 +296,10 @@ impl Context {
                     Event::Input(Key::Mouse5Up, _) => {
                         self.mouse_5.released(self.mouse_pos);
                     }
-                    _ => passthrough_event = true,
+                    _ => return Some(event),
                 }
 
-                match passthrough_event {
-                    true => Some(event),
-                    false => None,
-                }
+                None
             }
         }
     }
@@ -330,7 +333,7 @@ impl Context {
 
         unsafe {
             StretchDIBits(
-                self.context.unwrap(),
+                self.dc.unwrap(),
                 0,
                 0,
                 self.width as i32,
@@ -403,6 +406,33 @@ impl Context {
         }
     }
 
+    pub fn draw_arc(
+        &mut self,
+        cx: usize,
+        cy: usize,
+        radius: usize,
+        color: u32,
+        quadrant: Quadrant,
+    ) {
+        let (x1, y1, x2, y2) = match quadrant {
+            Quadrant::TopLeft => (cx - radius, cy - radius, cx, cy),
+            Quadrant::TopRight => (cx, cy - radius, cx + radius, cy),
+            Quadrant::BottomLeft => (cx - radius, cy, cx, cy + radius),
+            Quadrant::BottomRight => (cx, cy, cx + radius, cy + radius),
+        };
+
+        for y in y1..=y2 {
+            for x in x1..=x2 {
+                let dist_x = x as f32 - cx as f32 + 0.5;
+                let dist_y = y as f32 - cy as f32 + 0.5;
+                let distance = (dist_x * dist_x + dist_y * dist_y).sqrt();
+                if distance <= radius as f32 {
+                    self.draw_pixel(x, y, color);
+                }
+            }
+        }
+    }
+
     pub fn draw_circle(&mut self, cx: usize, cy: usize, radius: usize, color: u32) {
         let (x1, y1) = (cx - radius, cy - radius);
         let (x2, y2) = (cx + radius, cy + radius);
@@ -447,36 +477,26 @@ impl Context {
     //We mearly append what we want and then it's drawn later on.
     //Doesn't that mean renderer would be on a seperate thread?
 
-    #[track_caller]
-    pub fn draw_rectangle(&mut self, x: usize, y: usize, width: usize, height: usize, color: u32) {
-        // let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
-
-        let canvas_width = self.width;
-
-        #[cfg(debug_assertions)]
-        {
-            let canvas_height = self.height;
-            if x + width >= canvas_width {
-                panic!("x: {x} + width: {width} cannot be >= to the canvas width: {canvas_width}");
-            }
-            if y + height >= canvas_height {
-                panic!(
-                    "y: {y} + height: {height} cannot be >= to the canvas height: {canvas_height}"
-                );
-            }
-        }
-
-        // println!("{}", self.buffer.len());
-
+    #[must_use]
+    pub fn draw_rectangle(
+        &mut self,
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+        color: u32,
+    ) -> Result<(), String> {
+        self.bounds_check(x, y, width, height)?;
         for i in y..y + height {
-            let pos = x + canvas_width * i;
+            let pos = x + self.width * i;
             for px in &mut self.buffer[pos..pos + width] {
                 *px = color;
             }
         }
+        Ok(())
     }
 
-    #[track_caller]
+    #[must_use]
     pub fn draw_linear_gradient(
         &mut self,
         x: usize,
@@ -485,24 +505,11 @@ impl Context {
         height: usize,
         color1: u32,
         color2: u32,
-    ) {
-        let canvas_width = self.width;
-
-        #[cfg(debug_assertions)]
-        {
-            let canvas_height = self.height;
-            if x + width >= canvas_width {
-                panic!("x: {x} + width: {width} cannot be >= to the canvas width: {canvas_width}");
-            }
-            if y + height >= canvas_height {
-                panic!(
-                    "y: {y} + height: {height} cannot be >= to the canvas height: {canvas_height}"
-                );
-            }
-        }
+    ) -> Result<(), String> {
+        self.bounds_check(x, y, width, height)?;
 
         for i in y..y + height {
-            let start = x + canvas_width * i;
+            let start = x + self.width * i;
             let end = start + width;
 
             for (x, px) in self.buffer[start..end].iter_mut().enumerate() {
@@ -510,10 +517,11 @@ impl Context {
                 *px = lerp_hex(color1, color2, t);
             }
         }
+        Ok(())
     }
 
     //TODO: Allow for variable length outlines.
-    #[track_caller]
+    #[must_use]
     pub fn draw_rectangle_outline(
         &mut self,
         x: usize,
@@ -521,22 +529,10 @@ impl Context {
         width: usize,
         height: usize,
         color: u32,
-    ) {
+    ) -> Result<(), String> {
+        self.bounds_check(x, y, width, height)?;
         let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
         let canvas_width = self.width;
-
-        #[cfg(debug_assertions)]
-        {
-            let canvas_height = self.height;
-            if x + width >= canvas_width {
-                panic!("x: {x} + width: {width} cannot be >= to the canvas width: {canvas_width}");
-            }
-            if y + height >= canvas_height {
-                panic!(
-                    "y: {y} + height: {height} cannot be >= to the canvas height: {canvas_height}"
-                );
-            }
-        }
 
         for i in y..y + height {
             if i > y && i < (y + height).saturating_sub(1) {
@@ -549,6 +545,42 @@ impl Context {
                 }
             }
         }
+
+        return Ok(());
+    }
+
+    #[inline]
+    pub fn bounds_check(
+        &self,
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+    ) -> Result<(), String> {
+        #[cfg(debug_assertions)]
+        {
+            if x + width >= self.width {
+                return Err(format!(
+                    "Canvas width is {}, cannot draw at {} ({}x + {}w)",
+                    self.width,
+                    x + width,
+                    x,
+                    width,
+                ));
+            }
+
+            if y + height >= self.height {
+                return Err(format!(
+                    "Canvas height is {}, cannot draw at {} ({}y + {}h)",
+                    self.height,
+                    y + height,
+                    y,
+                    height,
+                ));
+            }
+        }
+
+        Ok(())
     }
 
     //https://en.wikipedia.org/wiki/Superellipse
@@ -561,8 +593,48 @@ impl Context {
         height: usize,
         radius: usize,
         color: u32,
-    ) {
-        todo!()
+    ) -> Result<(), String> {
+        self.bounds_check(x, y, width, height)?;
+
+        for i in y..y + height {
+            let y = i - y;
+            if y <= radius || y >= height - radius {
+                let pos = x + radius + self.width * i;
+                for px in &mut self.buffer[pos..pos + width - radius - radius] {
+                    *px = color;
+                }
+                continue;
+            }
+
+            let pos = x + self.width * i;
+            for px in &mut self.buffer[pos..pos + width] {
+                *px = color;
+            }
+        }
+
+        // let color = Color::Red.into();
+
+        //Top left
+        let (tlx, tly) = (x + radius, y + radius);
+        self.draw_arc(tlx, tly, radius, color, Quadrant::TopLeft);
+        // self.draw_circle(tlx, tly, radius, color);
+
+        //Top right
+        let (trx, tr_y) = ((x + width) - radius, y + radius);
+        self.draw_arc(trx, tr_y, radius, color, Quadrant::TopRight);
+        // self.draw_circle(trx, tr_y, radius, color);
+
+        //Bottom left
+        let (blx, bly) = (x + radius, (y + height) - radius);
+        self.draw_arc(blx, bly, radius, color, Quadrant::BottomLeft);
+        // self.draw_circle(blx, bly, radius, color);
+
+        //Bottom right
+        let (brx, bry) = ((x + width) - radius, (y + height) - radius);
+        self.draw_arc(brx, bry, radius, color, Quadrant::BottomRight);
+        // self.draw_circle(brx, bly, radius, color);
+
+        Ok(())
     }
 
     //TODO

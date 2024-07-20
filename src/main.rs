@@ -25,7 +25,7 @@ fn main() {
         {
             // text("test").y(20).draw();
             // empty((text("hi"), text("Tesing").y(30)));
-            let str = "hello\nyipee!\ntesting testing testing\none two three four five six\n1 2 3 4 5 6 7";
+            let str = "yipeee!\n1234567890\n!@#$%^&*()";
             let mut text = text(str)
                 .font_size(32)
                 .on_clicked(Left, |_| println!("Clicked text {:?}", ctx.area));
@@ -33,7 +33,7 @@ fn main() {
             //     println!("Clicked text {:?}", ctx.area);
             // }
             text.draw();
-            button().on_clicked(Left, |_| println!("hi"));
+            // button().on_clicked(Left, |_| println!("hi"));
         }
 
         //Dragging example.
@@ -64,8 +64,16 @@ fn main() {
                 drag.width as usize,
                 drag.height as usize,
                 Color::Red.into(),
-            );
+            )
+            .unwrap();
         }
+
+        // ctx.draw_circle(300, 30, 20, Color::Blue.into());
+
+        // ctx.draw_rectangle_rounded(300, 300, 100, 50, 10, Color::White.into())
+        //     .unwrap();
+        ctx.draw_rectangle_rounded(300, 300, 300, 200, 50, Color::White.into())
+            .unwrap();
 
         {
             //TODO: I'm not liking draw on drop.

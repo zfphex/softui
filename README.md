@@ -1,7 +1,7 @@
 ### TODO
 
 - [ ] Allow drawing outside of the window area without crashing. Allow for clipping.
-- [ ] Rectangle with rounded corners
+- [x] Rectangle with rounded corners
 - [ ] Framerate limiter
 - [ ] Remove draw on drop and require that everything be placed into a container.
 
