@@ -66,54 +66,60 @@ fn main() {
             // canvas.draw_simd64();
         }
 
-        ctx.fill(Color::Black);
+        ctx.fill(Color::BLACK);
 
         'gradient: {
-            ctx.draw_linear_gradient(400, 200, 100, 100, 0x00ff00, 0xfffff);
+            ctx.draw_linear_gradient(400, 200, 100, 100, Color::new(0x00ff00), Color::new(0xfffff));
             ctx.draw_linear_gradient(
                 400,
                 400,
                 100,
                 100,
-                0x773ec7,
-                lerp_hex(0xe317be, 0x773ec7, t.sin()),
+                Color::new(0x773ec7),
+                Color::new(0xe317be).lerp(Color::new(0x773ec7), t.sin()),
             );
         }
 
-        ctx.draw_rectangle(x, y, square, square, lerp_hex(0x5e9955, 0x4ec1ff, t.sin()));
+        ctx.draw_rectangle(
+            x,
+            y,
+            square,
+            square,
+            Color::new(0x5e9955).lerp(Color::new(0x4ec1ff), t.sin()),
+        );
 
         'text: {
             // atlas.draw_text(&mut ctx, "abcdefg!@#$%1234", 0, 525);
         }
 
         'circle: {
-            unsafe { ctx.draw_circle_outline(60, 350, 50, Color::Blue.into()) };
-            ctx.draw_circle(60, 475, 50, Color::Blue.into());
+            unsafe { ctx.draw_circle_outline(60, 350, 50, Color::BLUE) };
+            ctx.draw_circle(60, 475, 50, Color::BLUE);
         }
 
         //Alpha blending
         //TODO: These shapes should blend into the background.
         'lerp: {
-            let red = Rgb::new(255, 0, 0, 255);
-            let blue = Rgb::new(0, 0, 255, 255);
-            let blend = lerp_rgb(red, blue, 0.5);
-            ctx.draw_rectangle(300, 300, 50, 50, red.into());
-            ctx.draw_rectangle(300, 350, 50, 10, blend.into());
-            ctx.draw_rectangle(300, 360, 50, 40, blue.into());
+            let red = Color::new_rgb(255, 0, 0);
+            let blue = Color::new_rgb(0, 0, 255);
+            let blend = red.lerp(blue, 0.5);
+            ctx.draw_rectangle(300, 300, 50, 50, red);
+            ctx.draw_rectangle(300, 350, 50, 10, blend);
+            ctx.draw_rectangle(300, 360, 50, 40, blue);
         }
 
         'line: {
-            ctx.draw_line(40, 20, 200, 20, Color::Green.into());
-            ctx.draw_line(40, 20, 200, 25, Color::Green.into());
-            ctx.draw_line(40, 20, 200, 50, Color::Green.into());
-            ctx.draw_line(40, 20, 200, 100, Color::Green.into());
-            ctx.draw_line(40, 20, 200, 200, Color::Green.into());
-            ctx.draw_line(200, 50, 190, 52, Color::Green.into());
+            ctx.draw_line(40, 20, 200, 20, Color::GREEN);
+            ctx.draw_line(40, 20, 200, 25, Color::GREEN);
+            ctx.draw_line(40, 20, 200, 50, Color::GREEN);
+            ctx.draw_line(40, 20, 200, 100, Color::GREEN);
+            ctx.draw_line(40, 20, 200, 200, Color::GREEN);
+            ctx.draw_line(200, 50, 190, 52, Color::GREEN);
         }
 
         'button: {
             // let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(200);
-            let b = btn(&ctx).bg(Color::Hex(0xff)).centered(ctx.area).y(200);
+            let b = btn(&ctx).bg(Color::new(0xff)).centered(ctx.area).y(200);
             if b.clicked(Left) {
                 println!("Clicked blue button!");
             }

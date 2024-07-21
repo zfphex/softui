@@ -1,34 +1,15 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(unused)]
 use softui::*;
 use window::*;
 
-fn svg<P: AsRef<std::path::Path>>(path: P) -> resvg::tiny_skia::Pixmap {
-    let ctx = ctx();
-    let tree = resvg::usvg::Tree::from_data(
-        &std::fs::read(path).unwrap(),
-        &resvg::usvg::Options::default(),
-    )
-    .unwrap();
-    let mut pixmap = resvg::tiny_skia::Pixmap::new(ctx.width as u32, ctx.height as u32).unwrap();
-    resvg::render(
-        &tree,
-        resvg::tiny_skia::Transform::from_scale(0.5, 0.5),
-        &mut pixmap.as_mut(),
-    );
-    pixmap
-}
-
 fn main() {
-    // let mut ctx = Context::new("Softui", 800, 600);
-    // unsafe { CTX = Some(Context::new("Softui", 800, 600)) };
-    // let ctx = ctx();
-
     let ctx = create_ctx("Softui", 800, 600);
 
-    // let mut size = 20;
     let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
     set_default_font(font);
 
+    #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg");
 
     loop {
@@ -38,57 +19,26 @@ fn main() {
             _ => {}
         }
 
-        ctx.fill(Color::White);
+        // ctx.fill(Color::WHITE);
+        ctx.fill(Color::BLACK);
 
-        //SVG
-        {
-            let mut x = 0;
-            let mut y = 0;
-            for pixel in ferris.pixels() {
-                if y >= ferris.height() {
-                    break;
-                }
-
-                let color = (pixel.red() as u32) << 16
-                    | (pixel.green() as u32) << 8
-                    | (pixel.blue() as u32);
-                ctx.draw_pixel(x as usize, y as usize, color);
-
-                x += 1;
-                if x >= ferris.width() {
-                    y += 1;
-                    x = 0;
-                    continue;
-                }
-            }
-            // for x in 0..pixmap.width() {
-            //     if x >= ctx.width as u32 {
-            //         continue;
-            //     }
-            //     for y in 0..pixmap.height() {
-            //         if y >= ctx.height as u32 {
-            //             continue;
-            //         }
-            //         let pixel = pixmap.pixel(x, y).unwrap();
-            //         let color = (pixel.red() as u32) << 16
-            //             | (pixel.green() as u32) << 8
-            //             | (pixel.blue() as u32);
-            //         ctx.draw_pixel(x as usize, y as usize, color);
-            //     }
-            // }
-        }
+        #[cfg(feature = "svg")]
+        draw_svg(ctx, &ferris);
 
         {
             // empty((text("epic"), text("epic").y(30)));
+
             let str = "yipeee!\nabcdefghijklmnopqrstuvwxyz\n1234567890!@#$%^&*()\n";
             let mut text = text(str)
                 .y(40 + 32)
                 .font_size(32)
                 .on_clicked(Left, |_| println!("Clicked text {:?}", ctx.area));
+
             // if text.clicked(Left) {
             //     println!("Clicked text {:?}", ctx.area);
             // }
-            // text.draw();
+
+            text.draw();
 
             // button().on_clicked(Left, |_| println!("hi"));
         }
@@ -120,12 +70,12 @@ fn main() {
                 drag.y as usize,
                 drag.width as usize,
                 drag.height as usize,
-                Color::Red.into(),
+                Color::RED,
             )
             .unwrap();
         }
 
-        // ctx.draw_rectangle_rounded(300, 300, 300, 200, 25, Color::White.into())
+        // ctx.draw_rectangle_rounded(300, 300, 300, 200, 25, Color::WHITE.into())
         //     .unwrap();
 
         {

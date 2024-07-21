@@ -31,6 +31,7 @@ pub fn text(text: &str) -> Text {
         font: default_font().unwrap(),
         area: Rect::default(),
         text,
+        color: Color::WHITE,
         font_size: default_font_size(),
         line_height: None,
     }
@@ -40,6 +41,7 @@ pub struct Text<'a> {
     pub font: &'a fontdue::Font,
     pub area: Rect,
     pub text: &'a str,
+    color: Color,
     font_size: usize,
     line_height: Option<usize>,
 }
@@ -51,6 +53,10 @@ impl<'a> Text<'a> {
     }
     pub fn line_heigth(mut self, line_height: usize) -> Self {
         self.line_height = Some(line_height);
+        self
+    }
+    pub fn color(mut self, color: Color) -> Self {
+        self.color = color;
         self
     }
 
@@ -66,6 +72,10 @@ impl<'a> Text<'a> {
         let mut max_y = 0;
         let line_height = self.line_height.unwrap_or_default();
 
+        let r = self.color.r();
+        let g = self.color.g();
+        let b = self.color.b();
+
         'line: for line in self.text.lines() {
             let mut glyph_x = x;
 
@@ -78,7 +88,13 @@ impl<'a> Text<'a> {
 
                 for y in 0..metrics.height {
                     for x in 0..metrics.width {
-                        let color = bitmap[x + y * metrics.width];
+                        //TODO: Metrics.bounds determines the bounding are of the glyph.
+                        //Currently the whole bitmap bounding box is drawn.
+
+                        let alpha = bitmap[x + y * metrics.width];
+                        if alpha == 0 {
+                            continue;
+                        }
 
                         //Should the text really be offset by the font size?
                         //This allows the user to draw text at (0, 0).
@@ -103,8 +119,19 @@ impl<'a> Text<'a> {
                             break 'char;
                         }
 
-                        //Set the R, G and B values to the correct color.
-                        ctx.buffer[i] = (color as u32) << 16 | (color as u32) << 8 | (color as u32);
+                        let bg = Color::new(ctx.buffer[i]);
+                        //Inverted?
+                        let bga = 255 - alpha;
+
+                        fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
+                            ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32)
+                                / 255.0)
+                                .round() as u8
+                        }
+                        let r = blend(r, alpha, bg.r(), bga);
+                        let g = blend(g, alpha, bg.g(), bga);
+                        let b = blend(b, alpha, bg.b(), bga);
+                        ctx.buffer[i] = rgb(r, g, b);
                     }
                 }
 
@@ -131,7 +158,7 @@ impl<'a> Text<'a> {
             self.area.y as usize,
             self.area.width as usize,
             self.area.height as usize,
-            Color::Red.into(),
+            Color::RED,
         );
     }
 }

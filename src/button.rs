@@ -5,7 +5,7 @@ use mini::info;
 pub fn btn(ctx: &Context) -> Button {
     Button {
         area: Rect::new(0, 0, 10, 10),
-        bg: Color::White,
+        bg: Color::WHITE,
         ctx,
     }
 }
@@ -13,7 +13,7 @@ pub fn btn(ctx: &Context) -> Button {
 pub fn button() -> Button<'static> {
     Button {
         area: Rect::new(0, 0, 10, 10),
-        bg: Color::White,
+        bg: Color::WHITE,
         ctx: ctx(),
     }
 }
@@ -35,7 +35,7 @@ impl<'a> Widget for Button<'a> {
                 self.area.y as usize,
                 self.area.width as usize,
                 self.area.height as usize,
-                self.bg.into(),
+                self.bg,
             ));
         }
     }

@@ -29,6 +29,11 @@ pub use text::*;
 pub use tuple::*;
 pub use Mouse::*;
 
+#[cfg(feature = "svg")]
+pub mod svg;
+#[cfg(feature = "svg")]
+pub use svg::*;
+
 pub trait Widget {
     fn draw(&mut self) {}
     fn area(&self) -> Option<Rect>;
@@ -145,7 +150,7 @@ impl Widget for () {
 
 pub enum Command {
     /// (x, y, width, height, color)
-    Rectangle(usize, usize, usize, usize, u32),
+    Rectangle(usize, usize, usize, usize, Color),
     /// (text, font_size, x, y)
     /// This needs to include the desired font.
     /// Not sure how to do that yet.
@@ -364,9 +369,9 @@ impl Context {
     }
 
     //This is essentially just a memset.
-    pub fn fill<C: Into<u32>>(&mut self, color: C) {
+    pub fn fill(&mut self, color: Color) {
         profile!();
-        self.buffer.fill(color.into());
+        self.buffer.fill(color.as_u32());
     }
 
     ///Note color order is BGR_. The last byte is reserved.
@@ -380,17 +385,17 @@ impl Context {
     //Is it worth having a 2D projection matrix to convert top left orgin
     //into a center origin cartesian plane
     //FIXME: Disallow negative numbers, this can crash easily.
-    pub unsafe fn draw_circle_outline(&mut self, x: i32, y: i32, r: usize, color: u32) {
+    pub unsafe fn draw_circle_outline(&mut self, x: i32, y: i32, r: usize, color: Color) {
         //Bresenham algorithm
         let mut x1: i32 = -(r as i32);
         let mut y1: i32 = 0;
         let mut err: i32 = 2 - 2 * (r as i32);
 
         loop {
-            self.draw_pixel((x - x1) as usize, (y + y1) as usize, color);
-            self.draw_pixel((x - y1) as usize, (y - x1) as usize, color);
-            self.draw_pixel((x + x1) as usize, (y - y1) as usize, color);
-            self.draw_pixel((x + y1) as usize, (y + x1) as usize, color);
+            self.draw_pixel((x - x1) as usize, (y + y1) as usize, color.as_u32());
+            self.draw_pixel((x - y1) as usize, (y - x1) as usize, color.as_u32());
+            self.draw_pixel((x + x1) as usize, (y - y1) as usize, color.as_u32());
+            self.draw_pixel((x + y1) as usize, (y + x1) as usize, color.as_u32());
             let r = err;
             if r > x1 {
                 x1 += 1;
@@ -433,7 +438,7 @@ impl Context {
         }
     }
 
-    pub fn draw_circle(&mut self, cx: usize, cy: usize, radius: usize, color: u32) {
+    pub fn draw_circle(&mut self, cx: usize, cy: usize, radius: usize, color: Color) {
         let (x1, y1) = (cx - radius, cy - radius);
         let (x2, y2) = (cx + radius, cy + radius);
 
@@ -443,7 +448,7 @@ impl Context {
                 let dist_y = y as f32 - cy as f32 + 0.5;
                 let distance = (dist_x * dist_x + dist_y * dist_y).sqrt();
                 if distance <= radius as f32 {
-                    self.draw_pixel(x, y, color);
+                    self.draw_pixel(x, y, color.as_u32());
                 }
             }
         }
@@ -451,7 +456,7 @@ impl Context {
 
     //https://github.com/ssloy/tinyrenderer/wiki/Lesson-1:-Bresenham%E2%80%99s-Line-Drawing-Algorithm
     //Only works when the slope is >= 0 & <=1
-    pub fn draw_line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, color: u32) {
+    pub fn draw_line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, color: Color) {
         let mut error = 0.0;
         let dx = x1 as f32 - x0 as f32;
         let dy = y1 as f32 - y0 as f32;
@@ -461,7 +466,7 @@ impl Context {
         let mut y = y0;
 
         while x < x1 {
-            self.draw_pixel(x, y, color);
+            self.draw_pixel(x, y, color.as_u32());
             x += 1;
             error += m;
             if error > 0.5 {
@@ -484,13 +489,13 @@ impl Context {
         y: usize,
         width: usize,
         height: usize,
-        color: u32,
+        color: Color,
     ) -> Result<(), String> {
         self.bounds_check(x, y, width, height)?;
         for i in y..y + height {
             let pos = x + self.width * i;
             for px in &mut self.buffer[pos..pos + width] {
-                *px = color;
+                *px = color.as_u32();
             }
         }
         Ok(())
@@ -503,8 +508,8 @@ impl Context {
         y: usize,
         width: usize,
         height: usize,
-        color1: u32,
-        color2: u32,
+        color1: Color,
+        color2: Color,
     ) -> Result<(), String> {
         self.bounds_check(x, y, width, height)?;
 
@@ -514,7 +519,7 @@ impl Context {
 
             for (x, px) in self.buffer[start..end].iter_mut().enumerate() {
                 let t = (x as f32) / (end as f32 - start as f32);
-                *px = lerp_hex(color1, color2, t);
+                *px = color1.lerp(color2, t).as_u32();
             }
         }
         Ok(())
@@ -528,11 +533,12 @@ impl Context {
         y: usize,
         width: usize,
         height: usize,
-        color: u32,
+        color: Color,
     ) -> Result<(), String> {
         self.bounds_check(x, y, width, height)?;
         let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
         let canvas_width = self.width;
+        let color = color.as_u32();
 
         for i in y..y + height {
             if i > y && i < (y + height).saturating_sub(1) {
@@ -612,7 +618,7 @@ impl Context {
             }
         }
 
-        // let color = Color::Red.into();
+        // let color = Color::RED.into();
 
         //Top left
         let (tlx, tly) = (x + radius, y + radius);
