@@ -19,8 +19,7 @@ fn main() {
             _ => {}
         }
 
-        // ctx.fill(Color::WHITE);
-        ctx.fill(Color::BLACK);
+        ctx.fill(Color::WHITE);
 
         #[cfg(feature = "svg")]
         draw_svg(ctx, &ferris);
@@ -30,8 +29,9 @@ fn main() {
 
             let str = "yipeee!\nabcdefghijklmnopqrstuvwxyz\n1234567890!@#$%^&*()\n";
             let mut text = text(str)
-                .y(40 + 32)
-                .font_size(32)
+                .color(Color::new(0xfad))
+                .y(400)
+                .font_size(48)
                 .on_clicked(Left, |_| println!("Clicked text {:?}", ctx.area));
 
             // if text.clicked(Left) {
@@ -41,6 +41,8 @@ fn main() {
             text.draw();
 
             // button().on_clicked(Left, |_| println!("hi"));
+
+            fontdue_subpixel(ctx, 0, 0);
         }
 
         //Dragging example.

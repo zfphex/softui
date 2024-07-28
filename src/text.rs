@@ -4,7 +4,6 @@ use fontdue::*;
 use std::{ops::Range, path::Path, sync::atomic::AtomicUsize};
 
 pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
-pub const CHAR: char = 'g';
 
 static mut DEFAULT_FONT_SIZE: AtomicUsize = AtomicUsize::new(18);
 static mut DEFAULT_FONT: Option<Font> = None;
@@ -120,17 +119,16 @@ impl<'a> Text<'a> {
                         }
 
                         let bg = Color::new(ctx.buffer[i]);
-                        //Inverted?
-                        let bga = 255 - alpha;
 
+                        //Blend the background and the text color.
+                        #[rustfmt::skip] 
                         fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
-                            ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32)
-                                / 255.0)
-                                .round() as u8
+                            ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32) / 255.0).round() as u8
                         }
-                        let r = blend(r, alpha, bg.r(), bga);
-                        let g = blend(g, alpha, bg.g(), bga);
-                        let b = blend(b, alpha, bg.b(), bga);
+
+                        let r = blend(r, alpha, bg.r(), 255 - alpha);
+                        let g = blend(g, alpha, bg.g(), 255 - alpha);
+                        let b = blend(b, alpha, bg.b(), 255 - alpha);
                         ctx.buffer[i] = rgb(r, g, b);
                     }
                 }
@@ -292,9 +290,18 @@ impl Atlas {
     // }
 }
 
+//http://arkanis.de/weblog/2023-08-14-simple-good-quality-subpixel-text-rendering-in-opengl-with-stb-truetype-and-dual-source-blending
+
+// [FT_LCD_FILTER_DEFAULT](https://freetype.org/freetype2/docs/reference/ft2-lcd_rendering.html)
+// This is a beveled, normalized, and color-balanced five-tap filter with weights of [0x08 0x4D 0x56 0x4D 0x08] in 1/256 units.
+const LCD_FILTER: [u8; 5] = [0x08, 0x4D, 0x56, 0x4D, 0x08];
+
+// What in the fuck?
+// https://github.com/arkanis/gl-4.5-subpixel-text-rendering/blob/d770f0395f610d9fcc53319734069fe7fc4138b2/main.c#L626
+
 pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
     let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-    let (metrics, bitmap) = font.rasterize_subpixel(CHAR, 50.0);
+    let (metrics, bitmap) = font.rasterize_subpixel('g', 200.0);
 
     let start_x = x;
     let start_y = y;
@@ -304,35 +311,11 @@ pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
             let i = ((start_y + y) * ctx.width + start_x + x);
             let j = (y * metrics.width + x) * 3;
 
-            //Bitmap is BGR_ not RGB.
-
-            //Subpixels
-            let r = bitmap[j + 2];
+            let r = bitmap[j];
             let g = bitmap[j + 1];
-            let b = bitmap[j];
+            let b = bitmap[j + 2];
 
-            // let color =
-            //     (bitmap[j + 2] as u32) << 16 | (bitmap[j + 1] as u32) << 8 | (bitmap[j] as u32);
-            // ctx.buffer[i] = color;
-
-            //We need to modify the neighboring pixels, but I'm not sure how exactly.
-            // ctx.buffer[i - 1] = color;
-            // ctx.buffer[i + 1] = color;
-
-            //https://github.com/godotengine/godot-proposals/issues/1258
-
-            // for c in bitmap[j..j + 3].iter().rev() {
-            //     print!("{} ", c);
-            // }
-            // println!();
-
-            // let r = (bitmap[j + 2] as u32) << 16;
-            // let g = (bitmap[j + 1] as u32) << 8;
-            // let b = (bitmap[j] as u32);
-            // let color = lerp_hex(lerp_hex(r, g, 0.33), b, 0.33);
-            // ctx.buffer[i] = color;
-
-            // ctx.buffer[i] = (r as u32) << 16 | (g as u32) << 8 | (b as u32)
+            ctx.buffer[i] = rgb(r, g, b);
         }
     }
 }
