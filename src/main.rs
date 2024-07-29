@@ -12,6 +12,8 @@ fn main() {
     #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg");
 
+    let mut text_color = Color::WHITE;
+
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
@@ -19,7 +21,7 @@ fn main() {
             _ => {}
         }
 
-        ctx.fill(Color::WHITE);
+        ctx.fill(Color::BLACK);
 
         #[cfg(feature = "svg")]
         draw_svg(ctx, &ferris);
@@ -27,12 +29,28 @@ fn main() {
         {
             // empty((text("epic"), text("epic").y(30)));
 
+            //TODO: This aint workin.
+            let mut ve = v((text("one"), text("two"))).on_clicked(Left, |s| {
+                //
+                println!("Clicked on vertical");
+            });
+
             let str = "yipeee!\nabcdefghijklmnopqrstuvwxyz\n1234567890!@#$%^&*()\n";
             let mut text = text(str)
-                .color(Color::new(0xfad))
+                // .color(Color::new(0xfad))
+                .color(text_color)
                 .y(400)
                 .font_size(48)
-                .on_clicked(Left, |_| println!("Clicked text {:?}", ctx.area));
+                // .on_clicked(Left, |_| );
+                .on_clicked(Left, |s| {
+                    let ctx = softui::ctx();
+                    println!("Clicked text {:?}", ctx.area);
+                    if text_color == Color::WHITE {
+                        text_color = Color::BLACK;
+                    } else {
+                        text_color = Color::WHITE;
+                    }
+                });
 
             // if text.clicked(Left) {
             //     println!("Clicked text {:?}", ctx.area);
@@ -42,7 +60,7 @@ fn main() {
 
             // button().on_clicked(Left, |_| println!("hi"));
 
-            fontdue_subpixel(ctx, 0, 0);
+            // fontdue_subpixel(ctx, 0, 0);
         }
 
         //Dragging example.

@@ -43,7 +43,7 @@ pub trait Widget {
     fn calculate(&self) -> Option<Rect> {
         self.area()
     }
-    fn on_clicked<F: FnMut(&Context) -> ()>(mut self, button: Mouse, mut function: F) -> Self
+    fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: Mouse, mut function: F) -> Self
     where
         Self: Sized,
     {
@@ -69,7 +69,7 @@ pub trait Widget {
         };
 
         if clicked {
-            function(ctx);
+            function(&mut self);
         }
 
         self

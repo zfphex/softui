@@ -6,12 +6,6 @@ pub trait Style {
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Color(u32);
 
-impl From<u32> for Color {
-    fn from(color: u32) -> Self {
-        Self(color)
-    }
-}
-
 impl Color {
     pub const RED: Color = Color::new(0xFF0000);
     pub const BLUE: Color = Color::new(0x0000FF);
@@ -52,9 +46,16 @@ impl Color {
         Self::new_rgb(r, g, b)
     }
 
-    #[inline]
-    pub const fn as_u32(&self) -> u32 {
+    //Based debug mode optimizer. Note, this does literally nothing.
+
+    #[inline(always)]
+    pub const fn as_u32(self) -> u32 {
         self.0
+    }
+
+    #[inline(always)]
+    pub const fn from(color: u32) -> Self {
+        Self(color)
     }
 }
 

@@ -5,8 +5,9 @@ pub trait Tuple {
     // const LEN: usize;
     // fn array(&mut self) -> [&mut dyn View; Self::LEN];
 
-    fn for_each<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F);
-    fn for_each_rev<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F);
+    fn for_each<F: FnMut(&dyn Widget)>(&self, f: F);
+    fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F);
+    fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F);
     fn len(&self) -> usize;
     fn first(&mut self) -> &mut dyn Widget;
 }
@@ -20,10 +21,14 @@ macro_rules! impl_view_tuple {
             // fn array(&mut self) -> [&mut dyn View; Self::LEN] {
             //     [$(&mut self.$s,)*]
             // }
-            fn for_each<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
+
+            fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
+                $( f(&self.$s); )*
+            }
+            fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
                 $( f(&mut self.$s); )*
             }
-            fn for_each_rev<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
+            fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
                 $( f(&mut self.$s_rev); )*
             }
             fn len(&self) -> usize {
@@ -37,10 +42,13 @@ macro_rules! impl_view_tuple {
 }
 
 impl<V: Widget> Tuple for V {
-    fn for_each<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
+    fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
         f(self);
     }
-    fn for_each_rev<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
+    fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
+        f(self);
+    }
+    fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
         f(self);
     }
     fn len(&self) -> usize {

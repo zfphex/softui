@@ -5,6 +5,7 @@
 - [ ] Framerate limiter
 - [ ] Remove draw on drop and require that everything be placed into a container.
 - [ ] Rework color again, maybe using `T: Into<Color>` or something. Double check that `#[repr(transparent)]` and `as_u32()` are optimized away.
+- [ ] Text border
 - [x] Rectangle with rounded corners
 
 ### Trait Definitions

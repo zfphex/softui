@@ -40,9 +40,9 @@ pub struct Text<'a> {
     pub font: &'a fontdue::Font,
     pub area: Rect,
     pub text: &'a str,
-    color: Color,
-    font_size: usize,
-    line_height: Option<usize>,
+    pub color: Color,
+    pub font_size: usize,
+    pub line_height: Option<usize>,
 }
 
 impl<'a> Text<'a> {

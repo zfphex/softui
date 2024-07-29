@@ -306,7 +306,8 @@ pub trait Layout {
 pub const fn v<T: Tuple>(mut widgets: T) -> Container<T> {
     Container {
         widgets,
-        area: None,
+        // area: None,
+        area: Rect::default(),
         direction: Direction::Vertical,
         padding: 0,
         margin: 0,
@@ -316,7 +317,8 @@ pub const fn v<T: Tuple>(mut widgets: T) -> Container<T> {
 pub const fn h<T: Tuple>(mut widgets: T) -> Container<T> {
     Container {
         widgets,
-        area: None,
+        // area: None,
+        area: Rect::default(),
         direction: Direction::Horizontal,
         padding: 0,
         margin: 0,
@@ -333,7 +335,7 @@ pub struct Empty<T: Tuple> {
 
 impl<T: Tuple> Drop for Empty<T> {
     fn drop(&mut self) {
-        self.widgets.for_each(&mut |widget| widget.draw());
+        self.widgets.for_each_mut(&mut |widget| widget.draw());
     }
 }
 
@@ -347,29 +349,76 @@ pub enum Direction {
 pub struct Container<T: Tuple> {
     pub widgets: T,
     pub direction: Direction,
-    pub area: Option<Rect>,
+    pub area: Rect,
+    // pub area: Option<Rect>,
     ///Outer padding
     pub padding: usize,
     ///Inner padding
     pub margin: usize,
 }
 
+impl<T: Tuple> Layout for Container<T> {}
+
 impl<T: Tuple> Widget for Container<T> {
-    fn area(&self) -> Option<Rect> {
-        self.area
+    #[inline]
+    fn calculate(&self) -> Option<Rect> {
+        let mut x = -1;
+        let mut y = -1;
+
+        let padding = self.padding as i32;
+        let margin = self.margin as i32;
+        let direction = self.direction;
+
+        let mut root_area = Rect::new(0, 0, 0, 0);
+        let mut max_width = 0;
+        let mut max_height = 0;
+
+        self.widgets.for_each(|f| {
+            if let Some(mut area) = f.area() {
+                if area.width > max_width {
+                    max_width = area.width;
+                }
+
+                if area.height > max_height {
+                    max_height = area.height;
+                }
+            }
+        });
+
+        match direction {
+            Direction::Vertical => {
+                root_area.width = max_width;
+                root_area.height -= padding;
+            }
+            Direction::Horizontal => {
+                root_area.height = max_height;
+                root_area.width -= padding;
+            }
+        }
+
+        Some(root_area)
     }
+    fn area(&self) -> Option<Rect> {
+        // self.area
+        Some(self.area)
+    }
+
     fn area_mut(&mut self) -> Option<&mut Rect> {
-        self.area.as_mut()
+        // if self.area.is_none() {
+        //     self.area = Some(Rect::default());
+        // }
+        // self.area.as_mut()
+        Some(&mut self.area)
     }
     fn calculate_mut(&mut self, x: i32, y: i32) {
-        self.calculate(Some(x), Some(y));
+        self.calculate_area(Some(x), Some(y));
     }
 }
 
 //TODO: Should the inital position be based on the first widget.
 //Or should the user define that themselves.
 impl<T: Tuple> Container<T> {
-    pub fn calculate(&mut self, x: Option<i32>, y: Option<i32>) {
+    pub fn calculate_area(&mut self, x: Option<i32>, y: Option<i32>) {
         let mut x = x.unwrap_or(-1);
         let mut y = y.unwrap_or(-1);
 
@@ -381,7 +430,7 @@ impl<T: Tuple> Container<T> {
         let mut max_width = 0;
         let mut max_height = 0;
 
-        self.widgets.for_each(&mut |f| {
+        self.widgets.for_each_mut(&mut |f| {
             //If the widget is a container calculate the area.
             f.calculate_mut(x, y);
 
@@ -414,6 +463,7 @@ impl<T: Tuple> Container<T> {
 
                 //Recalculate the child area
                 f.calculate_mut(x, y);
+                f.draw();
 
                 //Note that since we don't know which item is last.
                 //We add some too much area and remove it after the loop.
@@ -443,11 +493,13 @@ impl<T: Tuple> Container<T> {
             }
         }
 
-        self.area = Some(root_area);
+        // self.area = Some(root_area);
+        self.area = root_area;
     }
     pub fn area(&mut self) -> Rect {
-        self.calculate(None, None);
-        self.area.as_ref().unwrap().clone()
+        self.calculate_area(None, None);
+        self.area
+        // self.area.as_ref().unwrap().clone()
     }
     pub fn padding(mut self, padding: usize) -> Self {
         self.padding = padding;
@@ -470,6 +522,6 @@ impl<T: Tuple> Container<T> {
 impl<T: Tuple> Drop for Container<T> {
     // Calculate the widget layout.
     fn drop(&mut self) {
-        self.calculate(None, None);
+        self.calculate_area(None, None);
     }
 }
