@@ -31,12 +31,13 @@ fn main() {
 
             let mut ve = v((
                 //TODO: This aint workin.
+                //Because the text layout is calculated after the `on_clicked` function is called. HMMMMM.
                 text("one").on_clicked(Left, |_| println!("Clicked on one")),
                 text("two").on_clicked(Left, |_| println!("Clicked on two")),
-            ))
-            .on_clicked(Left, |s| {
-                println!("Clicked on vertical");
-            });
+            ));
+            // .on_clicked(Left, |s| {
+            //     println!("Clicked on vertical");
+            // });
 
             let str = "yipeee!\nabcdefghijklmnopqrstuvwxyz\n1234567890!@#$%^&*()\n";
             let mut text = text(str)

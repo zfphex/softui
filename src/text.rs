@@ -173,14 +173,18 @@ impl<'a> Widget for Text<'a> {
         self.draw();
         // todo!();
     }
+
     #[inline]
     fn area(&self) -> Option<Rect> {
         Some(self.area)
     }
+
     #[inline]
     fn area_mut(&mut self) -> Option<&mut Rect> {
+        self.calculate(0, 0);
         Some(&mut self.area)
     }
+
     fn calculate(&mut self, x: i32, y: i32){
         let ctx = ctx();
         let mut y: usize = y as usize + self.area.y as usize;

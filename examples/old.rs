@@ -69,7 +69,14 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         'gradient: {
-            ctx.draw_linear_gradient(400, 200, 100, 100, Color::new(0x00ff00), Color::new(0xfffff));
+            ctx.draw_linear_gradient(
+                400,
+                200,
+                100,
+                100,
+                Color::new(0x00ff00),
+                Color::new(0xfffff),
+            );
             ctx.draw_linear_gradient(
                 400,
                 400,
@@ -117,9 +124,10 @@ fn main() {
             ctx.draw_line(200, 50, 190, 52, Color::GREEN);
         }
 
+        //TODO: These don't work anymore.
         'button: {
             // let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(200);
-            let b = btn(&ctx).bg(Color::new(0xff)).centered(ctx.area).y(200);
+            let mut b = btn(&ctx).bg(Color::new(0xff)).centered(ctx.area).y(200);
             if b.clicked(Left) {
                 println!("Clicked blue button!");
             }
