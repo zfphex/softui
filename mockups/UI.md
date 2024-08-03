@@ -24,9 +24,12 @@ let b = button().wh(48).radius(24)
 //  ^ This would have drawn      |
 //If the user had done b.clone() V here.
 h(b.clone().icon(CLOSE).left(0), b.icon(AUDIO).right(0));
+
 //Since drop would have been called.
 //I'm not sure what to do about that.
 //We draw on drop.
+
+//I removed this ^
 
 //Bottom bar
 h(

@@ -112,6 +112,7 @@ impl Rect {
     // }
 }
 
+//Unused
 pub trait Metrics {
     fn em(self) -> Unit;
     fn vh(self) -> Self;
@@ -158,14 +159,11 @@ impl From<f32> for Unit {
     }
 }
 
-//TODO: This is a complete mess :/
-pub trait Layout {
-    fn centered(mut self, parent: Rect) -> Self
-    where
-        Self: Sized + Widget,
-    {
+pub trait Layout: Sized {
+    fn layout_area(&mut self) -> Option<&mut Rect>;
+    fn centered(mut self, parent: Rect) -> Self {
         let parent_area = parent.clone();
-        let area = self.area_mut().unwrap();
+        let area = self.layout_area().unwrap();
         let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
         let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);
 
@@ -173,12 +171,8 @@ pub trait Layout {
 
         self
     }
-
-    fn x<U: Into<Unit>>(mut self, x: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
-        let area = self.area_mut().unwrap();
+    fn x<U: Into<Unit>>(mut self, x: U) -> Self {
+        let area = self.layout_area().unwrap();
         match x.into() {
             Unit::Px(px) => {
                 area.x = px as i32;
@@ -194,15 +188,11 @@ pub trait Layout {
         }
         self
     }
-
-    fn y<U: Into<Unit>>(mut self, y: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
-        let area = self.area_mut().unwrap();
+    fn y<U: Into<Unit>>(mut self, y: U) -> Self {
+        let area = self.layout_area().unwrap();
         match y.into() {
             Unit::Px(px) => {
-                self.area_mut().unwrap().y = px as i32;
+                self.layout_area().unwrap().y = px as i32;
                 // self.area.y = px as i32;
             }
             Unit::Em(_) => todo!(),
@@ -210,11 +200,8 @@ pub trait Layout {
         }
         self
     }
-    fn width<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
-        let area = self.area_mut().unwrap();
+    fn width<U: Into<Unit>>(mut self, length: U) -> Self {
+        let area = self.layout_area().unwrap();
         match length.into() {
             Unit::Px(px) => {
                 area.width = px as i32;
@@ -224,11 +211,8 @@ pub trait Layout {
         }
         self
     }
-    fn height<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
-        let area = self.area_mut().unwrap();
+    fn height<U: Into<Unit>>(mut self, length: U) -> Self {
+        let area = self.layout_area().unwrap();
         match length.into() {
             Unit::Px(px) => {
                 area.height = px as i32;
@@ -238,44 +222,23 @@ pub trait Layout {
         }
         self
     }
-    fn w<U: Into<Unit>>(self, width: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
+    fn w<U: Into<Unit>>(self, width: U) -> Self {
         self.width(width)
     }
-    fn h<U: Into<Unit>>(self, width: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
+    fn h<U: Into<Unit>>(self, width: U) -> Self {
         self.height(width)
     }
-
     //Swizzle 😏
-    fn wh<U: Into<Unit> + Copy>(self, value: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
+    fn wh<U: Into<Unit> + Copy>(self, value: U) -> Self {
         self.width(value).height(value)
     }
-
-    fn top<U: Into<Unit>>(self, top: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
+    fn top<U: Into<Unit>>(self, top: U) -> Self {
         self.y(top)
     }
-    fn left<U: Into<Unit>>(self, left: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
+    fn left<U: Into<Unit>>(self, left: U) -> Self {
         self.x(left)
     }
-
-    fn right<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
+    fn right<U: Into<Unit>>(mut self, length: U) -> Self {
         match length.into() {
             Unit::Px(px) => todo!(),
             Unit::Em(_) => todo!(),
@@ -283,10 +246,7 @@ pub trait Layout {
         }
         self
     }
-    fn bottom<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
+    fn bottom<U: Into<Unit>>(mut self, length: U) -> Self {
         match length.into() {
             Unit::Px(px) => todo!(),
             Unit::Em(_) => todo!(),
@@ -294,12 +254,22 @@ pub trait Layout {
         }
         self
     }
-
-    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
+    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self {
         self.x(x).y(y).width(width).height(height)
+    }
+}
+
+#[macro_export]
+macro_rules! v {
+    ($($widget:expr),*) => {
+        $crate::layout::v(($($widget),*))
+    }
+}
+
+#[macro_export]
+macro_rules! h {
+    ($($widget:expr),*) => {
+        $crate::layout::h(($($widget),*))
     }
 }
 
@@ -359,60 +329,8 @@ pub struct Container<T: Tuple> {
 }
 
 impl<T: Tuple> Layout for Container<T> {
-    fn x<U: Into<Unit>>(mut self, x: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
-        match x.into() {
-            Unit::Px(px) => {
-                self.bounds.x = px as i32;
-            }
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(p) => {
-                todo!();
-            }
-        }
-        self
-    }
-
-    fn y<U: Into<Unit>>(mut self, y: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
-        match y.into() {
-            Unit::Px(px) => {
-                self.bounds.y = px as i32;
-            }
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(_) => todo!(),
-        }
-        self
-    }
-    fn width<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
-        match length.into() {
-            Unit::Px(px) => {
-                self.bounds.width = px as i32;
-            }
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(_) => todo!(),
-        }
-        self
-    }
-    fn height<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized + Widget,
-    {
-        match length.into() {
-            Unit::Px(px) => {
-                self.bounds.height = px as i32;
-            }
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(_) => todo!(),
-        }
-        self
+    fn layout_area(&mut self) -> Option<&mut Rect> {
+        Some(&mut self.bounds)
     }
 }
 
@@ -433,8 +351,8 @@ impl<T: Tuple> Widget for Container<T> {
         let margin = self.margin as i32;
         let direction = self.direction;
 
-        let mut x = None;
-        let mut y = None;
+        let mut x = self.bounds.x;
+        let mut y = self.bounds.y;
 
         let mut root_area = Rect::new(0, 0, 0, 0);
         let mut max_width = 0;
@@ -442,36 +360,32 @@ impl<T: Tuple> Widget for Container<T> {
 
         self.widgets.for_each_mut(&mut |f| {
             //Calculate the widget area.
-            f.calculate(x.unwrap_or_default(), y.unwrap_or_default());
+            //Some widgets like text will need to have their layout pre-computed before they can be moved.
+            //This will only really do something the second time, since the first widget isn't
+            //positioned based on anything else.
+            //I need to change how I do layout, this sucks :/
+            f.calculate(x, y);
 
-            //Adjust the area based on the container.
-            if let Some(area) = f.area_mut() {
-                let height = area.height;
+            //Update the margin.
+            if margin != 0 {
+                let area = f.area().unwrap().inner(margin, margin);
+                *f.area_mut().unwrap() = area;
+            }
+
+            //Draw the widget once the layout is correct.
+            f.draw();
+
+            //Calculate the position of the next element.
+            if let Some(area) = f.area() {
                 let width = area.width;
+                let height = area.height;
 
+                //Used to calculate the layout bounds.
                 if width > max_width {
                     max_width = width;
                 }
-
                 if height > max_height {
                     max_height = height;
-                }
-
-                if let Some(x) = x
-                    && let Some(y) = y
-                {
-                    area.x = x + self.bounds.x;
-                    area.y = y + self.bounds.y;
-                } else {
-                    x = Some(area.x);
-                    y = Some(area.y);
-
-                    root_area.x = area.x;
-                    root_area.y = area.y;
-                }
-
-                if margin != 0 {
-                    *area = area.inner(margin, margin);
                 }
 
                 //Note that since we don't know which item is last.
@@ -481,17 +395,13 @@ impl<T: Tuple> Widget for Container<T> {
                 match direction {
                     Direction::Vertical => {
                         root_area.height += height + padding;
-                        *y.as_mut().unwrap() += height + padding;
+                        y += height + padding;
                     }
                     Direction::Horizontal => {
                         root_area.width += width + padding;
-                        *x.as_mut().unwrap() += width + padding;
+                        x += width + padding;
                     }
                 }
-
-                //Recalculate the child area
-                f.calculate(x.unwrap(), y.unwrap());
-                f.draw();
             }
         });
 

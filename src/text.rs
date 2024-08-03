@@ -181,14 +181,22 @@ impl<'a> Widget for Text<'a> {
 
     #[inline]
     fn area_mut(&mut self) -> Option<&mut Rect> {
-        self.calculate(0, 0);
         Some(&mut self.area)
     }
 
     fn calculate(&mut self, x: i32, y: i32){
         let ctx = ctx();
-        let mut y: usize = y as usize + self.area.y as usize;
-        let x = x as usize + self.area.x as usize;
+
+        //These are set up front because it's easier.
+        //This could be done when width and height is written.
+        self.area.y = y;
+        self.area.x = x;
+
+        //TODO: Two text widgets with same y value have different heights.
+        //Text needs to be aligned specifically over this y coordinate, 
+        //and not based on the largest character.
+        let mut y: usize = y as usize;
+        let x = x as usize;
 
         let mut max_x = 0;
         let mut max_y = 0;
@@ -252,14 +260,15 @@ impl<'a> Widget for Text<'a> {
 
         self.area = rect;
     }
-    // fn calculate(&self, x: i32, y: i32) -> Option<Rect> {
-       
-    // }
-}
+} 
 
 impl<'a> Layout for Text<'a> {
     fn centered(self, parent: Rect) -> Self {
         todo!()
+    }
+    
+    fn layout_area(&mut self) -> Option<&mut Rect> {
+        Some(&mut self.area)
     }
 }
 

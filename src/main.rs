@@ -29,12 +29,16 @@ fn main() {
         {
             // empty((text("epic"), text("epic").y(30)));
 
-            let mut ve = v((
-                //TODO: This aint workin.
-                //Because the text layout is calculated after the `on_clicked` function is called. HMMMMM.
-                text("one").on_clicked(Left, |_| println!("Clicked on one")),
-                text("two").on_clicked(Left, |_| println!("Clicked on two")),
-            ));
+            let vertical = v((text("hello"), text("hi"))).padding(2).y(300);
+            // panic!();
+            // let vertical = h((text("hello"))).y(300);
+
+            // let mut ve = v((
+            //     //TODO: This aint workin.
+            //     //Because the text layout is calculated after the `on_clicked` function is called. HMMMMM.
+            //     text("one").on_clicked(Left, |_| println!("Clicked on one")),
+            //     text("two").on_clicked(Left, |_| println!("Clicked on two")),
+            // ));
             // .on_clicked(Left, |s| {
             //     println!("Clicked on vertical");
             // });

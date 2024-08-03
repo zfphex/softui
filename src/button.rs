@@ -60,4 +60,8 @@ impl<'a> Style for Button<'a> {
     }
 }
 
-impl<'a> Layout for Button<'a> {}
+impl<'a> Layout for Button<'a> {
+    fn layout_area(&mut self) -> Option<&mut Rect> {
+        Some(&mut self.area)
+    }
+}
