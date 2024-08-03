@@ -8,6 +8,10 @@ pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
 static mut DEFAULT_FONT_SIZE: AtomicUsize = AtomicUsize::new(18);
 static mut DEFAULT_FONT: Option<Font> = None;
 
+pub fn load_default_font() {
+    set_default_font(fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap());
+}
+
 pub fn default_font() -> Option<&'static Font> {
     unsafe { DEFAULT_FONT.as_ref() }
 }
@@ -177,11 +181,10 @@ impl<'a> Widget for Text<'a> {
     fn area_mut(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }
-    //TODO: These x, y parameters aren't even used.
-    fn calculate(&self) -> Option<Rect> {
+    fn calculate(&mut self, x: i32, y: i32){
         let ctx = ctx();
-        let mut y: usize = self.area.y.try_into().unwrap();
-        let x = self.area.x as usize;
+        let mut y: usize = y as usize + self.area.y as usize;
+        let x = x as usize + self.area.x as usize;
 
         let mut max_x = 0;
         let mut max_y = 0;
@@ -243,8 +246,11 @@ impl<'a> Widget for Text<'a> {
         rect.height = (max_y as i32 + 1 - self.area.y);
         rect.width = (max_x as i32 + 1 - self.area.x);
 
-        Some(rect)
+        self.area = rect;
     }
+    // fn calculate(&self, x: i32, y: i32) -> Option<Rect> {
+       
+    // }
 }
 
 impl<'a> Layout for Text<'a> {

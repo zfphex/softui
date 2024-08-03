@@ -6,8 +6,8 @@ use window::*;
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
-    let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-    set_default_font(font);
+    //TODO: Removeme.
+    load_default_font();
 
     #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg");
@@ -29,9 +29,12 @@ fn main() {
         {
             // empty((text("epic"), text("epic").y(30)));
 
-            //TODO: This aint workin.
-            let mut ve = v((text("one"), text("two"))).on_clicked(Left, |s| {
-                //
+            let mut ve = v((
+                //TODO: This aint workin.
+                text("one").on_clicked(Left, |_| println!("Clicked on one")),
+                text("two").on_clicked(Left, |_| println!("Clicked on two")),
+            ))
+            .on_clicked(Left, |s| {
                 println!("Clicked on vertical");
             });
 
@@ -56,7 +59,7 @@ fn main() {
             //     println!("Clicked text {:?}", ctx.area);
             // }
 
-            text.draw();
+            // text.draw();
 
             // button().on_clicked(Left, |_| println!("hi"));
 

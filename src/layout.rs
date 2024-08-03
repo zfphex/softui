@@ -306,8 +306,9 @@ pub trait Layout {
 pub const fn v<T: Tuple>(mut widgets: T) -> Container<T> {
     Container {
         widgets,
-        // area: None,
-        area: Rect::default(),
+        bounds: Rect::default(),
+        computed_area: None,
+        // area: Rect::default(),
         direction: Direction::Vertical,
         padding: 0,
         margin: 0,
@@ -317,8 +318,8 @@ pub const fn v<T: Tuple>(mut widgets: T) -> Container<T> {
 pub const fn h<T: Tuple>(mut widgets: T) -> Container<T> {
     Container {
         widgets,
-        // area: None,
-        area: Rect::default(),
+        bounds: Rect::default(),
+        computed_area: None,
         direction: Direction::Horizontal,
         padding: 0,
         margin: 0,
@@ -349,91 +350,101 @@ pub enum Direction {
 pub struct Container<T: Tuple> {
     pub widgets: T,
     pub direction: Direction,
-    pub area: Rect,
-    // pub area: Option<Rect>,
+    pub bounds: Rect,
+    pub computed_area: Option<Rect>,
     ///Outer padding
     pub padding: usize,
     ///Inner padding
     pub margin: usize,
 }
 
-impl<T: Tuple> Layout for Container<T> {}
-
-impl<T: Tuple> Widget for Container<T> {
-    #[inline]
-    fn calculate(&self) -> Option<Rect> {
-        let mut x = -1;
-        let mut y = -1;
-
-        let padding = self.padding as i32;
-        let margin = self.margin as i32;
-        let direction = self.direction;
-
-        let mut root_area = Rect::new(0, 0, 0, 0);
-        let mut max_width = 0;
-        let mut max_height = 0;
-
-        self.widgets.for_each(|f| {
-            if let Some(mut area) = f.area() {
-                if area.width > max_width {
-                    max_width = area.width;
-                }
-
-                if area.height > max_height {
-                    max_height = area.height;
-                }
+impl<T: Tuple> Layout for Container<T> {
+    fn x<U: Into<Unit>>(mut self, x: U) -> Self
+    where
+        Self: Sized + Widget,
+    {
+        match x.into() {
+            Unit::Px(px) => {
+                self.bounds.x = px as i32;
             }
-        });
-
-        match direction {
-            Direction::Vertical => {
-                root_area.width = max_width;
-                root_area.height -= padding;
-            }
-            Direction::Horizontal => {
-                root_area.height = max_height;
-                root_area.width -= padding;
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(p) => {
+                todo!();
             }
         }
-
-        Some(root_area)
-    }
-    fn area(&self) -> Option<Rect> {
-        // self.area
-        Some(self.area)
+        self
     }
 
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        // if self.area.is_none() {
-        //     self.area = Some(Rect::default());
-        // }
-        // self.area.as_mut()
-        Some(&mut self.area)
+    fn y<U: Into<Unit>>(mut self, y: U) -> Self
+    where
+        Self: Sized + Widget,
+    {
+        match y.into() {
+            Unit::Px(px) => {
+                self.bounds.y = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
     }
-    fn calculate_mut(&mut self, x: i32, y: i32) {
-        self.calculate_area(Some(x), Some(y));
+    fn width<U: Into<Unit>>(mut self, length: U) -> Self
+    where
+        Self: Sized + Widget,
+    {
+        match length.into() {
+            Unit::Px(px) => {
+                self.bounds.width = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+    fn height<U: Into<Unit>>(mut self, length: U) -> Self
+    where
+        Self: Sized + Widget,
+    {
+        match length.into() {
+            Unit::Px(px) => {
+                self.bounds.height = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
     }
 }
 
-//TODO: Should the inital position be based on the first widget.
-//Or should the user define that themselves.
-impl<T: Tuple> Container<T> {
-    pub fn calculate_area(&mut self, x: Option<i32>, y: Option<i32>) {
-        let mut x = x.unwrap_or(-1);
-        let mut y = y.unwrap_or(-1);
+impl<T: Tuple> Widget for Container<T> {
+    fn area(&self) -> Option<Rect> {
+        self.computed_area
+    }
 
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        if self.computed_area.is_none() {
+            self.calculate(0, 0);
+        }
+
+        self.computed_area.as_mut()
+    }
+    fn calculate(&mut self, _: i32, _: i32) {
         let padding = self.padding as i32;
         let margin = self.margin as i32;
         let direction = self.direction;
+
+        let mut x = None;
+        let mut y = None;
 
         let mut root_area = Rect::new(0, 0, 0, 0);
         let mut max_width = 0;
         let mut max_height = 0;
 
         self.widgets.for_each_mut(&mut |f| {
-            //If the widget is a container calculate the area.
-            f.calculate_mut(x, y);
+            //Calculate the widget area.
+            f.calculate(x.unwrap_or_default(), y.unwrap_or_default());
 
+            //Adjust the area based on the container.
             if let Some(area) = f.area_mut() {
                 let height = area.height;
                 let width = area.width;
@@ -446,24 +457,22 @@ impl<T: Tuple> Container<T> {
                     max_height = height;
                 }
 
-                if y < 0 || x < 0 {
-                    x = area.x;
-                    y = area.y;
-
-                    root_area.x = x;
-                    root_area.y = y;
+                if let Some(x) = x
+                    && let Some(y) = y
+                {
+                    area.x = x + self.bounds.x;
+                    area.y = y + self.bounds.y;
                 } else {
-                    area.x = x;
-                    area.y = y;
+                    x = Some(area.x);
+                    y = Some(area.y);
+
+                    root_area.x = area.x;
+                    root_area.y = area.y;
                 }
 
                 if margin != 0 {
                     *area = area.inner(margin, margin);
                 }
-
-                //Recalculate the child area
-                f.calculate_mut(x, y);
-                f.draw();
 
                 //Note that since we don't know which item is last.
                 //We add some too much area and remove it after the loop.
@@ -472,13 +481,17 @@ impl<T: Tuple> Container<T> {
                 match direction {
                     Direction::Vertical => {
                         root_area.height += height + padding;
-                        y += height + padding;
+                        *y.as_mut().unwrap() += height + padding;
                     }
                     Direction::Horizontal => {
                         root_area.width += width + padding;
-                        x += width + padding;
+                        *x.as_mut().unwrap() += width + padding;
                     }
                 }
+
+                //Recalculate the child area
+                f.calculate(x.unwrap(), y.unwrap());
+                f.draw();
             }
         });
 
@@ -493,14 +506,11 @@ impl<T: Tuple> Container<T> {
             }
         }
 
-        // self.area = Some(root_area);
-        self.area = root_area;
+        self.computed_area = Some(root_area);
     }
-    pub fn area(&mut self) -> Rect {
-        self.calculate_area(None, None);
-        self.area
-        // self.area.as_ref().unwrap().clone()
-    }
+}
+
+impl<T: Tuple> Container<T> {
     pub fn padding(mut self, padding: usize) -> Self {
         self.padding = padding;
         self
@@ -522,6 +532,25 @@ impl<T: Tuple> Container<T> {
 impl<T: Tuple> Drop for Container<T> {
     // Calculate the widget layout.
     fn drop(&mut self) {
-        self.calculate_area(None, None);
+        self.calculate(0, 0);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn layout() {
+        load_default_font();
+        let ctx = create_ctx("Softui", 800, 600);
+        // let mut t = text("1");
+        // t.calculate_mut(0, 0);
+        // dbg!(t.area());
+        let mut container = v((text("1"), text("1")));
+        // let mut container = v((text("1")));
+        dbg!(container.area_mut());
+        // container.calculate(Some(container.area.x), Some(container.area.y));
+        // dbg!(container.area);
     }
 }

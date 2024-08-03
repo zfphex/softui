@@ -49,6 +49,8 @@ impl<'a> Widget for Button<'a> {
     fn area(&self) -> Option<Rect> {
         Some(self.area)
     }
+
+    fn calculate(&mut self, x: i32, y: i32) {}
 }
 
 impl<'a> Style for Button<'a> {

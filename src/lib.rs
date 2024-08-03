@@ -1,5 +1,5 @@
 #![allow(unused, static_mut_refs)]
-#![feature(portable_simd, test, const_float_bits_conv)]
+#![feature(portable_simd, test, const_float_bits_conv, let_chains)]
 use core::ffi::c_void;
 use crossbeam_queue::SegQueue;
 use mini::{info, profile};
@@ -38,17 +38,19 @@ pub trait Widget {
     fn draw(&mut self) {}
     fn area(&self) -> Option<Rect>;
     fn area_mut(&mut self) -> Option<&mut Rect>;
-    fn calculate_mut(&mut self, x: i32, y: i32) {}
-    #[inline]
-    fn calculate(&self) -> Option<Rect> {
-        self.area()
-    }
+
+    //TODO: Explain why calculate takes in an x and y coordinate.
+    //I don't even remember why. It think it's for offsetting child widgets.
+    //calculate(self.area.x, self.area.y) is bad because. x and y are calculated
+    //to be x + self.area.x and y + self.area.y, so don't double up okay?
+    fn calculate(&mut self, x: i32, y: i32);
+
     fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: Mouse, mut function: F) -> Self
     where
         Self: Sized,
     {
         let ctx = ctx();
-        let area = self.calculate().unwrap();
+        let area = *self.area_mut().unwrap();
 
         if !ctx.mouse_pos.intersects(area) {
             return self;
@@ -75,12 +77,15 @@ pub trait Widget {
         self
     }
     /// The user's cusor has been clicked and released on top of a widget.
-    fn clicked(&self, button: Mouse) -> bool
+    fn clicked(&mut self, button: Mouse) -> bool
     where
         Self: Sized,
     {
         let ctx = ctx();
-        let area = self.calculate().unwrap();
+
+        //Use area_mut so widgets can calculate their area.
+        let area = *self.area_mut().unwrap();
+
         if !ctx.mouse_pos.intersects(area) {
             return false;
         }
@@ -146,6 +151,8 @@ impl Widget for () {
     fn area_mut(&mut self) -> Option<&mut Rect> {
         None
     }
+
+    fn calculate(&mut self, x: i32, y: i32) {}
 }
 
 pub enum Command {
