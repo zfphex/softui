@@ -1,5 +1,5 @@
 #![allow(unused, static_mut_refs)]
-#![feature(portable_simd, test, const_float_bits_conv, let_chains)]
+#![feature(portable_simd, test, const_float_bits_conv, let_chains, decl_macro)]
 use core::ffi::c_void;
 use crossbeam_queue::SegQueue;
 use mini::{info, profile};

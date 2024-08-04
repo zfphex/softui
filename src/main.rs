@@ -29,7 +29,7 @@ fn main() {
         {
             // empty((text("epic"), text("epic").y(30)));
 
-            let vertical = v((text("hello"), text("hi"))).padding(2).y(300);
+            v!(text("hello"), text("hi")).padding(2).y(300);
             // panic!();
             // let vertical = h((text("hello"))).y(300);
 

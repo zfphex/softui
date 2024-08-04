@@ -259,18 +259,26 @@ pub trait Layout: Sized {
     }
 }
 
-#[macro_export]
-macro_rules! v {
-    ($($widget:expr),*) => {
-        $crate::layout::v(($($widget),*))
-    }
+// #[macro_export]
+// macro_rules! v {
+//     ($($widget:expr),*) => {
+//         $crate::layout::v(($($widget),*))
+//     }
+// }
+
+// #[macro_export]
+// macro_rules! h {
+//     ($($widget:expr),*) => {
+//         $crate::layout::h(($($widget),*))
+//     }
+// }
+
+pub macro v($($widget:expr),*) {
+   v(($($widget), *))
 }
 
-#[macro_export]
-macro_rules! h {
-    ($($widget:expr),*) => {
-        $crate::layout::h(($($widget),*))
-    }
+pub macro h($($widget:expr),*) {
+    h(($($widget), *))
 }
 
 pub const fn v<T: Tuple>(mut widgets: T) -> Container<T> {
@@ -278,7 +286,6 @@ pub const fn v<T: Tuple>(mut widgets: T) -> Container<T> {
         widgets,
         bounds: Rect::default(),
         computed_area: None,
-        // area: Rect::default(),
         direction: Direction::Vertical,
         padding: 0,
         margin: 0,
