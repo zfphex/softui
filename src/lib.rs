@@ -29,6 +29,17 @@ pub use text::*;
 pub use tuple::*;
 pub use Mouse::*;
 
+pub macro builder($struct:ty, $($field:tt, $field_type:ty),*) {
+    impl $struct {
+        $(
+            pub fn $field(mut self, $field: $field_type) -> Self {
+                self.$field = $field;
+                self
+            }
+        )*
+    }
+}
+
 #[cfg(feature = "svg")]
 pub mod svg;
 #[cfg(feature = "svg")]
@@ -171,6 +182,8 @@ impl Widget for () {
 }
 
 pub enum Command {
+    /// (x, y, width, height, radius, color)
+    Ellipse(usize, usize, usize, usize, usize, Color),
     /// (x, y, width, height, color)
     Rectangle(usize, usize, usize, usize, Color),
     /// (text, font_size, x, y)
@@ -340,6 +353,14 @@ impl Context {
                 //This should idealy have a z index/depth parameter.
                 Command::Rectangle(x, y, width, height, color) => {
                     self.draw_rectangle(x, y, width, height, color);
+                }
+                Command::Ellipse(x, y, width, height, radius, color) => {
+                    if radius == 0 {
+                        self.draw_rectangle(x, y, width, height, color).unwrap();
+                    } else {
+                        self.draw_rectangle_rounded(x, y, width, height, radius, color)
+                            .unwrap();
+                    }
                 }
                 Command::Text(text, size, x, y) => {
                     todo!();
@@ -613,6 +634,7 @@ impl Context {
 
     //https://en.wikipedia.org/wiki/Superellipse
     //https://en.wikipedia.org/wiki/Squircle
+    #[must_use]
     pub fn draw_rectangle_rounded(
         &mut self,
         x: usize,
@@ -620,9 +642,18 @@ impl Context {
         width: usize,
         height: usize,
         radius: usize,
-        color: u32,
+        color: Color,
     ) -> Result<(), String> {
         self.bounds_check(x, y, width, height)?;
+
+        if (2 * radius) > (width) {
+            return Err(format!(
+                "Radius {} is larger than the width {}.",
+                radius, width
+            ));
+        }
+
+        let color = color.as_u32();
 
         for i in y..y + height {
             let y = i - y;

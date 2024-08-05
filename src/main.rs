@@ -14,7 +14,7 @@ fn main() {
 
     let mut text_color = Color::WHITE;
 
-    let mut wh = 50;
+    let mut wh = 100;
 
     loop {
         match ctx.event() {
@@ -36,6 +36,7 @@ fn main() {
                 text("hi"),
                 rect().wh(50).bg(Color::RED),
                 rect()
+                    .radius(20)
                     .wh(wh)
                     .bg(Color::new(0xce70d6))
                     //Doesn't work...
