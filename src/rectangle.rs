@@ -2,16 +2,16 @@ use crate::*;
 use mini::info;
 
 //Old version for testing.
-pub fn btn(ctx: &Context) -> Button {
-    Button {
+pub fn rct(ctx: &Context) -> Rectangle {
+    Rectangle {
         area: Rect::new(0, 0, 10, 10),
         bg: Color::WHITE,
         ctx,
     }
 }
 
-pub fn button() -> Button<'static> {
-    Button {
+pub fn rect() -> Rectangle<'static> {
+    Rectangle {
         area: Rect::new(0, 0, 10, 10),
         bg: Color::WHITE,
         ctx: ctx(),
@@ -19,15 +19,15 @@ pub fn button() -> Button<'static> {
 }
 
 #[derive(Clone)]
-pub struct Button<'a> {
+pub struct Rectangle<'a> {
     pub area: Rect,
     pub ctx: &'a Context,
     bg: Color,
 }
 
-impl<'a> Button<'a> {}
+impl<'a> Rectangle<'a> {}
 
-impl<'a> Widget for Button<'a> {
+impl<'a> Widget for Rectangle<'a> {
     fn draw(&mut self) {
         unsafe {
             COMMAND_QUEUE.push(Command::Rectangle(
@@ -50,17 +50,20 @@ impl<'a> Widget for Button<'a> {
         Some(self.area)
     }
 
-    fn calculate(&mut self, x: i32, y: i32) {}
+    fn adjust_position(&mut self, x: i32, y: i32) {
+        self.area.x = x;
+        self.area.y = y;
+    }
 }
 
-impl<'a> Style for Button<'a> {
+impl<'a> Style for Rectangle<'a> {
     fn bg(mut self, color: Color) -> Self {
         self.bg = color;
         self
     }
 }
 
-impl<'a> Layout for Button<'a> {
+impl<'a> Layout for Rectangle<'a> {
     fn layout_area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }

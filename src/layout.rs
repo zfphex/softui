@@ -26,7 +26,7 @@ impl AtomicRect {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Rect {
     pub x: i32,
     pub y: i32,
@@ -289,6 +289,7 @@ pub const fn v<T: Tuple>(mut widgets: T) -> Container<T> {
         direction: Direction::Vertical,
         padding: 0,
         margin: 0,
+        drawn: false,
     }
 }
 
@@ -300,6 +301,7 @@ pub const fn h<T: Tuple>(mut widgets: T) -> Container<T> {
         direction: Direction::Horizontal,
         padding: 0,
         margin: 0,
+        drawn: false,
     }
 }
 
@@ -333,6 +335,9 @@ pub struct Container<T: Tuple> {
     pub padding: usize,
     ///Inner padding
     pub margin: usize,
+
+    //Yuck
+    pub drawn: bool,
 }
 
 impl<T: Tuple> Layout for Container<T> {
@@ -342,18 +347,26 @@ impl<T: Tuple> Layout for Container<T> {
 }
 
 impl<T: Tuple> Widget for Container<T> {
+    fn is_container() -> bool
+    where
+        Self: Sized,
+    {
+        true
+    }
     fn area(&self) -> Option<Rect> {
         self.computed_area
     }
 
     fn area_mut(&mut self) -> Option<&mut Rect> {
         if self.computed_area.is_none() {
-            self.calculate(0, 0);
+            self.adjust_position(0, 0);
         }
 
         self.computed_area.as_mut()
     }
-    fn calculate(&mut self, _: i32, _: i32) {
+    fn adjust_position(&mut self, _: i32, _: i32) {
+        self.drawn = true;
+
         let padding = self.padding as i32;
         let margin = self.margin as i32;
         let direction = self.direction;
@@ -361,7 +374,7 @@ impl<T: Tuple> Widget for Container<T> {
         let mut x = self.bounds.x;
         let mut y = self.bounds.y;
 
-        let mut root_area = Rect::new(0, 0, 0, 0);
+        let mut root_area = Rect::new(x, y, 0, 0);
         let mut max_width = 0;
         let mut max_height = 0;
 
@@ -371,7 +384,7 @@ impl<T: Tuple> Widget for Container<T> {
             //This will only really do something the second time, since the first widget isn't
             //positioned based on anything else.
             //I need to change how I do layout, this sucks :/
-            f.calculate(x, y);
+            f.adjust_position(x, y);
 
             //Update the margin.
             if margin != 0 {
@@ -423,6 +436,15 @@ impl<T: Tuple> Widget for Container<T> {
             }
         }
 
+        let ctx = ctx();
+        ctx.draw_rectangle_outline(
+            root_area.x as usize,
+            root_area.y as usize,
+            root_area.width as usize,
+            root_area.height as usize,
+            Color::RED,
+        );
+
         self.computed_area = Some(root_area);
     }
 }
@@ -449,7 +471,15 @@ impl<T: Tuple> Container<T> {
 impl<T: Tuple> Drop for Container<T> {
     // Calculate the widget layout.
     fn drop(&mut self) {
-        self.calculate(0, 0);
+        if self.drawn {
+            return;
+        }
+
+        if let Some(area) = self.computed_area {
+            self.adjust_position(area.x, area.y);
+        } else {
+            self.adjust_position(0, 0);
+        }
     }
 }
 

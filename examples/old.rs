@@ -127,32 +127,32 @@ fn main() {
         //TODO: These don't work anymore.
         'button: {
             // let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(200);
-            let mut b = btn(&ctx).bg(Color::new(0xff)).centered(ctx.area).y(200);
+            let mut b = rct(&ctx).bg(Color::new(0xff)).centered(ctx.area).y(200);
             if b.clicked(Left) {
                 println!("Clicked blue button!");
             }
 
-            if btn(&ctx).centered(ctx.area).clicked(Middle) {
+            if rct(&ctx).centered(ctx.area).clicked(Middle) {
                 println!("Clicked white button!");
             }
         }
 
         'layout: {
             h((
-                btn(&ctx).pos(40, 120, 20, 20),
-                btn(&ctx).width(20).height(20),
+                rct(&ctx).pos(40, 120, 20, 20),
+                rct(&ctx).width(20).height(20),
             ))
             .padding(6)
             //TODO: Margin errors are too hard to track down.
             .margin(2);
 
-            v((btn(&ctx).pos(40, 180, 20, 20), btn(&ctx).w(20).h(40))).padding(6);
+            v((rct(&ctx).pos(40, 180, 20, 20), rct(&ctx).w(20).h(40))).padding(6);
 
             h((
-                btn(&ctx).pos(400, 20, 20, 20),
-                btn(&ctx).w(40).h(20),
-                btn(&ctx).w(40).h(20),
-                btn(&ctx).w(40).h(20),
+                rct(&ctx).pos(400, 20, 20, 20),
+                rct(&ctx).w(40).h(20),
+                rct(&ctx).w(40).h(20),
+                rct(&ctx).w(40).h(20),
             ))
             .padding(10);
         }

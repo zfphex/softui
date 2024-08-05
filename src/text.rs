@@ -184,7 +184,7 @@ impl<'a> Widget for Text<'a> {
         Some(&mut self.area)
     }
 
-    fn calculate(&mut self, x: i32, y: i32){
+    fn adjust_position(&mut self, x: i32, y: i32){
         let ctx = ctx();
 
         //These are set up front because it's easier.

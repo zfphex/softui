@@ -14,16 +14,16 @@ use std::{
 use window::*;
 
 pub mod atomic_float;
-pub mod button;
 pub mod input;
 pub mod layout;
+pub mod rectangle;
 pub mod style;
 pub mod text;
 pub mod tuple;
 
-pub use button::*;
 pub use input::*;
 pub use layout::*;
+pub use rectangle::*;
 pub use style::*;
 pub use text::*;
 pub use tuple::*;
@@ -39,18 +39,33 @@ pub trait Widget {
     fn area(&self) -> Option<Rect>;
     fn area_mut(&mut self) -> Option<&mut Rect>;
 
+    //This should be called need_draw, need_compute_area, idk...
+    //If we used Any we could just call self.type_id() == Container.
+    //Easy as that.
+    fn is_container() -> bool
+    where
+        Self: Sized,
+    {
+        false
+    }
+
     //TODO: Explain why calculate takes in an x and y coordinate.
     //I don't even remember why. It think it's for offsetting child widgets.
     //calculate(self.area.x, self.area.y) is bad because. x and y are calculated
     //to be x + self.area.x and y + self.area.y, so don't double up okay?
-    fn calculate(&mut self, x: i32, y: i32);
+    fn adjust_position(&mut self, x: i32, y: i32);
 
     fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: Mouse, mut function: F) -> Self
     where
         Self: Sized,
     {
         let ctx = ctx();
-        let area = *self.area_mut().unwrap();
+
+        if Self::is_container() {
+            self.adjust_position(0, 0);
+        }
+
+        let area = self.area().unwrap();
 
         if !ctx.mouse_pos.intersects(area) {
             return self;
@@ -152,7 +167,7 @@ impl Widget for () {
         None
     }
 
-    fn calculate(&mut self, x: i32, y: i32) {}
+    fn adjust_position(&mut self, x: i32, y: i32) {}
 }
 
 pub enum Command {

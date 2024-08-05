@@ -10,38 +10,65 @@ pub trait Tuple {
     fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F);
     fn len(&self) -> usize;
     fn first(&mut self) -> &mut dyn Widget;
+    fn get(&self, index: usize) -> Option<&dyn Widget>;
+    fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget>;
+    // fn array(&self) -> [&dyn Widget; Self::LEN];
+    // fn vec(&self) -> Vec<&dyn Widget>;
 }
 
 //https://github.com/audulus/rui/blob/main/src/Tuple.rs
 macro_rules! impl_view_tuple {
-    ($n: tt; $($t:ident),*; $($s:tt),*; $($s_rev:tt),*) => {
+    ($len: tt; $($t:ident),*; $($idx:tt),*; $($idx_rev:tt),*) => {
         impl< $( $t: Widget, )* > Tuple for ( $( $t, )* ) {
-            // const LEN: usize = $n;
+            // const LEN: usize = $len;
 
-            // fn array(&mut self) -> [&mut dyn View; Self::LEN] {
-            //     [$(&mut self.$s,)*]
+            // fn vec(&self) -> Vec<&dyn Widget> {
+            //     vec![$(&self.$idx as &dyn Widget,)*]
+            // }
+            // fn array(&self) -> [&dyn Widget; Self::LEN] {
+            //     [$(&self.$idx as &dyn Widget,)*]
             // }
 
             fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
-                $( f(&self.$s); )*
+                $( f(&self.$idx); )*
             }
             fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
-                $( f(&mut self.$s); )*
+                $( f(&mut self.$idx); )*
             }
             fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
-                $( f(&mut self.$s_rev); )*
+                $( f(&mut self.$idx_rev); )*
             }
             fn len(&self) -> usize {
-                $n
+                $len
             }
             fn first(&mut self) -> &mut dyn Widget {
                 &mut self.0 as &mut dyn Widget
+            }
+            fn get(&self, index: usize) -> Option<&dyn Widget> {
+                match index {
+                    $($idx => Some(&self.$idx as &dyn Widget),)*
+                    _ => unreachable!(),
+                }
+            }
+            fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget> {
+                match index {
+                    $($idx => Some(&mut self.$idx as &mut dyn Widget),)*
+                    _ => None,
+                }
             }
         }
     }
 }
 
+/*
+match len {
+    $idx => self.$idx
+
+}
+*/
+
 impl<V: Widget> Tuple for V {
+    // const LEN: usize = 1;
     fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
         f(self);
     }
@@ -57,6 +84,19 @@ impl<V: Widget> Tuple for V {
     fn first(&mut self) -> &mut dyn Widget {
         self as &mut dyn Widget
     }
+    fn get(&self, index: usize) -> Option<&dyn Widget> {
+        Some(self as &dyn Widget)
+    }
+    fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget> {
+        Some(self as &mut dyn Widget)
+    }
+
+    // fn array(&self) -> [&dyn Widget; Self::LEN] {
+    //     [self as &dyn Widget]
+    // }
+    // fn vec(&self) -> Vec<&dyn Widget> {
+    //     vec![self]
+    // }
 }
 
 //Limit tuples to 10 items long. Helps with compile times.
