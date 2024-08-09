@@ -3,7 +3,7 @@ use atomic_float::AtomicF32;
 use fontdue::*;
 use std::{ops::Range, path::Path, sync::atomic::AtomicUsize};
 
-pub const FONT: &[u8] = include_bytes!("../fonts/JetBrainsMono.ttf");
+pub const FONT: &[u8] = include_bytes!("../../fonts/JetBrainsMono.ttf");
 
 static mut DEFAULT_FONT_SIZE: AtomicUsize = AtomicUsize::new(18);
 static mut DEFAULT_FONT: Option<Font> = None;
@@ -62,7 +62,6 @@ impl<'a> Text<'a> {
         self.color = color;
         self
     }
-
     //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
     //or maybe the buffer should just include all the text related code and the metrics should be static.
     //TODO: If the text is longer than canvas width it needs to be clipped.

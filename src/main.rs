@@ -30,23 +30,24 @@ fn main() {
 
         {
             // empty((text("epic"), text("epic").y(30)));
+            let mut r = rect_new().on_clicked(|| println!("test"));
+            // r.draw();
+
+            empty((r));
 
             v!(
                 text("hello"),
                 text("hi"),
                 rect().wh(50).bg(Color::RED),
-                rect()
-                    .radius(20)
-                    .wh(wh)
-                    .bg(Color::new(0xce70d6))
-                    //Doesn't work...
-                    .on_clicked(Left, |_| println!("Clicked on the pink square"))
+                rect().radius(20).wh(wh).bg(Color::new(0xce70d6)) //Doesn't work...
+                                                                  // .on_clicked(Left, |_| println!("Clicked on the pink square"))
             )
             .padding(10)
             .y(200)
             .on_clicked(Left, |s| {
                 wh += 5;
             });
+
             // panic!();
             // let vertical = h((text("hello"))).y(300);
 

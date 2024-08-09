@@ -13,22 +13,27 @@ use std::{
 };
 use window::*;
 
+pub mod widgets;
+
 pub mod atomic_float;
 pub mod input;
-pub mod layout;
-pub mod rectangle;
 pub mod style;
-pub mod text;
 pub mod tuple;
 
 pub use input::*;
-pub use layout::*;
-pub use rectangle::*;
 pub use style::*;
-pub use text::*;
 pub use tuple::*;
+
 pub use Mouse::*;
 
+pub use widgets::layout::*;
+pub use widgets::rectangle::*;
+pub use widgets::text::*;
+
+pub use widgets::rectangle_new::*;
+
+//Doesn't support self.$filed = Some($field)
+//Not sure how to add that.
 pub macro builder($struct:ty, $($field:tt, $field_type:ty),*) {
     impl $struct {
         $(
@@ -41,9 +46,7 @@ pub macro builder($struct:ty, $($field:tt, $field_type:ty),*) {
 }
 
 #[cfg(feature = "svg")]
-pub mod svg;
-#[cfg(feature = "svg")]
-pub use svg::*;
+pub use widgets::svg::*;
 
 pub trait Widget {
     fn draw(&mut self) {}
@@ -534,13 +537,36 @@ impl Context {
         height: usize,
         color: Color,
     ) -> Result<(), String> {
+        #[cfg(debug_assertions)]
         self.bounds_check(x, y, width, height)?;
+
         for i in y..y + height {
             let pos = x + self.width * i;
-            for px in &mut self.buffer[pos..pos + width] {
-                *px = color.as_u32();
-            }
+            self.buffer[pos..pos + width].fill(color.as_u32());
         }
+        Ok(())
+    }
+
+    //An alternative way of rendering.
+    //I don't think it's much faster.
+    //Can't really optimise something this simple.
+    pub fn draw_rectangle_2(
+        &mut self,
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+        color: u32,
+    ) -> Result<(), String> {
+        #[cfg(debug_assertions)]
+        self.bounds_check(x, y, width, height)?;
+
+        let mut i = x + (y * self.width);
+        for _ in 0..height {
+            unsafe { self.buffer.get_unchecked_mut(i..i + width).fill(color) };
+            i += self.width;
+        }
+
         Ok(())
     }
 

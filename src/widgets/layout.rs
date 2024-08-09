@@ -273,11 +273,11 @@ pub trait Layout: Sized {
 //     }
 // }
 
-pub macro v($($widget:expr),*) {
+pub macro v($($widget:expr),*$(,)?) {
    v(($($widget), *))
 }
 
-pub macro h($($widget:expr),*) {
+pub macro h($($widget:expr),*$(,)?) {
     h(($($widget), *))
 }
 

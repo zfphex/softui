@@ -28,13 +28,11 @@ pub struct Rectangle<'a> {
     bg: Color,
 }
 
-builder!(Rectangle<'_>, radius, usize);
-
 impl<'a> Rectangle<'a> {
-    // pub fn radius(mut self, radius: usize) -> Self {
-    //     self.radius = radius;
-    //     self
-    // }
+    pub fn radius(mut self, radius: usize) -> Self {
+        self.radius = radius;
+        self
+    }
 }
 
 impl<'a> Widget for Rectangle<'a> {
