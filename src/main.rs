@@ -3,6 +3,10 @@
 use softui::*;
 use window::*;
 
+struct Clicked {
+    on_clicked: fn(Self),
+}
+
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
@@ -15,6 +19,13 @@ fn main() {
     let mut text_color = Color::WHITE;
 
     let mut wh = 100;
+
+    fn test(c: Clicked) {
+        dbg!(c.on_clicked);
+    };
+    let c = Clicked { on_clicked: test };
+
+    (c.on_clicked)(c);
 
     loop {
         match ctx.event() {
@@ -30,10 +41,13 @@ fn main() {
 
         {
             // empty((text("epic"), text("epic").y(30)));
-            let mut r = rect_new().on_clicked(|| println!("test"));
-            // r.draw();
 
-            empty((r));
+            {
+                // let mut r = RectangleNew::new().on_clicked(|_| println!("{:?}", text_color));
+                // r.draw();
+
+                // empty((r));
+            }
 
             v!(
                 text("hello"),

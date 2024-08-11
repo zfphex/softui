@@ -1,32 +1,36 @@
+use std::marker::PhantomData;
+
 use crate::*;
 use mini::info;
 
-pub fn rect_new<F: FnMut() -> ()>() -> RectangleNew<F> {
-    RectangleNew {
-        area: Rect::new(0, 0, 10, 10),
-        bg: Color::WHITE,
-        on_clicked: None,
-        radius: 0,
-    }
-}
-
-#[derive(Clone)]
-pub struct RectangleNew<F: FnMut() -> ()> {
+pub struct RectangleNew {
     pub area: Rect,
     pub radius: usize,
-    pub on_clicked: Option<F>,
+    pub on_clicked: Option<Box<dyn FnMut(&mut RectangleNew)>>,
     bg: Color,
 }
 
-impl<F: FnMut() -> ()> RectangleNew<F> {
+impl RectangleNew {
+    pub fn new() -> Self {
+        RectangleNew {
+            area: Rect::new(0, 0, 10, 10),
+            bg: Color::WHITE,
+            on_clicked: None,
+            radius: 0,
+        }
+    }
     pub fn radius(mut self, radius: usize) -> Self {
         self.radius = radius;
         self
     }
-    pub fn on_clicked(mut self, on_clicked: F) -> Self {
-        self.on_clicked = Some(on_clicked);
-        self
-    }
+    // pub fn on_clicked(mut self, on_clicked: impl FnMut(&mut RectangleNew)) -> Self {
+    //     self.on_clicked = Some(Box::new(on_clicked));
+    //     self
+    // }
+    // pub fn on_clicked<F: FnMut(&mut Self) + 'a>(mut self, on_clicked: dyn FnMut(&mut RectangleNew)) -> Self {
+    //     self.on_clicked = Some(Box::new(on_clicked));
+    //     self
+    // }
     fn temp_on_clicked(&mut self, button: Mouse) {
         let ctx = ctx();
 
@@ -56,14 +60,14 @@ impl<F: FnMut() -> ()> RectangleNew<F> {
 
         if clicked {
             // function(&mut self);
-            if let Some(function) = &mut self.on_clicked {
-                function();
+            if let Some(mut function) = self.on_clicked.take() {
+                function(self);
             }
         }
     }
 }
 
-impl<F: FnMut() -> ()> Widget for RectangleNew<F> {
+impl Widget for RectangleNew {
     fn draw(&mut self) {
         self.temp_on_clicked(Left);
         // if let Some(click) = &mut self.on_clicked {
@@ -98,14 +102,14 @@ impl<F: FnMut() -> ()> Widget for RectangleNew<F> {
     }
 }
 
-impl<F: FnMut() -> ()> Style for RectangleNew<F> {
+impl Style for RectangleNew {
     fn bg(mut self, color: Color) -> Self {
         self.bg = color;
         self
     }
 }
 
-impl<F: FnMut() -> ()> Layout for RectangleNew<F> {
+impl Layout for RectangleNew {
     fn layout_area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }

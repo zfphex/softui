@@ -23,14 +23,8 @@ pub mod tuple;
 pub use input::*;
 pub use style::*;
 pub use tuple::*;
-
+pub use widgets::*;
 pub use Mouse::*;
-
-pub use widgets::layout::*;
-pub use widgets::rectangle::*;
-pub use widgets::text::*;
-
-pub use widgets::rectangle_new::*;
 
 //Doesn't support self.$filed = Some($field)
 //Not sure how to add that.
@@ -44,9 +38,6 @@ pub macro builder($struct:ty, $($field:tt, $field_type:ty),*) {
         )*
     }
 }
-
-#[cfg(feature = "svg")]
-pub use widgets::svg::*;
 
 pub trait Widget {
     fn draw(&mut self) {}

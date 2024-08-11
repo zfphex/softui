@@ -25,3 +25,18 @@ fn draw() {
 }
 
 ```
+
+# Closure Containers
+
+
+```rs
+
+v(|ui|{ 
+    button(ui, "a");
+    button(ui, "b");
+    //or
+    ui.button("button a");
+    ui.button("button b");
+})
+
+``` 
