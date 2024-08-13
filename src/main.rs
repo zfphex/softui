@@ -20,13 +20,6 @@ fn main() {
 
     let mut wh = 100;
 
-    fn test(c: Clicked) {
-        dbg!(c.on_clicked);
-    };
-    let c = Clicked { on_clicked: test };
-
-    (c.on_clicked)(c);
-
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
@@ -41,6 +34,8 @@ fn main() {
 
         {
             // empty((text("epic"), text("epic").y(30)));
+
+            ctx.draw_circle(100, 100, 50, Color::new(0xa463d6));
 
             {
                 // let mut r = RectangleNew::new().on_clicked(|_| println!("{:?}", text_color));

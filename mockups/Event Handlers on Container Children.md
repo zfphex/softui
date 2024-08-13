@@ -89,3 +89,36 @@ loop {
 }
 
 ```
+
+# Possible Fix
+
+
+Typically you would need to something like this.
+
+```rs
+v(|ui| {
+    ui.text("a");
+    ui.text("b");
+}).gap(12);
+```
+
+However something like this might also work.
+```rs
+gap(12).v(|| {
+    text("a"); //Layout is calculated using immediately.
+    text("b");
+});
+
+fn v() {
+    LAYOUT = ...
+}
+
+fn text() {
+    //Skip passing in the layout.
+    let layout = &LAYOUT;
+
+    //... text stuff
+}
+```
+
+This has a number of issues, the first is thread safety. All round feels like a bad idea. Plus I don't like the prefix `gap()`.
