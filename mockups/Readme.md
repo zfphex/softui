@@ -151,8 +151,6 @@ struct Flex {}
 flex((button(), button())).direction(Direction::Vertical)
 ```
 
-Immediate mode style
-
 ```rs
 ui.vertical(|ui| {
     if button(ui).clicked() {
@@ -160,8 +158,6 @@ ui.vertical(|ui| {
     }
 });
 ```
-
-Xilem style
 
 ```rs
 vertical(

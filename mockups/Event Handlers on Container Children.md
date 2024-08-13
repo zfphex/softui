@@ -73,7 +73,7 @@ struct ... {
 }
 ```
 
-One work around for this is that every single ui element is contained in the same struct. I _think_ this is the way xilem works. 
+One work around for this is that every single ui element is contained in the same struct. I _think_ this is the way em works. 
 
 ```rs
 struct App {
