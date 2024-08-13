@@ -1,10 +1,6 @@
 use crate::*;
 
 pub trait Tuple {
-    //error: constant expression depends on a generic parameter
-    // const LEN: usize;
-    // fn array(&mut self) -> [&mut dyn View; Self::LEN];
-
     fn for_each<F: FnMut(&dyn Widget)>(&self, f: F);
     fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F);
     fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F);
@@ -12,23 +8,12 @@ pub trait Tuple {
     fn first(&mut self) -> &mut dyn Widget;
     fn get(&self, index: usize) -> Option<&dyn Widget>;
     fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget>;
-    // fn array(&self) -> [&dyn Widget; Self::LEN];
-    // fn vec(&self) -> Vec<&dyn Widget>;
 }
 
 //https://github.com/audulus/rui/blob/main/src/Tuple.rs
 macro_rules! impl_view_tuple {
     ($len: tt; $($t:ident),*; $($idx:tt),*; $($idx_rev:tt),*) => {
         impl< $( $t: Widget, )* > Tuple for ( $( $t, )* ) {
-            // const LEN: usize = $len;
-
-            // fn vec(&self) -> Vec<&dyn Widget> {
-            //     vec![$(&self.$idx as &dyn Widget,)*]
-            // }
-            // fn array(&self) -> [&dyn Widget; Self::LEN] {
-            //     [$(&self.$idx as &dyn Widget,)*]
-            // }
-
             fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
                 $( f(&self.$idx); )*
             }
@@ -60,15 +45,7 @@ macro_rules! impl_view_tuple {
     }
 }
 
-/*
-match len {
-    $idx => self.$idx
-
-}
-*/
-
 impl<V: Widget> Tuple for V {
-    // const LEN: usize = 1;
     fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
         f(self);
     }
@@ -90,13 +67,6 @@ impl<V: Widget> Tuple for V {
     fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget> {
         Some(self as &mut dyn Widget)
     }
-
-    // fn array(&self) -> [&dyn Widget; Self::LEN] {
-    //     [self as &dyn Widget]
-    // }
-    // fn vec(&self) -> Vec<&dyn Widget> {
-    //     vec![self]
-    // }
 }
 
 //Limit tuples to 10 items long. Helps with compile times.

@@ -50,6 +50,9 @@ pub struct Text<'a> {
 }
 
 impl<'a> Text<'a> {
+    pub fn on_clicked_test<F: FnMut(&mut Self) -> ()>(self, f: F) -> (Self, Option<F>) {
+        (self, Some(f))
+    }
     pub fn font_size(mut self, font_size: usize) -> Self {
         self.font_size = font_size;
         self
@@ -124,7 +127,7 @@ impl<'a> Text<'a> {
                         let bg = Color::new(ctx.buffer[i]);
 
                         //Blend the background and the text color.
-                        #[rustfmt::skip] 
+                        #[rustfmt::skip]
                         fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
                             ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32) / 255.0).round() as u8
                         }
@@ -183,7 +186,7 @@ impl<'a> Widget for Text<'a> {
         Some(&mut self.area)
     }
 
-    fn adjust_position(&mut self, x: i32, y: i32){
+    fn adjust_position(&mut self, x: i32, y: i32) {
         let ctx = ctx();
 
         //These are set up front because it's easier.
@@ -192,7 +195,7 @@ impl<'a> Widget for Text<'a> {
         self.area.x = x;
 
         //TODO: Two text widgets with same y value have different heights.
-        //Text needs to be aligned specifically over this y coordinate, 
+        //Text needs to be aligned specifically over this y coordinate,
         //and not based on the largest character.
         let mut y: usize = y as usize;
         let x = x as usize;
@@ -259,13 +262,13 @@ impl<'a> Widget for Text<'a> {
 
         self.area = rect;
     }
-} 
+}
 
 impl<'a> Layout for Text<'a> {
     fn centered(self, parent: Rect) -> Self {
         todo!()
     }
-    
+
     fn layout_area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }

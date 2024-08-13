@@ -19,10 +19,12 @@ pub mod atomic_float;
 pub mod input;
 pub mod style;
 pub mod tuple;
+pub mod tuple2;
 
 pub use input::*;
 pub use style::*;
 pub use tuple::*;
+pub use tuple2::*;
 pub use widgets::*;
 pub use Mouse::*;
 

@@ -33,6 +33,27 @@ fn main() {
         draw_svg(ctx, &ferris);
 
         {
+            {
+                struct Flex {}
+
+                pub fn flex<T: Tuple2>(mut widgets: T) {
+                    widgets.for_each_mut(&mut |_| {
+                        //Calcualte the widget layout.
+                        //Draw the widget.
+                    });
+
+                    //Run all of the on click functions.
+
+                    //TODO: Need to check area here. Not sure how I will modify this to work?
+                    widgets.on_click();
+                }
+
+                flex((
+                    text("hi").on_clicked_test(|_| println!("hi")),
+                    text("hi").on_clicked_test(|_| println!("hi")),
+                ));
+            }
+
             // empty((text("epic"), text("epic").y(30)));
 
             ctx.draw_circle(100, 100, 50, Color::new(0xa463d6));
@@ -43,7 +64,6 @@ fn main() {
 
                 // empty((r));
             }
-
             v!(
                 text("hello"),
                 text("hi"),

@@ -489,14 +489,14 @@ mod tests {
 
     #[test]
     fn layout() {
-        load_default_font();
-        let ctx = create_ctx("Softui", 800, 600);
+        // load_default_font();
+        // let ctx = create_ctx("Softui", 800, 600);
         // let mut t = text("1");
         // t.calculate_mut(0, 0);
         // dbg!(t.area());
-        let mut container = v((text("1"), text("1")));
+        // let mut container = v((text("1"), text("1")));
         // let mut container = v((text("1")));
-        dbg!(container.area_mut());
+        // dbg!(container.area_mut());
         // container.calculate(Some(container.area.x), Some(container.area.y));
         // dbg!(container.area);
     }

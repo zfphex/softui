@@ -122,3 +122,91 @@ fn text() {
 ```
 
 This has a number of issues, the first is thread safety. All round feels like a bad idea. Plus I don't like the prefix `gap()`.
+
+Another idea
+
+```rs
+struct Rect {
+    x: usize,
+    y: usize,
+    width: usize,
+    height: usize,
+}
+
+struct Layout {}
+
+impl Layout {
+    pub fn clicked(&self) -> bool {
+        true
+    }
+}
+
+//T would be tuple here.
+fn vertical<T>(w1: impl AsMut<T>, w2: impl AsMut<T>) -> Layout {
+    //Calcaulte the layout.
+    let layout = Rect {
+        x: 0,
+        y: 0,
+        width: 30, //Example values
+        height: 10,
+        // padding: 0,
+        // marign: 0,
+    };
+
+    // w1.area = ...
+    // w2.area = ...
+
+    // draw text
+
+    Layout {}
+}
+
+struct Style {}
+
+struct Text<'a> {
+    content: &'a str,
+    area: Rect,
+    style: Style,
+}
+
+impl<'a> Text<'a> {
+    pub fn clicked(&self) -> bool {
+        true
+    }
+}
+
+impl<'a> AsMut<Text<'a>> for Text<'a> {
+    fn as_mut(&mut self) -> &mut Text<'a> {
+        self
+    }
+}
+
+fn text(content: &str) -> Text {
+    Text {
+        content,
+        area: Rect {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+        },
+        style: Style {},
+    }
+}
+
+fn main() {
+    // let mut text1 = text("this is some text");
+    let mut text2 = text("this is some more text");
+
+    //Area modified here.
+    let v = vertical(text("this is some text"), &mut text2);
+
+    //Clicked will have use the correct text area, since the layout was just calculated.
+    if text2.clicked() {
+        println!("Do something")
+    }
+
+    //This works too.
+    if v.clicked() {}
+}
+```
