@@ -1,5 +1,15 @@
 use crate::*;
 
+//ehhhhhhhhhhhhhhhhh...?
+pub enum CanClick<T, F>
+where
+    T: Widget,
+    F: FnMut(&mut T) -> (),
+{
+    Yes(OnClick<T, F>),
+    No,
+}
+
 pub struct OnClick<T, F>
 where
     T: Widget,
@@ -19,42 +29,6 @@ pub trait Tuple2 {
     fn get(&self, index: usize) -> Option<&dyn Widget>;
     fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget>;
     fn handle_on_click(&mut self);
-}
-
-//https://github.com/audulus/rui/blob/main/src/Tuple.rs
-macro_rules! impl_view_tuple {
-    ($len: tt; $($t:ident),*; $($idx:tt),*; $($idx_rev:tt),*) => {
-        impl< $( $t: Widget, )* > Tuple2 for ( $( $t, )* ) {
-            fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
-                $( f(&self.$idx); )*
-            }
-            fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
-                $( f(&mut self.$idx); )*
-            }
-            fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
-                $( f(&mut self.$idx_rev); )*
-            }
-            fn len(&self) -> usize {
-                $len
-            }
-            fn first(&mut self) -> &mut dyn Widget {
-                &mut self.0 as &mut dyn Widget
-            }
-            fn get(&self, index: usize) -> Option<&dyn Widget> {
-                match index {
-                    $($idx => Some(&self.$idx as &dyn Widget),)*
-                    _ => unreachable!(),
-                }
-            }
-            fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget> {
-                match index {
-                    $($idx => Some(&mut self.$idx as &mut dyn Widget),)*
-                    _ => None,
-                }
-            }
-            fn on_click(&mut self) {}
-        }
-    }
 }
 
 impl<V0: Widget, C0: FnMut(&mut V0) -> ()> Tuple2 for OnClick<V0, C0> {

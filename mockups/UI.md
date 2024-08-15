@@ -20,18 +20,11 @@ ctx.set_default_font_size(18);
 ctx.set_font_color(FONT_PRIMARY);
 
 //Top icons
-let b = button().wh(48).radius(24)
-//  ^ This would have drawn      |
-//If the user had done b.clone() V here.
-h(b.clone().icon(CLOSE).left(0), b.icon(AUDIO).right(0));
+h(
+    button(CLOSE).wh(48).radius(24).left(0).clicked(|_| ...),
+    button(AUDIO).wh(48).radius(24).right(0).clicked(|_| ...)
+);
 
-//Since drop would have been called.
-//I'm not sure what to do about that.
-//We draw on drop.
-
-//I removed this ^
-
-//Bottom bar
 h(
     button(PREV).clicked(|_| player.prev()), 
     if player.paused { button(PAUSED).clicked(|_| player.play()) } else { button(PLAY).clicked(|_| player.pause()) }, 
