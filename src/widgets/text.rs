@@ -50,8 +50,16 @@ pub struct Text<'a> {
 }
 
 impl<'a> Text<'a> {
-    pub fn on_clicked_test<F: FnMut(&mut Self) -> ()>(self, f: F) -> (Self, Option<F>) {
-        (self, Some(f))
+    pub fn on_clicked_defered<F: FnMut(&mut Self) -> ()>(
+        self,
+        button: MouseButton,
+        on_click: F,
+    ) -> OnClick<Text<'a>, F> {
+        OnClick {
+            widget: self,
+            f: on_click,
+            button,
+        }
     }
     pub fn font_size(mut self, font_size: usize) -> Self {
         self.font_size = font_size;

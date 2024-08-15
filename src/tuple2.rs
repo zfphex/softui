@@ -1,5 +1,15 @@
 use crate::*;
 
+pub struct OnClick<T, F>
+where
+    T: Widget,
+    F: FnMut(&mut T) -> (),
+{
+    pub widget: T,
+    pub f: F,
+    pub button: MouseButton,
+}
+
 pub trait Tuple2 {
     fn for_each<F: FnMut(&dyn Widget)>(&self, f: F);
     fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F);
@@ -8,7 +18,7 @@ pub trait Tuple2 {
     fn first(&mut self) -> &mut dyn Widget;
     fn get(&self, index: usize) -> Option<&dyn Widget>;
     fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget>;
-    fn on_click(&mut self);
+    fn handle_on_click(&mut self);
 }
 
 //https://github.com/audulus/rui/blob/main/src/Tuple.rs
@@ -47,74 +57,76 @@ macro_rules! impl_view_tuple {
     }
 }
 
-// impl<V: Widget, C: FnMut(&mut V) -> ()> Tuple2 for (V, Option<C>) {
-//     //Call the on click function for every widget.
-//     fn on_click(&mut self) {
-//         if let Some(mut f) = self.1.take() {
-//             f(&mut self.0);
-//         }
-//     }
-//     fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
-//         f(&self.0);
-//     }
-//     fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
-//         f(&mut self.0);
-//     }
-//     fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
-//         f(&mut self.0);
-//     }
-//     fn len(&self) -> usize {
-//         1
-//     }
-//     fn first(&mut self) -> &mut dyn Widget {
-//         &mut self.0 as &mut dyn Widget
-//     }
+impl<V0: Widget, C0: FnMut(&mut V0) -> ()> Tuple2 for OnClick<V0, C0> {
+    //Call the on click function for every widget.
+    fn handle_on_click(&mut self) {
+        let w = &mut self.widget as &mut dyn Widget;
+        if clicked_dyn(ctx(), w, self.button) {
+            (self.f)(&mut self.widget);
+        }
+    }
+    fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
+        f(&self.widget);
+    }
+    fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
+        f(&mut self.widget);
+    }
+    fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
+        f(&mut self.widget);
+    }
+    fn len(&self) -> usize {
+        1
+    }
+    fn first(&mut self) -> &mut dyn Widget {
+        &mut self.widget as &mut dyn Widget
+    }
 
-//     fn get(&self, index: usize) -> Option<&dyn Widget> {
-//         Some(&self.0 as &dyn Widget)
-//     }
+    fn get(&self, index: usize) -> Option<&dyn Widget> {
+        Some(&self.widget as &dyn Widget)
+    }
 
-//     fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget> {
-//         Some(&mut self.0 as &mut dyn Widget)
-//     }
-// }
+    fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget> {
+        Some(&mut self.widget as &mut dyn Widget)
+    }
+}
 
 pub macro impl_tuple($len: tt; $($t:ident, $c:ident),*; $($idx:tt),*; $($idx_rev:tt),*) {
 
-impl< $( $t: Widget, $c: FnMut(&mut $t) -> () ,)* > Tuple2 for ( $(( $t, Option<$c>) ),*,  ){
+impl< $( $t: Widget, $c: FnMut(&mut $t) -> () ,)* > Tuple2 for ( $( OnClick<$t, $c> ),*,  ){
     //Call the on click function for every widget.
-    fn on_click(&mut self) {
+    fn handle_on_click(&mut self) {
         $(
-        let widget = &mut self.$idx;
-        if let Some(mut f) = widget.1.take() {
-            f(&mut widget.0);
+        let on_click = &mut self.$idx;
+        let w = &mut on_click.widget as &mut dyn Widget;
+        if clicked_dyn(ctx(), w, on_click.button) {
+            (on_click.f)(&mut on_click.widget);
         }
         )*
     }
     fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
-                $( f(&self.$idx.0); )*
+                $( f(&self.$idx.widget); )*
     }
     fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
-        $( f(&mut self.$idx.0); )*
+        $( f(&mut self.$idx.widget); )*
     }
     fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
-        $( f(&mut self.$idx_rev.0); )*
+        $( f(&mut self.$idx_rev.widget); )*
     }
     fn len(&self) -> usize {
         $len
     }
     fn first(&mut self) -> &mut dyn Widget {
-        &mut self.0.0 as &mut dyn Widget
+        &mut self.0.widget as &mut dyn Widget
     }
     fn get(&self, index: usize) -> Option<&dyn Widget> {
         match index {
-            $($idx => Some(&self.$idx.0 as &dyn Widget),)*
+            $($idx => Some(&self.$idx.widget as &dyn Widget),)*
             _ => unreachable!(),
         }
     }
     fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget> {
         match index {
-            $($idx => Some(&mut self.$idx.0 as &mut dyn Widget),)*
+            $($idx => Some(&mut self.$idx.widget as &mut dyn Widget),)*
             _ => None,
         }
     }

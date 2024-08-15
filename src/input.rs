@@ -1,56 +1,75 @@
 use crate::*;
 
-pub fn clicked<T: Widget + Sized>(ctx: &Context, widget: &T, button: Mouse) -> bool {
+pub fn clicked_dyn<T: Widget + ?Sized>(ctx: &Context, widget: &T, button: MouseButton) -> bool {
     let area = widget.area().unwrap();
     if !ctx.mouse_pos.intersects(area) {
         return false;
     }
 
     match button {
-        Mouse::Left => ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area),
-        Mouse::Right => {
+        MouseButton::Left => ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area),
+        MouseButton::Right => {
             ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
         }
-        Mouse::Middle => {
+        MouseButton::Middle => {
             ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
         }
-        Mouse::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
-        Mouse::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
+        MouseButton::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
+        MouseButton::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
     }
 }
 
-pub fn up<T: Widget>(ctx: &Context, widget: &T, button: Mouse) -> bool {
+pub fn clicked<T: Widget + Sized>(ctx: &Context, widget: &T, button: MouseButton) -> bool {
     let area = widget.area().unwrap();
     if !ctx.mouse_pos.intersects(area) {
         return false;
     }
 
     match button {
-        Mouse::Left => ctx.left_mouse.released,
-        Mouse::Right => ctx.right_mouse.released,
-        Mouse::Middle => ctx.middle_mouse.released,
-        Mouse::Back => ctx.mouse_4.released,
-        Mouse::Forward => ctx.mouse_5.released,
+        MouseButton::Left => ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area),
+        MouseButton::Right => {
+            ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
+        }
+        MouseButton::Middle => {
+            ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
+        }
+        MouseButton::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
+        MouseButton::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
     }
 }
 
-pub fn down<T: Widget>(ctx: &Context, widget: &T, button: Mouse) -> bool {
+pub fn up<T: Widget>(ctx: &Context, widget: &T, button: MouseButton) -> bool {
     let area = widget.area().unwrap();
     if !ctx.mouse_pos.intersects(area) {
         return false;
     }
 
     match button {
-        Mouse::Left => ctx.left_mouse.pressed,
-        Mouse::Right => ctx.right_mouse.pressed,
-        Mouse::Middle => ctx.middle_mouse.pressed,
-        Mouse::Back => ctx.mouse_4.pressed,
-        Mouse::Forward => ctx.mouse_5.pressed,
+        MouseButton::Left => ctx.left_mouse.released,
+        MouseButton::Right => ctx.right_mouse.released,
+        MouseButton::Middle => ctx.middle_mouse.released,
+        MouseButton::Back => ctx.mouse_4.released,
+        MouseButton::Forward => ctx.mouse_5.released,
     }
 }
 
-#[derive(Debug)]
-pub enum Mouse {
+pub fn down<T: Widget>(ctx: &Context, widget: &T, button: MouseButton) -> bool {
+    let area = widget.area().unwrap();
+    if !ctx.mouse_pos.intersects(area) {
+        return false;
+    }
+
+    match button {
+        MouseButton::Left => ctx.left_mouse.pressed,
+        MouseButton::Right => ctx.right_mouse.pressed,
+        MouseButton::Middle => ctx.middle_mouse.pressed,
+        MouseButton::Back => ctx.mouse_4.pressed,
+        MouseButton::Forward => ctx.mouse_5.pressed,
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum MouseButton {
     Left,
     Right,
     Middle,

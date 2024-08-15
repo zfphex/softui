@@ -31,7 +31,7 @@ impl RectangleNew {
     //     self.on_clicked = Some(Box::new(on_clicked));
     //     self
     // }
-    fn temp_on_clicked(&mut self, button: Mouse) {
+    fn temp_on_clicked(&mut self, button: MouseButton) {
         let ctx = ctx();
 
         if Self::is_container() {
@@ -45,17 +45,17 @@ impl RectangleNew {
         }
 
         let clicked = match button {
-            Mouse::Left => {
+            MouseButton::Left => {
                 ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
             }
-            Mouse::Right => {
+            MouseButton::Right => {
                 ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
             }
-            Mouse::Middle => {
+            MouseButton::Middle => {
                 ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
             }
-            Mouse::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
-            Mouse::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
+            MouseButton::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
+            MouseButton::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
         };
 
         if clicked {

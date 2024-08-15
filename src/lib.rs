@@ -26,7 +26,7 @@ pub use style::*;
 pub use tuple::*;
 pub use tuple2::*;
 pub use widgets::*;
-pub use Mouse::*;
+pub use MouseButton::*;
 
 //Doesn't support self.$filed = Some($field)
 //Not sure how to add that.
@@ -62,7 +62,7 @@ pub trait Widget {
     //to be x + self.area.x and y + self.area.y, so don't double up okay?
     fn adjust_position(&mut self, x: i32, y: i32);
 
-    fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: Mouse, mut function: F) -> Self
+    fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: MouseButton, mut function: F) -> Self
     where
         Self: Sized,
     {
@@ -79,17 +79,17 @@ pub trait Widget {
         }
 
         let clicked = match button {
-            Mouse::Left => {
+            MouseButton::Left => {
                 ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
             }
-            Mouse::Right => {
+            MouseButton::Right => {
                 ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
             }
-            Mouse::Middle => {
+            MouseButton::Middle => {
                 ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
             }
-            Mouse::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
-            Mouse::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
+            MouseButton::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
+            MouseButton::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
         };
 
         if clicked {
@@ -99,7 +99,7 @@ pub trait Widget {
         self
     }
     /// The user's cusor has been clicked and released on top of a widget.
-    fn clicked(&mut self, button: Mouse) -> bool
+    fn clicked(&mut self, button: MouseButton) -> bool
     where
         Self: Sized,
     {
@@ -113,20 +113,20 @@ pub trait Widget {
         }
 
         match button {
-            Mouse::Left => {
+            MouseButton::Left => {
                 ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
             }
-            Mouse::Right => {
+            MouseButton::Right => {
                 ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
             }
-            Mouse::Middle => {
+            MouseButton::Middle => {
                 ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
             }
-            Mouse::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
-            Mouse::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
+            MouseButton::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
+            MouseButton::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
         }
     }
-    fn up(&self, button: Mouse) -> bool
+    fn up(&self, button: MouseButton) -> bool
     where
         Self: Sized,
     {
@@ -137,14 +137,14 @@ pub trait Widget {
         }
 
         match button {
-            Mouse::Left => ctx.left_mouse.released,
-            Mouse::Right => ctx.right_mouse.released,
-            Mouse::Middle => ctx.middle_mouse.released,
-            Mouse::Back => ctx.mouse_4.released,
-            Mouse::Forward => ctx.mouse_5.released,
+            MouseButton::Left => ctx.left_mouse.released,
+            MouseButton::Right => ctx.right_mouse.released,
+            MouseButton::Middle => ctx.middle_mouse.released,
+            MouseButton::Back => ctx.mouse_4.released,
+            MouseButton::Forward => ctx.mouse_5.released,
         }
     }
-    fn down(&self, button: Mouse) -> bool
+    fn down(&self, button: MouseButton) -> bool
     where
         Self: Sized,
     {
@@ -155,11 +155,11 @@ pub trait Widget {
         }
 
         match button {
-            Mouse::Left => ctx.left_mouse.pressed,
-            Mouse::Right => ctx.right_mouse.pressed,
-            Mouse::Middle => ctx.middle_mouse.pressed,
-            Mouse::Back => ctx.mouse_4.pressed,
-            Mouse::Forward => ctx.mouse_5.pressed,
+            MouseButton::Left => ctx.left_mouse.pressed,
+            MouseButton::Right => ctx.right_mouse.pressed,
+            MouseButton::Middle => ctx.middle_mouse.pressed,
+            MouseButton::Back => ctx.mouse_4.pressed,
+            MouseButton::Forward => ctx.mouse_5.pressed,
         }
     }
 }

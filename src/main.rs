@@ -37,20 +37,25 @@ fn main() {
                 struct Flex {}
 
                 pub fn flex<T: Tuple2>(mut widgets: T) {
-                    widgets.for_each_mut(&mut |_| {
+                    widgets.for_each_mut(&mut |w| {
                         //Calcualte the widget layout.
                         //Draw the widget.
+                        w.draw();
                     });
 
                     //Run all of the on click functions.
 
                     //TODO: Need to check area here. Not sure how I will modify this to work?
-                    widgets.on_click();
+                    widgets.handle_on_click();
                 }
 
+                // flex(
+                //     text("test").on_clicked_defered(Left, |_| println!("Clicked the test button.")),
+                // );
+
                 flex((
-                    text("hi").on_clicked_test(|_| println!("hi")),
-                    text("hi").on_clicked_test(|_| println!("hi")),
+                    text("hi").on_clicked_defered(Left, |_| println!("hi")),
+                    text("hi").on_clicked_defered(Left, |_| println!("hi")),
                 ));
             }
 
