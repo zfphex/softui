@@ -77,3 +77,9 @@ impl<'a> Layout for Rectangle<'a> {
         Some(&mut self.area)
     }
 }
+
+impl<'a> AsRef<dyn Widget + 'a> for Rectangle<'a> {
+    fn as_ref(&self) -> &(dyn Widget + 'a) {
+        self as &dyn Widget
+    }
+}

@@ -88,8 +88,12 @@ pub trait Widget {
             MouseButton::Middle => {
                 ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
             }
-            MouseButton::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
-            MouseButton::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
+            MouseButton::Back => {
+                ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area)
+            }
+            MouseButton::Forward => {
+                ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area)
+            }
         };
 
         if clicked {
@@ -122,8 +126,12 @@ pub trait Widget {
             MouseButton::Middle => {
                 ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
             }
-            MouseButton::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
-            MouseButton::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
+            MouseButton::Back => {
+                ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area)
+            }
+            MouseButton::Forward => {
+                ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area)
+            }
         }
     }
     fn up(&self, button: MouseButton) -> bool

@@ -1,4 +1,5 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![feature(decl_macro)]
 #![allow(unused)]
 use softui::*;
 use window::*;

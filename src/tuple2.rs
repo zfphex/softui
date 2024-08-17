@@ -54,57 +54,54 @@ impl<V0: Widget, C0: FnMut(&mut V0) -> ()> Tuple2 for OnClick<V0, C0> {
     fn first(&mut self) -> &mut dyn Widget {
         &mut self.widget as &mut dyn Widget
     }
-
     fn get(&self, index: usize) -> Option<&dyn Widget> {
         Some(&self.widget as &dyn Widget)
     }
-
     fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget> {
         Some(&mut self.widget as &mut dyn Widget)
     }
 }
 
 pub macro impl_tuple($len: tt; $($t:ident, $c:ident),*; $($idx:tt),*; $($idx_rev:tt),*) {
-
-impl< $( $t: Widget, $c: FnMut(&mut $t) -> () ,)* > Tuple2 for ( $( OnClick<$t, $c> ),*,  ){
-    //Call the on click function for every widget.
-    fn handle_on_click(&mut self) {
-        $(
-        let on_click = &mut self.$idx;
-        let w = &mut on_click.widget as &mut dyn Widget;
-        if clicked_dyn(ctx(), w, on_click.button) {
-            (on_click.f)(&mut on_click.widget);
+    impl< $( $t: Widget, $c: FnMut(&mut $t) -> () ,)* > Tuple2 for ( $( OnClick<$t, $c> ),*,  ){
+        //Call the on click function for every widget.
+        fn handle_on_click(&mut self) {
+            $(
+                let on_click = &mut self.$idx;
+                let w = &mut on_click.widget as &mut dyn Widget;
+                if clicked_dyn(ctx(), w, on_click.button) {
+                    (on_click.f)(&mut on_click.widget);
+                }
+            )*
         }
-        )*
-    }
-    fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
-                $( f(&self.$idx.widget); )*
-    }
-    fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
-        $( f(&mut self.$idx.widget); )*
-    }
-    fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
-        $( f(&mut self.$idx_rev.widget); )*
-    }
-    fn len(&self) -> usize {
-        $len
-    }
-    fn first(&mut self) -> &mut dyn Widget {
-        &mut self.0.widget as &mut dyn Widget
-    }
-    fn get(&self, index: usize) -> Option<&dyn Widget> {
-        match index {
-            $($idx => Some(&self.$idx.widget as &dyn Widget),)*
-            _ => unreachable!(),
+        fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
+            $( f(&self.$idx.widget); )*
+        }
+        fn for_each_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
+            $( f(&mut self.$idx.widget); )*
+        }
+        fn for_each_rev_mut<F: FnMut(&mut dyn Widget)>(&mut self, f: &mut F) {
+            $( f(&mut self.$idx_rev.widget); )*
+        }
+        fn len(&self) -> usize {
+            $len
+        }
+        fn first(&mut self) -> &mut dyn Widget {
+            &mut self.0.widget as &mut dyn Widget
+        }
+        fn get(&self, index: usize) -> Option<&dyn Widget> {
+            match index {
+                $($idx => Some(&self.$idx.widget as &dyn Widget),)*
+                _ => unreachable!(),
+            }
+        }
+        fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget> {
+            match index {
+                $($idx => Some(&mut self.$idx.widget as &mut dyn Widget),)*
+                _ => None,
+            }
         }
     }
-    fn get_mut(&mut self, index: usize) -> Option<&mut dyn Widget> {
-        match index {
-            $($idx => Some(&mut self.$idx.widget as &mut dyn Widget),)*
-            _ => None,
-        }
-    }
-}
 }
 
 // impl_tuple!(1; V0; 0; 0);
