@@ -1,6 +1,6 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-#![feature(decl_macro)]
 #![allow(unused)]
+use mini::defer_results;
 use softui::*;
 use window::*;
 
@@ -9,10 +9,11 @@ struct Clicked {
 }
 
 fn main() {
-    let ctx = create_ctx("Softui", 800, 600);
-
-    //TODO: Removeme.
+    //TODO: Remove me.
     load_default_font();
+
+    defer_results!();
+    let ctx = create_ctx("Softui", 800, 600);
 
     #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg");
@@ -60,6 +61,41 @@ fn main() {
                 ));
             }
 
+            pub fn handle_widget<T: Widget>(widget: T) {}
+
+            #[macro_export]
+            macro_rules! vertical {
+                ($($widget:expr),*$(,)?) => {
+                    $(
+                        handle_widget($widget);
+                    )*
+                };
+            }
+
+            {
+                //
+                struct E {}
+                vertical!(text("hi"), E {});
+                // v((text("hi"), E {}));
+            }
+
+            {
+
+                // Works fine
+                // v!(text("hi"), rect());
+
+                //Won't work and won't give good errors.
+                // v!(text("hi"), rect(), 10);
+
+                // softui_proc::layout!(text("hi"), rect());
+
+                // let text = text("hi");
+                // let rect = rect();
+                // softui_proc::layout!(text, rect);
+
+                // softui_proc::layout!(text("hi"), rect(), rect(), text("this is a test"), 22);
+            }
+
             // empty((text("epic"), text("epic").y(30)));
 
             ctx.draw_circle(100, 100, 50, Color::new(0xa463d6));
@@ -70,6 +106,7 @@ fn main() {
 
                 // empty((r));
             }
+
             v!(
                 text("hello"),
                 text("hi"),

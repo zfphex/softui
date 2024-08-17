@@ -1,16 +1,9 @@
 #![allow(unused, static_mut_refs)]
-#![feature(portable_simd, test, const_float_bits_conv, let_chains, decl_macro)]
+// #![feature(test, const_float_bits_conv, let_chains)]
 use core::ffi::c_void;
 use crossbeam_queue::SegQueue;
 use mini::{info, profile};
-use std::{
-    cell::UnsafeCell,
-    mem::MaybeUninit,
-    pin::Pin,
-    ptr::NonNull,
-    simd::{u32x16, u32x4, u32x8, u8x16, u8x32, u8x64},
-    sync::LazyLock,
-};
+use std::{cell::UnsafeCell, mem::MaybeUninit, pin::Pin, ptr::NonNull, sync::LazyLock};
 use window::*;
 
 pub mod widgets;
@@ -30,16 +23,16 @@ pub use MouseButton::*;
 
 //Doesn't support self.$filed = Some($field)
 //Not sure how to add that.
-pub macro builder($struct:ty, $($field:tt, $field_type:ty),*) {
-    impl $struct {
-        $(
-            pub fn $field(mut self, $field: $field_type) -> Self {
-                self.$field = $field;
-                self
-            }
-        )*
-    }
-}
+// pub macro builder($struct:ty, $($field:tt, $field_type:ty),*) {
+//     impl $struct {
+//         $(
+//             pub fn $field(mut self, $field: $field_type) -> Self {
+//                 self.$field = $field;
+//                 self
+//             }
+//         )*
+//     }
+// }
 
 pub trait Widget {
     fn draw(&mut self) {}
@@ -303,6 +296,7 @@ impl Context {
 
     //TODO: Cleanup and remove.
     pub fn event(&mut self) -> Option<Event> {
+        profile!();
         match self.window.event() {
             None => None,
             Some(event) => {

@@ -112,3 +112,8 @@ fn test2<T: AsRef<dyn Widget>>(widgets: &[T]) {
 test(&[&text("hi"), &rect()]);
 test2(&[text("hi"), rect()]);
 ```
+
+
+What about using macros instead?
+
+Maybe with a proc macro we could get better error handling?

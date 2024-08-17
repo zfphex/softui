@@ -1,5 +1,6 @@
-use crate::*;
 use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
+use crate::{RECT, Tuple, Widget, ctx, Color};
+use mini::profile;
 
 #[derive(Debug, Default)]
 pub struct AtomicRect {
@@ -259,27 +260,27 @@ pub trait Layout: Sized {
     }
 }
 
-// #[macro_export]
-// macro_rules! v {
-//     ($($widget:expr),*) => {
-//         $crate::layout::v(($($widget),*))
-//     }
-// }
-
-// #[macro_export]
-// macro_rules! h {
-//     ($($widget:expr),*) => {
-//         $crate::layout::h(($($widget),*))
-//     }
-// }
-
-pub macro v($($widget:expr),*$(,)?) {
-   v(($($widget), *))
+#[macro_export]
+macro_rules! v {
+    ($($widget:expr),*) => {
+        $crate::layout::v(($($widget),*))
+    }
 }
 
-pub macro h($($widget:expr),*$(,)?) {
-    h(($($widget), *))
+#[macro_export]
+macro_rules! h {
+    ($($widget:expr),*) => {
+        $crate::layout::h(($($widget),*))
+    }
 }
+
+// pub macro v($($widget:expr),*$(,)?) {
+//    v(($($widget), *))
+// }
+
+// pub macro h($($widget:expr),*$(,)?) {
+//     h(($($widget), *))
+// }
 
 pub const fn v<T: Tuple>(mut widgets: T) -> Container<T> {
     Container {
@@ -365,6 +366,7 @@ impl<T: Tuple> Widget for Container<T> {
         self.computed_area.as_mut()
     }
     fn adjust_position(&mut self, _: i32, _: i32) {
+        profile!();
         self.drawn = true;
 
         let padding = self.padding as i32;

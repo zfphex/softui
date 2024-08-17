@@ -1,0 +1,16 @@
+[package]
+name = "softui_proc"
+version = "0.1.0"
+edition = "2021"
+proc-macro = true
+
+[lib]
+crate-type = ["proc-macro"]
+name = "softui_proc"
+path = "src/lib.rs"
+
+[[bin]]
+name = "softui_proc_bin"
+path = "src/main.rs"
+
+[dependencies]

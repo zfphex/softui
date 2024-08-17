@@ -9,6 +9,7 @@ static mut DEFAULT_FONT_SIZE: AtomicUsize = AtomicUsize::new(18);
 static mut DEFAULT_FONT: Option<Font> = None;
 
 pub fn load_default_font() {
+    profile!();
     set_default_font(fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap());
 }
 
@@ -26,6 +27,14 @@ pub fn default_font_size() -> usize {
 
 pub fn set_font_size(font_size: usize) {
     unsafe { DEFAULT_FONT_SIZE.store(font_size, Ordering::Relaxed) }
+}
+
+pub fn text2(text: &'static str) -> Text2 {
+    Text2 { text }
+}
+
+pub struct Text2 {
+    pub text: &'static str,
 }
 
 pub fn text(text: &str) -> Text {
@@ -54,7 +63,6 @@ pub struct Text<'a> {
 //         self as &dyn Widget
 //     }
 // }
-
 
 impl<'a> AsRef<dyn Widget + 'a> for Text<'a> {
     fn as_ref(&self) -> &(dyn Widget + 'a) {
@@ -362,32 +370,32 @@ pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    extern crate test;
+// #[cfg(test)]
+// mod tests {
+//     extern crate test;
 
-    use super::*;
-    use test::black_box;
+//     use super::*;
+//     use test::black_box;
 
-    #[bench]
-    fn atlas(b: &mut test::bench::Bencher) {
-        let atlas = Atlas::new(32.0);
-        b.iter(|| {
-            for _ in 0..1000 {
-                let (metrics, bitmap) = &atlas.glyphs[black_box(b'a' as usize)];
-                assert_eq!(metrics.width, 15);
-            }
-        });
-    }
+//     #[bench]
+//     fn atlas(b: &mut test::bench::Bencher) {
+//         let atlas = Atlas::new(32.0);
+//         b.iter(|| {
+//             for _ in 0..1000 {
+//                 let (metrics, bitmap) = &atlas.glyphs[black_box(b'a' as usize)];
+//                 assert_eq!(metrics.width, 15);
+//             }
+//         });
+//     }
 
-    #[bench]
-    fn rasterize(b: &mut test::bench::Bencher) {
-        let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-        b.iter(|| {
-            for _ in 0..1000 {
-                let (metrics, bitmap) = font.rasterize(black_box('a'), 32.0);
-                assert_eq!(metrics.width, 15);
-            }
-        });
-    }
-}
+//     #[bench]
+//     fn rasterize(b: &mut test::bench::Bencher) {
+//         let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
+//         b.iter(|| {
+//             for _ in 0..1000 {
+//                 let (metrics, bitmap) = font.rasterize(black_box('a'), 32.0);
+//                 assert_eq!(metrics.width, 15);
+//             }
+//         });
+//     }
+// }
