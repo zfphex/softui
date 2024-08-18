@@ -73,9 +73,8 @@ fn main() {
             }
 
             {
-                //
-                struct E {}
-                vertical!(text("hi"), E {});
+                // struct E {}
+                // vertical!(text("hi"), E {});
                 // v((text("hi"), E {}));
             }
 

@@ -58,18 +58,6 @@ pub struct Text<'a> {
     pub line_height: Option<usize>,
 }
 
-// impl AsRef<dyn Widget + 'static> for Text<'static> {
-//     fn as_ref(&self) -> &(dyn Widget + 'static) {
-//         self as &dyn Widget
-//     }
-// }
-
-impl<'a> AsRef<dyn Widget + 'a> for Text<'a> {
-    fn as_ref(&self) -> &(dyn Widget + 'a) {
-        self as &dyn Widget
-    }
-}
-
 impl<'a> Text<'a> {
     pub fn on_clicked_defered<F: FnMut(&mut Self) -> ()>(
         self,
