@@ -1,4 +1,4 @@
-#![allow(unused, static_mut_refs)]
+#![allow(unused, static_mut_refs, incomplete_features)]
 // #![feature(test, const_float_bits_conv, let_chains)]
 use core::ffi::c_void;
 use crossbeam_queue::SegQueue;

@@ -1,6 +1,6 @@
-use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
-use crate::{RECT, Tuple, Widget, ctx, Color};
+use crate::{ctx, Color, Tuple, Widget, RECT};
 use mini::profile;
+use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
 
 #[derive(Debug, Default)]
 pub struct AtomicRect {
@@ -260,16 +260,30 @@ pub trait Layout: Sized {
     }
 }
 
+#[inline(always)]
+pub fn type_checker<T: Widget>(widgets: T) {}
+
 #[macro_export]
 macro_rules! v {
     ($($widget:expr),*) => {
-        $crate::layout::v(($($widget),*))
+        {
+            use std::any::Any;
+            $(
+                if !$widget.impl_widget() {
+                    compile_error!("Type does not implement the `Widget` trait.");
+                }
+            )*
+
+            // $($crate::type_checker($widget);)*
+            $crate::layout::v(($($widget),*))
+        }
     }
 }
 
 #[macro_export]
 macro_rules! h {
     ($($widget:expr),*) => {
+        $($crate::type_checker($widget);)*
         $crate::layout::h(($($widget),*))
     }
 }
@@ -281,7 +295,6 @@ macro_rules! h {
 // pub macro h($($widget:expr),*$(,)?) {
 //     h(($($widget), *))
 // }
-
 pub const fn v<T: Tuple>(mut widgets: T) -> Container<T> {
     Container {
         widgets,
