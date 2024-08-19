@@ -101,7 +101,7 @@ macro_rules! impl_tuple {
  }
 }
 
-// impl_tuple!(1; V0; 0; 0);
+impl_tuple!(1; V0, C0; 0; 0);
 impl_tuple!(2; V0, C0, V1, C1; 0, 1; 1, 0);
 impl_tuple!(3; V0, C0, V1, C1, V2, C2; 0, 1, 2; 2, 1, 0);
 impl_tuple!(4; V0, C0, V1, C1, V2, C2, V3, C3; 0, 1, 2, 3; 3, 2, 1, 0);

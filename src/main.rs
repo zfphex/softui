@@ -4,9 +4,7 @@ use mini::defer_results;
 use softui::*;
 use window::*;
 
-struct Clicked {
-    on_clicked: fn(Self),
-}
+struct Test {}
 
 fn main() {
     //TODO: Remove me.
@@ -57,23 +55,14 @@ fn main() {
 
                 flex((
                     text("hi").on_clicked_defered(Left, |_| println!("hi")),
-                    text("hi").on_clicked_defered(Left, |_| println!("hi")),
+                    //This doesn't work, on_click_defered cannot be chained, hmmm.
+                    // rect()
+                    //     .on_clicked_defered(Right, |_| println!("Pressed left"))
+                    //     .on_click_defered(Right, |_| println!("Pressed right"),
                 ));
             }
 
-            // pub fn handle_widget<T: Widget>(widget: T) {}
-
-            // #[macro_export]
-            // macro_rules! vertical {
-            //     ($($widget:expr),*$(,)?) => {
-            //         $(
-            //             handle_widget($widget);
-            //         )*
-            //     };
-            // }
-
             {
-                // struct E {}
                 // vertical!(
                 //     text("this is a test of the layout"),
                 //     text("next widget"),
@@ -88,7 +77,8 @@ fn main() {
                 // if text("").impl_widget() {
                 // }
                 // test!(text(""));
-                // v!(text(""));
+
+                v!(rect(),);
                 // vertical!(text("hi"), E {});
                 // v((text("hi"), E {}));
             }

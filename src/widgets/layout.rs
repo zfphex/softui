@@ -165,16 +165,14 @@ pub fn type_checker<T: Widget>(widgets: T) {}
 
 #[macro_export]
 macro_rules! v {
-    ($($widget:expr),*) => {
+    ($($widget:expr),* $(,)?) => {
         {
-            use std::any::Any;
+            //This is the best code I've ever written!
             $(
-                if !$widget.impl_widget() {
-                    compile_error!("Type does not implement the `Widget` trait.");
-                }
+                #[cfg(debug_assertions)]
+                $crate::type_checker($widget);
             )*
 
-            // $($crate::type_checker($widget);)*
             $crate::layout::v(($($widget),*))
         }
     }
@@ -182,9 +180,16 @@ macro_rules! v {
 
 #[macro_export]
 macro_rules! h {
-    ($($widget:expr),*) => {
-        $($crate::type_checker($widget);)*
-        $crate::layout::h(($($widget),*))
+    ($($widget:expr),* $(,)?) => {
+        {
+            //This is the best code I've ever written!
+            $(
+                #[cfg(debug_assertions)]
+                $crate::type_checker($widget);
+            )*
+
+            $crate::layout::h(($($widget),*))
+        }
     }
 }
 
