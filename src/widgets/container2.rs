@@ -1,19 +1,7 @@
 use crate::*;
 
-#[derive(Clone)]
-pub struct Container2 {
-    pub direction: Direction,
-    pub bounds: Rect,
-    pub computed_area: Option<Rect>,
-    ///Outer padding
-    pub padding: usize,
-    ///Inner padding
-    pub margin: usize,
-
-    //Yuck
-    pub drawn: bool,
-}
-
+//You cannot chain macros, so it is not possible to modify the container properties after.
+//`vertical!().padding(2)` will not work :(
 #[macro_export]
 macro_rules! vertical {
     ($($widget:expr),*$(,)?) => {
@@ -32,7 +20,7 @@ macro_rules! vertical {
             let mut max_height = 0;
 
             $(
-                handle_widget($widget, margin,padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut root_area, direction);
+                please_ignore_this_and_look_at_the_red_text($widget, margin,padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut root_area, direction);
             )*
 
             match direction {
@@ -58,7 +46,8 @@ macro_rules! vertical {
     };
 }
 
-pub fn handle_widget<T: Widget>(
+//Probably one of the best error messages ever written.
+pub fn please_ignore_this_and_look_at_the_red_text<T: Widget>(
     mut widget: T,
     margin: i32,
     padding: i32,

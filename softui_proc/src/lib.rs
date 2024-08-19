@@ -18,6 +18,7 @@ pub fn layout(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             _ => (),
         }
     }
+
     // stream.push("}".to_string());
     let stream = stream.join("");
     dbg!(&stream);

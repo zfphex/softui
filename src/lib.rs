@@ -21,19 +21,6 @@ pub use tuple2::*;
 pub use widgets::*;
 pub use MouseButton::*;
 
-//Doesn't support self.$filed = Some($field)
-//Not sure how to add that.
-// pub macro builder($struct:ty, $($field:tt, $field_type:ty),*) {
-//     impl $struct {
-//         $(
-//             pub fn $field(mut self, $field: $field_type) -> Self {
-//                 self.$field = $field;
-//                 self
-//             }
-//         )*
-//     }
-// }
-
 pub trait Widget {
     fn draw(&mut self) {}
     fn area(&self) -> Option<Rect>;
@@ -163,6 +150,147 @@ pub trait Widget {
             MouseButton::Forward => ctx.mouse_5.pressed,
         }
     }
+
+    //
+    // Layout
+
+    fn layout_area(&mut self) -> Option<&mut Rect>;
+
+    fn centered(mut self, parent: Rect) -> Self
+    where
+        Self: Sized,
+    {
+        let parent_area = parent.clone();
+        let area = self.layout_area().unwrap();
+        let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
+        let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);
+
+        *area = Rect::new(x.round() as i32, y.round() as i32, area.width, area.height);
+
+        self
+    }
+    fn x<U: Into<Unit>>(mut self, x: U) -> Self
+    where
+        Self: Sized,
+    {
+        let area = self.layout_area().unwrap();
+        match x.into() {
+            Unit::Px(px) => {
+                area.x = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(p) => {
+                todo!();
+                // let percentage = p as f32 / 100.0;
+                // area.x = ((self.parent_area.width as f32 * percentage)
+                //     - (self.area.width as f32 / 2.0))
+                //     .round() as i32;
+            }
+        }
+        self
+    }
+    fn y<U: Into<Unit>>(mut self, y: U) -> Self
+    where
+        Self: Sized,
+    {
+        let area = self.layout_area().unwrap();
+        match y.into() {
+            Unit::Px(px) => {
+                self.layout_area().unwrap().y = px as i32;
+                // self.area.y = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+    fn width<U: Into<Unit>>(mut self, length: U) -> Self
+    where
+        Self: Sized,
+    {
+        let area = self.layout_area().unwrap();
+        match length.into() {
+            Unit::Px(px) => {
+                area.width = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+    fn height<U: Into<Unit>>(mut self, length: U) -> Self
+    where
+        Self: Sized,
+    {
+        let area = self.layout_area().unwrap();
+        match length.into() {
+            Unit::Px(px) => {
+                area.height = px as i32;
+            }
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+    fn w<U: Into<Unit>>(self, width: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.width(width)
+    }
+    fn h<U: Into<Unit>>(self, width: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.height(width)
+    }
+    //Swizzle 😏
+    fn wh<U: Into<Unit> + Copy>(self, value: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.width(value).height(value)
+    }
+    fn top<U: Into<Unit>>(self, top: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.y(top)
+    }
+    fn left<U: Into<Unit>>(self, left: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.x(left)
+    }
+    fn right<U: Into<Unit>>(mut self, length: U) -> Self
+    where
+        Self: Sized,
+    {
+        match length.into() {
+            Unit::Px(px) => todo!(),
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+    fn bottom<U: Into<Unit>>(mut self, length: U) -> Self
+    where
+        Self: Sized,
+    {
+        match length.into() {
+            Unit::Px(px) => todo!(),
+            Unit::Em(_) => todo!(),
+            Unit::Percentage(_) => todo!(),
+        }
+        self
+    }
+    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self
+    where
+        Self: Sized,
+    {
+        self.x(x).y(y).width(width).height(height)
+    }
 }
 
 impl Widget for () {
@@ -170,8 +298,14 @@ impl Widget for () {
     fn area(&self) -> Option<Rect> {
         None
     }
+
     #[inline]
     fn area_mut(&mut self) -> Option<&mut Rect> {
+        None
+    }
+
+    #[inline]
+    fn layout_area(&mut self) -> Option<&mut Rect> {
         None
     }
 

@@ -160,106 +160,6 @@ impl From<f32> for Unit {
     }
 }
 
-pub trait Layout: Sized {
-    fn layout_area(&mut self) -> Option<&mut Rect>;
-    fn centered(mut self, parent: Rect) -> Self {
-        let parent_area = parent.clone();
-        let area = self.layout_area().unwrap();
-        let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
-        let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);
-
-        *area = Rect::new(x.round() as i32, y.round() as i32, area.width, area.height);
-
-        self
-    }
-    fn x<U: Into<Unit>>(mut self, x: U) -> Self {
-        let area = self.layout_area().unwrap();
-        match x.into() {
-            Unit::Px(px) => {
-                area.x = px as i32;
-            }
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(p) => {
-                todo!();
-                // let percentage = p as f32 / 100.0;
-                // area.x = ((self.parent_area.width as f32 * percentage)
-                //     - (self.area.width as f32 / 2.0))
-                //     .round() as i32;
-            }
-        }
-        self
-    }
-    fn y<U: Into<Unit>>(mut self, y: U) -> Self {
-        let area = self.layout_area().unwrap();
-        match y.into() {
-            Unit::Px(px) => {
-                self.layout_area().unwrap().y = px as i32;
-                // self.area.y = px as i32;
-            }
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(_) => todo!(),
-        }
-        self
-    }
-    fn width<U: Into<Unit>>(mut self, length: U) -> Self {
-        let area = self.layout_area().unwrap();
-        match length.into() {
-            Unit::Px(px) => {
-                area.width = px as i32;
-            }
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(_) => todo!(),
-        }
-        self
-    }
-    fn height<U: Into<Unit>>(mut self, length: U) -> Self {
-        let area = self.layout_area().unwrap();
-        match length.into() {
-            Unit::Px(px) => {
-                area.height = px as i32;
-            }
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(_) => todo!(),
-        }
-        self
-    }
-    fn w<U: Into<Unit>>(self, width: U) -> Self {
-        self.width(width)
-    }
-    fn h<U: Into<Unit>>(self, width: U) -> Self {
-        self.height(width)
-    }
-    //Swizzle 😏
-    fn wh<U: Into<Unit> + Copy>(self, value: U) -> Self {
-        self.width(value).height(value)
-    }
-    fn top<U: Into<Unit>>(self, top: U) -> Self {
-        self.y(top)
-    }
-    fn left<U: Into<Unit>>(self, left: U) -> Self {
-        self.x(left)
-    }
-    fn right<U: Into<Unit>>(mut self, length: U) -> Self {
-        match length.into() {
-            Unit::Px(px) => todo!(),
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(_) => todo!(),
-        }
-        self
-    }
-    fn bottom<U: Into<Unit>>(mut self, length: U) -> Self {
-        match length.into() {
-            Unit::Px(px) => todo!(),
-            Unit::Em(_) => todo!(),
-            Unit::Percentage(_) => todo!(),
-        }
-        self
-    }
-    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self {
-        self.x(x).y(y).width(width).height(height)
-    }
-}
-
 #[inline(always)]
 pub fn type_checker<T: Widget>(widgets: T) {}
 
@@ -354,13 +254,16 @@ pub struct Container<T: Tuple> {
     pub drawn: bool,
 }
 
-impl<T: Tuple> Layout for Container<T> {
+// impl<T: Tuple> Layout for Container<T> {
+//     fn layout_area(&mut self) -> Option<&mut Rect> {
+//         Some(&mut self.bounds)
+//     }
+// }
+
+impl<T: Tuple> Widget for Container<T> {
     fn layout_area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.bounds)
     }
-}
-
-impl<T: Tuple> Widget for Container<T> {
     fn is_container() -> bool
     where
         Self: Sized,

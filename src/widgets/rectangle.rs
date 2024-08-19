@@ -63,23 +63,14 @@ impl<'a> Widget for Rectangle<'a> {
         self.area.x = x;
         self.area.y = y;
     }
+    fn layout_area(&mut self) -> Option<&mut Rect> {
+        Some(&mut self.area)
+    }
 }
 
 impl<'a> Style for Rectangle<'a> {
     fn bg(mut self, color: Color) -> Self {
         self.bg = color;
         self
-    }
-}
-
-impl<'a> Layout for Rectangle<'a> {
-    fn layout_area(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.area)
-    }
-}
-
-impl<'a> AsRef<dyn Widget + 'a> for Rectangle<'a> {
-    fn as_ref(&self) -> &(dyn Widget + 'a) {
-        self as &dyn Widget
     }
 }

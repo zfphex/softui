@@ -73,12 +73,12 @@ fn main() {
             // }
 
             {
-                struct E {}
-                vertical!(
-                    text("this is a test of the layout"),
-                    text("next widget"),
-                    // E {}
-                );
+                // struct E {}
+                // vertical!(
+                //     text("this is a test of the layout"),
+                //     text("next widget"),
+                //     // E {}
+                // );
 
                 // dbg!(text("").impl_widget());
                 // macro_rules! test {

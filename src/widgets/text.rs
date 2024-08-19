@@ -63,10 +63,10 @@ impl<'a> Text<'a> {
         self,
         button: MouseButton,
         on_click: F,
-    ) -> OnClick<Text<'a>, F> {
-        OnClick {
+    ) -> OnClickWrapper<Text<'a>, F> {
+        OnClickWrapper {
             widget: self,
-            f: on_click,
+            f: Some(on_click),
             button,
         }
     }
@@ -279,9 +279,6 @@ impl<'a> Widget for Text<'a> {
 
         self.area = rect;
     }
-}
-
-impl<'a> Layout for Text<'a> {
     fn centered(self, parent: Rect) -> Self {
         todo!()
     }
