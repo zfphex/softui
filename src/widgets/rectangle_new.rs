@@ -72,22 +72,23 @@ impl RectangleNew {
 }
 
 impl Widget for RectangleNew {
-    fn draw(&mut self) {
-        self.temp_on_clicked(Left);
+    fn draw(&self) -> Option<DrawCommand> {
+        // self.temp_on_clicked(Left);
         // if let Some(click) = &mut self.on_clicked {
         //     click();
         // }
 
-        unsafe {
-            COMMAND_QUEUE.push(Command::Ellipse(
-                self.area.x as usize,
-                self.area.y as usize,
-                self.area.width as usize,
-                self.area.height as usize,
-                self.radius,
-                self.bg,
-            ));
-        }
+        // unsafe {
+        //     COMMAND_QUEUE.push(Command::Ellipse(
+        //         self.area.x as usize,
+        //         self.area.y as usize,
+        //         self.area.width as usize,
+        //         self.area.height as usize,
+        //         self.radius,
+        //         self.bg,
+        //     ));
+        // }
+        todo!();
     }
 
     #[inline]

@@ -4,21 +4,15 @@ use mini::defer_results;
 use softui::*;
 use window::*;
 
-struct Test {}
-
 fn main() {
     //TODO: Remove me.
     load_default_font();
 
-    defer_results!();
+    // defer_results!();
     let ctx = create_ctx("Softui", 800, 600);
 
     #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg");
-
-    let mut text_color = Color::WHITE;
-
-    let mut wh = 100;
 
     loop {
         match ctx.event() {
@@ -33,7 +27,8 @@ fn main() {
         draw_svg(ctx, &ferris);
 
         {
-            {
+            'defer: {
+                break 'defer;
                 struct Flex {}
 
                 pub fn flex<T: Tuple2>(mut widgets: T) {
@@ -78,171 +73,56 @@ fn main() {
                 // }
                 // test!(text(""));
 
-                v!(rect(),);
+                // v!(rect(),);
                 // vertical!(text("hi"), E {});
                 // v((text("hi"), E {}));
             }
 
+            //DrawCommand
             {
-
-                // Works fine
-                // v!(text("hi"), rect());
-
-                //Won't work and won't give good errors.
-                // v!(text("hi"), rect(), 10);
-
-                // softui_proc::layout!(text("hi"), rect());
-
-                // let text = text("hi");
-                // let rect = rect();
-                // softui_proc::layout!(text, rect);
-
-                // softui_proc::layout!(text("hi"), rect(), rect(), text("this is a test"), 22);
+                let dc = text("hi").draw().unwrap();
+                if dc.area.intersects(ctx.mouse_pos) {
+                    println!("hovered");
+                }
+                // println!("dc.area: {:?} can be used when laying out widgets.", dc.area);
+                unsafe {
+                    COMMAND_QUEUE.push(dc.command);
+                }
             }
 
-            // empty((text("epic"), text("epic").y(30)));
+            //Dragging example.
+            // if ctx.left_mouse.inital_position != Rect::default() {
+            //     let inital = ctx.left_mouse.inital_position;
+            //     let end = ctx.left_mouse.release_position.unwrap_or(ctx.mouse_pos);
+            //     let mut drag = Rect::default();
 
-            ctx.draw_circle(100, 100, 50, Color::new(0xa463d6));
+            //     if end.x > inital.x {
+            //         drag.x = inital.x;
+            //         drag.width = end.x - inital.x;
+            //     } else {
+            //         drag.x = end.x;
+            //         drag.width = inital.x - end.x;
+            //     }
 
-            {
-                // let mut r = RectangleNew::new().on_clicked(|_| println!("{:?}", text_color));
-                // r.draw();
+            //     if end.y > inital.y {
+            //         drag.y = inital.y;
+            //         drag.height = end.y - inital.y;
+            //     } else {
+            //         drag.y = end.y;
+            //         drag.height = inital.y - end.y;
+            //     }
 
-                // empty((r));
-            }
-
-            // v!(
-            //     text("hello"),
-            //     text("hi"),
-            //     rect().wh(50).bg(Color::RED),
-            //     rect().radius(20).wh(wh).bg(Color::new(0xce70d6))
-            // )
-            // .padding(10)
-            // .y(200)
-            // .on_clicked(Left, |s| {
-            //     wh += 5;
-            // });
-
-            // panic!();
-            // let vertical = h((text("hello"))).y(300);
-
-            // let mut ve = v((
-            //     //TODO: This aint workin.
-            //     //Because the text layout is calculated after the `on_clicked` function is called. HMMMMM.
-            //     text("one").on_clicked(Left, |_| println!("Clicked on one")),
-            //     text("two").on_clicked(Left, |_| println!("Clicked on two")),
-            // ));
-            // .on_clicked(Left, |s| {
-            //     println!("Clicked on vertical");
-            // });
-
-            let str = "yipeee!\nabcdefghijklmnopqrstuvwxyz\n1234567890!@#$%^&*()\n";
-            let mut text = text(str)
-                // .color(Color::new(0xfad))
-                .color(text_color)
-                .y(400)
-                .font_size(48)
-                // .on_clicked(Left, |_| );
-                .on_clicked(Left, |s| {
-                    let ctx = softui::ctx();
-                    println!("Clicked text {:?}", ctx.area);
-                    if text_color == Color::WHITE {
-                        text_color = Color::BLACK;
-                    } else {
-                        text_color = Color::WHITE;
-                    }
-                });
-
-            // if text.clicked(Left) {
-            //     println!("Clicked text {:?}", ctx.area);
+            //     ctx.draw_rectangle(
+            //         drag.x as usize,
+            //         drag.y as usize,
+            //         drag.width as usize,
+            //         drag.height as usize,
+            //         Color::RED,
+            //     )
+            //     .unwrap();
             // }
 
-            // text.draw();
-
-            // button().on_clicked(Left, |_| println!("hi"));
-
-            // fontdue_subpixel(ctx, 0, 0);
+            ctx.draw_frame();
         }
-
-        //Dragging example.
-        if ctx.left_mouse.inital_position != Rect::default() {
-            let inital = ctx.left_mouse.inital_position;
-            let end = ctx.left_mouse.release_position.unwrap_or(ctx.mouse_pos);
-            let mut drag = Rect::default();
-
-            if end.x > inital.x {
-                drag.x = inital.x;
-                drag.width = end.x - inital.x;
-            } else {
-                drag.x = end.x;
-                drag.width = inital.x - end.x;
-            }
-
-            if end.y > inital.y {
-                drag.y = inital.y;
-                drag.height = end.y - inital.y;
-            } else {
-                drag.y = end.y;
-                drag.height = inital.y - end.y;
-            }
-
-            ctx.draw_rectangle(
-                drag.x as usize,
-                drag.y as usize,
-                drag.width as usize,
-                drag.height as usize,
-                Color::RED,
-            )
-            .unwrap();
-        }
-
-        // ctx.draw_rectangle_rounded(300, 300, 300, 200, 25, Color::WHITE.into())
-        //     .unwrap();
-
-        {
-            //TODO: I'm not liking draw on drop.
-            //It works for an immediate style of code but falls apart everywhere else.
-            // ctx.vertical(|ctx| {
-            //     if button(&ctx).clicked(Left) {
-            //         println!("Clicked button im");
-            //     };
-            // });
-
-            // v((
-            //     button(&ctx)
-            //         .wh(20)
-            //         .on_clicked(Forward, |_| {
-            //             if size >= 30 {
-            //                 size = 20;
-            //             } else {
-            //                 size = 30;
-            //             }
-            //         })
-            //         .on_clicked(Left, |_| {
-            //             if size >= 30 {
-            //                 size = 20;
-            //             } else {
-            //                 size = 40;
-            //             }
-            //         }),
-            //     h((button(&ctx).wh(20), button(&ctx).wh(20))).p(10),
-            //     h((
-            //         button(&ctx).wh(size),
-            //         button(&ctx).wh(size),
-            //         button(&ctx).wh(size),
-            //     ))
-            //     .p(10),
-            //     h((
-            //         button(&ctx).wh(20),
-            //         button(&ctx).wh(20),
-            //         button(&ctx).wh(20),
-            //         v((button(&ctx).w(20).h(8), button(&ctx).w(20).h(8))).p(4),
-            //     ))
-            //     .p(10),
-            // ))
-            // .p(10);
-        }
-
-        ctx.draw_frame();
     }
 }

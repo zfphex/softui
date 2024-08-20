@@ -3,7 +3,9 @@
 use core::ffi::c_void;
 use crossbeam_queue::SegQueue;
 use mini::{info, profile};
-use std::{cell::UnsafeCell, mem::MaybeUninit, pin::Pin, ptr::NonNull, sync::LazyLock};
+use std::{
+    borrow::Cow, cell::UnsafeCell, mem::MaybeUninit, pin::Pin, ptr::NonNull, sync::LazyLock,
+};
 use window::*;
 
 pub mod widgets;
@@ -21,8 +23,38 @@ pub use tuple2::*;
 pub use widgets::*;
 pub use MouseButton::*;
 
+//Ideally the user could write there own commands
+//Then they would send custom commands to the context.
+//And it would draw their entire widget for them.
+//Need to think more about this, thread safety is not easy.
+//Vulkan is probably my best bet for inspiration.
+
+pub enum Command {
+    /// (x, y, width, height, radius, color)
+    Ellipse(usize, usize, usize, usize, usize, Color),
+    /// (x, y, width, height, color)
+    Rectangle(usize, usize, usize, usize, Color),
+    /// (x, y, width, height, color)
+    RectangleOutline(usize, usize, usize, usize, Color),
+    /// (text, font_size, x, y, Color)
+    /// This needs to include the desired font.
+    /// Not sure how to do that yet.
+    //TODO: Should font size be f32?
+    //TODO: Could change text to Cow<'_, str>
+    Text(String, usize, usize, usize, Color),
+}
+
+pub struct DrawCommand {
+    //The computed area of a widget, used with vertical/horizontal layout.
+    pub area: Rect,
+    //Sent to the draw context.
+    pub command: Command,
+}
+
 pub trait Widget {
-    fn draw(&mut self) {}
+    fn draw(&self) -> Option<DrawCommand> {
+        None
+    }
     fn area(&self) -> Option<Rect>;
     fn area_mut(&mut self) -> Option<&mut Rect>;
 
@@ -312,17 +344,6 @@ impl Widget for () {
     fn adjust_position(&mut self, x: i32, y: i32) {}
 }
 
-pub enum Command {
-    /// (x, y, width, height, radius, color)
-    Ellipse(usize, usize, usize, usize, usize, Color),
-    /// (x, y, width, height, color)
-    Rectangle(usize, usize, usize, usize, Color),
-    /// (text, font_size, x, y)
-    /// This needs to include the desired font.
-    /// Not sure how to do that yet.
-    Text(&'static str, f32, usize, usize),
-}
-
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
 
 // pub static mut CONTEXT: Context = Context {
@@ -486,6 +507,9 @@ impl Context {
                 Command::Rectangle(x, y, width, height, color) => {
                     self.draw_rectangle(x, y, width, height, color);
                 }
+                Command::RectangleOutline(x, y, width, height, color) => {
+                    self.draw_rectangle_outline(x, y, width, height, color);
+                }
                 Command::Ellipse(x, y, width, height, radius, color) => {
                     if radius == 0 {
                         self.draw_rectangle(x, y, width, height, color).unwrap();
@@ -494,8 +518,10 @@ impl Context {
                             .unwrap();
                     }
                 }
-                Command::Text(text, size, x, y) => {
-                    todo!();
+                Command::Text(text, size, x, y, color) => {
+                    //TODO: Specify the font with a font database and font ID.
+                    let font = default_font().unwrap();
+                    self.draw_text(&text, font, size, x, y, 0, color);
                 }
             }
         }
@@ -851,8 +877,122 @@ impl Context {
         Ok(())
     }
 
-    //TODO
-    pub fn vertical<F: FnMut(&Self) -> ()>(&self, mut function: F) {
-        function(self)
+    //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
+    //or maybe the buffer should just include all the text related code and the metrics should be static.
+    //TODO: If the text is longer than canvas width it needs to be clipped.
+    fn draw_text(
+        &mut self,
+        text: &str,
+        font: &fontdue::Font,
+        font_size: usize,
+        x: usize,
+        y: usize,
+        //Zero is fine
+        line_height: usize,
+        color: Color,
+    ) {
+        let font = default_font().unwrap();
+        let mut area = Rect::new(x as i32, y as i32, 0, 0);
+        let mut y: usize = area.y.try_into().unwrap();
+        let x = area.x as usize;
+
+        let mut max_x = 0;
+        let mut max_y = 0;
+
+        let r = color.r();
+        let g = color.g();
+        let b = color.b();
+
+        'line: for line in text.lines() {
+            let mut glyph_x = x;
+
+            'char: for char in line.chars() {
+                let (metrics, bitmap) = font.rasterize(char, font_size as f32);
+
+                let glyph_y = y as f32
+                    - (metrics.height as f32 - metrics.advance_height)
+                    - metrics.ymin as f32;
+
+                for y in 0..metrics.height {
+                    for x in 0..metrics.width {
+                        //TODO: Metrics.bounds determines the bounding are of the glyph.
+                        //Currently the whole bitmap bounding box is drawn.
+
+                        let alpha = bitmap[x + y * metrics.width];
+                        if alpha == 0 {
+                            continue;
+                        }
+
+                        //Should the text really be offset by the font size?
+                        //This allows the user to draw text at (0, 0).
+                        let offset = font_size as f32 + glyph_y + y as f32;
+
+                        //We can't render off of the screen, mkay?
+                        if offset < 0.0 {
+                            continue;
+                        }
+
+                        if max_x < x + glyph_x {
+                            max_x = x + glyph_x;
+                        }
+
+                        if max_y < offset as usize {
+                            max_y = offset as usize;
+                        }
+
+                        let i = x + glyph_x + self.width * offset as usize;
+
+                        if i >= self.buffer.len() {
+                            break 'char;
+                        }
+
+                        let bg = Color::new(self.buffer[i]);
+
+                        //Blend the background and the text color.
+                        #[rustfmt::skip]
+                        fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
+                            ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32) / 255.0).round() as u8
+                        }
+
+                        let r = blend(r, alpha, bg.r(), 255 - alpha);
+                        let g = blend(g, alpha, bg.g(), 255 - alpha);
+                        let b = blend(b, alpha, bg.b(), 255 - alpha);
+                        self.buffer[i] = rgb(r, g, b);
+                    }
+                }
+
+                glyph_x += metrics.advance_width as usize;
+
+                //TODO: Still not enough.
+                if glyph_x >= self.width {
+                    break 'line;
+                }
+            }
+
+            //CSS is probably line height * font size.
+            //1.2 is the default line height
+            //I'm guessing 1.0 is probably just adding the font size.
+            y += font_size + line_height;
+        }
+
+        //Not sure why these are one off.
+        area.height = (max_y as i32 + 1 - area.y);
+        area.width = (max_x as i32 + 1 - area.x);
+
+        // ctx.draw_rectangle_outline(
+        //     area.x as usize,
+        //     area.y as usize,
+        //     area.width as usize,
+        //     area.height as usize,
+        //     Color::RED,
+        // );
+
+        self.draw_rectangle_outline(
+            area.x as usize,
+            area.y as usize,
+            area.width as usize,
+            area.height as usize,
+            Color::RED,
+        );
     }
 }

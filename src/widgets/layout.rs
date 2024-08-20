@@ -234,7 +234,7 @@ pub struct Empty<T: Tuple> {
 
 impl<T: Tuple> Drop for Empty<T> {
     fn drop(&mut self) {
-        self.widgets.for_each_mut(&mut |widget| widget.draw());
+        // self.widgets.for_each_mut(&mut |widget| widget.draw());
     }
 }
 

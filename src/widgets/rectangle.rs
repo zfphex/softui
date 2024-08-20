@@ -36,17 +36,18 @@ impl<'a> Rectangle<'a> {
 }
 
 impl<'a> Widget for Rectangle<'a> {
-    fn draw(&mut self) {
-        unsafe {
-            COMMAND_QUEUE.push(Command::Ellipse(
+    fn draw(&self) -> Option<DrawCommand> {
+        Some(DrawCommand {
+            area: self.area,
+            command: Command::Ellipse(
                 self.area.x as usize,
                 self.area.y as usize,
                 self.area.width as usize,
                 self.area.height as usize,
                 self.radius,
                 self.bg,
-            ));
-        }
+            ),
+        })
     }
 
     #[inline]
