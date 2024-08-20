@@ -29,6 +29,12 @@ pub use MouseButton::*;
 //Need to think more about this, thread safety is not easy.
 //Vulkan is probably my best bet for inspiration.
 
+//Command buffers a little different in vulkan
+//They have a begin and end, then they are submitted.
+//I think this is a good approach, if multiple threads are being used.
+//I would like to append single commands to the buffer and large groups of commands.
+//There is no COMMAND_QUEUE.push_slice() unfortunately.
+
 pub enum Command {
     /// (x, y, width, height, radius, color)
     Ellipse(usize, usize, usize, usize, usize, Color),
