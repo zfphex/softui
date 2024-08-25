@@ -73,7 +73,7 @@ impl<'a> Text<'a> {
         self
     }
     fn calculate_position(&self, x: i32, y: i32) -> Rect {
-        let ctx = ctx();
+        let canvas_width = ctx().area.width as usize;
         let font = default_font().unwrap();
         let mut area = self.area;
 
@@ -121,18 +121,14 @@ impl<'a> Text<'a> {
                             max_y = offset as usize;
                         }
 
-                        let i = x + glyph_x + ctx.width * offset as usize;
-
-                        if i >= ctx.buffer.len() {
-                            break 'char;
-                        }
+                        let i = x + glyph_x + canvas_width * offset as usize;
                     }
                 }
 
                 glyph_x += metrics.advance_width as usize;
 
                 //TODO: Still not enough.
-                if glyph_x >= ctx.width {
+                if glyph_x >= canvas_width {
                     break 'line;
                 }
             }
@@ -180,7 +176,7 @@ impl<'a> Widget for Text<'a> {
     }
 
     fn layout_area(&mut self) -> Option<&mut Rect> {
-        None
+        Some(&mut self.area)
     }
 }
 
@@ -239,7 +235,7 @@ pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
 
     for y in 0..metrics.height {
         for x in 0..metrics.width {
-            let i = ((start_y + y) * ctx.width + start_x + x);
+            let i = ((start_y + y) * ctx.area.width as usize + start_x + x);
             let j = (y * metrics.width + x) * 3;
 
             let r = bitmap[j];

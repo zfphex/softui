@@ -2,13 +2,8 @@
 #![allow(unused)]
 use mini::defer_results;
 use softui::*;
-use window::*;
 
 fn main() {
-    //TODO: Remove me.
-    load_default_font();
-
-    // defer_results!();
     let ctx = create_ctx("Softui", 800, 600);
 
     #[cfg(feature = "svg")]
@@ -80,15 +75,24 @@ fn main() {
 
             //DrawCommand
             {
-                let dc = text("hi").draw().unwrap();
+                let dc = text("this is some really long text!")
+                    .y(ctx.height() - 100)
+                    .font_size(50)
+                    .draw()
+                    .unwrap();
                 if dc.area.intersects(ctx.mouse_pos) {
-                    println!("hovered");
+                    // Do something ...
+                    // println!("hovered");
                 }
+
                 // println!("dc.area: {:?} can be used when laying out widgets.", dc.area);
                 unsafe {
                     COMMAND_QUEUE.push(dc.command);
                 }
             }
+
+            // unsafe { COMMAND_QUEUE.push(Command::CustomBoxed(Box::new(red_background))) };
+            // send_command(Command::Custom(&red_background));
 
             //Dragging example.
             // if ctx.left_mouse.inital_position != Rect::default() {
