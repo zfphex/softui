@@ -1,4 +1,4 @@
-use crate::{ctx, Color, Tuple, Widget, RECT};
+use crate::{ctx, Color, Tuple, Widget};
 use mini::profile;
 use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
 
@@ -35,7 +35,10 @@ pub struct Rect {
     pub height: i32,
 }
 
-impl From<RECT> for Rect {
+
+
+#[cfg(target_os = "windows")]
+impl From<crate::RECT> for Rect {
     fn from(rect: RECT) -> Self {
         Rect {
             x: 0,

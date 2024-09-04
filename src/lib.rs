@@ -11,8 +11,11 @@ use std::{
 pub mod platform;
 pub use platform::*;
 
-pub mod windows;
 pub mod macos;
+
+pub mod windows;
+// #[cfg(target_os = "windows")]
+use windows::*;
 
 //Re-export the window functions.
 // pub use window::*;
@@ -57,11 +60,12 @@ pub enum Command {
     //TODO: Should font size be f32?
     //TODO: Could change text to Cow<'_, str>
     Text(String, usize, usize, usize, Color),
-
     //But which to use?
-    CustomBoxed(Box<dyn FnOnce(&mut Context) -> ()>),
-    Custom(&'static dyn Fn(&mut Context) -> ()),
-    CustomFn(fn(&mut Context) -> ()),
+    // CustomBoxed(Box<dyn FnOnce(&mut Context<B>) -> ()>),
+    // Custom(&'static dyn Fn(&mut Context<B>) -> ()),
+    // CustomFn(fn(&mut Context<B>) -> ()),
+    // CustomFn(fn(&mut Box<dyn Backend>) -> ());
+    // CustomFn(fn(Box<Context<dyn Backend + Si>>) -> ())
 }
 
 pub struct DrawCommand {
@@ -78,10 +82,12 @@ pub fn queue_command(command: Command) {
     unsafe { COMMAND_QUEUE.push(command) }
 }
 
-#[inline]
-pub fn queue_command_fn(f: fn(&mut Context) -> ()) {
-    unsafe { COMMAND_QUEUE.push(Command::CustomFn(f)) }
-}
+//Not sure about this. 
+
+// #[inline]
+// pub fn queue_command_fn<B: Backend>(f: fn(&mut Context<B>) -> ()) {
+//     unsafe { COMMAND_QUEUE.push(Command::CustomFn()) }
+// }
 
 // pub static mut CONTEXT: Context = Context {
 //     buffer: Vec::new(),
@@ -113,9 +119,9 @@ pub fn ctx() -> &'static mut Context {
     unsafe { CTX.as_mut().unwrap() }
 }
 
-pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Context {
+pub fn create_ctx(backend: Box<&'static dyn Backend>, title: &str, width: usize, height: usize) -> &'static mut Context {
     unsafe {
-        CTX = Some(Context::new(title, width, height));
+        CTX = Some(Context::new(backend, title, width, height));
         CTX.as_mut().unwrap()
     }
 }
@@ -130,16 +136,15 @@ pub enum Quadrant {
 /// Holds the framebuffer and input state.
 /// Also handles rendering.
 pub struct Context {
+    pub backend: Box<&'static dyn Backend>,
     //size is width * height.
-    pub buffer: Vec<u32>,
+    // pub buffer: Vec<u32>,
     //(width * height) / 4
-    // pub simd16: Vec<u8x16>,
-    // pub simd32: Vec<u32x8>,
-    // pub simd64: Vec<u32x16>,
-    pub area: Rect,
-    pub window: Pin<Box<Window>>,
-    pub dc: Option<*mut c_void>,
-    pub bitmap: BITMAPINFO,
+    // pub area: Rect,
+    // pub window: Pin<Box<Window>>,
+    // pub dc: Option<*mut c_void>,
+    // pub bitmap: BITMAPINFO,
+
     //This should really be a Vec2 or (usize, usize), but this makes checking
     //rectangle intersections really easy.
     pub mouse_pos: Rect,
@@ -151,29 +156,24 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(title: &str, width: usize, height: usize) -> Self {
+    pub fn new(backend: Box<&'static dyn Backend>, title: &str, width: usize, height: usize) -> Self {
         //TODO: Remove me.
         load_default_font();
 
-        let mut window = unsafe { create_window(title, width as i32, height as i32) };
-        let dc = unsafe { GetDC(window.hwnd) };
+        // let window = B::create_window();
+        // let area = window.area();
+        // let mut window = unsafe { create_window(title, width as i32, height as i32) };
+        // let dc = unsafe { GetDC(window.hwnd) };
         //Convert top, left, right, bottom to x, y, width, height.
-        let area = Rect::from(window.client_area());
+        // let area = Rect::from(window.client_area());
 
         Self {
-            window,
-            dc: Some(dc),
-            area,
-            buffer: vec![0; area.width as usize * area.height as usize],
-            //4 RGBQUADS in u8x16 -> 16 / 4 = 4
-            // simd16: vec![u8x16::splat(0); ((width * height) as f32 / 4.0).ceil() as usize],
-            //8 RGBQUADS in u8x64 -> 32 / 4 = 8
-            // simd32: vec![u8x32::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
-            // simd32: vec![u32x8::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
-            // simd64: vec![u32x16::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
-            //16 RGBQUADS in u8x64 -> 64 / 4 = 16
-            // simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
-            bitmap: BITMAPINFO::new(area.width, area.height),
+            backend,
+            // window,
+            // dc: Some(dc),
+            // area,
+            // buffer: vec![0; area.width as usize * area.height as usize],
+            // bitmap: BITMAPINFO::new(area.width, area.height),
             mouse_pos: Rect::default(),
             left_mouse: MouseState::new(),
             right_mouse: MouseState::new(),
@@ -186,7 +186,7 @@ impl Context {
     //TODO: Cleanup and remove.
     pub fn event(&mut self) -> Option<Event> {
         profile!();
-        match self.window.event() {
+        match self.backend.event() {
             None => None,
             Some(event) => {
                 match event {
@@ -257,39 +257,15 @@ impl Context {
                     let font = default_font().unwrap();
                     self.draw_text(&text, font, size, x, y, 0, color);
                 }
-                Command::CustomBoxed(f) => f(self),
-                Command::Custom(f) => f(self),
-                Command::CustomFn(f) => f(self),
+                // Command::CustomBoxed(f) => f(self),
+                // Command::Custom(f) => f(self),
+                // Command::CustomFn(f) => f(self),
             }
         }
 
         //Resize the window if needed.
-        let area = Rect::from(self.window.client_area());
-        if self.area != area {
-            self.area = area;
-            self.buffer.clear();
-            self.buffer
-                .resize(self.area.width as usize * self.area.height as usize, 0);
-            self.bitmap = BITMAPINFO::new(self.area.width as i32, self.area.height as i32);
-        }
-
-        unsafe {
-            StretchDIBits(
-                self.dc.unwrap(),
-                0,
-                0,
-                self.area.width as i32,
-                self.area.height as i32,
-                0,
-                0,
-                self.area.width as i32,
-                self.area.height as i32,
-                self.buffer.as_mut_ptr() as *const c_void,
-                &self.bitmap,
-                0,
-                SRCCOPY,
-            );
-        }
+        self.backend.resize();
+        self.backend.present();
 
         //Reset the important state at the end of a frame.
         //Does this break dragging?
@@ -301,20 +277,20 @@ impl Context {
     }
 
     pub fn get_pixel(&mut self, x: usize, y: usize) -> Option<&mut u32> {
-        let pos = x + (self.area.width as usize * y);
-        self.buffer.get_mut(pos)
+        let pos = x + (self.backend.area().width as usize * y);
+        self.backend.buffer().get_mut(pos)
     }
 
     //This is essentially just a memset.
     pub fn fill(&mut self, color: Color) {
         profile!();
-        self.buffer.fill(color.as_u32());
+        self.backend.buffer().fill(color.as_u32());
     }
 
     ///Note color order is BGR_. The last byte is reserved.
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
-        let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
-        buffer[y * self.area.width as usize + x] = color;
+        let buffer = unsafe { self.backend.buffer().align_to_mut::<u32>().1 };
+        buffer[y * self.backend.area().width as usize + x] = color;
     }
 
     //TODO: https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
@@ -432,8 +408,8 @@ impl Context {
         self.bounds_check(x, y, width, height)?;
 
         for i in y..y + height {
-            let pos = x + self.area.width as usize * i;
-            self.buffer[pos..pos + width].fill(color.as_u32());
+            let pos = x + self.backend.area().width as usize * i;
+            self.backend.buffer()[pos..pos + width].fill(color.as_u32());
         }
         Ok(())
     }
@@ -452,10 +428,15 @@ impl Context {
         #[cfg(debug_assertions)]
         self.bounds_check(x, y, width, height)?;
 
-        let mut i = x + (y * self.area.width as usize);
+        let mut i = x + (y * self.backend.area().width as usize);
         for _ in 0..height {
-            unsafe { self.buffer.get_unchecked_mut(i..i + width).fill(color) };
-            i += self.area.width as usize;
+            unsafe {
+                self.backend
+                    .buffer()
+                    .get_unchecked_mut(i..i + width)
+                    .fill(color)
+            };
+            i += self.backend.area().width as usize;
         }
 
         Ok(())
@@ -474,10 +455,10 @@ impl Context {
         self.bounds_check(x, y, width, height)?;
 
         for i in y..y + height {
-            let start = x + self.area.width as usize * i;
+            let start = x + self.backend.area().width as usize * i;
             let end = start + width;
 
-            for (x, px) in self.buffer[start..end].iter_mut().enumerate() {
+            for (x, px) in self.backend.buffer()[start..end].iter_mut().enumerate() {
                 let t = (x as f32) / (end as f32 - start as f32);
                 *px = color1.lerp(color2, t).as_u32();
             }
@@ -496,8 +477,8 @@ impl Context {
         color: Color,
     ) -> Result<(), String> {
         self.bounds_check(x, y, width, height)?;
-        let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
-        let canvas_width = self.area.width as usize;
+        let buffer = unsafe { self.backend.buffer().align_to_mut::<u32>().1 };
+        let canvas_width = self.backend.area().width as usize;
         let color = color.as_u32();
 
         for i in y..y + height {
@@ -525,20 +506,20 @@ impl Context {
     ) -> Result<(), String> {
         #[cfg(debug_assertions)]
         {
-            if x + width >= self.area.width as usize {
+            if x + width >= self.backend.area().width as usize {
                 return Err(format!(
                     "Canvas width is {}, cannot draw at {} ({}x + {}w)",
-                    self.area.width,
+                    self.backend.area().width,
                     x + width,
                     x,
                     width,
                 ));
             }
 
-            if y + height >= self.area.height as usize {
+            if y + height >= self.backend.area().height as usize {
                 return Err(format!(
                     "Canvas height is {}, cannot draw at {} ({}y + {}h)",
-                    self.area.height,
+                    self.backend.area().height,
                     y + height,
                     y,
                     height,
@@ -572,20 +553,20 @@ impl Context {
 
         let color = color.as_u32();
 
-        let canvas_width = self.area.width as usize;
+        let canvas_width = self.backend.area().width as usize;
 
         for i in y..y + height {
             let y = i - y;
             if y <= radius || y >= height - radius {
                 let pos = x + radius + canvas_width * i;
-                for px in &mut self.buffer[pos..pos + width - radius - radius] {
+                for px in &mut self.backend.buffer()[pos..pos + width - radius - radius] {
                     *px = color;
                 }
                 continue;
             }
 
             let pos = x + canvas_width * i;
-            for px in &mut self.buffer[pos..pos + width] {
+            for px in &mut self.backend.buffer()[pos..pos + width] {
                 *px = color;
             }
         }
@@ -680,13 +661,13 @@ impl Context {
                             max_y = offset as usize;
                         }
 
-                        let i = x + glyph_x + self.area.width as usize * offset as usize;
+                        let i = x + glyph_x + self.backend.area().width as usize * offset as usize;
 
-                        if i >= self.buffer.len() {
+                        if i >= self.backend.buffer().len() {
                             break 'x;
                         }
 
-                        let bg = Color::new(self.buffer[i]);
+                        let bg = Color::new(self.backend.buffer()[i]);
 
                         //Blend the background and the text color.
                         #[rustfmt::skip]
@@ -697,14 +678,14 @@ impl Context {
                         let r = blend(r, alpha, bg.r(), 255 - alpha);
                         let g = blend(g, alpha, bg.g(), 255 - alpha);
                         let b = blend(b, alpha, bg.b(), 255 - alpha);
-                        self.buffer[i] = rgb(r, g, b);
+                        self.backend.buffer()[i] = rgb(r, g, b);
                     }
                 }
 
                 glyph_x += metrics.advance_width as usize;
 
                 //TODO: Still not enough.
-                if glyph_x >= self.area.width as usize {
+                if glyph_x >= self.backend.area().width as usize {
                     break 'line;
                 }
             }
@@ -730,11 +711,11 @@ impl Context {
 
     #[inline(always)]
     pub fn width(&self) -> usize {
-        self.area.width as usize
+        self.backend.area().width as usize
     }
 
     #[inline(always)]
     pub fn height(&self) -> usize {
-        self.area.height as usize
+        self.backend.area().height as usize
     }
 }

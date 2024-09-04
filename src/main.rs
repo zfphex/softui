@@ -2,15 +2,23 @@
 #![allow(unused)]
 use mini::defer_results;
 use softui::*;
+use softui::windows::Windows;
 
 fn main() {
-    let ctx = create_ctx("Softui", 800, 600);
+    let windows = Windows::new();
+    //Not sure if this will help my problem...
+    let b = Box::new(&windows as &dyn Backend);
+    return;
+
+    // let ctx = create_ctx(b, "Softui", 800, 600);
+    let mut ctx: Context = todo!();
 
     #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg");
 
+
     loop {
-        match ctx.event() {
+        match ctx.backend.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             None => {}
             _ => {}
@@ -18,8 +26,8 @@ fn main() {
 
         ctx.fill(Color::BLACK);
 
-        #[cfg(feature = "svg")]
-        draw_svg(ctx, &ferris);
+        // #[cfg(feature = "svg")]
+        // draw_svg(ctx, &ferris);
 
         {
             'defer: {

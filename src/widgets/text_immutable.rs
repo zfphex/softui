@@ -1,7 +1,11 @@
 use crate::*;
 use atomic_float::AtomicF32;
 use fontdue::*;
-use std::{ops::Range, path::Path, sync::atomic::AtomicUsize};
+use std::{
+    ops::Range,
+    path::Path,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 pub const FONT: &[u8] = include_bytes!("../../fonts/JetBrainsMono.ttf");
 
@@ -73,7 +77,7 @@ impl<'a> Text<'a> {
         self
     }
     fn calculate_position(&self, x: i32, y: i32) -> Rect {
-        let canvas_width = ctx().area.width as usize;
+        let canvas_width = ctx().backend.area().width as usize;
         let font = default_font().unwrap();
         let mut area = self.area;
 
@@ -232,17 +236,19 @@ pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
 
     let start_x = x;
     let start_y = y;
+    let width = ctx.backend.area().width as usize;
+    let buffer = ctx.backend.buffer();
 
     for y in 0..metrics.height {
         for x in 0..metrics.width {
-            let i = ((start_y + y) * ctx.area.width as usize + start_x + x);
+            let i = ((start_y + y) * width + start_x + x);
             let j = (y * metrics.width + x) * 3;
 
             let r = bitmap[j];
             let g = bitmap[j + 1];
             let b = bitmap[j + 2];
 
-            ctx.buffer[i] = rgb(r, g, b);
+            buffer[i] = rgb(r, g, b);
         }
     }
 }

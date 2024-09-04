@@ -25,7 +25,7 @@ fn main() {
             _ => {}
         }
 
-        let area = &ctx.area;
+        let area = ctx.backend.area();
 
         t += 0.02;
         x += 1;
@@ -128,6 +128,7 @@ fn main() {
         'button: {
             // let btn = button(&ctx).bg(Color::Hex(0xff)).x(0.5).y(200);
             let mut b = rct(&ctx).bg(Color::new(0xff)).centered(ctx.area).y(200);
+
             if b.clicked(Left) {
                 println!("Clicked blue button!");
             }
