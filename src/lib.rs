@@ -8,8 +8,14 @@ use std::{
     sync::LazyLock,
 };
 
+pub mod platform;
+pub use platform::*;
+
+pub mod windows;
+pub mod macos;
+
 //Re-export the window functions.
-pub use window::*;
+// pub use window::*;
 
 pub mod widgets;
 
