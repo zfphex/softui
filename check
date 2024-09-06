@@ -1,0 +1,529 @@
+    Checking softui v0.1.0 (/Users/bay/Desktop/Projects/softui)
+error: attempted to repeat an expression containing no syntax variables matched as repeating at this depth
+   --> src/lib.rs:177:22
+    |
+177 |                       $(
+    |  ______________________^
+178 | |                         $plaform(w) => w.area(),
+179 | |                     )*
+    | |_____________________^
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/widgets/text_immutable.rs:80:42
+    |
+80  |         let canvas_width = ctx().backend.area().width as usize;
+    |                                          ^^^^ method not found in `Window`
+    |
+   ::: src/lib.rs:145:1
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/widgets/text_immutable.rs:239:29
+    |
+239 |     let width = ctx.backend.area().width as usize;
+    |                             ^^^^ method not found in `Window`
+    |
+   ::: src/lib.rs:145:1
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/widgets/text_immutable.rs:240:30
+    |
+240 |     let buffer = ctx.backend.buffer();
+    |                              ^^^^^^ method not found in `Window`
+    |
+   ::: src/lib.rs:145:1
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `event` found for enum `Window` in the current scope
+   --> src/lib.rs:247:28
+    |
+145 | pub enum Window {
+    | --------------- method `event` not found for this enum
+...
+247 |         match self.backend.event() {
+    |                            ^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `event`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `resize` found for enum `Window` in the current scope
+   --> src/lib.rs:324:22
+    |
+145 | pub enum Window {
+    | --------------- method `resize` not found for this enum
+...
+324 |         self.backend.resize();
+    |                      ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `resize`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `present` found for enum `Window` in the current scope
+   --> src/lib.rs:325:22
+    |
+145 | pub enum Window {
+    | --------------- method `present` not found for this enum
+...
+325 |         self.backend.present();
+    |                      ^^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `present`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:337:37
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+337 |         let pos = x + (self.backend.area().width as usize * y);
+    |                                     ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:338:22
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+338 |         self.backend.buffer().get_mut(pos)
+    |                      ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:344:22
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+344 |         self.backend.buffer().fill(color.as_u32());
+    |                      ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:349:44
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+349 |         let buffer = unsafe { self.backend.buffer().align_to_mut::<u32>().1 };
+    |                                            ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:350:33
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+350 |         buffer[y * self.backend.area().width as usize + x] = color;
+    |                                 ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:468:40
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+468 |             let pos = x + self.backend.area().width as usize * i;
+    |                                        ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:469:26
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+469 |             self.backend.buffer()[pos..pos + width].fill(color.as_u32());
+    |                          ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:488:43
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+488 |         let mut i = x + (y * self.backend.area().width as usize);
+    |                                           ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:492:22
+    |
+145 |   pub enum Window {
+    |   --------------- method `buffer` not found for this enum
+...
+491 | /                 self.backend
+492 | |                     .buffer()
+    | |                     -^^^^^^ method not found in `Window`
+    | |_____________________|
+    |
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:496:31
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+496 |             i += self.backend.area().width as usize;
+    |                               ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:515:42
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+515 |             let start = x + self.backend.area().width as usize * i;
+    |                                          ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:518:41
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+518 |             for (x, px) in self.backend.buffer()[start..end].iter_mut().enumerate() {
+    |                                         ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:537:44
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+537 |         let buffer = unsafe { self.backend.buffer().align_to_mut::<u32>().1 };
+    |                                            ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:538:41
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+538 |         let canvas_width = self.backend.area().width as usize;
+    |                                         ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:566:42
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+566 |             if x + width >= self.backend.area().width as usize {
+    |                                          ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:569:34
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+569 |                     self.backend.area().width,
+    |                                  ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:576:43
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+576 |             if y + height >= self.backend.area().height as usize {
+    |                                           ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:579:34
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+579 |                     self.backend.area().height,
+    |                                  ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:613:41
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+613 |         let canvas_width = self.backend.area().width as usize;
+    |                                         ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:619:45
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+619 |                 for px in &mut self.backend.buffer()[pos..pos + width - radius - radius] {
+    |                                             ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:626:41
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+626 |             for px in &mut self.backend.buffer()[pos..pos + width] {
+    |                                         ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:721:60
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+721 |                         let i = x + glyph_x + self.backend.area().width as usize * offset as usize;
+    |                                                            ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:723:46
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+723 |                         if i >= self.backend.buffer().len() {
+    |                                              ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:727:58
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+727 |                         let bg = Color::new(self.backend.buffer()[i]);
+    |                                                          ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `buffer` found for enum `Window` in the current scope
+   --> src/lib.rs:738:38
+    |
+145 | pub enum Window {
+    | --------------- method `buffer` not found for this enum
+...
+738 |                         self.backend.buffer()[i] = rgb(r, g, b);
+    |                                      ^^^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+note: `platform::Backend` defines an item `buffer`, perhaps you need to implement it
+   --> src/platform.rs:3:1
+    |
+3   | pub trait Backend {
+    | ^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:745:44
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+745 |                 if glyph_x >= self.backend.area().width as usize {
+    |                                            ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:771:22
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+771 |         self.backend.area().width as usize
+    |                      ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+error[E0599]: no method named `area` found for enum `Window` in the current scope
+   --> src/lib.rs:776:22
+    |
+145 | pub enum Window {
+    | --------------- method `area` not found for this enum
+...
+776 |         self.backend.area().height as usize
+    |                      ^^^^ method not found in `Window`
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following traits define an item `area`, perhaps you need to implement one of them:
+            candidate #1: `platform::Backend`
+            candidate #2: `widgets::Widget`
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `softui` (lib) due to 35 previous errors

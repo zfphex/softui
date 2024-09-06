@@ -11,11 +11,12 @@ use std::{
 pub mod platform;
 pub use platform::*;
 
-pub mod macos;
-
-pub mod windows;
 // #[cfg(target_os = "windows")]
-use windows::*;
+pub mod windows;
+pub use windows::*;
+
+pub mod macos;
+pub use macos::*;
 
 //Re-export the window functions.
 // pub use window::*;
@@ -82,7 +83,7 @@ pub fn queue_command(command: Command) {
     unsafe { COMMAND_QUEUE.push(command) }
 }
 
-//Not sure about this. 
+//Not sure about this.
 
 // #[inline]
 // pub fn queue_command_fn<B: Backend>(f: fn(&mut Context<B>) -> ()) {
@@ -119,7 +120,12 @@ pub fn ctx() -> &'static mut Context {
     unsafe { CTX.as_mut().unwrap() }
 }
 
-pub fn create_ctx(backend: Box<&'static dyn Backend>, title: &str, width: usize, height: usize) -> &'static mut Context {
+pub fn create_ctx(
+    backend: Window,
+    title: &str,
+    width: usize,
+    height: usize,
+) -> &'static mut Context {
     unsafe {
         CTX = Some(Context::new(backend, title, width, height));
         CTX.as_mut().unwrap()
@@ -133,10 +139,72 @@ pub enum Quadrant {
     BottomRight,
 }
 
+//It's not a hard requirement to implement the backend trait.
+//Since its an enum we can use different functions not just the generic
+//Backend interface.
+pub enum Window {
+    Windows(Windows),
+    MacOS(MacOS),
+}
+
+macro_rules! backend_impl {
+    ( $($i:ident),* ) => {
+        impl Backend for Window {
+            #[inline]
+            fn area(&self) -> Rect {
+                match self {
+                    $(
+                        Window::$i(w) => w.area(),
+                    )*
+                }
+            }
+
+            #[inline]
+            fn buffer<'a>(&self) -> &'a mut [u32] {
+                match self {
+                    $(
+                        Window::$i(w) => w.buffer(),
+                    )*
+                }
+            }
+
+            #[inline]
+            fn resize(&self) {
+                match self {
+                    $(
+                        Window::$i(w) => w.resize(),
+                    )*
+                }
+            }
+
+            #[inline]
+            fn present(&self) {
+                match self {
+                    $(
+                        Window::$i(w) => w.present(),
+                    )*
+                }
+            }
+
+            #[inline]
+            fn event(&self) -> Option<Event> {
+                match self {
+                    $(
+                        Window::$i(w) => w.event(),
+                    )*
+                }
+            }
+        }
+    };
+}
+
+//This was a complete waste of time...
+backend_impl!(Windows, MacOS);
+
 /// Holds the framebuffer and input state.
 /// Also handles rendering.
 pub struct Context {
-    pub backend: Box<&'static dyn Backend>,
+    pub backend: Window,
     //size is width * height.
     // pub buffer: Vec<u32>,
     //(width * height) / 4
@@ -156,24 +224,12 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(backend: Box<&'static dyn Backend>, title: &str, width: usize, height: usize) -> Self {
+    pub fn new(window: Window, title: &str, width: usize, height: usize) -> Self {
         //TODO: Remove me.
         load_default_font();
 
-        // let window = B::create_window();
-        // let area = window.area();
-        // let mut window = unsafe { create_window(title, width as i32, height as i32) };
-        // let dc = unsafe { GetDC(window.hwnd) };
-        //Convert top, left, right, bottom to x, y, width, height.
-        // let area = Rect::from(window.client_area());
-
         Self {
-            backend,
-            // window,
-            // dc: Some(dc),
-            // area,
-            // buffer: vec![0; area.width as usize * area.height as usize],
-            // bitmap: BITMAPINFO::new(area.width, area.height),
+            backend: window,
             mouse_pos: Rect::default(),
             left_mouse: MouseState::new(),
             right_mouse: MouseState::new(),
@@ -256,10 +312,9 @@ impl Context {
                     //TODO: Specify the font with a font database and font ID.
                     let font = default_font().unwrap();
                     self.draw_text(&text, font, size, x, y, 0, color);
-                }
-                // Command::CustomBoxed(f) => f(self),
-                // Command::Custom(f) => f(self),
-                // Command::CustomFn(f) => f(self),
+                } // Command::CustomBoxed(f) => f(self),
+                  // Command::Custom(f) => f(self),
+                  // Command::CustomFn(f) => f(self),
             }
         }
 

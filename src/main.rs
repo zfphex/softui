@@ -1,13 +1,12 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(unused)]
 use mini::defer_results;
-use softui::*;
 use softui::windows::Windows;
+use softui::*;
 
 fn main() {
     let windows = Windows::new();
     //Not sure if this will help my problem...
-    let b = Box::new(&windows as &dyn Backend);
     return;
 
     // let ctx = create_ctx(b, "Softui", 800, 600);
@@ -15,7 +14,6 @@ fn main() {
 
     #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg");
-
 
     loop {
         match ctx.backend.event() {
