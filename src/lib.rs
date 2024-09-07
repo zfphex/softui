@@ -15,8 +15,8 @@ pub use platform::*;
 pub mod windows;
 pub use windows::*;
 
-pub mod macos;
-pub use macos::*;
+pub mod glfw;
+pub use glfw::*;
 
 //Re-export the window functions.
 // pub use window::*;
@@ -120,14 +120,14 @@ pub fn ctx() -> &'static mut Context {
     unsafe { CTX.as_mut().unwrap() }
 }
 
-pub fn create_ctx(
-    backend: Window,
+pub fn create_ctx<T: Into<Window>>(
+    backend: T,
     title: &str,
     width: usize,
     height: usize,
 ) -> &'static mut Context {
     unsafe {
-        CTX = Some(Context::new(backend, title, width, height));
+        CTX = Some(Context::new(backend.into(), title, width, height));
         CTX.as_mut().unwrap()
     }
 }
@@ -137,14 +137,6 @@ pub enum Quadrant {
     TopRight,
     BottomLeft,
     BottomRight,
-}
-
-//It's not a hard requirement to implement the backend trait.
-//Since its an enum we can use different functions not just the generic
-//Backend interface.
-pub enum Window {
-    Windows(Windows),
-    MacOS(MacOS),
 }
 
 macro_rules! backend_impl {
@@ -187,7 +179,7 @@ macro_rules! backend_impl {
             }
 
             #[inline]
-            fn event(&self) -> Option<Event> {
+            fn event(&mut self) -> Option<Event> {
                 match self {
                     $(
                         Window::$i(w) => w.event(),
@@ -195,11 +187,27 @@ macro_rules! backend_impl {
                 }
             }
         }
+
+        $(
+            impl Into<Window> for $i {
+                fn into(self) -> Window {
+                    Window::$i(self)
+                }
+            }
+        )*
     };
+
 }
 
-//This was a complete waste of time...
-backend_impl!(Windows, MacOS);
+//It's not a hard requirement to implement the backend trait.
+//Since its an enum we can use different functions not just the generic
+//Backend interface.
+pub enum Window {
+    Windows(Windows),
+    Glfw(Glfw),
+}
+
+backend_impl!(Windows, Glfw);
 
 /// Holds the framebuffer and input state.
 /// Also handles rendering.

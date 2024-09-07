@@ -7,7 +7,7 @@ pub trait Backend {
     //
     fn resize(&self);
     fn present(&self);
-    fn event(&self) -> Option<Event>;
+    fn event(&mut self) -> Option<Event>;
 }
 
 //Ripped from `window`

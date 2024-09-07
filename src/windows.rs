@@ -72,7 +72,7 @@ impl Backend for Windows {
         // );
     }
 
-    fn event(&self) -> Option<crate::Event> {
+    fn event(&mut self) -> Option<crate::Event> {
         None
     }
 }

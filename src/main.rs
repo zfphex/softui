@@ -4,13 +4,13 @@ use mini::defer_results;
 use softui::windows::Windows;
 use softui::*;
 
-fn main() {
-    let windows = Windows::new();
-    //Not sure if this will help my problem...
-    return;
 
-    // let ctx = create_ctx(b, "Softui", 800, 600);
-    let mut ctx: Context = todo!();
+fn main() {
+    // let windows = Windows::new();
+    //Not sure if this will help my problem...
+
+    let window = Glfw::new();
+    let ctx = create_ctx(window, "Softui", 800, 600);
 
     #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg");
