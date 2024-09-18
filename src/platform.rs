@@ -1,9 +1,9 @@
-use crate::Rect;
+use crate::{MouseState, MouseStateNew, Rect};
 
 pub trait Backend {
     fn area(&self) -> Rect;
     //Should return &mut [u32]
-    fn buffer<'a>(&self) -> &'a mut [u32];
+    fn buffer(&mut self) -> &mut [u32];
     //
     fn resize(&self);
     fn present(&self);
@@ -16,6 +16,7 @@ pub enum Event {
     Quit,
     //(0, 0) is top left of window.
     Mouse(i32, i32),
+    MouseState(MouseStateNew),
     Move,
     // This event is only triggerd after a resize, so it's not very useful.
     // Resize,
@@ -84,4 +85,15 @@ pub struct Modifiers {
     pub shift: bool,
     pub alt: bool,
     pub win: bool,
+}
+
+impl Modifiers {
+    pub const fn new() -> Self {
+        Self {
+            control: false,
+            shift: false,
+            alt: false,
+            win: false,
+        }
+    }
 }

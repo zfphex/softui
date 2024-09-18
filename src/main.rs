@@ -4,13 +4,12 @@ use mini::defer_results;
 use softui::windows::Windows;
 use softui::*;
 
-
 fn main() {
     // let windows = Windows::new();
     //Not sure if this will help my problem...
 
-    let window = Glfw::new();
-    let ctx = create_ctx(window, "Softui", 800, 600);
+    let window = Glfw::new(800, 600);
+    let ctx = create_ctx(window, "Softui");
 
     #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg");
@@ -18,8 +17,12 @@ fn main() {
     loop {
         match ctx.backend.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
+            // Some(event) => {
+            //     dbg!(event);
+            // }
             None => {}
-            _ => {}
+            _ => {
+            }
         }
 
         ctx.fill(Color::BLACK);

@@ -120,14 +120,9 @@ pub fn ctx() -> &'static mut Context {
     unsafe { CTX.as_mut().unwrap() }
 }
 
-pub fn create_ctx<T: Into<Window>>(
-    backend: T,
-    title: &str,
-    width: usize,
-    height: usize,
-) -> &'static mut Context {
+pub fn create_ctx<T: Into<Window>>(backend: T, title: &str) -> &'static mut Context {
     unsafe {
-        CTX = Some(Context::new(backend.into(), title, width, height));
+        CTX = Some(Context::new(backend.into(), title));
         CTX.as_mut().unwrap()
     }
 }
@@ -152,7 +147,7 @@ macro_rules! backend_impl {
             }
 
             #[inline]
-            fn buffer<'a>(&self) -> &'a mut [u32] {
+            fn buffer(&mut self) -> &mut [u32] {
                 match self {
                     $(
                         Window::$i(w) => w.buffer(),
@@ -232,7 +227,7 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(window: Window, title: &str, width: usize, height: usize) -> Self {
+    pub fn new(window: Window, title: &str) -> Self {
         //TODO: Remove me.
         load_default_font();
 
@@ -352,8 +347,9 @@ impl Context {
 
     ///Note color order is BGR_. The last byte is reserved.
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
+        let width =  self.backend.area().width as usize;
         let buffer = unsafe { self.backend.buffer().align_to_mut::<u32>().1 };
-        buffer[y * self.backend.area().width as usize + x] = color;
+        buffer[y * width+ x] = color;
     }
 
     //TODO: https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
@@ -540,8 +536,8 @@ impl Context {
         color: Color,
     ) -> Result<(), String> {
         self.bounds_check(x, y, width, height)?;
-        let buffer = unsafe { self.backend.buffer().align_to_mut::<u32>().1 };
         let canvas_width = self.backend.area().width as usize;
+        let buffer = unsafe { self.backend.buffer().align_to_mut::<u32>().1 };
         let color = color.as_u32();
 
         for i in y..y + height {

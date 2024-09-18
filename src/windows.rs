@@ -35,7 +35,7 @@ impl Backend for Windows {
         todo!()
     }
 
-    fn buffer<'a>(&self) -> &'a mut [u32] {
+    fn buffer(&mut self) -> &mut [u32] {
         // self.framebuffer
         todo!()
     }

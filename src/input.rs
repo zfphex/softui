@@ -76,6 +76,29 @@ pub fn down<T: Widget>(ctx: &Context, widget: &T, button: MouseButton) -> bool {
     }
 }
 
+//The old way of doing mouse presses was pretty awful. Let's everything simply in a single u8.
+
+//Four bits for mouse button, two for mouse state
+//00000 11
+
+// let mouse_state: u8 = 0b00_00_00_00;
+
+pub const MOUSE_LEFT: u8 = 0b00000100;
+pub const MOUSE_RIGHT: u8 = 0b00001000;
+pub const MOUSE_MIDDLE: u8 = 0b00010000;
+pub const MOUSE_BACKWARD: u8 = 0b00100000;
+pub const MOUSE_FORWARD: u8 = 0b01000000;
+// pub const RESERVED: u8 =  0b10000000;
+
+pub const MOUSE_PRESSED: u8 = 0b00;
+pub const MOUSE_RELEASED: u8 = 0b01;
+pub const MOUSE_DOUBLE_CLICKED: u8 = 0b10;
+// pub const RESERVED: u8 = 0b11;
+
+#[repr(transparent)]
+#[derive(Debug, PartialEq)]
+pub struct MouseStateNew(u8);
+
 #[derive(Debug, Copy, Clone)]
 pub enum MouseButton {
     Left,
@@ -87,7 +110,7 @@ pub enum MouseButton {
     Forward,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct MouseState {
     pub pressed: bool,
     pub released: bool,
