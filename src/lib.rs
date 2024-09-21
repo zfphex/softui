@@ -647,11 +647,15 @@ impl Context {
                     - (metrics.height as f32 - metrics.advance_height)
                     - metrics.ymin as f32;
 
-                for y in 0..metrics.height {
+                'y: for y in 0..metrics.height {
                     'x: for x in 0..metrics.width {
+                        //Text doesn't fit on the screen.
+                        if (x + glyph_x) >= self.area.width as usize {
+                            continue;
+                        }
+
                         //TODO: Metrics.bounds determines the bounding are of the glyph.
                         //Currently the whole bitmap bounding box is drawn.
-
                         let alpha = bitmap[x + y * metrics.width];
                         if alpha == 0 {
                             continue;
@@ -683,6 +687,7 @@ impl Context {
                         let bg = Color::new(self.buffer[i]);
 
                         //Blend the background and the text color.
+                        #[inline]
                         #[rustfmt::skip]
                         fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
                             ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32) / 255.0).round() as u8
@@ -697,7 +702,7 @@ impl Context {
 
                 glyph_x += metrics.advance_width as usize;
 
-                //TODO: Still not enough.
+                //Check if the glyph position is off the screen.
                 if glyph_x >= self.area.width as usize {
                     break 'line;
                 }

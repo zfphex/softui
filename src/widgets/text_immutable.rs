@@ -1,7 +1,7 @@
 use crate::*;
 use atomic_float::AtomicF32;
 use fontdue::*;
-use std::{ops::Range, path::Path, sync::atomic::AtomicUsize};
+use std::{ops::Range, path::Path, sync::atomic::{AtomicUsize, Ordering}};
 
 pub const FONT: &[u8] = include_bytes!("../../fonts/JetBrainsMono.ttf");
 

@@ -1,5 +1,5 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-#![allow(unused)]
+#![allow(unused, static_mut_refs)]
 use mini::defer_results;
 use softui::*;
 
@@ -53,11 +53,12 @@ fn main() {
             }
 
             {
-                // vertical!(
-                //     text("this is a test of the layout"),
-                //     text("next widget"),
-                //     // E {}
-                // );
+                struct E {}
+                vertical!(
+                    text("this is a test of the layout"),
+                    text("next widget"),
+                    // E {}
+                );
 
                 // dbg!(text("").impl_widget());
                 // macro_rules! test {
@@ -76,7 +77,8 @@ fn main() {
             //DrawCommand
             {
                 let dc = text("this is some really long text!")
-                    .y(ctx.height() - 100)
+                    .y(100)
+                    // .y(ctx.height() - 100)
                     .font_size(50)
                     .draw()
                     .unwrap();

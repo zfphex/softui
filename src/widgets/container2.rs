@@ -20,7 +20,7 @@ macro_rules! vertical {
             let mut max_height = 0;
 
             $(
-                please_ignore_this_and_look_at_the_red_text($widget, margin,padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut root_area, direction);
+                layout($widget, margin,padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut root_area, direction);
             )*
 
             match direction {
@@ -47,7 +47,7 @@ macro_rules! vertical {
 }
 
 //Probably one of the best error messages ever written.
-pub fn please_ignore_this_and_look_at_the_red_text<T: Widget>(
+pub fn layout<T: Widget>(
     mut widget: T,
     margin: i32,
     padding: i32,
