@@ -6,8 +6,22 @@ where
     F: FnMut(&mut T) -> (),
 {
     pub widget: T,
-    pub f: Option<F>,
-    pub button: MouseButton,
+    pub f: Option<(F, MouseButton)>,
+}
+
+pub trait OnClick<T: Widget, F: FnMut(&mut T) -> ()> {
+    fn widget(&mut self) -> &mut dyn Widget;
+    fn function(&self) -> &Option<(F, MouseButton)>;
+}
+
+impl<T: Widget, F: FnMut(&mut T) -> ()> OnClick<T, F> for OnClickWrapper<T, F> {
+    fn widget(&mut self) -> &mut dyn Widget {
+        &mut self.widget as &mut dyn Widget
+    }
+
+    fn function(&self) -> &Option<(F, MouseButton)> {
+        &self.f
+    }
 }
 
 pub trait Tuple2 {
@@ -24,13 +38,14 @@ pub trait Tuple2 {
 impl<V0: Widget, C0: FnMut(&mut V0) -> ()> Tuple2 for OnClickWrapper<V0, C0> {
     //Call the on click function for every widget.
     fn handle_on_click(&mut self) {
-        if let Some(f) = &mut self.f {
+        if let Some((f, button)) = &mut self.f {
             let w = &mut self.widget as &mut dyn Widget;
-            if clicked_dyn(ctx(), w, self.button) {
+            if clicked_dyn(ctx(), w, *button) {
                 (f)(&mut self.widget);
             }
         }
     }
+
     fn for_each<F: FnMut(&dyn Widget)>(&self, mut f: F) {
         f(&self.widget);
     }
@@ -62,9 +77,9 @@ macro_rules! impl_tuple {
         fn handle_on_click(&mut self) {
             $(
                 let wrapper = &mut self.$idx;
-                if let Some(f) = &mut wrapper.f {
+                if let Some((f, button)) = &mut wrapper.f {
                     let w = &mut wrapper.widget as &mut dyn Widget;
-                    if clicked_dyn(ctx(), w, wrapper.button) {
+                    if clicked_dyn(ctx(), w, *button) {
                         (f)(&mut wrapper.widget);
                     }
                 }
@@ -101,12 +116,12 @@ macro_rules! impl_tuple {
  }
 }
 
-impl_tuple!(1; V0, C0; 0; 0);
-impl_tuple!(2; V0, C0, V1, C1; 0, 1; 1, 0);
-impl_tuple!(3; V0, C0, V1, C1, V2, C2; 0, 1, 2; 2, 1, 0);
-impl_tuple!(4; V0, C0, V1, C1, V2, C2, V3, C3; 0, 1, 2, 3; 3, 2, 1, 0);
-impl_tuple!(5;V0, C0, V1, C1, V2, C2, V3, C3, V4, C4; 0, 1, 2, 3, 4; 4, 3, 2, 1, 0);
-impl_tuple!(6; V0, C0, V1, C1, V2, C2, V3, C3, V4, C4, V5, C5; 0, 1, 2, 3, 4, 5; 5, 4, 3, 2, 1, 0);
+// impl_tuple!(1; V0, C0; 0; 0);
+// impl_tuple!(2; V0, C0, V1, C1; 0, 1; 1, 0);
+// impl_tuple!(3; V0, C0, V1, C1, V2, C2; 0, 1, 2; 2, 1, 0);
+// impl_tuple!(4; V0, C0, V1, C1, V2, C2, V3, C3; 0, 1, 2, 3; 3, 2, 1, 0);
+// impl_tuple!(5; V0, C0, V1, C1, V2, C2, V3, C3, V4, C4; 0, 1, 2, 3, 4; 4, 3, 2, 1, 0);
+// impl_tuple!(6; V0, C0, V1, C1, V2, C2, V3, C3, V4, C4, V5, C5; 0, 1, 2, 3, 4, 5; 5, 4, 3, 2, 1, 0);
 
 // impl_tuple!(7; V0, V1, V2, V3, V4, V5, V6; 0, 1, 2, 3, 4, 5, 6; 6, 5, 4, 3, 2, 1, 0);
 // impl_tuple!(8; V0, V1, V2, V3, V4, V5, V6, V7; 0, 1, 2, 3, 4, 5, 6, 7; 7, 6, 5, 4, 3, 2, 1, 0);

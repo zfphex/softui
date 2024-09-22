@@ -8,27 +8,27 @@ macro_rules! vertical {
         {
             // let padding = self.padding as i32;
             // let margin = self.margin as i32;
-            let direction = Direction::Vertical;
+            let direction = $crate::Direction::Vertical;
             let padding = 0;
             let margin = 0;
 
             let mut x = 0;
             let mut y = 0;
 
-            let mut root_area = Rect::new(x, y, 0, 0);
+            let mut root_area = $crate::Rect::new(x, y, 0, 0);
             let mut max_width = 0;
             let mut max_height = 0;
 
             $(
-                layout($widget, margin,padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut root_area, direction);
+                $crate::layout($widget, margin,padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut root_area, direction);
             )*
 
             match direction {
-                Direction::Vertical => {
+                $crate::Direction::Vertical => {
                     root_area.width = max_width;
                     root_area.height -= padding;
                 }
-                Direction::Horizontal => {
+                $crate::Direction::Horizontal => {
                     root_area.height = max_height;
                     root_area.width -= padding;
                 }
@@ -40,13 +40,12 @@ macro_rules! vertical {
                 root_area.y as usize,
                 root_area.width as usize,
                 root_area.height as usize,
-                Color::RED,
+                $crate::Color::RED,
             );
         }
     };
 }
 
-//Probably one of the best error messages ever written.
 pub fn layout<T: Widget>(
     mut widget: T,
     margin: i32,

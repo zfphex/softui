@@ -25,6 +25,8 @@ fn main() {
             _ => {}
         }
 
+        ctx.fill(Color::BLACK);
+
         //Queue the function.
         queue_command_fn(triangle);
 

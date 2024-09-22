@@ -718,13 +718,13 @@ impl Context {
         area.height = (max_y as i32 + 1 - area.y);
         area.width = (max_x as i32 + 1 - area.x);
 
-        // self.draw_rectangle_outline(
-        //     area.x as usize,
-        //     area.y as usize,
-        //     area.width as usize,
-        //     area.height as usize,
-        //     Color::RED,
-        // );
+        self.draw_rectangle_outline(
+            area.x as usize,
+            area.y as usize,
+            area.width as usize,
+            area.height as usize,
+            Color::RED,
+        );
     }
 
     #[inline(always)]

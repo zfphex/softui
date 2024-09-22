@@ -1,7 +1,11 @@
 use crate::*;
 use atomic_float::AtomicF32;
 use fontdue::*;
-use std::{ops::Range, path::Path, sync::atomic::{AtomicUsize, Ordering}};
+use std::{
+    ops::Range,
+    path::Path,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 pub const FONT: &[u8] = include_bytes!("../../fonts/JetBrainsMono.ttf");
 
@@ -56,8 +60,7 @@ impl<'a> Text<'a> {
     ) -> OnClickWrapper<Text<'a>, F> {
         OnClickWrapper {
             widget: self,
-            f: Some(on_click),
-            button,
+            f: Some((on_click, button)),
         }
     }
     pub fn font_size(mut self, font_size: usize) -> Self {
@@ -161,7 +164,12 @@ impl<'a> Widget for Text<'a> {
 
     #[inline]
     fn area(&self) -> Option<Rect> {
-        None
+        //TODO: This must be cached!!!
+        let area = self.calculate_position(0, 0);
+        // dbg!(area);
+        Some(area)
+        // Some(self.area)
+        // None
     }
 
     #[inline]

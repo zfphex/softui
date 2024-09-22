@@ -19,8 +19,12 @@ pub use container2::*;
 pub mod text_immutable;
 pub use text_immutable::*;
 
+// pub mod text;
+// pub use text::*;
+
 use crate::*;
 
+// #[diagnostic::on_unimplemented()]
 pub trait Widget {
     fn draw(&self) -> Option<DrawCommand> {
         None
