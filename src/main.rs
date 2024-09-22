@@ -1,5 +1,7 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(unused, static_mut_refs)]
+use std::ptr::{addr_of, addr_of_mut};
+
 use softui::*;
 
 fn main() {
@@ -13,6 +15,18 @@ fn main() {
         }
 
         ctx.fill(Color::BLACK);
+
+        {
+            fn test() -> impl FnMut(&mut Text) -> () {
+                |text: &mut Text| {}
+            }
+            // let f: impl FnMut(&mut Text) -> () = |text| {};
+            let mut test = || {
+                println!("width: {}", ctx.area.width);
+                return 2;
+            };
+            let test_ptr = addr_of_mut!(test);
+        }
 
         {
             'defer: {
