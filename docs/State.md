@@ -5,14 +5,9 @@ vertical((
     text("text 2").on_click(|_| println!("Clicked on text 2"),
 ))
 
-struct OnClickFunction<T: Widget, F: FnMut(&mut T)> {
-    f: F,
-    button: MouseButton,
-}
-
 struct OnClick<T: Widget, F: FnMut(&mut T)> {
     widget: T,
-    on_click: Option<OnClickFunction<T, F>>,
+    on_click: Option<(F, MouseButton)>,
 }
 
 T is type (OnClick<Text, FnMut(&mut Text)>, OnClick<Text, FnMut(&mut Text)>)
@@ -31,7 +26,7 @@ vertical((
 struct OnClick<T: Widget> {
     widget: T,
     //just a pointer.
-    on_click: Option<usize>
+    on_click: usize
     button: MouseButton,
 }
 

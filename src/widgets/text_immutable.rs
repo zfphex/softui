@@ -2,6 +2,7 @@ use crate::*;
 use atomic_float::AtomicF32;
 use fontdue::*;
 use std::{
+    any::Any,
     ops::Range,
     path::Path,
     sync::atomic::{AtomicUsize, Ordering},
@@ -53,16 +54,16 @@ pub struct Text<'a> {
 }
 
 impl<'a> Text<'a> {
-    pub fn on_clicked_defered<F: FnMut(&mut Self) -> ()>(
-        self,
-        button: MouseButton,
-        on_click: F,
-    ) -> OnClickWrapper<Text<'a>, F> {
-        OnClickWrapper {
-            widget: self,
-            f: Some((on_click, button)),
-        }
-    }
+    // pub fn on_clicked_defered<F: FnMut(&mut Self) -> ()>(
+    //     self,
+    //     button: MouseButton,
+    //     on_click: F,
+    // ) -> OnClickWrapper<Text<'a>, F> {
+    //     OnClickWrapper {
+    //         widget: self,
+    //         f: Some((on_click, button)),
+    //     }
+    // }
     pub fn font_size(mut self, font_size: usize) -> Self {
         self.font_size = font_size;
         self

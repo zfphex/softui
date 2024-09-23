@@ -1,13 +1,13 @@
 use crate::*;
 
 pub struct OnClick3<T: Widget> {
-    widget: T,
-    function: usize,
-    button: MouseButton,
+    pub widget: T,
+    pub function: Box<dyn FnMut(&mut dyn Widget)>,
+    pub button: MouseButton,
 }
 
 pub trait Tuple3 {
-    fn for_each(&mut self, f: impl FnMut((&mut dyn Widget, usize)));
+    fn for_each(&mut self, f: impl FnMut((&mut dyn Widget, &mut dyn FnMut(&mut dyn Widget))));
     fn len(&self) -> usize;
     fn first(&mut self) -> &mut dyn Widget;
     fn get(&self, index: usize) -> Option<&dyn Widget>;
@@ -15,8 +15,8 @@ pub trait Tuple3 {
 }
 
 impl<V0: Widget> Tuple3 for OnClick3<V0> {
-    fn for_each(&mut self, mut f: impl FnMut((&mut dyn Widget, usize))) {
-        f((&mut self.widget as &mut dyn Widget, self.function))
+    fn for_each(&mut self, mut f: impl FnMut((&mut dyn Widget, &mut dyn FnMut(&mut dyn Widget)))) {
+        f((&mut self.widget as &mut dyn Widget, &mut self.function))
     }
     fn len(&self) -> usize {
         1

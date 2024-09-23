@@ -1,6 +1,9 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(unused, static_mut_refs)]
-use std::ptr::{addr_of, addr_of_mut};
+use std::{
+    mem::{transmute, transmute_copy},
+    ptr::{addr_of, addr_of_mut},
+};
 
 use softui::*;
 
@@ -17,15 +20,10 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
-            fn test() -> impl FnMut(&mut Text) -> () {
-                |text: &mut Text| {}
-            }
-            // let f: impl FnMut(&mut Text) -> () = |text| {};
-            let mut test = || {
-                println!("width: {}", ctx.area.width);
-                return 2;
-            };
-            let test_ptr = addr_of_mut!(test);
+            flex3!(text("test"), rect().width(100).height(200)).padding(2);
+            flex3!(text("hi"), rect().width(50).height(200))
+                .padding(2)
+                .y(200);
         }
 
         {
@@ -49,9 +47,9 @@ fn main() {
                     // widgets.handle_on_click();
                 }
 
-                flex(
-                    text("test").on_clicked_defered(Left, |_| println!("Clicked the test button.")),
-                );
+                // flex(
+                //     text("test").on_clicked_defered(Left, |_| println!("Clicked the test button.")),
+                // );
 
                 // flex((
                 //     text("hi").on_clicked_defered(Left, |_| println!("hi")),
@@ -60,6 +58,24 @@ fn main() {
                 //     //     .on_clicked_defered(Right, |_| println!("Pressed left"))
                 //     //     .on_click_defered(Right, |_| println!("Pressed right"),
                 // ));
+
+                pub fn flex3<T: Tuple3, F: FnMut(&mut dyn Widget)>(mut widgets: T) {
+                    //Type info of fn_ptr is lost here.
+                    widgets.for_each(|(widget, f)| {
+                        if let Some(dc) = widget.draw() {
+                            // widget.area_mut();
+                            f(widget);
+                            unsafe { COMMAND_QUEUE.push(dc.command) };
+                        }
+
+                        // let f: F = unsafe { transmute(fn_ptr as *mut usize) };
+                        // let f: *mut dyn FnMut() -> () = transmute(fn_ptr as *mut usize);
+                    });
+                }
+
+                // flex3(
+                //     text("test").on_clicked_defered(Left, |_| println!("Clicked the test button.")),
+                // );
             }
 
             ctx.draw_frame();

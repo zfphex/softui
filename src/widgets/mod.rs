@@ -13,14 +13,14 @@ pub mod svg;
 #[cfg(feature = "svg")]
 pub use svg::*;
 
-pub mod container2;
-pub use container2::*;
-
 pub mod text_immutable;
 pub use text_immutable::*;
 
 // pub mod text;
 // pub use text::*;
+
+pub mod layout2;
+pub use layout2::*;
 
 use crate::*;
 
@@ -157,9 +157,7 @@ pub trait Widget {
         }
     }
 
-    //
-    // Layout
-
+    /// Used with x, y, width, height, etc...
     fn layout_area(&mut self) -> Option<&mut Rect>;
 
     fn centered(mut self, parent: Rect) -> Self
