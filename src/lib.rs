@@ -28,6 +28,17 @@ pub use tuple3::*;
 pub use widgets::*;
 pub use MouseButton::*;
 
+macro_rules! builder {
+    ($($variable:ident: $type:ty),*) => {
+        $(
+            pub fn $variable(mut self, $variable: $type) -> Self {
+                self.$variable = $variable;
+                self
+            }
+        )*
+    };
+}
+
 //Ideally the user could write there own commands
 //Then they would send custom commands to the context.
 //And it would draw their entire widget for them.

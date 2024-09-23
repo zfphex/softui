@@ -20,6 +20,8 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
+            let mut r = rect().wh(20);
+            flex3!(&mut r as &mut dyn Widget);
             flex3!(text("test"), rect().width(100).height(200)).padding(2);
             flex3!(text("hi"), rect().width(50).height(200))
                 .padding(2)

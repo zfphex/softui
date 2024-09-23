@@ -315,3 +315,37 @@ impl Widget for () {
 
     fn adjust_position(&mut self, x: i32, y: i32) {}
 }
+
+impl Widget for &dyn Widget {
+    fn area(&self) -> Option<Rect> {
+        (*self).area()
+    }
+
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        None
+    }
+
+    fn adjust_position(&mut self, x: i32, y: i32) {}
+
+    fn layout_area(&mut self) -> Option<&mut Rect> {
+        None
+    }
+}
+
+impl Widget for &mut dyn Widget {
+    fn area(&self) -> Option<Rect> {
+        (**self).area()
+    }
+
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        (**self).area_mut()
+    }
+
+    fn adjust_position(&mut self, x: i32, y: i32) {
+        (**self).adjust_position(x, y);
+    }
+
+    fn layout_area(&mut self) -> Option<&mut Rect> {
+        (**self).layout_area()
+    }
+}
