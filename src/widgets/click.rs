@@ -1,15 +1,10 @@
-use super::{clicked, ctx, MouseButton, Widget};
+use super::{clicked, ctx, Command, MouseButton, Widget};
 use std::marker::PhantomData;
 
 impl<T: Widget, F: FnMut(&mut T)> Widget for Click<T, F> {
     #[inline]
-    fn area(&self) -> Option<super::Rect> {
+    fn area(&mut self) -> Option<&mut super::Rect> {
         self.widget.area()
-    }
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut super::Rect> {
-        self.widget.area_mut()
     }
 
     #[inline]
@@ -20,13 +15,13 @@ impl<T: Widget, F: FnMut(&mut T)> Widget for Click<T, F> {
     #[inline]
     fn try_click(&mut self) {
         //TODO: Thread safety
-        if clicked(ctx(), &self.widget, self.button) {
+        if clicked(ctx(), &mut self.widget, self.button) {
             (self.click_fn)(&mut self.widget);
         }
     }
 
     #[inline]
-    fn draw(&self) -> Option<super::DrawCommand> {
+    fn draw(&self) -> Option<Command> {
         self.widget.draw()
     }
 }

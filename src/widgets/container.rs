@@ -20,7 +20,7 @@ pub fn layout<T: Widget>(
     //I need to change how I do layout, this sucks :/
     //Called first because it the area of the previous widget
     //is added to x and y
-    if let Some(area) = widget.area_mut() {
+    if let Some(area) = widget.area() {
         area.x = *x;
         area.y = *y;
     } else {
@@ -30,14 +30,13 @@ pub fn layout<T: Widget>(
     //Update the margin.
     if margin != 0 {
         let area = widget.area().unwrap().inner(margin, margin);
-        *widget.area_mut().unwrap() = area;
+        *widget.area().unwrap() = area;
     }
 
     //Draw the widget once the layout is correct.
-    if let Some(dc) = widget.draw() {
+    if let Some(command) = widget.draw() {
         widget.try_click();
-
-        unsafe { COMMAND_QUEUE.push(dc.command) };
+        unsafe { COMMAND_QUEUE.push(command) };
     }
 
     //Calculate the position of the next element.
@@ -127,7 +126,7 @@ macro_rules! layout {
                 bounds: Rect::default(),
                 padding: 0,
                 margin: 0
-            };
+            }
         }
     };
 }
@@ -191,10 +190,7 @@ impl<F: DrawContainer> Widget for Container<F> {
     {
         true
     }
-    fn area(&self) -> Option<Rect> {
-        None
-    }
-    fn area_mut(&mut self) -> Option<&mut Rect> {
+    fn area(&mut self) -> Option<&mut Rect> {
         None
     }
 }

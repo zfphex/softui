@@ -50,13 +50,6 @@ pub enum Command {
     CustomFn(fn(&mut Context) -> ()),
 }
 
-pub struct DrawCommand {
-    //The computed area of a widget, used with vertical/horizontal layout.
-    pub area: Rect,
-    //Sent to the draw context.
-    pub command: Command,
-}
-
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
 
 #[inline]

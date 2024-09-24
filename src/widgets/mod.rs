@@ -26,11 +26,10 @@ use crate::*;
 
 // #[diagnostic::on_unimplemented()]
 pub trait Widget: std::fmt::Debug {
-    fn draw(&self) -> Option<DrawCommand> {
+    fn draw(&self) -> Option<Command> {
         None
     }
-    fn area(&self) -> Option<Rect>;
-    fn area_mut(&mut self) -> Option<&mut Rect>;
+    fn area(&mut self) -> Option<&mut Rect>;
 
     //This should be called need_draw, need_compute_area, idk...
     //If we used Any we could just call self.type_id() == Container.
@@ -96,7 +95,7 @@ pub trait Widget: std::fmt::Debug {
         let ctx = ctx();
 
         //Use area_mut so widgets can calculate their area.
-        let area = *self.area_mut().unwrap();
+        let area = *self.area().unwrap();
 
         if !ctx.mouse_pos.intersects(area) {
             return false;
@@ -120,12 +119,12 @@ pub trait Widget: std::fmt::Debug {
             }
         }
     }
-    fn up(&self, button: MouseButton) -> bool
+    fn up(&mut self, button: MouseButton) -> bool
     where
         Self: Sized,
     {
         let ctx = ctx();
-        let area = self.area().unwrap();
+        let area = self.area().unwrap().clone();
         if !ctx.mouse_pos.intersects(area) {
             return false;
         }
@@ -138,12 +137,12 @@ pub trait Widget: std::fmt::Debug {
             MouseButton::Forward => ctx.mouse_5.released,
         }
     }
-    fn down(&self, button: MouseButton) -> bool
+    fn down(&mut self, button: MouseButton) -> bool
     where
         Self: Sized,
     {
         let ctx = ctx();
-        let area = self.area().unwrap();
+        let area = self.area().unwrap().clone();
         if !ctx.mouse_pos.intersects(area) {
             return false;
         }
@@ -157,7 +156,9 @@ pub trait Widget: std::fmt::Debug {
         }
     }
 
-    /// Used with x, y, width, height, etc...
+    /// Used to modifiy x, y, width and height
+    /// Should return the `Rect` that stores the widget area/position.
+    /// I cannot remember why there are also area and area_mut functions.
     fn layout_area(&mut self) -> Option<&mut Rect>;
 
     fn centered(mut self, parent: Rect) -> Self
@@ -299,12 +300,7 @@ pub trait Widget: std::fmt::Debug {
 
 impl Widget for () {
     #[inline]
-    fn area(&self) -> Option<Rect> {
-        None
-    }
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
+    fn area(&mut self) -> Option<&mut Rect> {
         None
     }
 
@@ -315,11 +311,7 @@ impl Widget for () {
 }
 
 impl Widget for &dyn Widget {
-    fn area(&self) -> Option<Rect> {
-        (*self).area()
-    }
-
-    fn area_mut(&mut self) -> Option<&mut Rect> {
+    fn area(&mut self) -> Option<&mut Rect> {
         None
     }
 
@@ -329,12 +321,8 @@ impl Widget for &dyn Widget {
 }
 
 impl Widget for &mut dyn Widget {
-    fn area(&self) -> Option<Rect> {
+    fn area(&mut self) -> Option<&mut Rect> {
         (**self).area()
-    }
-
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        (**self).area_mut()
     }
 
     fn layout_area(&mut self) -> Option<&mut Rect> {

@@ -47,7 +47,7 @@ impl RectangleNew {
             // self.adjust_position(0, 0);
         }
 
-        let area = self.area().unwrap();
+        let area = self.area().unwrap().clone();
 
         if !ctx.mouse_pos.intersects(area) {
             return;
@@ -81,7 +81,7 @@ impl RectangleNew {
 }
 
 impl Widget for RectangleNew {
-    fn draw(&self) -> Option<DrawCommand> {
+    fn draw(&self) -> Option<Command> {
         // self.temp_on_clicked(Left);
         // if let Some(click) = &mut self.on_clicked {
         //     click();
@@ -101,13 +101,8 @@ impl Widget for RectangleNew {
     }
 
     #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
+    fn area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
-    }
-
-    #[inline]
-    fn area(&self) -> Option<Rect> {
-        Some(self.area)
     }
 
     fn layout_area(&mut self) -> Option<&mut Rect> {

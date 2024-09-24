@@ -35,6 +35,7 @@ pub fn text(text: &str) -> Text {
         font_size: default_font_size(),
         line_height: None,
         area: Rect::default(),
+        drawn: false,
     }
 }
 
@@ -46,14 +47,11 @@ pub struct Text<'a> {
     pub line_height: Option<usize>,
     //Used with the builder pattern, x(), y(), width(), etc...
     pub area: Rect,
+    pub drawn: bool,
 }
 
 impl<'a> Text<'a> {
-    pub fn on_click<F: FnMut(&mut Self)>(
-        self,
-        button: MouseButton,
-        click_fn: F,
-    ) -> Click<Self, F> {
+    pub fn on_click<F: FnMut(&mut Self)>(self, button: MouseButton, click_fn: F) -> Click<Self, F> {
         Click {
             widget: self,
             click_fn,
@@ -82,7 +80,7 @@ impl<'a> Text<'a> {
         self.color = color;
         self
     }
-    fn calculate_position(&self, x: i32, y: i32) -> Rect {
+    fn calculate_area(&self, x: i32, y: i32) -> Rect {
         let canvas_width = ctx().area.width as usize;
         let font = default_font().unwrap();
         let mut area = self.area;
@@ -156,31 +154,20 @@ impl<'a> Text<'a> {
 }
 
 impl<'a> Widget for Text<'a> {
-    fn draw(&self) -> Option<DrawCommand> {
-        Some(DrawCommand {
-            area: self.calculate_position(self.area.x, self.area.y),
-            command: Command::Text(
-                self.text.to_string(),
-                self.font_size,
-                self.area.x as usize,
-                self.area.y as usize,
-                Color::WHITE,
-            ),
-        })
+    fn draw(&self) -> Option<Command> {
+        //Because draw is immutable, the area must be calculated on each draw since it cannot store it's own state.
+        Some(Command::Text(
+            self.text.to_string(),
+            self.font_size,
+            self.area.x as usize,
+            self.area.y as usize,
+            Color::WHITE,
+        ))
     }
 
     #[inline]
-    fn area(&self) -> Option<Rect> {
-        //TODO: This must be cached!!!
-        let area = self.calculate_position(0, 0);
-        // dbg!(area);
-        Some(area)
-        // Some(self.area)
-        // None
-    }
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
+    fn area(&mut self) -> Option<&mut Rect> {
+        self.area = self.calculate_area(self.area.x, self.area.y);
         Some(&mut self.area)
     }
 
@@ -260,19 +247,6 @@ pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
     }
 }
 
-impl Widget for &'static str {
-    fn area(&self) -> Option<Rect> {
-        None
-    }
-
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
-    }
-
-    fn layout_area(&mut self) -> Option<&mut Rect> {
-        None
-    }
-}
 // #[cfg(test)]
 // mod tests {
 //     extern crate test;

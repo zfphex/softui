@@ -154,7 +154,6 @@ impl From<usize> for Unit {
 }
 
 impl From<i32> for Unit {
-    #[track_caller]
     fn from(value: i32) -> Self {
         Unit::Px(value.try_into().unwrap())
     }

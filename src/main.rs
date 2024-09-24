@@ -30,8 +30,11 @@ fn main() {
 
             //TODO: What about multiple click functions with different buttons 😲
 
-            let text = text("click me!").on_click(Left, |text: &mut Text| println!("hi"));
-            v!(text);
+            v!(
+                text("click me!").on_click(Left, |text: &mut Text| println!("clicked text1")),
+                text("this is some more text").on_click(Right, |_| println!("clicked text2")),
+            )
+            .x(10);
         }
 
         ctx.draw_frame();
