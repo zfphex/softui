@@ -153,13 +153,20 @@ impl From<usize> for Unit {
     }
 }
 
+impl From<i32> for Unit {
+    #[track_caller]
+    fn from(value: i32) -> Self {
+        Unit::Px(value.try_into().unwrap())
+    }
+}
+
 impl From<f32> for Unit {
     fn from(val: f32) -> Self {
         Unit::Percentage((val * 100.0) as usize)
     }
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub enum Direction {
     #[default]
     Vertical,

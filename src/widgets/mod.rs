@@ -22,7 +22,7 @@ pub use container::*;
 use crate::*;
 
 // #[diagnostic::on_unimplemented()]
-pub trait Widget {
+pub trait Widget: std::fmt::Debug {
     fn draw(&self) -> Option<DrawCommand> {
         None
     }
@@ -39,12 +39,6 @@ pub trait Widget {
         false
     }
 
-    //TODO: Explain why calculate takes in an x and y coordinate.
-    //I don't even remember why. It think it's for offsetting child widgets.
-    //calculate(self.area.x, self.area.y) is bad because. x and y are calculated
-    //to be x + self.area.x and y + self.area.y, so don't double up okay?
-    fn adjust_position(&mut self, x: i32, y: i32);
-
     fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: MouseButton, mut function: F) -> Self
     where
         Self: Sized,
@@ -52,7 +46,8 @@ pub trait Widget {
         let ctx = ctx();
 
         if Self::is_container() {
-            self.adjust_position(0, 0);
+            todo!();
+            // self.adjust_position(0, 0);
         }
 
         let area = self.area().unwrap();
@@ -310,7 +305,6 @@ impl Widget for () {
         None
     }
 
-    fn adjust_position(&mut self, x: i32, y: i32) {}
 }
 
 impl Widget for &dyn Widget {
@@ -322,7 +316,6 @@ impl Widget for &dyn Widget {
         None
     }
 
-    fn adjust_position(&mut self, x: i32, y: i32) {}
 
     fn layout_area(&mut self) -> Option<&mut Rect> {
         None
@@ -338,9 +331,6 @@ impl Widget for &mut dyn Widget {
         (**self).area_mut()
     }
 
-    fn adjust_position(&mut self, x: i32, y: i32) {
-        (**self).adjust_position(x, y);
-    }
 
     fn layout_area(&mut self) -> Option<&mut Rect> {
         (**self).layout_area()

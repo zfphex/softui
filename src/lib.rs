@@ -115,6 +115,7 @@ pub enum Quadrant {
 
 /// Holds the framebuffer and input state.
 /// Also handles rendering.
+#[derive(Debug)]
 pub struct Context {
     //size is width * height.
     pub buffer: Vec<u32>,

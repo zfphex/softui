@@ -19,7 +19,7 @@ pub fn rect() -> Rectangle<'static> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Rectangle<'a> {
     pub area: Rect,
     pub ctx: &'a Context,
@@ -59,10 +59,6 @@ impl<'a> Widget for Rectangle<'a> {
         Some(self.area)
     }
 
-    fn adjust_position(&mut self, x: i32, y: i32) {
-        self.area.x = x;
-        self.area.y = y;
-    }
     fn layout_area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }

@@ -38,6 +38,7 @@ pub fn text(text: &str) -> Text {
     }
 }
 
+#[derive(Debug)]
 pub struct Text<'a> {
     pub text: Cow<'a, str>,
     pub color: Color,
@@ -169,10 +170,8 @@ impl<'a> Widget for Text<'a> {
 
     #[inline]
     fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
+        Some(&mut self.area)
     }
-
-    fn adjust_position(&mut self, x: i32, y: i32) {}
 
     fn centered(self, parent: Rect) -> Self {
         todo!()
@@ -258,8 +257,6 @@ impl Widget for &'static str {
     fn area_mut(&mut self) -> Option<&mut Rect> {
         None
     }
-
-    fn adjust_position(&mut self, x: i32, y: i32) {}
 
     fn layout_area(&mut self) -> Option<&mut Rect> {
         None

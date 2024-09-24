@@ -1,3 +1,5 @@
+use mini::info;
+
 use super::*;
 
 pub fn layout<T: Widget>(
@@ -8,7 +10,7 @@ pub fn layout<T: Widget>(
     max_height: &mut i32,
     x: &mut i32,
     y: &mut i32,
-    root_area: &mut Rect,
+    layout_area: &mut Rect,
     direction: Direction,
 ) {
     //Calculate the widget area.
@@ -16,7 +18,15 @@ pub fn layout<T: Widget>(
     //This will only really do something the second time, since the first widget isn't
     //positioned based on anything else.
     //I need to change how I do layout, this sucks :/
-    widget.adjust_position(*x, *y);
+    //Called first because it the area of the previous widget
+    //is added to x and y
+    if let Some(area) = widget.area_mut() {
+        area.x = *x;
+        area.y = *y;
+    } else {
+        println!("This widget does not have any area: {:#?}", widget);
+    }
+    // widget.adjust_position(*x, *y);
 
     //Update the margin.
     if margin != 0 {
@@ -48,11 +58,11 @@ pub fn layout<T: Widget>(
         //the the Tuple trait. I'm looking into fixing this.
         match direction {
             Direction::Vertical => {
-                root_area.height += height + padding;
+                layout_area.height += height + padding;
                 *y += height + padding;
             }
             Direction::Horizontal => {
-                root_area.width += width + padding;
+                layout_area.width += width + padding;
                 *x += width + padding;
             }
         }
@@ -78,43 +88,42 @@ macro_rules! layout {
     ($direction:expr, $($widget:expr),*$(,)?) => {
         {
             // let count = $crate::count_widgets!($($widget),*);
-            let draw_layout_impl = DrawLayoutImpl {
+            let draw_layout_impl = DrawContainerImpl {
                 f: Some(|direction: Direction, mut x: i32, mut y: i32, margin: i32, padding: i32| {
-                    let mut root_area = $crate::Rect::new(x, y, 0, 0);
+                    let mut layout_area = $crate::Rect::new(x, y, 0, 0);
                     let mut max_width = 0;
                     let mut max_height = 0;
 
                     $(
-                        $crate::layout($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut root_area, direction);
+                        $crate::layout($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
                     )*
 
                     match direction {
                         $crate::Direction::Vertical => {
-                            root_area.width = max_width;
-                            root_area.height -= padding;
+                            layout_area.width = max_width;
+                            layout_area.height -= padding;
                         }
                         $crate::Direction::Horizontal => {
-                            root_area.height = max_height;
-                            root_area.width -= padding;
+                            layout_area.height = max_height;
+                            layout_area.width -= padding;
                         }
                     }
 
                     // let ctx = $crate::ctx();
                     // ctx.draw_rectangle_outline(
-                    //     root_area.x as usize,
-                    //     root_area.y as usize,
-                    //     root_area.width as usize,
-                    //     root_area.height as usize,
+                    //     layout_area.x as usize,
+                    //     layout_area.y as usize,
+                    //     layout_area.width as usize,
+                    //     layout_area.height as usize,
                     //     $crate::Color::RED,
                     // );
                 })
             };
 
-            $crate::Layout2 {
+            $crate::Container {
                 f: Some(draw_layout_impl),
                 direction: $direction,
                 bounds: Rect::default(),
-                computed_area: None,
                 padding: 0,
                 margin: 0
             }
@@ -122,32 +131,21 @@ macro_rules! layout {
     };
 }
 
-// Define the trait
-pub trait DrawLayout {
-    fn call(&mut self, layout: &mut Layout2<Self>)
+pub trait DrawContainer {
+    fn call(&mut self, layout: &mut Container<Self>)
     where
         Self: Sized;
 }
 
-// Define the struct to hold your closure
-pub struct DrawLayoutImpl<F> {
+pub struct DrawContainerImpl<F> {
     pub f: Option<F>,
 }
 
-// impl<F> DrawLayout for DrawLayoutImpl<F>
-// where
-//     F: FnMut(i32, i32, i32, i32),
-// {
-//     fn call(&mut self, layout: &mut Layout2<Self>) {
-//         (self.f)(0, 0, 0, 0);
-//     }
-// }
-
-impl<F> DrawLayout for DrawLayoutImpl<F>
+impl<F> DrawContainer for DrawContainerImpl<F>
 where
     F: FnOnce(Direction, i32, i32, i32, i32),
 {
-    fn call(&mut self, layout: &mut Layout2<Self>) {
+    fn call(&mut self, layout: &mut Container<Self>) {
         if let Some(f) = self.f.take() {
             (f)(
                 layout.direction,
@@ -160,19 +158,29 @@ where
     }
 }
 
-pub struct Layout2<F: DrawLayout> {
+pub struct Container<F: DrawContainer> {
     pub f: Option<F>,
-    // pub f: fn(&mut Self),
     pub direction: Direction,
     pub bounds: Rect,
-    pub computed_area: Option<Rect>,
     ///Outer padding
     pub padding: usize,
     ///Inner padding
     pub margin: usize,
 }
 
-impl<F: DrawLayout> Widget for Layout2<F> {
+impl<F: DrawContainer> std::fmt::Debug for Container<F> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Container")
+            // .field("f", &self.f)
+            .field("direction", &self.direction)
+            .field("bounds", &self.bounds)
+            .field("padding", &self.padding)
+            .field("margin", &self.margin)
+            .finish()
+    }
+}
+
+impl<F: DrawContainer> Widget for Container<F> {
     fn layout_area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.bounds)
     }
@@ -183,23 +191,14 @@ impl<F: DrawLayout> Widget for Layout2<F> {
         true
     }
     fn area(&self) -> Option<Rect> {
-        self.computed_area
+        None
     }
-
     fn area_mut(&mut self) -> Option<&mut Rect> {
-        if self.computed_area.is_none() {
-            self.adjust_position(0, 0);
-        }
-
-        self.computed_area.as_mut()
-    }
-
-    fn adjust_position(&mut self, x: i32, y: i32) {
-        todo!()
+        None
     }
 }
 
-impl<F: DrawLayout> Layout2<F> {
+impl<F: DrawContainer> Container<F> {
     pub fn direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
@@ -222,7 +221,7 @@ impl<F: DrawLayout> Layout2<F> {
     }
 }
 
-impl<F: DrawLayout> Drop for Layout2<F> {
+impl<F: DrawContainer> Drop for Container<F> {
     fn drop(&mut self) {
         // if self.drawn {
         //     return;
