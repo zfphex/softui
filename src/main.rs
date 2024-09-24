@@ -1,6 +1,7 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(unused, static_mut_refs)]
 use std::{
+    marker::PhantomData,
     mem::{transmute, transmute_copy},
     ptr::{addr_of, addr_of_mut},
 };
@@ -20,13 +21,17 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
-            // let mut r = rect().wh(20);
-            // flex3!(&mut r as &mut dyn Widget);
             // flex3!(text("test"), rect().width(100).height(200)).padding(2);
             // flex3!(text("hi"), rect().width(50).height(200))
             //     .padding(2)
             //     .y(200);
-            v!(text("hi there :)"), text("line two"));
+
+            // v!(text("hi there :)"), text("line two")).padding(20);
+
+            //TODO: What about multiple click functions with different buttons 😲
+
+            let text = text("click me!").on_click(Left, |text: &mut Text| println!("hi"));
+            v!(text);
         }
 
         ctx.draw_frame();

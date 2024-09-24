@@ -19,6 +19,9 @@ pub use text::*;
 pub mod container;
 pub use container::*;
 
+pub mod click;
+pub use click::*;
+
 use crate::*;
 
 // #[diagnostic::on_unimplemented()]
@@ -39,47 +42,52 @@ pub trait Widget: std::fmt::Debug {
         false
     }
 
-    fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: MouseButton, mut function: F) -> Self
-    where
-        Self: Sized,
-    {
-        let ctx = ctx();
+    //This is used to run the click closure after calling on_click
+    //This should be hidden from the user and only implemented on `Click`.
+    //https://stackoverflow.com/questions/77562161/is-there-a-way-to-prevent-a-struct-from-implementing-a-trait-method
+    fn try_click(&mut self) {}
 
-        if Self::is_container() {
-            todo!();
-            // self.adjust_position(0, 0);
-        }
+    // fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: MouseButton, mut function: F) -> Self
+    // where
+    //     Self: Sized,
+    // {
+    //     let ctx = ctx();
 
-        let area = self.area().unwrap();
+    //     if Self::is_container() {
+    //         todo!();
+    //         // self.adjust_position(0, 0);
+    //     }
 
-        if !ctx.mouse_pos.intersects(area) {
-            return self;
-        }
+    //     let area = self.area().unwrap();
 
-        let clicked = match button {
-            MouseButton::Left => {
-                ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Right => {
-                ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Middle => {
-                ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Back => {
-                ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area)
-            }
-            MouseButton::Forward => {
-                ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area)
-            }
-        };
+    //     if !ctx.mouse_pos.intersects(area) {
+    //         return self;
+    //     }
 
-        if clicked {
-            function(&mut self);
-        }
+    //     let clicked = match button {
+    //         MouseButton::Left => {
+    //             ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
+    //         }
+    //         MouseButton::Right => {
+    //             ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
+    //         }
+    //         MouseButton::Middle => {
+    //             ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
+    //         }
+    //         MouseButton::Back => {
+    //             ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area)
+    //         }
+    //         MouseButton::Forward => {
+    //             ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area)
+    //         }
+    //     };
 
-        self
-    }
+    //     if clicked {
+    //         function(&mut self);
+    //     }
+
+    //     self
+    // }
     /// The user's cusor has been clicked and released on top of a widget.
     fn clicked(&mut self, button: MouseButton) -> bool
     where
@@ -304,7 +312,6 @@ impl Widget for () {
     fn layout_area(&mut self) -> Option<&mut Rect> {
         None
     }
-
 }
 
 impl Widget for &dyn Widget {
@@ -315,7 +322,6 @@ impl Widget for &dyn Widget {
     fn area_mut(&mut self) -> Option<&mut Rect> {
         None
     }
-
 
     fn layout_area(&mut self) -> Option<&mut Rect> {
         None
@@ -330,7 +336,6 @@ impl Widget for &mut dyn Widget {
     fn area_mut(&mut self) -> Option<&mut Rect> {
         (**self).area_mut()
     }
-
 
     fn layout_area(&mut self) -> Option<&mut Rect> {
         (**self).layout_area()

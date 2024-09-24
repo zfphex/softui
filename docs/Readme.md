@@ -1,13 +1,3 @@
-### TODO
-
-- [ ] Allow drawing outside of the window area without crashing. Allow for clipping.
-- [ ] SVG & Image support
-- [ ] Framerate limiter
-- [ ] Remove draw on drop and require that everything be placed into a container.
-- [ ] Rework color again, maybe using `T: Into<Color>` or something. Double check that `#[repr(transparent)]` and `as_u32()` are optimized away.
-- [ ] Text border
-- [x] Rectangle with rounded corners
-
 ### Trait Definitions
 
 ```rs
@@ -77,7 +67,7 @@ pub trait Style {
 ```
 
 ```rs
-pub trait Text, { 
+pub trait Text, {
     //There are lots of ways the user might want text to wrap.
     fn text_wrap(self) -> Self;
     fn color(self, color: Color) -> Self;
@@ -119,11 +109,10 @@ pub trait Input {
 }
 ```
 
-
 ### Layout System
 
 ```rs
-//Area will use the largest widget size unless wrapped. 
+//Area will use the largest widget size unless wrapped.
 //So here width: 50, height: 100
 v((button("width, height", 50, 100), button("button2", 10, 10)));
 

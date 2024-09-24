@@ -49,6 +49,17 @@ pub struct Text<'a> {
 }
 
 impl<'a> Text<'a> {
+    pub fn on_click<F: FnMut(&mut Self)>(
+        self,
+        button: MouseButton,
+        click_fn: F,
+    ) -> Click<Self, F> {
+        Click {
+            widget: self,
+            click_fn,
+            button,
+        }
+    }
     // pub fn on_clicked_defered<F: FnMut(&mut Self) -> ()>(
     //     self,
     //     button: MouseButton,

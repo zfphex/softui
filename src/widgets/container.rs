@@ -26,7 +26,6 @@ pub fn layout<T: Widget>(
     } else {
         println!("This widget does not have any area: {:#?}", widget);
     }
-    // widget.adjust_position(*x, *y);
 
     //Update the margin.
     if margin != 0 {
@@ -36,6 +35,8 @@ pub fn layout<T: Widget>(
 
     //Draw the widget once the layout is correct.
     if let Some(dc) = widget.draw() {
+        widget.try_click();
+
         unsafe { COMMAND_QUEUE.push(dc.command) };
     }
 
@@ -126,7 +127,7 @@ macro_rules! layout {
                 bounds: Rect::default(),
                 padding: 0,
                 margin: 0
-            }
+            };
         }
     };
 }
@@ -230,5 +231,28 @@ impl<F: DrawContainer> Drop for Container<F> {
         if let Some(mut f) = self.f.take() {
             f.call(self);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    #[test]
+    fn container() {
+        let ctx = create_ctx("Softui", 800, 600);
+        let mut r = rect().wh(20);
+        v!(&mut r as &mut dyn Widget);
+        v!(
+            text("abc").x(10).y(20).width(20),
+            text(""),
+            text(""),
+            text(""),
+            text(""),
+            text(""),
+            text(""),
+            text(""),
+            text(""),
+        );
     }
 }
