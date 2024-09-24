@@ -13,14 +13,11 @@ pub mod svg;
 #[cfg(feature = "svg")]
 pub use svg::*;
 
-pub mod text_immutable;
-pub use text_immutable::*;
+pub mod text;
+pub use text::*;
 
-// pub mod text;
-// pub use text::*;
-
-pub mod layout2;
-pub use layout2::*;
+pub mod container;
+pub use container::*;
 
 use crate::*;
 

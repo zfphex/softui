@@ -1,7 +1,4 @@
-use std::marker::PhantomData;
-
 use crate::*;
-use mini::info;
 
 pub struct RectangleNew {
     pub area: Rect,

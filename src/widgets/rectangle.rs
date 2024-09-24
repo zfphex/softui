@@ -1,5 +1,4 @@
 use crate::*;
-use mini::info;
 
 //Old version for testing.
 pub fn rct(ctx: &Context) -> Rectangle {

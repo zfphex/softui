@@ -1,43 +1,22 @@
-#![allow(unused, static_mut_refs, incomplete_features)]
-// #![feature(test, const_float_bits_conv, let_chains, const_format_args)]
+#![allow(unused, static_mut_refs)]
 use core::ffi::c_void;
-use crossbeam_queue::SegQueue;
-use mini::{info, profile};
-use std::{
-    borrow::Cow, cell::UnsafeCell, fmt::Arguments, mem::MaybeUninit, pin::Pin, ptr::NonNull,
-    sync::LazyLock,
-};
+use mini::profile;
+use std::{borrow::Cow, pin::Pin};
 
 //Re-export the window functions.
 pub use window::*;
 
-pub mod widgets;
-
 pub mod atomic_float;
 pub mod input;
+pub mod macros;
 pub mod style;
-pub mod tuple;
-pub mod tuple2;
-pub mod tuple3;
+pub mod widgets;
 
 pub use input::*;
+pub use macros::*;
 pub use style::*;
-pub use tuple::*;
-pub use tuple2::*;
-pub use tuple3::*;
 pub use widgets::*;
 pub use MouseButton::*;
-
-macro_rules! builder {
-    ($($variable:ident: $type:ty),*) => {
-        $(
-            pub fn $variable(mut self, $variable: $type) -> Self {
-                self.$variable = $variable;
-                self
-            }
-        )*
-    };
-}
 
 //Ideally the user could write there own commands
 //Then they would send custom commands to the context.
@@ -162,7 +141,7 @@ impl Context {
         //TODO: Remove me.
         load_default_font();
 
-        let mut window = unsafe { create_window(title, width as i32, height as i32) };
+        let window = create_window(title, width as i32, height as i32);
         let dc = unsafe { GetDC(window.hwnd) };
         //Convert top, left, right, bottom to x, y, width, height.
         let area = Rect::from(window.client_area());
@@ -246,10 +225,11 @@ impl Context {
             match cmd {
                 //This should idealy have a z index/depth parameter.
                 Command::Rectangle(x, y, width, height, color) => {
-                    self.draw_rectangle(x, y, width, height, color);
+                    self.draw_rectangle(x, y, width, height, color).unwrap();
                 }
                 Command::RectangleOutline(x, y, width, height, color) => {
-                    self.draw_rectangle_outline(x, y, width, height, color);
+                    self.draw_rectangle_outline(x, y, width, height, color)
+                        .unwrap();
                 }
                 Command::Ellipse(x, y, width, height, radius, color) => {
                     if radius == 0 {
@@ -638,7 +618,6 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
-        let font = default_font().unwrap();
         let mut area = Rect::new(x as i32, y as i32, 0, 0);
         let mut y: usize = area.y.try_into().unwrap();
         let x = area.x as usize;
@@ -728,8 +707,8 @@ impl Context {
         }
 
         //Not sure why these are one off.
-        area.height = (max_y as i32 + 1 - area.y);
-        area.width = (max_x as i32 + 1 - area.x);
+        area.height = max_y as i32 + 1 - area.y;
+        area.width = max_x as i32 + 1 - area.x;
 
         self.draw_rectangle_outline(
             area.x as usize,
@@ -737,7 +716,8 @@ impl Context {
             area.width as usize,
             area.height as usize,
             Color::RED,
-        );
+        )
+        .unwrap();
     }
 
     #[inline(always)]
