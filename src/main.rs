@@ -1,15 +1,13 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(unused, static_mut_refs)]
-use std::{
-    marker::PhantomData,
-    mem::{transmute, transmute_copy},
-    ptr::{addr_of, addr_of_mut},
-};
-
+use window::{Event, Key};
+// use softui::{create_ctx, text, v, Color, MouseButton::*, Text, Widget};
 use softui::*;
 
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
+
+    let mut font_size = 10;
 
     loop {
         match ctx.event() {
@@ -31,7 +29,12 @@ fn main() {
             //TODO: What about multiple click functions with different buttons 😲
 
             v!(
-                text("click me!").on_click(Left, |text: &mut Text| println!("clicked text1")),
+                text("click me!")
+                    .font_size(font_size)
+                    .on_click(Left, |text| {
+                        println!("clicked on widget with text: {}", text.text);
+                        font_size += 10;
+                    }),
                 text("this is some more text").on_click(Right, |_| println!("clicked text2")),
             )
             .x(10);

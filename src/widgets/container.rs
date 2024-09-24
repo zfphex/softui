@@ -72,14 +72,14 @@ pub fn layout<T: Widget>(
 #[macro_export]
 macro_rules! h {
     ($($widget:expr),*$(,)?) => {
-        $crate::layout!(Direction::Horizontal, $($widget),*)
+        $crate::layout!($crate::Direction::Horizontal, $($widget),*)
     };
 }
 
 #[macro_export]
 macro_rules! v {
     ($($widget:expr),*$(,)?) => {
-        $crate::layout!(Direction::Vertical, $($widget),*)
+        $crate::layout!($crate::Direction::Vertical, $($widget),*)
     };
 }
 
@@ -88,8 +88,8 @@ macro_rules! layout {
     ($direction:expr, $($widget:expr),*$(,)?) => {
         {
             // let count = $crate::count_widgets!($($widget),*);
-            let draw_layout_impl = DrawContainerImpl {
-                f: Some(|direction: Direction, mut x: i32, mut y: i32, margin: i32, padding: i32| {
+            let draw_layout_impl = $crate::DrawContainerImpl {
+                f: Some(|direction: $crate::Direction, mut x: i32, mut y: i32, margin: i32, padding: i32| {
                     let mut layout_area = $crate::Rect::new(x, y, 0, 0);
                     let mut max_width = 0;
                     let mut max_height = 0;
@@ -123,7 +123,7 @@ macro_rules! layout {
             $crate::Container {
                 f: Some(draw_layout_impl),
                 direction: $direction,
-                bounds: Rect::default(),
+                bounds: $crate::Rect::default(),
                 padding: 0,
                 margin: 0
             }

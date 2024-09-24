@@ -167,7 +167,26 @@ impl<'a> Widget for Text<'a> {
 
     #[inline]
     fn area(&mut self) -> Option<&mut Rect> {
+        //The user can set a custom width and height of the text.
+        //If we assigned the area directly to the calculated area
+        //we would override `.width()` and `.height()` user calls.
+        // let area = self.calculate_area(self.area.x, self.area.y);
+        // self.area.x = area.x;
+        // self.area.y = area.y;
+
+        // if area.width > self.area.width {
+        //     self.area.width = area.width;
+        // }
+
+        // if area.height > self.area.height {
+        //     self.area.height = area.height;
+        // }
+
+        //I'm not sure if I want the user modifying the text area...
+        //It doesn't do anything 
+
         self.area = self.calculate_area(self.area.x, self.area.y);
+
         Some(&mut self.area)
     }
 
