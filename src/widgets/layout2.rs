@@ -1,95 +1,31 @@
 use super::*;
 
 #[macro_export]
+macro_rules! count_widgets {
+    () => { 0 };
+    ($first:expr $(, $rest:expr)*) => {
+        1 + count_widgets!($($rest),*)
+    };
+}
+
+// #[macro_export]
+// macro_rules! count_idents {
+//     ( $( $i:ident ),* ) => {
+//         ${count($i)}
+//     };
+// }
+
+#[macro_export]
 macro_rules! flex3 {
     ($($widget:expr),*$(,)?) => {
         {
-            // fn draw_layout(layout: &mut Layout2) {
-            //     let direction = $crate::Direction::Vertical;
-            //     let padding = layout.padding as i32;
-            //     let margin = layout.margin as i32;
-
-            //     let mut x = layout.bounds.x;
-            //     let mut y = layout.bounds.y;
-
-            //     let mut root_area = $crate::Rect::new(x, y, 0, 0);
-            //     let mut max_width = 0;
-            //     let mut max_height = 0;
-
-            //     $(
-            //         $crate::layout($widget, margin,padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut root_area, direction);
-            //     )*
-
-            //     match direction {
-            //         $crate::Direction::Vertical => {
-            //             root_area.width = max_width;
-            //             root_area.height -= padding;
-            //         }
-            //         $crate::Direction::Horizontal => {
-            //             root_area.height = max_height;
-            //             root_area.width -= padding;
-            //         }
-            //     }
-
-            //     let ctx = $crate::ctx();
-            //     ctx.draw_rectangle_outline(
-            //         root_area.x as usize,
-            //         root_area.y as usize,
-            //         root_area.width as usize,
-            //         root_area.height as usize,
-            //         $crate::Color::RED,
-            //     );
-            // }
-            // let draw_layout = |layout: &mut Layout2| {
-            //     let direction = $crate::Direction::Vertical;
-            //     let padding = layout.padding as i32;
-            //     let margin = layout.margin as i32;
-
-            //     let mut x = layout.bounds.x;
-            //     let mut y = layout.bounds.y;
-
-            //     let mut root_area = $crate::Rect::new(x, y, 0, 0);
-            //     let mut max_width = 0;
-            //     let mut max_height = 0;
-
-            //     $(
-            //         $crate::layout($widget, margin,padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut root_area, direction);
-            //     )*
-
-            //     match direction {
-            //         $crate::Direction::Vertical => {
-            //             root_area.width = max_width;
-            //             root_area.height -= padding;
-            //         }
-            //         $crate::Direction::Horizontal => {
-            //             root_area.height = max_height;
-            //             root_area.width -= padding;
-            //         }
-            //     }
-
-            //     let ctx = $crate::ctx();
-            //     ctx.draw_rectangle_outline(
-            //         root_area.x as usize,
-            //         root_area.y as usize,
-            //         root_area.width as usize,
-            //         root_area.height as usize,
-            //         $crate::Color::RED,
-            //     );
-            // };
-
+            // let count = $crate::count_widgets!($($widget),*);
             let draw_layout_impl = DrawLayoutImpl {
-                f: Some(|x: i32, y: i32, margin: i32, padding: i32| {
+                f: Some(|mut x: i32, mut y: i32, margin: i32, padding: i32| {
                     let direction = $crate::Direction::Vertical;
-                    let padding = padding ;
-                    let margin = margin ;
-
-                    let mut x = x;
-                    let mut y = y;
-
                     let mut root_area = $crate::Rect::new(x, y, 0, 0);
                     let mut max_width = 0;
                     let mut max_height = 0;
-
                     $(
                         $crate::layout($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut root_area, direction);
                     )*
