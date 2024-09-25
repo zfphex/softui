@@ -51,21 +51,26 @@ pub struct Text<'a> {
 }
 
 impl<'a> Text<'a> {
-    pub fn on_click<F: FnMut(&mut Self)>(self, button: MouseButton, click_fn: F) -> Click<Self, F> {
+    pub fn on_click<F: FnMut(&mut Self)>(
+        self,
+        button: MouseButton,
+        click_fn: F,
+    ) -> Click<Self, ClickContainerImpl<F, Text<'a>>> {
         Click {
             widget: self,
-            click_fn,
+            click_fn: ClickContainerImpl {
+                click_fn: Some(click_fn),
+                _marker: std::marker::PhantomData::default(),
+            },
+            click_fn_vec: Vec::new(),
             button,
         }
     }
-    // pub fn on_clicked_defered<F: FnMut(&mut Self) -> ()>(
-    //     self,
-    //     button: MouseButton,
-    //     on_click: F,
-    // ) -> OnClickWrapper<Text<'a>, F> {
-    //     OnClickWrapper {
+    // pub fn on_click<F: FnMut(&mut Self)>(self, button: MouseButton, click_fn: F) -> Click<Self, F> {
+    //     Click {
     //         widget: self,
-    //         f: Some((on_click, button)),
+    //         click_fn,
+    //         button,
     //     }
     // }
     pub fn font_size(mut self, font_size: usize) -> Self {
@@ -183,7 +188,7 @@ impl<'a> Widget for Text<'a> {
         // }
 
         //I'm not sure if I want the user modifying the text area...
-        //It doesn't do anything 
+        //It doesn't do anything
 
         self.area = self.calculate_area(self.area.x, self.area.y);
 
