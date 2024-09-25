@@ -24,20 +24,23 @@ fn main() {
             //     .padding(2)
             //     .y(200);
 
-            // v!(text("hi there :)"), text("line two")).padding(20);
+            v!(text("hi there :)"), text("line two")).padding(20);
 
             //TODO: What about multiple click functions with different buttons 😲
+            //TODO: What about passing in references?
 
-            v!(
-                text("click me!")
-                    .font_size(font_size)
-                    .on_click(Left, |text| {
-                        println!("clicked on widget with text: {}", text.text);
-                        font_size += 10;
-                    }),
-                text("this is some more text").on_click(Right, |_| println!("clicked text2")),
-            )
-            .x(10);
+            // v!(t.clone().on_click(Left, |t| {}));
+
+            // v!(
+            //     text("click me!")
+            //         .font_size(font_size)
+            //         .on_click(Left, |text| {
+            //             println!("clicked on widget with text: {}", text.text);
+            //             font_size += 10;
+            //         }),
+            //     text("this is some more text").on_click(Right, |_| println!("clicked text2")),
+            // )
+            // .x(10);
         }
 
         ctx.draw_frame();

@@ -21,8 +21,8 @@ impl<T: Widget, F: FnMut(&mut T)> Widget for Click<T, F> {
     }
 
     #[inline]
-    fn draw(&self) -> Option<Command> {
-        self.widget.draw()
+    fn draw_command(&self) -> Option<Command> {
+        self.widget.draw_command()
     }
 }
 

@@ -25,8 +25,11 @@ pub use click::*;
 use crate::*;
 
 // #[diagnostic::on_unimplemented()]
+
+//Widgets should also be clone.
 pub trait Widget: std::fmt::Debug {
-    fn draw(&self) -> Option<Command> {
+    #[must_use]
+    fn draw_command(&self) -> Option<Command> {
         None
     }
     fn area(&mut self) -> Option<&mut Rect>;

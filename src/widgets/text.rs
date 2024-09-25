@@ -39,7 +39,7 @@ pub fn text(text: &str) -> Text {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Text<'a> {
     pub text: Cow<'a, str>,
     pub color: Color,
@@ -154,7 +154,7 @@ impl<'a> Text<'a> {
 }
 
 impl<'a> Widget for Text<'a> {
-    fn draw(&self) -> Option<Command> {
+    fn draw_command(&self) -> Option<Command> {
         //Because draw is immutable, the area must be calculated on each draw since it cannot store it's own state.
         Some(Command::Text(
             self.text.to_string(),

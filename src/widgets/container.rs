@@ -34,7 +34,7 @@ pub fn layout<T: Widget>(
     }
 
     //Draw the widget once the layout is correct.
-    if let Some(command) = widget.draw() {
+    if let Some(command) = widget.draw_command() {
         widget.try_click();
         unsafe { COMMAND_QUEUE.push(command) };
     }

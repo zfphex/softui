@@ -35,7 +35,7 @@ impl<'a> Rectangle<'a> {
 }
 
 impl<'a> Widget for Rectangle<'a> {
-    fn draw(&self) -> Option<Command> {
+    fn draw_command(&self) -> Option<Command> {
         Some(Command::Ellipse(
             self.area.x as usize,
             self.area.y as usize,
