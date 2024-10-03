@@ -138,10 +138,10 @@ macro_rules! backend_impl {
     ( $($i:ident),* ) => {
         impl Backend for Window {
             #[inline]
-            fn area(&self) -> Rect {
+            fn size(&self) -> Rect {
                 match self {
                     $(
-                        Window::$i(w) => w.area(),
+                        Window::$i(w) => w.size(),
                     )*
                 }
             }
@@ -335,7 +335,7 @@ impl Context {
     }
 
     pub fn get_pixel(&mut self, x: usize, y: usize) -> Option<&mut u32> {
-        let pos = x + (self.backend.area().width as usize * y);
+        let pos = x + (self.backend.size().width as usize * y);
         self.backend.buffer().get_mut(pos)
     }
 
@@ -347,7 +347,7 @@ impl Context {
 
     ///Note color order is BGR_. The last byte is reserved.
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
-        let width =  self.backend.area().width as usize;
+        let width =  self.backend.size().width as usize;
         let buffer = unsafe { self.backend.buffer().align_to_mut::<u32>().1 };
         buffer[y * width+ x] = color;
     }
@@ -467,7 +467,7 @@ impl Context {
         self.bounds_check(x, y, width, height)?;
 
         for i in y..y + height {
-            let pos = x + self.backend.area().width as usize * i;
+            let pos = x + self.backend.size().width as usize * i;
             self.backend.buffer()[pos..pos + width].fill(color.as_u32());
         }
         Ok(())
@@ -487,7 +487,7 @@ impl Context {
         #[cfg(debug_assertions)]
         self.bounds_check(x, y, width, height)?;
 
-        let mut i = x + (y * self.backend.area().width as usize);
+        let mut i = x + (y * self.backend.size().width as usize);
         for _ in 0..height {
             unsafe {
                 self.backend
@@ -495,7 +495,7 @@ impl Context {
                     .get_unchecked_mut(i..i + width)
                     .fill(color)
             };
-            i += self.backend.area().width as usize;
+            i += self.backend.size().width as usize;
         }
 
         Ok(())
@@ -514,7 +514,7 @@ impl Context {
         self.bounds_check(x, y, width, height)?;
 
         for i in y..y + height {
-            let start = x + self.backend.area().width as usize * i;
+            let start = x + self.backend.size().width as usize * i;
             let end = start + width;
 
             for (x, px) in self.backend.buffer()[start..end].iter_mut().enumerate() {
@@ -536,7 +536,7 @@ impl Context {
         color: Color,
     ) -> Result<(), String> {
         self.bounds_check(x, y, width, height)?;
-        let canvas_width = self.backend.area().width as usize;
+        let canvas_width = self.backend.size().width as usize;
         let buffer = unsafe { self.backend.buffer().align_to_mut::<u32>().1 };
         let color = color.as_u32();
 
@@ -565,20 +565,20 @@ impl Context {
     ) -> Result<(), String> {
         #[cfg(debug_assertions)]
         {
-            if x + width >= self.backend.area().width as usize {
+            if x + width >= self.backend.size().width as usize {
                 return Err(format!(
                     "Canvas width is {}, cannot draw at {} ({}x + {}w)",
-                    self.backend.area().width,
+                    self.backend.size().width,
                     x + width,
                     x,
                     width,
                 ));
             }
 
-            if y + height >= self.backend.area().height as usize {
+            if y + height >= self.backend.size().height as usize {
                 return Err(format!(
                     "Canvas height is {}, cannot draw at {} ({}y + {}h)",
-                    self.backend.area().height,
+                    self.backend.size().height,
                     y + height,
                     y,
                     height,
@@ -612,7 +612,7 @@ impl Context {
 
         let color = color.as_u32();
 
-        let canvas_width = self.backend.area().width as usize;
+        let canvas_width = self.backend.size().width as usize;
 
         for i in y..y + height {
             let y = i - y;
@@ -720,7 +720,7 @@ impl Context {
                             max_y = offset as usize;
                         }
 
-                        let i = x + glyph_x + self.backend.area().width as usize * offset as usize;
+                        let i = x + glyph_x + self.backend.size().width as usize * offset as usize;
 
                         if i >= self.backend.buffer().len() {
                             break 'x;
@@ -744,7 +744,7 @@ impl Context {
                 glyph_x += metrics.advance_width as usize;
 
                 //TODO: Still not enough.
-                if glyph_x >= self.backend.area().width as usize {
+                if glyph_x >= self.backend.size().width as usize {
                     break 'line;
                 }
             }
@@ -770,11 +770,11 @@ impl Context {
 
     #[inline(always)]
     pub fn width(&self) -> usize {
-        self.backend.area().width as usize
+        self.backend.size().width as usize
     }
 
     #[inline(always)]
     pub fn height(&self) -> usize {
-        self.backend.area().height as usize
+        self.backend.size().height as usize
     }
 }

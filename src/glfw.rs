@@ -3,11 +3,31 @@ use crate::{Backend, Rect};
 use crate::{Event, Key, Modifiers};
 use glfw::{Context, GlfwReceiver, WindowEvent};
 
+pub fn convert_glfw_modifier(modifiers: glfw::Modifiers) -> crate::Modifiers {
+    let mut m = Modifiers::new();
+
+    if modifiers.contains(glfw::Modifiers::Shift) {
+        m.shift = true;
+    };
+    if modifiers.contains(glfw::Modifiers::Control) {
+        m.control = true;
+    };
+    if modifiers.contains(glfw::Modifiers::Alt) {
+        m.alt = true;
+    };
+    if modifiers.contains(glfw::Modifiers::Super) {
+        m.win = true;
+    };
+
+    m
+}
+
 pub struct Glfw {
-    glfw: glfw::Glfw,
-    window: glfw::PWindow,
-    events: GlfwReceiver<(f64, WindowEvent)>,
-    buffer: Vec<u32>,
+    pub glfw: glfw::Glfw,
+    pub window: glfw::PWindow,
+    pub events: GlfwReceiver<(f64, WindowEvent)>,
+    pub buffer: Vec<u32>,
+    pub size: Rect,
 }
 
 impl Glfw {
@@ -21,24 +41,28 @@ impl Glfw {
         window.set_all_polling(true);
         window.make_current();
 
+        let size = Rect::new(0, 0, 800, 600);
+
         Self {
             glfw,
             window,
             events,
-            buffer: vec![0; 800 * 600],
+            buffer: vec![0; size.width as usize * size.height as usize],
+            size 
         }
     }
 }
 
 impl Backend for Glfw {
-    fn area(&self) -> Rect {
-        let (width, height) = self.window.get_size();
-        Rect {
-            x: 0,
-            y: 0,
-            width,
-            height,
-        }
+    fn size(&self) -> Rect {
+        self.size
+        // let (width, height) = self.window.get_size();
+        // Rect {
+        //     x: 0,
+        //     y: 0,
+        //     width,
+        //     height,
+        // }
     }
 
     fn buffer(&mut self) -> &mut [u32] {
@@ -56,11 +80,19 @@ impl Backend for Glfw {
                 match event {
                     WindowEvent::Close => return Some(Event::Quit),
                     // WindowEvent::Pos(_, _) => todo!(),
-                    // WindowEvent::Size(_, _) => todo!(),
+                    WindowEvent::Size(width, height) => {
+                        self.size.width = width;
+                        self.size.height = height;
+                    },
                     // WindowEvent::Refresh => todo!(),
                     // WindowEvent::Focus(_) => todo!(),
                     // WindowEvent::Iconify(_) => todo!(),
                     // WindowEvent::FramebufferSize(_, _) => todo!(),
+                    // WindowEvent::FileDrop(vec) => todo!(),
+                    // WindowEvent::Maximize(_) => todo!(),
+                    // WindowEvent::ContentScale(_, _) => todo!(),
+                    // WindowEvent::CursorEnter(_) => todo!(),
+                    // WindowEvent::Scroll(_, _) => todo!(),
                     WindowEvent::MouseButton(mouse_button, action, modifiers) => {
                         //TODO: Double click is usually 3 but repeat is 3 in glfw.
                         let mut mouse_state: u8 = action as u8;
@@ -75,8 +107,6 @@ impl Backend for Glfw {
                         };
                     }
                     WindowEvent::CursorPos(x, y) => return Some(Event::Mouse(x as i32, y as i32)),
-                    // WindowEvent::CursorEnter(_) => todo!(),
-                    // WindowEvent::Scroll(_, _) => todo!(),
                     WindowEvent::Key(key, _, action, modifiers) => {
                         let shift = modifiers.contains(glfw::Modifiers::Shift);
                         let key = match key {
@@ -221,28 +251,19 @@ impl Backend for Glfw {
                             // }
                         };
 
-                        let mut m = Modifiers::new();
-
-                        if modifiers.contains(glfw::Modifiers::Shift) {
-                            m.shift = true;
-                        };
-                        if modifiers.contains(glfw::Modifiers::Control) {
-                            m.control = true;
-                        };
-                        if modifiers.contains(glfw::Modifiers::Alt) {
-                            m.alt = true;
-                        };
-                        if modifiers.contains(glfw::Modifiers::Super) {
-                            m.win = true;
-                        };
-
+                        let m = convert_glfw_modifier(modifiers);
                         return Some(Event::Input(key, m));
                     }
-                    WindowEvent::Char(_) => todo!(),
-                    WindowEvent::CharModifiers(_, modifiers) => todo!(),
-                    _ => {}, // WindowEvent::FileDrop(vec) => todo!(),
-                                  // WindowEvent::Maximize(_) => todo!(),
-                                  // WindowEvent::ContentScale(_, _) => todo!(),
+                    // WindowEvent::Char(char) => {
+                    //     return Some(Event::Input(Key::Char(char), Modifiers::new()))
+                    // }
+                    // WindowEvent::CharModifiers(char, modifiers) => {
+                    //     return Some(Event::Input(
+                    //         Key::Char(char),
+                    //         convert_glfw_modifier(modifiers),
+                    //     ))
+                    // }
+                    _ => {}
                 }
             }
         }

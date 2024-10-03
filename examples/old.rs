@@ -25,7 +25,7 @@ fn main() {
             _ => {}
         }
 
-        let area = ctx.backend.area();
+        let area = ctx.backend.size();
 
         t += 0.02;
         x += 1;

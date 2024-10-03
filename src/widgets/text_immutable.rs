@@ -77,7 +77,7 @@ impl<'a> Text<'a> {
         self
     }
     fn calculate_position(&self, x: i32, y: i32) -> Rect {
-        let canvas_width = ctx().backend.area().width as usize;
+        let canvas_width = ctx().backend.size().width as usize;
         let font = default_font().unwrap();
         let mut area = self.area;
 
@@ -236,7 +236,7 @@ pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
 
     let start_x = x;
     let start_y = y;
-    let width = ctx.backend.area().width as usize;
+    let width = ctx.backend.size().width as usize;
     let buffer = ctx.backend.buffer();
 
     for y in 0..metrics.height {

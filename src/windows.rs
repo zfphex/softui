@@ -30,7 +30,7 @@ impl Windows {
 }
 
 impl Backend for Windows {
-    fn area(&self) -> crate::Rect {
+    fn size(&self) -> crate::Rect {
         // self.area
         todo!()
     }

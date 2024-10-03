@@ -6,7 +6,7 @@ use resvg::{
 
 pub fn svg<P: AsRef<std::path::Path>>(path: P) -> Pixmap {
     let ctx = ctx();
-    let area = ctx.backend.area();
+    let area = ctx.backend.size();
     let tree = Tree::from_data(&std::fs::read(path).unwrap(), &Options::default()).unwrap();
     let mut pixmap = Pixmap::new(area.width as u32, area.height as u32).unwrap();
     resvg::render(&tree, Transform::from_scale(0.5, 0.5), &mut pixmap.as_mut());

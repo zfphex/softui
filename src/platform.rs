@@ -1,7 +1,8 @@
 use crate::{MouseState, MouseStateNew, Rect};
 
 pub trait Backend {
-    fn area(&self) -> Rect;
+    ///Returns the size of the window.
+    fn size(&self) -> Rect;
     //Should return &mut [u32]
     fn buffer(&mut self) -> &mut [u32];
     //
