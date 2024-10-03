@@ -18,8 +18,9 @@ impl Glfw {
             .create_window(width, height, "Softui", glfw::WindowMode::Windowed)
             .expect("Failed to create GLFW window.");
 
-        window.set_key_polling(true);
+        window.set_all_polling(true);
         window.make_current();
+
         Self {
             glfw,
             window,
@@ -52,15 +53,14 @@ impl Backend for Glfw {
         while !self.window.should_close() {
             self.glfw.poll_events();
             for (_, event) in glfw::flush_messages(&self.events) {
-                dbg!(&event);
                 match event {
                     WindowEvent::Close => return Some(Event::Quit),
-                    WindowEvent::Pos(_, _) => todo!(),
-                    WindowEvent::Size(_, _) => todo!(),
-                    WindowEvent::Refresh => todo!(),
-                    WindowEvent::Focus(_) => todo!(),
-                    WindowEvent::Iconify(_) => todo!(),
-                    WindowEvent::FramebufferSize(_, _) => todo!(),
+                    // WindowEvent::Pos(_, _) => todo!(),
+                    // WindowEvent::Size(_, _) => todo!(),
+                    // WindowEvent::Refresh => todo!(),
+                    // WindowEvent::Focus(_) => todo!(),
+                    // WindowEvent::Iconify(_) => todo!(),
+                    // WindowEvent::FramebufferSize(_, _) => todo!(),
                     WindowEvent::MouseButton(mouse_button, action, modifiers) => {
                         //TODO: Double click is usually 3 but repeat is 3 in glfw.
                         let mut mouse_state: u8 = action as u8;
@@ -76,7 +76,7 @@ impl Backend for Glfw {
                     }
                     WindowEvent::CursorPos(x, y) => return Some(Event::Mouse(x as i32, y as i32)),
                     // WindowEvent::CursorEnter(_) => todo!(),
-                    WindowEvent::Scroll(_, _) => todo!(),
+                    // WindowEvent::Scroll(_, _) => todo!(),
                     WindowEvent::Key(key, _, action, modifiers) => {
                         let shift = modifiers.contains(glfw::Modifiers::Shift);
                         let key = match key {
@@ -240,7 +240,7 @@ impl Backend for Glfw {
                     }
                     WindowEvent::Char(_) => todo!(),
                     WindowEvent::CharModifiers(_, modifiers) => todo!(),
-                    _ => todo!(), // WindowEvent::FileDrop(vec) => todo!(),
+                    _ => {}, // WindowEvent::FileDrop(vec) => todo!(),
                                   // WindowEvent::Maximize(_) => todo!(),
                                   // WindowEvent::ContentScale(_, _) => todo!(),
                 }
