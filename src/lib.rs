@@ -11,13 +11,6 @@ use std::{
 pub mod platform;
 pub use platform::*;
 
-// #[cfg(target_os = "windows")]
-pub mod windows;
-pub use windows::*;
-
-pub mod glfw;
-pub use glfw::*;
-
 //Re-export the window functions.
 // pub use window::*;
 
@@ -165,7 +158,7 @@ macro_rules! backend_impl {
             }
 
             #[inline]
-            fn present(&self) {
+            fn present(&mut self) {
                 match self {
                     $(
                         Window::$i(w) => w.present(),
@@ -200,9 +193,10 @@ macro_rules! backend_impl {
 pub enum Window {
     Windows(Windows),
     Glfw(Glfw),
+    Minifb(Minifb)
 }
 
-backend_impl!(Windows, Glfw);
+backend_impl!(Windows, Glfw, Minifb);
 
 /// Holds the framebuffer and input state.
 /// Also handles rendering.
@@ -347,9 +341,9 @@ impl Context {
 
     ///Note color order is BGR_. The last byte is reserved.
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
-        let width =  self.backend.size().width as usize;
+        let width = self.backend.size().width as usize;
         let buffer = unsafe { self.backend.buffer().align_to_mut::<u32>().1 };
-        buffer[y * width+ x] = color;
+        buffer[y * width + x] = color;
     }
 
     //TODO: https://en.wikipedia.org/wiki/Midpoint_circle_algorithm

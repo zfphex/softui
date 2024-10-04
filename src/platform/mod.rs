@@ -1,5 +1,15 @@
 use crate::{MouseState, MouseStateNew, Rect};
 
+// #[cfg(target_os = "windows")]
+pub mod windows;
+pub use windows::*;
+
+pub mod glfw;
+pub use glfw::*;
+
+pub mod minifb;
+pub use minifb::*;
+
 pub trait Backend {
     ///Returns the size of the window.
     fn size(&self) -> Rect;
@@ -7,7 +17,7 @@ pub trait Backend {
     fn buffer(&mut self) -> &mut [u32];
     //
     fn resize(&self);
-    fn present(&self);
+    fn present(&mut self);
     fn event(&mut self) -> Option<Event>;
 }
 

@@ -71,7 +71,7 @@ impl Backend for Glfw {
 
     fn resize(&self) {}
 
-    fn present(&self) {}
+    fn present(&mut self) {}
 
     fn event(&mut self) -> Option<Event> {
         while !self.window.should_close() {

@@ -54,7 +54,7 @@ impl Backend for Windows {
         // }
     }
 
-    fn present(&self) {
+    fn present(&mut self) {
         // StretchDIBits(
         //     context,
         //     0,

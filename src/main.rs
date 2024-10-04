@@ -4,7 +4,8 @@ use softui::windows::Windows;
 use softui::*;
 
 fn main() {
-    let window = Glfw::new(800, 600);
+    // let window = Glfw::new(800, 600);
+    let window = Minifb::new(800, 600);
     let ctx = create_ctx(window, "Softui");
 
     loop {
@@ -17,6 +18,12 @@ fn main() {
         }
 
         ctx.fill(Color::BLACK);
+
+        {
+            ctx.draw_rectangle(0, 0,200, 100, Color::RED);
+            // ctx.draw_pixel(0, 0, Color::RED.as_u32());
+            // ctx.draw_pixel(0, , Color::RED.as_u32());
+        }
 
         ctx.draw_frame();
     }
