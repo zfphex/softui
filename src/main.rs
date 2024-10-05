@@ -1,8 +1,8 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(unused, static_mut_refs)]
-use window::{Event, Key};
 // use softui::{create_ctx, text, v, Color, MouseButton::*, Text, Widget};
 use softui::*;
+use window::{Event, Key};
 
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
@@ -12,7 +12,6 @@ fn main() {
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
-            None => {}
             _ => {}
         }
 
@@ -41,7 +40,40 @@ fn main() {
             //         font_size -= 10;
             //     });
 
-            v!(text("hi").on_click(Left, |_| println!("test")));
+            // v!(text("hi").on_click(Left, |_| println!("test")));
+        }
+
+        {
+            let text = text("hi");
+            // let ct = ClickTuple {
+            //     widget: text,
+            //     click: (|widget: &mut Text<'_>| {}, |widget: &mut Text<'_>| {}),
+            // };
+
+            let mut ct = ClickTuple {
+                widget: text,
+                click: (
+                    (MouseButton::Left, |widget: &mut Text<'_>| {
+                        println!("Left click")
+                    }),
+                    (MouseButton::Right, |widget: &mut Text<'_>| {
+                        println!("Right click")
+                    }),
+                ),
+            };
+
+            // v!(ct);
+        }
+
+        {
+            // #[rustfmt::skip]
+            // v!(
+            //     text("test")
+            //     .on_click(Left, |_| println!("Left"))
+            //     .on_click(Right, |_| println!("Right"))
+            //     .on_click(Middle, |_| println!("Middle"))
+            // )
+            // .y(50);
         }
 
         ctx.draw_frame();
