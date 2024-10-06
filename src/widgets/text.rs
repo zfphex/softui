@@ -51,39 +51,6 @@ pub struct Text<'a> {
 }
 
 impl<'a> Text<'a> {
-    // pub fn on_click<F: FnMut(&mut Self)>(
-    //     self,
-    //     button: MouseButton,
-    //     click_fn: F,
-    // ) -> Click<Self, ClickContainerImpl<F, Text<'a>>> {
-    //     Click {
-    //         widget: self,
-    //         click_fn: ClickContainerImpl {
-    //             click_fn: Some(click_fn),
-    //             _marker: std::marker::PhantomData::default(),
-    //         },
-    //         click_fn_vec: Vec::new(),
-    //         button,
-    //     }
-    // }
-    // pub fn on_click<F: FnMut(&mut Self)>(self, button: MouseButton, click_fn: F) -> Click<Self, F> {
-    //     Click {
-    //         widget: self,
-    //         click_fn,
-    //         button,
-    //     }
-    // }
-    // pub fn on_click<F: FnMut(&mut Self)>(
-    //     self,
-    //     button: MouseButton,
-    //     click_fn: F,
-    // ) -> ClickTuple<Self, (MouseButton, F)> {
-    //     ClickTuple {
-    //         widget: self,
-    //         click: (button, click_fn),
-    //     }
-    // }
-
     pub fn on_click<F: FnMut(&mut Self)>(
         self,
         button: MouseButton,
