@@ -50,17 +50,17 @@ fn main() {
             //     click: (|widget: &mut Text<'_>| {}, |widget: &mut Text<'_>| {}),
             // };
 
-            let mut ct = ClickTuple {
-                widget: text,
-                click: (
-                    (MouseButton::Left, |widget: &mut Text<'_>| {
-                        println!("Left click")
-                    }),
-                    (MouseButton::Right, |widget: &mut Text<'_>| {
-                        println!("Right click")
-                    }),
-                ),
-            };
+            // let mut ct = ClickTuple {
+            //     widget: text,
+            //     click: (
+            //         (MouseButton::Left, |widget: &mut Text<'_>| {
+            //             println!("Left click")
+            //         }),
+            //         (MouseButton::Right, |widget: &mut Text<'_>| {
+            //             println!("Right click")
+            //         }),
+            //     ),
+            // };
 
             // v!(ct);
         }
@@ -74,6 +74,26 @@ fn main() {
             //     .on_click(Middle, |_| println!("Middle"))
             // )
             // .y(50);
+        }
+
+        {
+            let text = text("Hello :)")
+                .on_click(Left, |_| println!("Left"))
+                .on_click(Right, |_| println!("Right"))
+                .on_click(Middle, |_| println!("Middle"))
+                .on_click(Back, |_| println!("Mouse4"))
+                .on_click(Forward, |_| println!("Mouse5"));
+
+            vertical!(text);
+        }
+
+        {
+            // v!(text("hi")
+            //     .on_click(Left, |_| println!("Left"))
+            //     .on_click(Right, |_| println!("Right"))
+            //     .on_click(Middle, |_| println!("Middle"))
+            //     .on_click(Back, |_| println!("Mouse4"))
+            //     .on_click(Forward, |_| println!("Mouse5")));
         }
 
         ctx.draw_frame();

@@ -73,14 +73,25 @@ impl<'a> Text<'a> {
     //         button,
     //     }
     // }
+    // pub fn on_click<F: FnMut(&mut Self)>(
+    //     self,
+    //     button: MouseButton,
+    //     click_fn: F,
+    // ) -> ClickTuple<Self, (MouseButton, F)> {
+    //     ClickTuple {
+    //         widget: self,
+    //         click: (button, click_fn),
+    //     }
+    // }
+
     pub fn on_click<F: FnMut(&mut Self)>(
         self,
         button: MouseButton,
         click_fn: F,
-    ) -> ClickTuple<Self, (MouseButton, F)> {
-        ClickTuple {
+    ) -> Click0<Self, F> {
+        Click0 {
             widget: self,
-            click: (button, click_fn),
+            click: ((button, click_fn),),
         }
     }
     pub fn font_size(mut self, font_size: usize) -> Self {

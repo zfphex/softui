@@ -77,7 +77,21 @@ macro_rules! h {
 }
 
 #[macro_export]
+macro_rules! horizontal {
+    ($($widget:expr),*$(,)?) => {
+        $crate::layout!($crate::Direction::Horizontal, $($widget),*)
+    };
+}
+
+#[macro_export]
 macro_rules! v {
+    ($($widget:expr),*$(,)?) => {
+        $crate::layout!($crate::Direction::Vertical, $($widget),*)
+    };
+}
+
+#[macro_export]
+macro_rules! vertical {
     ($($widget:expr),*$(,)?) => {
         $crate::layout!($crate::Direction::Vertical, $($widget),*)
     };

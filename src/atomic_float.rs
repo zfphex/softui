@@ -8,7 +8,6 @@ pub struct AtomicF32 {
 }
 
 impl AtomicF32 {
-
     // #![feature(const_float_bits_conv)]
 
     /// New atomic float with initial value `value`.
