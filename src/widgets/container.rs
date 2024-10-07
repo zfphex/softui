@@ -24,22 +24,6 @@ impl<'a> IntoVec for Text<'a> {
     }
 }
 
-impl<'a> IntoVec for &'a dyn Widget {
-    type T = &'a dyn Widget;
-
-    fn into_vec(self) -> Vec<Self::T> {
-        vec![self]
-    }
-}
-
-impl<'a> IntoVec for &'a mut dyn Widget {
-    type T = &'a mut dyn Widget;
-
-    fn into_vec(self) -> Vec<Self::T> {
-        vec![self]
-    }
-}
-
 #[inline]
 pub fn iterate_widgets<T: IntoVec>(
     mut widgets: T,
@@ -177,7 +161,6 @@ macro_rules! layout {
                     $(
 
                         $crate::iterate_widgets($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
-
                     )*
                     // $(
                     //     $crate::layout($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
@@ -312,28 +295,5 @@ impl<F: DrawContainer> Drop for Container<F> {
         if let Some(mut f) = self.f.take() {
             f.call(self);
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::*;
-
-    #[test]
-    fn container() {
-        // let _ctx = create_ctx("Softui", 800, 600);
-        // let mut r = rect().wh(20);
-        // v!(&mut r as &mut dyn Widget);
-        // v!(
-        //     text("abc").x(10).y(20).width(20),
-        //     text(""),
-        //     text(""),
-        //     text(""),
-        //     text(""),
-        //     text(""),
-        //     text(""),
-        //     text(""),
-        //     text(""),
-        // );
     }
 }
