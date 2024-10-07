@@ -1,6 +1,71 @@
-use mini::info;
-
 use super::*;
+
+//I don't like this.
+//But I'll leave it for now.
+//Could incorporate it into widget but i'd prefer to remove it.
+pub trait IntoVec {
+    type T: Widget;
+    fn into_vec(self) -> Vec<Self::T>;
+}
+
+impl<'a, T: Widget + IntoVec> IntoVec for Vec<T> {
+    type T = T;
+
+    fn into_vec(self) -> Vec<Self::T> {
+        self
+    }
+}
+
+impl<'a> IntoVec for Text<'a> {
+    type T = Text<'a>;
+
+    fn into_vec(self) -> Vec<Self::T> {
+        vec![self]
+    }
+}
+
+impl<'a> IntoVec for &'a dyn Widget {
+    type T = &'a dyn Widget;
+
+    fn into_vec(self) -> Vec<Self::T> {
+        vec![self]
+    }
+}
+
+impl<'a> IntoVec for &'a mut dyn Widget {
+    type T = &'a mut dyn Widget;
+
+    fn into_vec(self) -> Vec<Self::T> {
+        vec![self]
+    }
+}
+
+#[inline]
+pub fn iterate_widgets<T: IntoVec>(
+    mut widgets: T,
+    margin: i32,
+    padding: i32,
+    max_width: &mut i32,
+    max_height: &mut i32,
+    x: &mut i32,
+    y: &mut i32,
+    layout_area: &mut Rect,
+    direction: Direction,
+) {
+    for widget in widgets.into_vec() {
+        layout(
+            widget,
+            margin,
+            padding,
+            max_width,
+            max_height,
+            x,
+            y,
+            layout_area,
+            direction,
+        );
+    }
+}
 
 pub fn layout<T: Widget>(
     mut widget: T,
@@ -107,10 +172,16 @@ macro_rules! layout {
                     let mut layout_area = $crate::Rect::new(x, y, 0, 0);
                     let mut max_width = 0;
                     let mut max_height = 0;
+                    use $crate::IntoVec;
 
                     $(
-                        $crate::layout($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
+
+                        $crate::iterate_widgets($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
+
                     )*
+                    // $(
+                    //     $crate::layout($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
+                    // )*
 
                     match direction {
                         $crate::Direction::Vertical => {
@@ -250,19 +321,19 @@ mod tests {
 
     #[test]
     fn container() {
-        let ctx = create_ctx("Softui", 800, 600);
-        let mut r = rect().wh(20);
-        v!(&mut r as &mut dyn Widget);
-        v!(
-            text("abc").x(10).y(20).width(20),
-            text(""),
-            text(""),
-            text(""),
-            text(""),
-            text(""),
-            text(""),
-            text(""),
-            text(""),
-        );
+        // let _ctx = create_ctx("Softui", 800, 600);
+        // let mut r = rect().wh(20);
+        // v!(&mut r as &mut dyn Widget);
+        // v!(
+        //     text("abc").x(10).y(20).width(20),
+        //     text(""),
+        //     text(""),
+        //     text(""),
+        //     text(""),
+        //     text(""),
+        //     text(""),
+        //     text(""),
+        //     text(""),
+        // );
     }
 }

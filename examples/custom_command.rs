@@ -31,10 +31,13 @@ fn main() {
         queue_command_fn(triangle);
 
         //or
-        // queue_command(Command::CustomFn(triangle));
+        queue_command(Command::CustomFn(triangle));
 
         //or
-        // unsafe { COMMAND_QUEUE.push(Command::CustomFn(triangle)) };
+        #[allow(static_mut_refs)]
+        unsafe {
+            COMMAND_QUEUE.push(Command::CustomFn(triangle))
+        };
 
         //Draw all queue commands.
         ctx.draw_frame();

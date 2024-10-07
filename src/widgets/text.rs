@@ -24,11 +24,11 @@ pub fn default_font_size() -> usize {
     unsafe { DEFAULT_FONT_SIZE.load(Ordering::Relaxed) }
 }
 
-pub fn set_font_size(font_size: usize) {
+pub fn set_default_font_size(font_size: usize) {
     unsafe { DEFAULT_FONT_SIZE.store(font_size, Ordering::Relaxed) }
 }
 
-pub fn text(text: &str) -> Text {
+pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
     Text {
         text: text.into(),
         color: Color::WHITE,

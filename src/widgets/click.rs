@@ -1,7 +1,9 @@
-use super::{clicked, ctx, Command, MouseButton, Widget};
+use super::{clicked, ctx, Command, IntoVec, MouseButton, Widget};
 
 macro_rules! impl_click {
     ($struct: ident;  $($t:ident),*; $next:ident; $next_fn:ident; $($idx:tt),*) => {
+        #[doc(hidden)]
+        #[derive(Clone)]
         pub struct $struct<T: Widget, $($t: FnMut(&mut T)),*> {
             pub widget: T,
             pub click: ($((MouseButton, $t)),*,),
@@ -16,6 +18,7 @@ macro_rules! impl_click {
             }
         }
 
+        #[doc(hidden)]
         impl<T: Widget, $($t: FnMut(&mut T)),*>Widget for $struct<T, $($t),*> {
             #[inline]
             fn area(&mut self) -> Option<&mut super::Rect> {
@@ -52,15 +55,29 @@ macro_rules! impl_click {
                     .finish()
             }
         }
+
+        impl<T: Widget, $($t: FnMut(&mut T)),*> $crate::IntoVec for $struct<T, $($t),*> {
+                type T = $struct<T, $($t),*>;
+
+                fn into_vec(self) -> Vec<Self::T> {
+                    vec![self]
+                }
+        }
     };
 }
 
+// TODO: Sealed widget trait might hide these Click structs from v! and h! errors.
+// TODO: What about scroll up and down?
+// TODO: What about mouse up and mouse down events...
 impl_click!(Click0; F0; Click1; F1; 0);
 impl_click!(Click1; F0, F1; Click2; F2; 0, 1);
 impl_click!(Click2; F0, F1, F2; Click3; F3; 0, 1, 2);
 impl_click!(Click3; F0, F1, F2, F3; Click4; F4; 0, 1, 2, 3);
 impl_click!(Click4; F0, F1, F2, F3, F4; Click5; F5; 0, 1, 2, 3, 4);
+// impl_click!(Click5; F0, F1, F2, F3, F4, F5; Click6; F6; 0, 1, 2, 3, 4, 5);
 
+#[doc(hidden)]
+#[derive(Clone)]
 pub struct Click5<
     T: Widget,
     F0: FnMut(&mut T),
@@ -91,9 +108,26 @@ impl<
         F5: FnMut(&mut T),
     > Click5<T, F0, F1, F2, F3, F4, F5>
 {
-    pub fn on_click<F6: FnMut(&mut Self)>(self, button: MouseButton, f: F6) {
+    pub fn on_click<F6: FnMut(&mut Self)>(self, _button: MouseButton, _f: F6) {
         unimplemented!(
             "On click chains are only support up to 5 times. Left, Right, Middle, Forward, Back."
         );
     }
 }
+
+// impl<
+//         T: Widget,
+//         F0: FnMut(&mut T),
+//         F1: FnMut(&mut T),
+//         F2: FnMut(&mut T),
+//         F3: FnMut(&mut T),
+//         F4: FnMut(&mut T),
+//         F5: FnMut(&mut T),
+//     > IntoVec for Click5<T, F0, F1, F2, F3, F4, F5>
+// {
+//     type T = Click5<T, F0, F1, F2, F3, F4, F5>;
+
+//     fn into_vec(self) -> Vec<Self::T> {
+//         vec![self]
+//     }
+// }
