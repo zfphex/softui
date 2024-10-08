@@ -3,13 +3,13 @@ use crate::Rect;
 use super::{Backend, Event};
 use minifb::*;
 
-pub struct Minifb {
+pub struct Window {
     buffer: Vec<u32>,
     window: Window,
     // size: Rect,
 }
 
-impl Minifb {
+impl Window {
     pub fn new(width: usize, height: usize) -> Self {
         let mut buffer = vec![0u32; width * height];
 
@@ -75,7 +75,7 @@ impl Minifb {
     }
 }
 
-impl Backend for Minifb {
+impl Backend for Window {
     fn size(&self) -> Rect {
         let (width, height) = self.window.get_size();
         let (x, y) = self.window.get_position();

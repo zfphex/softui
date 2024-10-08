@@ -1,17 +1,9 @@
 #![allow(unused)]
 use mini::defer_results;
-use softui::windows::Windows;
 use softui::*;
 
 fn main() {
-    // let window = Glfw::new(800, 600);
-    #[cfg(not(target_os = "windows"))]
-    let window = Minifb::new(800, 600);
-
-    #[cfg(target_os = "windows")]
-    let window = Windows::new(800, 600);
-
-    let ctx = create_ctx(window, "Softui");
+    let ctx = create_ctx("Softui", 800, 600);
 
     loop {
         match ctx.backend.event() {

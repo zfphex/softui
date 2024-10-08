@@ -1,6 +1,6 @@
 use crate::{Backend, Rect};
 use std::{ffi::c_void, pin::Pin};
-use window::*;
+use window::{client_area, create_window, GetDC, StretchDIBits, BITMAPINFO, RECT, SRCCOPY};
 
 impl From<RECT> for Rect {
     fn from(rect: RECT) -> Self {
@@ -13,15 +13,15 @@ impl From<RECT> for Rect {
     }
 }
 
-pub struct Windows {
-    window: Pin<Box<Window>>,
+pub struct Window {
+    window: Pin<Box<window::Window>>,
     buffer: Vec<u32>,
     bitmap: BITMAPINFO,
     dc: Option<*mut c_void>,
     area: Rect,
 }
 
-impl Windows {
+impl Window {
     pub fn new(width: usize, height: usize) -> Self {
         // TODO: Should the window struct in the `window` crate
         // have it's own framebuffer. Otherwise I'll need to create a wrapper.
@@ -38,7 +38,7 @@ impl Windows {
         let buffer_size = width as usize * height as usize;
         let mut buffer = vec![0u32; buffer_size];
 
-        Windows {
+        Self {
             window,
             buffer,
             bitmap,
@@ -48,7 +48,7 @@ impl Windows {
     }
 }
 
-impl Backend for Windows {
+impl Backend for Window {
     fn size(&self) -> crate::Rect {
         self.area
     }
@@ -98,10 +98,10 @@ impl Backend for Windows {
     fn event(&mut self) -> Option<crate::Event> {
         match self.window.event() {
             Some(event) => match event {
-                Event::Quit => Some(crate::Event::Quit),
-                Event::Mouse(x, y) => Some(crate::Event::Mouse(x, y)),
-                Event::Move => Some(crate::Event::Move),
-                Event::Dpi(dpi) => Some(crate::Event::Dpi(dpi)),
+                window::Event::Quit => Some(crate::Event::Quit),
+                window::Event::Mouse(x, y) => Some(crate::Event::Mouse(x, y)),
+                window::Event::Move => Some(crate::Event::Move),
+                window::Event::Dpi(dpi) => Some(crate::Event::Dpi(dpi)),
                 _ => None,
                 // Event::Input(key, modifiers) => Some(crate::Event::Input(key, modifiers)),
             },

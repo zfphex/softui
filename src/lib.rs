@@ -113,9 +113,16 @@ pub fn ctx() -> &'static mut Context {
     unsafe { CTX.as_mut().unwrap() }
 }
 
-pub fn create_ctx<T: Into<Window>>(backend: T, title: &str) -> &'static mut Context {
+// A different window struct will be imported on different platforms, not the best solutions but it works.
+pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Context {
+    #[cfg(not(target_os = "windows"))]
+    let window = Window::new(width, height);
+
+    #[cfg(target_os = "windows")]
+    let window = Window::new(width, height);
+
     unsafe {
-        CTX = Some(Context::new(backend.into(), title));
+        CTX = Some(Context::new(window, title));
         CTX.as_mut().unwrap()
     }
 }
@@ -126,85 +133,6 @@ pub enum Quadrant {
     BottomLeft,
     BottomRight,
 }
-
-// Whoever wrote this is an idiot.
-// Oh wait....
-macro_rules! backend_impl {
-    ( $($i:ident),* ) => {
-        impl Backend for Window {
-            #[inline]
-            fn size(&self) -> Rect {
-                match self {
-                    $(
-                        Window::$i(w) => w.size(),
-                    )*
-                }
-            }
-
-            #[inline]
-            fn buffer(&mut self) -> &mut [u32] {
-                match self {
-                    $(
-                        Window::$i(w) => w.buffer(),
-                    )*
-                }
-            }
-
-            #[inline]
-            fn resize(&mut self) {
-                match self {
-                    $(
-                        Window::$i(w) => w.resize(),
-                    )*
-                }
-            }
-
-            #[inline]
-            fn present(&mut self) {
-                match self {
-                    $(
-                        Window::$i(w) => w.present(),
-                    )*
-                }
-            }
-
-            #[inline]
-            fn event(&mut self) -> Option<Event> {
-                match self {
-                    $(
-                        Window::$i(w) => w.event(),
-                    )*
-                }
-            }
-        }
-
-        $(
-            impl Into<Window> for $i {
-                fn into(self) -> Window {
-                    Window::$i(self)
-                }
-            }
-        )*
-    };
-
-}
-
-//It's not a hard requirement to implement the backend trait.
-//Since its an enum we can use different functions not just the generic
-//Backend interface.
-pub enum Window {
-    Windows(Windows),
-    #[cfg(not(target_os = "windows"))]
-    Glfw(Glfw),
-    #[cfg(not(target_os = "windows"))]
-    Minifb(Minifb),
-}
-
-#[cfg(not(target_os = "windows"))]
-backend_impl!(Windows, Glfw, Minifb);
-
-#[cfg(target_os = "windows")]
-backend_impl!(Windows);
 
 /// Holds the framebuffer and input state.
 /// Also handles rendering.

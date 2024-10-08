@@ -1,13 +1,15 @@
 use crate::{MouseState, MouseStateNew, Rect};
 
-// #[cfg(target_os = "windows")]
+#[cfg(target_os = "windows")]
 pub mod windows;
+
+#[cfg(target_os = "windows")]
 pub use windows::*;
 
-#[cfg(not(target_os = "windows"))]
-pub mod glfw;
-#[cfg(not(target_os = "windows"))]
-pub use glfw::*;
+// #[cfg(not(target_os = "windows"))]
+// pub mod glfw;
+// #[cfg(not(target_os = "windows"))]
+// pub use glfw::*;
 
 #[cfg(not(target_os = "windows"))]
 pub mod minifb;
