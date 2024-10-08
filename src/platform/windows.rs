@@ -96,7 +96,7 @@ impl Backend for Windows {
     //TODO: This is dumb, maybe make another crate that will share the same type, no reason to convert between this.
     //TODO: Exit is broken
     fn event(&mut self) -> Option<crate::Event> {
-        match event(Some(self.window.hwnd)) {
+        match self.window.event() {
             Some(event) => match event {
                 Event::Quit => Some(crate::Event::Quit),
                 Event::Mouse(x, y) => Some(crate::Event::Mouse(x, y)),
