@@ -20,7 +20,10 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
-            ctx.draw_rectangle(0, 0,200, 100, Color::RED);
+            let t = text("hi");
+            let cmd = t.draw().unwrap();
+            queue_command(cmd.command);
+            // ctx.draw_rectangle(0, 0,200, 100, Color::RED);
             // ctx.draw_pixel(0, 0, Color::RED.as_u32());
             // ctx.draw_pixel(0, , Color::RED.as_u32());
         }
