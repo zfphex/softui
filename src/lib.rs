@@ -127,6 +127,8 @@ pub enum Quadrant {
     BottomRight,
 }
 
+// Whoever wrote this is an idiot.
+// Oh wait....
 macro_rules! backend_impl {
     ( $($i:ident),* ) => {
         impl Backend for Window {
@@ -149,7 +151,7 @@ macro_rules! backend_impl {
             }
 
             #[inline]
-            fn resize(&self) {
+            fn resize(&mut self) {
                 match self {
                     $(
                         Window::$i(w) => w.resize(),
@@ -192,11 +194,17 @@ macro_rules! backend_impl {
 //Backend interface.
 pub enum Window {
     Windows(Windows),
+    #[cfg(not(target_os = "windows"))]
     Glfw(Glfw),
-    Minifb(Minifb)
+    #[cfg(not(target_os = "windows"))]
+    Minifb(Minifb),
 }
 
+#[cfg(not(target_os = "windows"))]
 backend_impl!(Windows, Glfw, Minifb);
+
+#[cfg(target_os = "windows")]
+backend_impl!(Windows);
 
 /// Holds the framebuffer and input state.
 /// Also handles rendering.

@@ -37,18 +37,6 @@ pub struct Rect {
 
 
 
-#[cfg(target_os = "windows")]
-impl From<crate::RECT> for Rect {
-    fn from(rect: RECT) -> Self {
-        Rect {
-            x: 0,
-            y: 0,
-            width: rect.width(),
-            height: rect.height(),
-        }
-    }
-}
-
 impl Rect {
     pub const fn default() -> Self {
         Self {

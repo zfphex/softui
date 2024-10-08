@@ -86,7 +86,7 @@ impl Backend for Minifb {
         &mut self.buffer
     }
 
-    fn resize(&self) {}
+    fn resize(&mut self) {}
 
     fn present(&mut self) {
         let (width, height) = self.window.get_size();

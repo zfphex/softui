@@ -69,7 +69,7 @@ impl Backend for Glfw {
         self.buffer.as_mut_slice()
     }
 
-    fn resize(&self) {}
+    fn resize(&mut self) {}
 
     fn present(&mut self) {}
 

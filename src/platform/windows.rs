@@ -1,78 +1,111 @@
-use crate::{Backend, Window};
+use crate::{Backend, Rect};
+use std::{ffi::c_void, pin::Pin};
+use window::*;
+
+impl From<RECT> for Rect {
+    fn from(rect: RECT) -> Self {
+        Rect {
+            x: 0,
+            y: 0,
+            width: rect.width(),
+            height: rect.height(),
+        }
+    }
+}
 
 pub struct Windows {
-    //window: window::Window,
-    //framebuffer: Vec<u32>,
-    //bitmap: BITMAPINFO,
-    //dc: Option<*mut c_void>,
-    //area: Rect,
+    window: Pin<Box<Window>>,
+    buffer: Vec<u32>,
+    bitmap: BITMAPINFO,
+    dc: Option<*mut c_void>,
+    area: Rect,
 }
 
 impl Windows {
-    pub fn new() -> Self {
+    pub fn new(width: usize, height: usize) -> Self {
         // TODO: Should the window struct in the `window` crate
         // have it's own framebuffer. Otherwise I'll need to create a wrapper.
 
-        // create_window("Window", 600, 400)
+        let window = create_window("Window", 600, 400);
 
         //Convert top, left, right, bottom to x, y, width, height.
-        // let area = Rect::from(window.client_area());
-        // let width = area.width;
-        // let height = area.height;
+        let area = Rect::from(window.client_area());
+        let width = area.width;
+        let height = area.height;
 
-        // let context = GetDC(hwnd);
-        // let mut bitmap = BITMAPINFO::new(width, height);
-        // let buffer_size = width as usize * height as usize;
-        // let mut buffer = vec![0u32; buffer_size];
+        let context = unsafe { GetDC(window.hwnd) };
+        let mut bitmap = BITMAPINFO::new(width, height);
+        let buffer_size = width as usize * height as usize;
+        let mut buffer = vec![0u32; buffer_size];
 
-        Windows {}
+        Windows {
+            window,
+            buffer,
+            bitmap,
+            dc: Some(context),
+            area,
+        }
     }
 }
 
 impl Backend for Windows {
     fn size(&self) -> crate::Rect {
-        // self.area
-        todo!()
+        self.area
     }
 
     fn buffer(&mut self) -> &mut [u32] {
-        // self.framebuffer
-        todo!()
+        &mut self.buffer
     }
 
-    fn resize(&self) {
-        // let new_area = client_area(hwnd);
-        // if new_area != area {
-        //     area = new_area;
-        //     width = area.width();
-        //     height = area.height();
+    fn resize(&mut self) {
+        let new_area = Rect::from(client_area(self.window.hwnd));
 
-        //     buffer.clear();
-        //     buffer.resize(width as usize * height as usize, 0);
-        //     buffer.fill(fill_color);
-        //     bitmap = BITMAPINFO::new(width, height);
-        // }
+        if new_area != self.area {
+            self.area = new_area;
+            // self.area.width = self.area.width();
+            // self.area.height = self.area.height();
+
+            self.buffer.clear();
+            self.buffer
+                .resize(self.area.width as usize * self.area.height as usize, 0);
+            // self.buffer.fill(fill_color);
+            self.bitmap = BITMAPINFO::new(self.area.width, self.area.height);
+        }
     }
 
     fn present(&mut self) {
-        // StretchDIBits(
-        //     context,
-        //     0,
-        //     0,
-        //     width,
-        //     height,
-        //     0,
-        //     0,
-        //     width,
-        //     height,
-        //     buffer.as_mut_ptr() as *const c_void,
-        //     &bitmap,
-        //     0,
-        //     SRCCOPY,
-        // );
+        unsafe {
+            StretchDIBits(
+                self.dc.unwrap(),
+                0,
+                0,
+                self.area.width,
+                self.area.height,
+                0,
+                0,
+                self.area.width,
+                self.area.height,
+                self.buffer.as_mut_ptr() as *const c_void,
+                &self.bitmap,
+                0,
+                SRCCOPY,
+            );
+        }
     }
 
+    //TODO: This is dumb, maybe make another crate that will share the same type, no reason to convert between this.
+    //TODO: Exit is broken
     fn event(&mut self) -> Option<crate::Event> {
-        None
+        match event(Some(self.window.hwnd)) {
+            Some(event) => match event {
+                Event::Quit => Some(crate::Event::Quit),
+                Event::Mouse(x, y) => Some(crate::Event::Mouse(x, y)),
+                Event::Move => Some(crate::Event::Move),
+                Event::Dpi(dpi) => Some(crate::Event::Dpi(dpi)),
+                _ => None,
+                // Event::Input(key, modifiers) => Some(crate::Event::Input(key, modifiers)),
+            },
+            None => None,
+        }
     }
 }

@@ -5,15 +5,17 @@ use softui::*;
 
 fn main() {
     // let window = Glfw::new(800, 600);
+    #[cfg(not(target_os = "windows"))]
     let window = Minifb::new(800, 600);
+
+    #[cfg(target_os = "windows")]
+    let window = Windows::new(800, 600);
+
     let ctx = create_ctx(window, "Softui");
 
     loop {
         match ctx.backend.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
-            Some(event) => {
-                dbg!(event);
-            }
             _ => {}
         }
 
