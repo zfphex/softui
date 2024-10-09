@@ -1,5 +1,4 @@
 use crate::*;
-use mini::info;
 
 //Old version for testing.
 pub fn rct(ctx: &Context) -> Rectangle {
@@ -20,7 +19,7 @@ pub fn rect() -> Rectangle<'static> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Rectangle<'a> {
     pub area: Rect,
     pub ctx: &'a Context,
@@ -36,34 +35,22 @@ impl<'a> Rectangle<'a> {
 }
 
 impl<'a> Widget for Rectangle<'a> {
-    fn draw(&self) -> Option<DrawCommand> {
-        Some(DrawCommand {
-            area: self.area,
-            command: Command::Ellipse(
-                self.area.x as usize,
-                self.area.y as usize,
-                self.area.width as usize,
-                self.area.height as usize,
-                self.radius,
-                self.bg,
-            ),
-        })
+    fn draw_command(&self) -> Option<Command> {
+        Some(Command::Ellipse(
+            self.area.x as usize,
+            self.area.y as usize,
+            self.area.width as usize,
+            self.area.height as usize,
+            self.radius,
+            self.bg,
+        ))
     }
 
     #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
+    fn area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }
 
-    #[inline]
-    fn area(&self) -> Option<Rect> {
-        Some(self.area)
-    }
-
-    fn adjust_position(&mut self, x: i32, y: i32) {
-        self.area.x = x;
-        self.area.y = y;
-    }
     fn layout_area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }

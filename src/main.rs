@@ -1,12 +1,13 @@
-#![allow(unused)]
-use mini::defer_results;
+// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(unused, static_mut_refs)]
+// use softui::{create_ctx, text, v, Color, MouseButton::*, Text, Widget};
 use softui::*;
 
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
     loop {
-        match ctx.backend.event() {
+        match ctx.window.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
@@ -14,14 +15,15 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
-            let t = text("hi");
-            let cmd = t.draw().unwrap();
-            queue_command(cmd.command);
-            // ctx.draw_rectangle(0, 0,200, 100, Color::RED);
-            // ctx.draw_pixel(0, 0, Color::RED.as_u32());
-            // ctx.draw_pixel(0, , Color::RED.as_u32());
-        }
+            // let text = text("Hello :)")
+            //     .on_click(Left, |_| println!("Left"))
+            //     .on_click(Right, |_| println!("Right"))
+            //     .on_click(Middle, |_| println!("Middle"))
+            //     .on_click(Back, |_| println!("Mouse4"))
+            //     .on_click(Forward, |_| println!("Mouse5"));
 
+            // vertical!(text.clone(), text.clone(), text);
+        }
         ctx.draw_frame();
     }
 }

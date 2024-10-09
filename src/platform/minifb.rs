@@ -3,6 +3,7 @@ use crate::Rect;
 use super::{Backend, Event};
 use minifb::*;
 
+#[derive(Debug)]
 pub struct Window {
     buffer: Vec<u32>,
     window: Window,

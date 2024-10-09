@@ -1,7 +1,6 @@
 use crate::*;
-use atomic_float::AtomicF32;
 use fontdue::*;
-use std::{ops::Range, path::Path, sync::atomic::AtomicUsize};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub const FONT: &[u8] = include_bytes!("../../fonts/JetBrainsMono.ttf");
 
@@ -25,41 +24,41 @@ pub fn default_font_size() -> usize {
     unsafe { DEFAULT_FONT_SIZE.load(Ordering::Relaxed) }
 }
 
-pub fn set_font_size(font_size: usize) {
+pub fn set_default_font_size(font_size: usize) {
     unsafe { DEFAULT_FONT_SIZE.store(font_size, Ordering::Relaxed) }
 }
 
-pub fn text(text: &str) -> Text {
+pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
     Text {
-        //TODO: Compile time fonts.
-        font: default_font().unwrap(),
-        area: Rect::default(),
-        text,
+        text: text.into(),
         color: Color::WHITE,
         font_size: default_font_size(),
         line_height: None,
+        area: Rect::default(),
+        drawn: false,
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Text<'a> {
-    pub font: &'a fontdue::Font,
-    pub area: Rect,
-    pub text: &'a str,
+    pub text: Cow<'a, str>,
     pub color: Color,
     pub font_size: usize,
     pub line_height: Option<usize>,
+    //Used with the builder pattern, x(), y(), width(), etc...
+    pub area: Rect,
+    pub drawn: bool,
 }
 
 impl<'a> Text<'a> {
-    pub fn on_clicked_defered<F: FnMut(&mut Self) -> ()>(
+    pub fn on_click<F: FnMut(&mut Self)>(
         self,
         button: MouseButton,
-        on_click: F,
-    ) -> OnClickWrapper<Text<'a>, F> {
-        OnClickWrapper {
+        click_fn: F,
+    ) -> Click0<Self, F> {
+        Click0 {
             widget: self,
-            f: Some(on_click),
-            button,
+            click: ((button, click_fn),),
         }
     }
     pub fn font_size(mut self, font_size: usize) -> Self {
@@ -74,134 +73,16 @@ impl<'a> Text<'a> {
         self.color = color;
         self
     }
-    //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
-    //or maybe the buffer should just include all the text related code and the metrics should be static.
-    //TODO: If the text is longer than canvas width it needs to be clipped.
-    pub fn draw(&mut self) {
-        let mut y: usize = self.area.y.try_into().unwrap();
-        let x = self.area.x as usize;
-        let ctx = ctx();
+    fn calculate_area(&self, x: i32, y: i32) -> Rect {
+        let canvas_width = ctx().width();
 
-        let mut max_x = 0;
-        let mut max_y = 0;
-        let line_height = self.line_height.unwrap_or_default();
-
-        let r = self.color.r();
-        let g = self.color.g();
-        let b = self.color.b();
-
-        'line: for line in self.text.lines() {
-            let mut glyph_x = x;
-
-            'char: for char in line.chars() {
-                let (metrics, bitmap) = self.font.rasterize(char, self.font_size as f32);
-
-                let glyph_y = y as f32
-                    - (metrics.height as f32 - metrics.advance_height)
-                    - metrics.ymin as f32;
-
-                for y in 0..metrics.height {
-                    for x in 0..metrics.width {
-                        //TODO: Metrics.bounds determines the bounding are of the glyph.
-                        //Currently the whole bitmap bounding box is drawn.
-
-                        let alpha = bitmap[x + y * metrics.width];
-                        if alpha == 0 {
-                            continue;
-                        }
-
-                        //Should the text really be offset by the font size?
-                        //This allows the user to draw text at (0, 0).
-                        let offset = self.font_size as f32 + glyph_y + y as f32;
-
-                        //We can't render off of the screen, mkay?
-                        if offset < 0.0 {
-                            continue;
-                        }
-
-                        if max_x < x + glyph_x {
-                            max_x = x + glyph_x;
-                        }
-
-                        if max_y < offset as usize {
-                            max_y = offset as usize;
-                        }
-
-                        let i = x + glyph_x + ctx.width * offset as usize;
-
-                        if i >= ctx.buffer.len() {
-                            break 'char;
-                        }
-
-                        let bg = Color::new(ctx.buffer[i]);
-
-                        //Blend the background and the text color.
-                        #[rustfmt::skip]
-                        fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
-                            ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32) / 255.0).round() as u8
-                        }
-
-                        let r = blend(r, alpha, bg.r(), 255 - alpha);
-                        let g = blend(g, alpha, bg.g(), 255 - alpha);
-                        let b = blend(b, alpha, bg.b(), 255 - alpha);
-                        ctx.buffer[i] = rgb(r, g, b);
-                    }
-                }
-
-                glyph_x += metrics.advance_width as usize;
-
-                //TODO: Still not enough.
-                if glyph_x >= ctx.width {
-                    break 'line;
-                }
-            }
-
-            //CSS is probably line height * font size.
-            //1.2 is the default line height
-            //I'm guessing 1.0 is probably just adding the font size.
-            y += self.font_size + line_height;
-        }
-
-        //Not sure why these are one off.
-        self.area.height = (max_y as i32 + 1 - self.area.y);
-        self.area.width = (max_x as i32 + 1 - self.area.x);
-
-        ctx.draw_rectangle_outline(
-            self.area.x as usize,
-            self.area.y as usize,
-            self.area.width as usize,
-            self.area.height as usize,
-            Color::RED,
-        );
-    }
-}
-
-impl<'a> Widget for Text<'a> {
-    #[inline]
-    fn draw(&mut self) {
-        //TODO: Make this thread safe, by sending a draw call.
-
-        self.draw();
-        // todo!();
-    }
-
-    #[inline]
-    fn area(&self) -> Option<Rect> {
-        Some(self.area)
-    }
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.area)
-    }
-
-    fn adjust_position(&mut self, x: i32, y: i32) {
-        let ctx = ctx();
+        let font = default_font().unwrap();
+        let mut area = self.area;
 
         //These are set up front because it's easier.
         //This could be done when width and height is written.
-        self.area.y = y;
-        self.area.x = x;
+        area.x = x;
+        area.y = y;
 
         //TODO: Two text widgets with same y value have different heights.
         //Text needs to be aligned specifically over this y coordinate,
@@ -217,7 +98,7 @@ impl<'a> Widget for Text<'a> {
             let mut glyph_x = x;
 
             'char: for char in line.chars() {
-                let (metrics, bitmap) = self.font.rasterize(char, self.font_size as f32);
+                let (metrics, _) = font.rasterize(char, self.font_size as f32);
 
                 let glyph_y = y as f32
                     - (metrics.height as f32 - metrics.advance_height)
@@ -242,18 +123,14 @@ impl<'a> Widget for Text<'a> {
                             max_y = offset as usize;
                         }
 
-                        let i = x + glyph_x + ctx.width * offset as usize;
-
-                        if i >= ctx.buffer.len() {
-                            break 'char;
-                        }
+                        let i = x + glyph_x + canvas_width * offset as usize;
                     }
                 }
 
                 glyph_x += metrics.advance_width as usize;
 
                 //TODO: Still not enough.
-                if glyph_x >= ctx.width {
+                if glyph_x >= canvas_width {
                     break 'line;
                 }
             }
@@ -264,13 +141,49 @@ impl<'a> Widget for Text<'a> {
             y += self.font_size + line_height;
         }
 
-        let mut rect = self.area;
-        //Not sure why these are one off.
-        rect.height = (max_y as i32 + 1 - self.area.y);
-        rect.width = (max_x as i32 + 1 - self.area.x);
-
-        self.area = rect;
+        area.height = (max_y as i32 + 1 - area.y);
+        area.width = (max_x as i32 + 1 - area.x);
+        area
     }
+}
+
+impl<'a> Widget for Text<'a> {
+    fn draw_command(&self) -> Option<Command> {
+        //Because draw is immutable, the area must be calculated on each draw since it cannot store it's own state.
+        Some(Command::Text(
+            self.text.to_string(),
+            self.font_size,
+            self.area.x as usize,
+            self.area.y as usize,
+            Color::WHITE,
+        ))
+    }
+
+    #[inline]
+    fn area(&mut self) -> Option<&mut Rect> {
+        //The user can set a custom width and height of the text.
+        //If we assigned the area directly to the calculated area
+        //we would override `.width()` and `.height()` user calls.
+        // let area = self.calculate_area(self.area.x, self.area.y);
+        // self.area.x = area.x;
+        // self.area.y = area.y;
+
+        // if area.width > self.area.width {
+        //     self.area.width = area.width;
+        // }
+
+        // if area.height > self.area.height {
+        //     self.area.height = area.height;
+        // }
+
+        //I'm not sure if I want the user modifying the text area...
+        //It doesn't do anything
+
+        self.area = self.calculate_area(self.area.x, self.area.y);
+
+        Some(&mut self.area)
+    }
+
     fn centered(self, parent: Rect) -> Self {
         todo!()
     }
@@ -326,26 +239,26 @@ const LCD_FILTER: [u8; 5] = [0x08, 0x4D, 0x56, 0x4D, 0x08];
 // What in the fuck?
 // https://github.com/arkanis/gl-4.5-subpixel-text-rendering/blob/d770f0395f610d9fcc53319734069fe7fc4138b2/main.c#L626
 
-pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
-    let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-    let (metrics, bitmap) = font.rasterize_subpixel('g', 200.0);
+// pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
+//     let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
+//     let (metrics, bitmap) = font.rasterize_subpixel('g', 200.0);
 
-    let start_x = x;
-    let start_y = y;
+//     let start_x = x;
+//     let start_y = y;
 
-    for y in 0..metrics.height {
-        for x in 0..metrics.width {
-            let i = ((start_y + y) * ctx.width + start_x + x);
-            let j = (y * metrics.width + x) * 3;
+//     for y in 0..metrics.height {
+//         for x in 0..metrics.width {
+//             let i = ((start_y + y) * ctx.area.width as usize + start_x + x);
+//             let j = (y * metrics.width + x) * 3;
 
-            let r = bitmap[j];
-            let g = bitmap[j + 1];
-            let b = bitmap[j + 2];
+//             let r = bitmap[j];
+//             let g = bitmap[j + 1];
+//             let b = bitmap[j + 2];
 
-            ctx.buffer[i] = rgb(r, g, b);
-        }
-    }
-}
+//             ctx.buffer[i] = rgb(r, g, b);
+//         }
+//     }
+// }
 
 // #[cfg(test)]
 // mod tests {

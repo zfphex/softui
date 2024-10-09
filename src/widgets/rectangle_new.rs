@@ -1,13 +1,21 @@
-use std::marker::PhantomData;
-
 use crate::*;
-use mini::info;
 
 pub struct RectangleNew {
     pub area: Rect,
     pub radius: usize,
     pub on_clicked: Option<Box<dyn FnMut(&mut RectangleNew)>>,
     bg: Color,
+}
+
+impl std::fmt::Debug for RectangleNew {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RectangleNew")
+            .field("area", &self.area)
+            .field("radius", &self.radius)
+            // .field("on_clicked", &self.on_clicked)
+            .field("bg", &self.bg)
+            .finish()
+    }
 }
 
 impl RectangleNew {
@@ -35,10 +43,11 @@ impl RectangleNew {
         let ctx = ctx();
 
         if Self::is_container() {
-            self.adjust_position(0, 0);
+            todo!();
+            // self.adjust_position(0, 0);
         }
 
-        let area = self.area().unwrap();
+        let area = self.area().unwrap().clone();
 
         if !ctx.mouse_pos.intersects(area) {
             return;
@@ -72,7 +81,7 @@ impl RectangleNew {
 }
 
 impl Widget for RectangleNew {
-    fn draw(&self) -> Option<DrawCommand> {
+    fn draw_command(&self) -> Option<Command> {
         // self.temp_on_clicked(Left);
         // if let Some(click) = &mut self.on_clicked {
         //     click();
@@ -92,18 +101,8 @@ impl Widget for RectangleNew {
     }
 
     #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
+    fn area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
-    }
-
-    #[inline]
-    fn area(&self) -> Option<Rect> {
-        Some(self.area)
-    }
-
-    fn adjust_position(&mut self, x: i32, y: i32) {
-        self.area.x = x;
-        self.area.y = y;
     }
 
     fn layout_area(&mut self) -> Option<&mut Rect> {

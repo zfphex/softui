@@ -13,20 +13,26 @@ pub mod svg;
 #[cfg(feature = "svg")]
 pub use svg::*;
 
-pub mod container2;
-pub use container2::*;
+pub mod text;
+pub use text::*;
 
-pub mod text_immutable;
-pub use text_immutable::*;
+pub mod container;
+pub use container::*;
+
+pub mod click;
+pub use click::*;
 
 use crate::*;
 
-pub trait Widget {
-    fn draw(&self) -> Option<DrawCommand> {
+// #[diagnostic::on_unimplemented()]
+
+//Widgets should also be clone.
+pub trait Widget: std::fmt::Debug {
+    #[must_use]
+    fn draw_command(&self) -> Option<Command> {
         None
     }
-    fn area(&self) -> Option<Rect>;
-    fn area_mut(&mut self) -> Option<&mut Rect>;
+    fn area(&mut self) -> Option<&mut Rect>;
 
     //This should be called need_draw, need_compute_area, idk...
     //If we used Any we could just call self.type_id() == Container.
@@ -38,52 +44,52 @@ pub trait Widget {
         false
     }
 
-    //TODO: Explain why calculate takes in an x and y coordinate.
-    //I don't even remember why. It think it's for offsetting child widgets.
-    //calculate(self.area.x, self.area.y) is bad because. x and y are calculated
-    //to be x + self.area.x and y + self.area.y, so don't double up okay?
-    fn adjust_position(&mut self, x: i32, y: i32);
+    //This is used to run the click closure after calling on_click
+    //This should be hidden from the user and only implemented on `Click`.
+    //https://stackoverflow.com/questions/77562161/is-there-a-way-to-prevent-a-struct-from-implementing-a-trait-method
+    fn try_click(&mut self) {}
 
-    fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: MouseButton, mut function: F) -> Self
-    where
-        Self: Sized,
-    {
-        let ctx = ctx();
+    // fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: MouseButton, mut function: F) -> Self
+    // where
+    //     Self: Sized,
+    // {
+    //     let ctx = ctx();
 
-        if Self::is_container() {
-            self.adjust_position(0, 0);
-        }
+    //     if Self::is_container() {
+    //         todo!();
+    //         // self.adjust_position(0, 0);
+    //     }
 
-        let area = self.area().unwrap();
+    //     let area = self.area().unwrap();
 
-        if !ctx.mouse_pos.intersects(area) {
-            return self;
-        }
+    //     if !ctx.mouse_pos.intersects(area) {
+    //         return self;
+    //     }
 
-        let clicked = match button {
-            MouseButton::Left => {
-                ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Right => {
-                ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Middle => {
-                ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Back => {
-                ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area)
-            }
-            MouseButton::Forward => {
-                ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area)
-            }
-        };
+    //     let clicked = match button {
+    //         MouseButton::Left => {
+    //             ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
+    //         }
+    //         MouseButton::Right => {
+    //             ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
+    //         }
+    //         MouseButton::Middle => {
+    //             ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
+    //         }
+    //         MouseButton::Back => {
+    //             ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area)
+    //         }
+    //         MouseButton::Forward => {
+    //             ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area)
+    //         }
+    //     };
 
-        if clicked {
-            function(&mut self);
-        }
+    //     if clicked {
+    //         function(&mut self);
+    //     }
 
-        self
-    }
+    //     self
+    // }
     /// The user's cusor has been clicked and released on top of a widget.
     fn clicked(&mut self, button: MouseButton) -> bool
     where
@@ -92,7 +98,7 @@ pub trait Widget {
         let ctx = ctx();
 
         //Use area_mut so widgets can calculate their area.
-        let area = *self.area_mut().unwrap();
+        let area = *self.area().unwrap();
 
         if !ctx.mouse_pos.intersects(area) {
             return false;
@@ -116,12 +122,12 @@ pub trait Widget {
             }
         }
     }
-    fn up(&self, button: MouseButton) -> bool
+    fn up(&mut self, button: MouseButton) -> bool
     where
         Self: Sized,
     {
         let ctx = ctx();
-        let area = self.area().unwrap();
+        let area = self.area().unwrap().clone();
         if !ctx.mouse_pos.intersects(area) {
             return false;
         }
@@ -134,12 +140,12 @@ pub trait Widget {
             MouseButton::Forward => ctx.mouse_5.released,
         }
     }
-    fn down(&self, button: MouseButton) -> bool
+    fn down(&mut self, button: MouseButton) -> bool
     where
         Self: Sized,
     {
         let ctx = ctx();
-        let area = self.area().unwrap();
+        let area = self.area().unwrap().clone();
         if !ctx.mouse_pos.intersects(area) {
             return false;
         }
@@ -153,9 +159,9 @@ pub trait Widget {
         }
     }
 
-    //
-    // Layout
-
+    /// Used to modifiy x, y, width and height
+    /// Should return the `Rect` that stores the widget area/position.
+    /// I cannot remember why there are also area and area_mut functions.
     fn layout_area(&mut self) -> Option<&mut Rect>;
 
     fn centered(mut self, parent: Rect) -> Self
@@ -297,12 +303,7 @@ pub trait Widget {
 
 impl Widget for () {
     #[inline]
-    fn area(&self) -> Option<Rect> {
-        None
-    }
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
+    fn area(&mut self) -> Option<&mut Rect> {
         None
     }
 
@@ -310,6 +311,24 @@ impl Widget for () {
     fn layout_area(&mut self) -> Option<&mut Rect> {
         None
     }
+}
 
-    fn adjust_position(&mut self, x: i32, y: i32) {}
+impl Widget for &dyn Widget {
+    fn area(&mut self) -> Option<&mut Rect> {
+        None
+    }
+
+    fn layout_area(&mut self) -> Option<&mut Rect> {
+        None
+    }
+}
+
+impl Widget for &mut dyn Widget {
+    fn area(&mut self) -> Option<&mut Rect> {
+        (**self).area()
+    }
+
+    fn layout_area(&mut self) -> Option<&mut Rect> {
+        (**self).layout_area()
+    }
 }
