@@ -75,7 +75,6 @@ impl<'a> Text<'a> {
     }
     fn calculate_area(&self, x: i32, y: i32) -> Rect {
         let canvas_width = ctx().width();
-
         let font = default_font().unwrap();
         let mut area = self.area;
 
@@ -123,14 +122,14 @@ impl<'a> Text<'a> {
                             max_y = offset as usize;
                         }
 
-                        let i = x + glyph_x + canvas_width * offset as usize;
+                        let i = x + glyph_x + canvas_width as usize * offset as usize;
                     }
                 }
 
                 glyph_x += metrics.advance_width as usize;
 
                 //TODO: Still not enough.
-                if glyph_x >= canvas_width {
+                if glyph_x >= canvas_width  as usize{
                     break 'line;
                 }
             }

@@ -31,8 +31,11 @@ impl Window {
 
         //Convert top, left, right, bottom to x, y, width, height.
         let area = Rect::from(window.client_area());
+        let width = area.width;
+        let height = area.height;
+
         let context = unsafe { GetDC(window.hwnd) };
-        let mut bitmap = BITMAPINFO::new(area.width, area.height);
+        let mut bitmap = BITMAPINFO::new(width, height);
         let buffer_size = width as usize * height as usize;
         let mut buffer = vec![0u32; buffer_size];
 
@@ -57,6 +60,7 @@ impl Backend for Window {
 
     fn resize(&mut self) {
         let new_area = Rect::from(client_area(self.window.hwnd));
+
         if new_area != self.area {
             self.area = new_area;
             // self.area.width = self.area.width();

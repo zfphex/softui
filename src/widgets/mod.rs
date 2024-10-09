@@ -34,6 +34,12 @@ pub trait Widget: std::fmt::Debug {
     }
     fn area(&mut self) -> Option<&mut Rect>;
 
+    //Just for testing don't use this.
+    fn force_draw(&self) {
+        let dc = self.draw_command().unwrap();
+        unsafe { COMMAND_QUEUE.push(dc) };
+    }
+
     //This should be called need_draw, need_compute_area, idk...
     //If we used Any we could just call self.type_id() == Container.
     //Easy as that.
