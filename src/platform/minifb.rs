@@ -6,7 +6,7 @@ use minifb::*;
 #[derive(Debug)]
 pub struct Window {
     buffer: Vec<u32>,
-    window: Window,
+    window: minifb::Window,
     // size: Rect,
 }
 
@@ -14,7 +14,7 @@ impl Window {
     pub fn new(width: usize, height: usize) -> Self {
         let mut buffer = vec![0u32; width * height];
 
-        let mut window = Window::new(
+        let mut window = minifb::Window::new(
             "Softui",
             width,
             height,

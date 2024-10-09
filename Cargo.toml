@@ -20,4 +20,4 @@ window = { version = "0.1.0", path = "../window" }
 
 [target."cfg(not(windows))".dependencies]
 minifb = "0.27.0"
-glfw = "0.58.0"
+# glfw = "0.58.0"
