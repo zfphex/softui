@@ -15,7 +15,7 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
-            let text = text("hi there");
+            let text = text("hi");
             let dc = text.force_draw();
             // let text = text("Hello :)")
             //     .on_click(Left, |_| println!("Left"))

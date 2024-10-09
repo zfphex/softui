@@ -18,7 +18,7 @@ pub use minifb::*;
 
 pub trait Backend {
     ///Returns the size of the window.
-    fn size(&self) -> Rect;
+    fn area(&self) -> Rect;
     //Should return &mut [u32]
     fn buffer(&mut self) -> &mut [u32];
     //

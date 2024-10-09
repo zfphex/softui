@@ -77,7 +77,7 @@ impl Window {
 }
 
 impl Backend for Window {
-    fn size(&self) -> Rect {
+    fn area(&self) -> Rect {
         let (width, height) = self.window.get_size();
         let (x, y) = self.window.get_position();
         Rect::new(x as i32, y as i32, width as i32, height as i32)

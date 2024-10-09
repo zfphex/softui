@@ -249,7 +249,7 @@ impl Context {
     }
 
     pub fn get_pixel(&mut self, x: usize, y: usize) -> Option<&mut u32> {
-        let pos = x + (self.window.size().width as usize * y);
+        let pos = x + (self.window.area().width as usize * y);
         self.window.buffer().get_mut(pos)
     }
 
@@ -261,7 +261,7 @@ impl Context {
 
     ///Note color order is BGR_. The last byte is reserved.
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
-        let width = self.window.size().width as usize;
+        let width = self.window.area().width as usize;
         let buffer = unsafe { self.window.buffer().align_to_mut::<u32>().1 };
         buffer[y * width + x] = color;
     }
@@ -381,7 +381,7 @@ impl Context {
         self.bounds_check(x, y, width, height)?;
 
         for i in y..y + height {
-            let pos = x + self.window.size().width as usize * i;
+            let pos = x + self.window.area().width as usize * i;
             self.window.buffer()[pos..pos + width].fill(color.as_u32());
         }
         Ok(())
@@ -401,7 +401,7 @@ impl Context {
         #[cfg(debug_assertions)]
         self.bounds_check(x, y, width, height)?;
 
-        let mut i = x + (y * self.window.size().width as usize);
+        let mut i = x + (y * self.window.area().width as usize);
         for _ in 0..height {
             unsafe {
                 self.window
@@ -409,7 +409,7 @@ impl Context {
                     .get_unchecked_mut(i..i + width)
                     .fill(color)
             };
-            i += self.window.size().width as usize;
+            i += self.window.area().width as usize;
         }
 
         Ok(())
@@ -428,7 +428,7 @@ impl Context {
         self.bounds_check(x, y, width, height)?;
 
         for i in y..y + height {
-            let start = x + self.window.size().width as usize * i;
+            let start = x + self.window.area().width as usize * i;
             let end = start + width;
 
             for (x, px) in self.window.buffer()[start..end].iter_mut().enumerate() {
@@ -450,7 +450,7 @@ impl Context {
         color: Color,
     ) -> Result<(), String> {
         self.bounds_check(x, y, width, height)?;
-        let canvas_width = self.window.size().width as usize;
+        let canvas_width = self.window.area().width as usize;
         let buffer = unsafe { self.window.buffer().align_to_mut::<u32>().1 };
         let color = color.as_u32();
 
@@ -479,20 +479,20 @@ impl Context {
     ) -> Result<(), String> {
         #[cfg(debug_assertions)]
         {
-            if x + width >= self.window.size().width as usize {
+            if x + width >= self.window.area().width as usize {
                 return Err(format!(
                     "Canvas width is {}, cannot draw at {} ({}x + {}w)",
-                    self.window.size().width,
+                    self.window.area().width,
                     x + width,
                     x,
                     width,
                 ));
             }
 
-            if y + height >= self.window.size().height as usize {
+            if y + height >= self.window.area().height as usize {
                 return Err(format!(
                     "Canvas height is {}, cannot draw at {} ({}y + {}h)",
-                    self.window.size().height,
+                    self.window.area().height,
                     y + height,
                     y,
                     height,
@@ -526,7 +526,7 @@ impl Context {
 
         let color = color.as_u32();
 
-        let canvas_width = self.window.size().width as usize;
+        let canvas_width = self.window.area().width as usize;
 
         for i in y..y + height {
             let y = i - y;
@@ -596,7 +596,7 @@ impl Context {
         let g = color.g();
         let b = color.b();
 
-        let width = self.width();
+        let width = self.window.area().width;
 
         'line: for line in text.lines() {
             let mut glyph_x = x;
@@ -611,7 +611,7 @@ impl Context {
                 'y: for y in 0..metrics.height {
                     'x: for x in 0..metrics.width {
                         //Text doesn't fit on the screen.
-                        if (x + glyph_x) >= width {
+                        if (x + glyph_x) >= width as usize {
                             continue;
                         }
 
@@ -639,7 +639,7 @@ impl Context {
                             max_y = offset as usize;
                         }
 
-                        let i = x + glyph_x + self.window.size().width as usize * offset as usize;
+                        let i = x + glyph_x + width as usize * offset as usize;
 
                         if i >= self.window.buffer().len() {
                             break 'x;
@@ -664,9 +664,9 @@ impl Context {
                 glyph_x += metrics.advance_width as usize;
 
                 //Check if the glyph position is off the screen.
-                if glyph_x >= width {
+                if glyph_x >= width as usize {
                     //TODO: Still not enough.
-                    if glyph_x >= self.window.size().width as usize {
+                    if glyph_x >= width as usize {
                         break 'line;
                     }
                 }
@@ -693,11 +693,11 @@ impl Context {
 
     #[inline(always)]
     pub fn width(&self) -> usize {
-        self.window.size().width as usize
+        self.window.area().width as usize
     }
 
     #[inline(always)]
     pub fn height(&self) -> usize {
-        self.window.size().height as usize
+        self.window.area().height as usize
     }
 }
