@@ -574,6 +574,7 @@ impl Context {
 
     //TODO: If the text is longer than canvas width it needs to be clipped.
     //Currently it circles around and starts drawing from the front again.
+
     fn draw_text(
         &mut self,
         text: &str,
@@ -596,7 +597,7 @@ impl Context {
         let g = color.g();
         let b = color.b();
 
-        let width = self.window.area().width;
+        let width = self.window.area().width as usize;
 
         'line: for line in text.lines() {
             let mut glyph_x = x;
@@ -608,7 +609,7 @@ impl Context {
                     - (metrics.height as f32 - metrics.advance_height)
                     - metrics.ymin as f32;
 
-                'y: for y in 0..metrics.height {
+                for y in 0..metrics.height {
                     'x: for x in 0..metrics.width {
                         //Text doesn't fit on the screen.
                         if (x + glyph_x) >= width as usize {
@@ -617,6 +618,7 @@ impl Context {
 
                         //TODO: Metrics.bounds determines the bounding are of the glyph.
                         //Currently the whole bitmap bounding box is drawn.
+
                         let alpha = bitmap[x + y * metrics.width];
                         if alpha == 0 {
                             continue;
@@ -639,7 +641,7 @@ impl Context {
                             max_y = offset as usize;
                         }
 
-                        let i = x + glyph_x + width as usize * offset as usize;
+                        let i = x + glyph_x + width * offset as usize;
 
                         if i >= self.window.buffer().len() {
                             break 'x;
@@ -663,32 +665,29 @@ impl Context {
 
                 glyph_x += metrics.advance_width as usize;
 
-                //Check if the glyph position is off the screen.
-                if glyph_x >= width as usize {
-                    //TODO: Still not enough.
-                    if glyph_x >= width as usize {
-                        break 'line;
-                    }
+                //TODO: Still not enough.
+                if glyph_x >= width {
+                    break 'line;
                 }
-
-                //CSS is probably line height * font size.
-                //1.2 is the default line height
-                //I'm guessing 1.0 is probably just adding the font size.
-                y += font_size + line_height;
             }
 
-            //Not sure why these are one off.
-            area.height = max_y as i32 + 1 - area.y;
-            area.width = max_x as i32 + 1 - area.x;
-
-            // let _ = self.draw_rectangle_outline(
-            //     area.x as usize,
-            //     area.y as usize,
-            //     area.width as usize,
-            //     area.height as usize,
-            //     Color::RED,
-            // );
+            //CSS is probably line height * font size.
+            //1.2 is the default line height
+            //I'm guessing 1.0 is probably just adding the font size.
+            y += font_size + line_height;
         }
+
+        //Not sure why these are one off.
+        area.height = max_y as i32 + 1 - area.y;
+        area.width = max_x as i32 + 1 - area.x;
+
+        // self.draw_rectangle_outline(
+        //     area.x as usize,
+        //     area.y as usize,
+        //     area.width as usize,
+        //     area.height as usize,
+        //     Color::RED,
+        // );
     }
 
     #[inline(always)]
