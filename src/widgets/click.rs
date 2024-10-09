@@ -33,9 +33,9 @@ macro_rules! impl_click {
             #[inline]
             fn try_click(&mut self) {
                 //TODO: Thread safety
-                let ctx = ctx();
+                let ctx = $crate::ctx();
                 $(
-                    if clicked(ctx, &mut self.widget, self.click.$idx.0) {
+                    if $crate::clicked(ctx, &mut self.widget, self.click.$idx.0) {
                         self.click.$idx.1(&mut self.widget);
                     }
                 )*

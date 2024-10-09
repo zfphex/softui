@@ -101,32 +101,7 @@ pub trait Widget: std::fmt::Debug {
     where
         Self: Sized,
     {
-        let ctx = ctx();
-
-        //Use area_mut so widgets can calculate their area.
-        let area = *self.area().unwrap();
-
-        if !ctx.mouse_pos.intersects(area) {
-            return false;
-        }
-
-        match button {
-            MouseButton::Left => {
-                ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Right => {
-                ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Middle => {
-                ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Back => {
-                ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area)
-            }
-            MouseButton::Forward => {
-                ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area)
-            }
-        }
+        clicked(ctx(), self, button)
     }
     fn up(&mut self, button: MouseButton) -> bool
     where

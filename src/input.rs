@@ -1,6 +1,40 @@
 use crate::*;
 
-pub fn clicked<T: Widget + Sized>(ctx: &Context, widget: &mut T, button: MouseButton) -> bool {
+pub fn clicked_im<T: Widget + Sized>(ctx: &mut Context, widget: &mut T, button: MouseButton) -> bool {
+    let area = widget.area().unwrap().clone();
+    if !ctx.mouse_pos.intersects(area) {
+        return false;
+    }
+
+    match button {
+        MouseButton::Left => {
+            if ctx.left_mouse.pressed && ctx.left_mouse.inital_position.intersects(area) {
+                ctx.left_mouse.pressed = false;
+                true
+            } else {
+                false
+            }
+        }
+        MouseButton::Right => {
+            if ctx.right_mouse.pressed && ctx.right_mouse.inital_position.intersects(area) {
+                ctx.right_mouse.pressed = false;
+                true
+            } else {
+                false
+            }
+        }
+        MouseButton::Middle => {
+            ctx.middle_mouse.pressed && ctx.middle_mouse.inital_position.intersects(area)
+        }
+        MouseButton::Back => ctx.mouse_4.pressed && ctx.mouse_4.inital_position.intersects(area),
+        MouseButton::Forward => ctx.mouse_5.pressed && ctx.mouse_5.inital_position.intersects(area),
+    }
+}
+
+pub fn clicked<T: Widget + Sized>(ctx: &mut Context, widget: &mut T, button: MouseButton) -> bool {
+    //No mouse released with minifb sigh...
+    return clicked_im(ctx, widget, button);
+
     let area = widget.area().unwrap().clone();
     if !ctx.mouse_pos.intersects(area) {
         return false;

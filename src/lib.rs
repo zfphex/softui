@@ -157,6 +157,7 @@ impl Context {
     //TODO: Cleanup and remove.
     pub fn event(&mut self) -> Option<Event> {
         profile!();
+        self.mouse_pos = self.window.mouse_pos();
         match self.window.event() {
             None => None,
             Some(event) => {

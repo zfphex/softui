@@ -25,6 +25,7 @@ pub trait Backend {
     fn resize(&mut self);
     fn present(&mut self);
     fn event(&mut self) -> Option<Event>;
+    fn mouse_pos(&self) -> Rect;
 }
 
 //Ripped from `window`

@@ -1,6 +1,6 @@
 use crate::Rect;
 
-use super::{Backend, Event};
+use super::{Backend, Event, Modifiers};
 use minifb::*;
 
 #[derive(Debug)]
@@ -106,6 +106,22 @@ impl Backend for Window {
         if !self.window.is_open() || self.window.is_key_down(Key::Escape) {
             return Some(Event::Quit);
         }
+
+        //This just doesn't work ...
+
+        // if self.window.get_mouse_down(minifb::MouseButton::Left) {
+        //     return Some(Event::Input(
+        //         super::Key::LeftMouseDown,
+        //         super::Modifiers::new(),
+        //     ));
+        // }
+
+        // if self.window.get_mouse_down(minifb::MouseButton::Right) {
+        //     return Some(Event::Input(
+        //         super::Key::RightMouseDown,
+        //         super::Modifiers::new(),
+        //     ));
+        // }
 
         return None;
 
@@ -223,5 +239,10 @@ impl Backend for Window {
         }
 
         None
+    }
+
+    fn mouse_pos(&self) -> Rect {
+        let (x, y) = self.window.get_mouse_pos(MouseMode::Pass).unwrap();
+        Rect::new(x as i32, y as i32, 1, 1)
     }
 }
