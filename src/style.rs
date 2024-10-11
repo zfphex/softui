@@ -60,6 +60,12 @@ impl Color {
 }
 
 #[inline]
+///Blend the background and the text color.
+pub fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
+    ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32) / 255.0).round() as u8
+}
+
+#[inline]
 pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
     (a * (1.0 - t)) + (b * t)
 }

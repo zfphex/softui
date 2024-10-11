@@ -12,18 +12,20 @@ fn main() {
             _ => {}
         }
 
-        ctx.fill(Color::BLACK);
+        ctx.fill(Color::WHITE);
+        ctx.draw_glyph_subpixel();
 
-        {
-            let text = text("Hello :)")
-                .on_click(Left, |_| println!("Left"))
-                .on_click(Right, |_| println!("Right"))
-                .on_click(Middle, |_| println!("Middle"))
-                .on_click(Back, |_| println!("Mouse4"))
-                .on_click(Forward, |_| println!("Mouse5"));
+        // {
+        //     let text = text("Hello :)")
+        //         .on_click(Left, |_| println!("Left"))
+        //         .on_click(Right, |_| println!("Right"))
+        //         .on_click(Middle, |_| println!("Middle"))
+        //         .on_click(Back, |_| println!("Mouse4"))
+        //         .on_click(Forward, |_| println!("Mouse5"));
 
-            vertical!(text.clone(), text.clone(), text);
-        }
+        //     vertical!(text.clone(), text.clone(), text);
+        // }
+
         ctx.draw_frame();
     }
 }

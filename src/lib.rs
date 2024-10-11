@@ -672,13 +672,6 @@ impl Context {
 
                         let bg = Color::new(self.buffer[i]);
 
-                        //Blend the background and the text color.
-                        #[inline]
-                        #[rustfmt::skip]
-                        fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
-                            ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32) / 255.0).round() as u8
-                        }
-
                         let r = blend(r, alpha, bg.r(), 255 - alpha);
                         let g = blend(g, alpha, bg.g(), 255 - alpha);
                         let b = blend(b, alpha, bg.b(), 255 - alpha);
@@ -721,5 +714,108 @@ impl Context {
     #[inline(always)]
     pub fn height(&self) -> usize {
         self.area.height as usize
+    }
+
+    pub fn draw_glyph_subpixel(&mut self) {
+        use dwrote::*;
+        use std::sync::Arc;
+
+        let font_data = Arc::new(FONT);
+        let font_file = FontFile::new_from_buffer(font_data.clone()).unwrap();
+        let collection_loader = CustomFontCollectionLoaderImpl::new(&[font_file.clone()]);
+        let collection = FontCollection::from_loader(collection_loader);
+        let family = collection.get_font_family(0);
+        let font = family.get_font(3);
+        let font_face = font.create_font_face();
+
+        let glyph_id = font_face
+            .get_glyph_indices(&[b'h' as u32])
+            .into_iter()
+            .next()
+            .and_then(|g| if g != 0 { Some(g as u32) } else { None })
+            .unwrap();
+
+        let advance = 0.0;
+        let point_size = 48.0;
+        let offset = GlyphOffset {
+            advanceOffset: 0.0,
+            ascenderOffset: 0.0,
+        };
+
+        let glyph_run = DWRITE_GLYPH_RUN {
+            fontFace: unsafe { font_face.as_ptr() },
+            fontEmSize: point_size,
+            glyphCount: 1,
+            glyphIndices: &(glyph_id as u16),
+            glyphAdvances: &advance,
+            glyphOffsets: &offset,
+            isSideways: 0,
+            bidiLevel: 0,
+        };
+        let glyph_analysis = GlyphRunAnalysis::create(
+            &glyph_run,
+            1.0,
+            None,
+            // Some(dwrote::DWRITE_MATRIX {
+            //     m11: transform.m11(),
+            //     m12: transform.m12(),
+            //     m21: transform.m21(),
+            //     m22: transform.m22(),
+            //     dx: transform.vector.x(),
+            //     dy: transform.vector.y(),
+            // }),
+            DWRITE_RENDERING_MODE_NATURAL,
+            DWRITE_MEASURING_MODE_NATURAL,
+            0.0,
+            0.0,
+        )
+        .unwrap();
+
+        let texture_bounds = glyph_analysis
+            .get_alpha_texture_bounds(DWRITE_TEXTURE_CLEARTYPE_3x1)
+            .unwrap();
+        let texture_width = texture_bounds.right - texture_bounds.left;
+        let texture_height = texture_bounds.bottom - texture_bounds.top;
+
+        if texture_width == 0 || texture_height == 0 {
+            panic!();
+        }
+
+        let alpha_texture = glyph_analysis
+            .create_alpha_texture(DWRITE_TEXTURE_CLEARTYPE_3x1, texture_bounds)
+            .unwrap();
+
+        let start_x = 0;
+        let start_y = 0;
+        let color = Color::BLACK;
+
+        for y in 0..texture_height as usize {
+            for x in 0..texture_width as usize {
+                let i = ((start_y + y) * self.width() + start_x + x);
+                let j = (y * texture_width as usize + x) * 3;
+
+                let r = alpha_texture[j];
+                let g = alpha_texture[j + 1];
+                let b = alpha_texture[j + 2];
+
+                //TODO: Blend background, font color and rgb values together.
+
+                let alpha = ((r as u32 + b as u32 + g as u32) / 3) as u8;
+                // let r = blend(r, 0, color.r(), 255);
+                // let g = blend(g, 0, color.g(), 255);
+                // let b = blend(b, 0, color.b(), 255);
+
+                // let bg = Color::new(self.buffer[i]);
+                // let r = blend(r, alpha, bg.r(), alpha);
+                // let g = blend(g, alpha, bg.g(), alpha);
+                // let b = blend(b, alpha, bg.b(), alpha);
+
+                //Black
+                self.buffer[i] = rgb(255 - r, 255 - g, 255 - b);
+
+                //White
+                // self.buffer[i] = rgb(r, g, b);
+            }
+        }
     }
 }
