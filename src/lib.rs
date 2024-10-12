@@ -743,10 +743,14 @@ impl Context {
             let mut glyph_x = x;
 
             'char: for char in line.chars() {
-                let (width, height, bitmap) = dwrite.glyph(char, font_size as f32);
-                let advance_width = width;
-                let advance_height = 0;
-                let ymin = 0;
+                let (metrics, texture) = dwrite.glyph(char, font_size as f32);
+                let height = texture.height;
+                let width = texture.width;
+                let texture = texture.data;
+
+                let advance_width = metrics.advance_width;
+                let advance_height = metrics.advance_height;
+                let ymin = metrics.bottom_side_bearing;
 
                 let glyph_y = y as f32 - (height as f32 - advance_height as f32) - ymin as f32;
 
@@ -757,13 +761,7 @@ impl Context {
                             continue;
                         }
 
-                        //Should the text really be offset by the font size?
-                        //This allows the user to draw text at (0, 0).
-                        let offset = font_size as f32 + glyph_y + y as f32;
-
-                        if offset < 0.0 {
-                            continue;
-                        }
+                        let offset = glyph_y + y as f32;
 
                         if max_x < x as usize + glyph_x {
                             max_x = x as usize + glyph_x;
@@ -780,9 +778,9 @@ impl Context {
                             break 'x;
                         }
 
-                        let r = bitmap[j];
-                        let g = bitmap[j + 1];
-                        let b = bitmap[j + 2];
+                        let r = texture[j];
+                        let g = texture[j + 1];
+                        let b = texture[j + 2];
                         self.buffer[i] = rgb(255 - r, 255 - g, 255 - b);
                     }
                 }
@@ -820,16 +818,16 @@ impl Context {
         let color = Color::BLACK;
         let dwrite = DWrite::new();
 
-        let (texture_width, texture_height, alpha_texture) = dwrite.glyph('h', 32.0);
+        let (metrics, texture) = dwrite.glyph('h', 32.0);
 
-        for y in 0..texture_height as usize {
-            for x in 0..texture_width as usize {
+        for y in 0..texture.height as usize {
+            for x in 0..texture.width as usize {
                 let i = ((start_y + y) * self.width() + start_x + x);
-                let j = (y * texture_width as usize + x) * 3;
+                let j = (y * texture.width as usize + x) * 3;
 
-                let r = alpha_texture[j];
-                let g = alpha_texture[j + 1];
-                let b = alpha_texture[j + 2];
+                let r = texture.data[j];
+                let g = texture.data[j + 1];
+                let b = texture.data[j + 2];
 
                 //TODO: Blend background, font color and rgb values together.
                 // let alpha = ((r as u32 + b as u32 + g as u32) / 3) as u8;

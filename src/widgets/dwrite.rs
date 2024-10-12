@@ -4,6 +4,23 @@ use dwrote::*;
 
 use super::FONT;
 
+pub struct Texture {
+    pub data: Vec<u8>,
+    pub width: i32,
+    pub height: i32,
+}
+
+#[derive(Copy, Clone)]
+pub struct Metrics {
+    pub left_size_bearing: i32,
+    pub advance_width: u32,
+    pub right_side_bearing: i32,
+    pub top_side_bearing: i32,
+    pub advance_height: u32,
+    pub bottom_side_bearing: i32,
+    pub vertical_origin_y: i32,
+}
+
 pub struct DWrite {
     font_face: FontFace,
 }
@@ -19,20 +36,64 @@ impl DWrite {
         let font_face = font.create_font_face();
         Self { font_face }
     }
-    pub fn glyph(&self, char: char, point_size: f32) -> (i32, i32, Vec<u8>) {
+    pub fn glyph(&self, char: char, point_size: f32) -> (Metrics, Texture) {
         let glyph_id = self
             .font_face
             .get_glyph_indices(&[char as u32])
             .into_iter()
             .next()
-            .and_then(|g| if g != 0 { Some(g as u32) } else { None })
+            .and_then(|g| if g != 0 { Some(g) } else { None })
             .unwrap();
+
+        let glyph_metrics = self.font_face.get_design_glyph_metrics(&[glyph_id], false)[0];
+        let metrics = self.font_face.metrics().metrics0();
+
+        //object oriented programming at it's finest 🍷
+        let glyph_metrics = Metrics {
+            left_size_bearing: ((glyph_metrics.leftSideBearing as f32
+                / metrics.designUnitsPerEm as f32)
+                * point_size)
+                .round() as i32,
+            advance_width: ((glyph_metrics.advanceWidth as f32 / metrics.designUnitsPerEm as f32)
+                * point_size)
+                .round() as u32,
+            right_side_bearing: ((glyph_metrics.rightSideBearing as f32
+                / metrics.designUnitsPerEm as f32)
+                * point_size)
+                .round() as i32,
+            top_side_bearing: ((glyph_metrics.topSideBearing as f32
+                / metrics.designUnitsPerEm as f32)
+                * point_size)
+                .round() as i32,
+            advance_height: ((glyph_metrics.advanceHeight as f32 / metrics.designUnitsPerEm as f32)
+                * point_size)
+                .round() as u32,
+            bottom_side_bearing: ((glyph_metrics.bottomSideBearing as f32
+                / metrics.designUnitsPerEm as f32)
+                * point_size)
+                .round() as i32,
+            vertical_origin_y: ((glyph_metrics.verticalOriginY as f32
+                / metrics.designUnitsPerEm as f32)
+                * point_size)
+                .round() as i32,
+        };
+
+        if char == ' ' {
+            return (
+                glyph_metrics,
+                Texture {
+                    data: Vec::new(),
+                    width: glyph_metrics.advance_width as i32,
+                    height: 0,
+                },
+            );
+        }
 
         let glyph_run = DWRITE_GLYPH_RUN {
             fontFace: unsafe { self.font_face.as_ptr() },
             fontEmSize: point_size,
             glyphCount: 1,
-            glyphIndices: &(glyph_id as u16),
+            glyphIndices: &glyph_id,
             glyphAdvances: &0.0,
             glyphOffsets: &GlyphOffset {
                 advanceOffset: 0.0,
@@ -59,13 +120,27 @@ impl DWrite {
         let texture_height = texture_bounds.bottom - texture_bounds.top;
 
         if texture_width == 0 || texture_height == 0 {
-            return (0, 0, Vec::new());
+            return (
+                glyph_metrics,
+                Texture {
+                    data: Vec::new(),
+                    width: texture_width,
+                    height: texture_height,
+                },
+            );
         }
 
         let alpha_texture = glyph_analysis
             .create_alpha_texture(DWRITE_TEXTURE_CLEARTYPE_3x1, texture_bounds)
             .unwrap();
 
-        (texture_width, texture_height, alpha_texture)
+        (
+            glyph_metrics,
+            Texture {
+                data: alpha_texture,
+                width: texture_width,
+                height: texture_height,
+            },
+        )
     }
 }
