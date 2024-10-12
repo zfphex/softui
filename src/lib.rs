@@ -601,7 +601,7 @@ impl Context {
 
     //TODO: If the text is longer than canvas width it needs to be clipped.
     //Currently it circles around and starts drawing from the front again.
-    fn draw_text(
+    pub fn draw_text(
         &mut self,
         text: &str,
         font: &fontdue::Font,
@@ -715,79 +715,112 @@ impl Context {
     pub fn height(&self) -> usize {
         self.area.height as usize
     }
+    pub fn draw_text_subpixel(
+        &mut self,
+        text: &str,
+        dwrite: &DWrite,
+        font_size: usize,
+        x: usize,
+        y: usize,
+        //Zero is fine
+        line_height: usize,
+        color: Color,
+    ) {
+        let mut area = Rect::new(x as i32, y as i32, 0, 0);
+        let mut y: usize = area.y.try_into().unwrap();
+        let x = area.x as usize;
 
-    pub fn draw_glyph_subpixel(&mut self) {
-        use dwrote::*;
-        use std::sync::Arc;
+        let mut max_x = 0;
+        let mut max_y = 0;
 
-        let font_data = Arc::new(FONT);
-        let font_file = FontFile::new_from_buffer(font_data.clone()).unwrap();
-        let collection_loader = CustomFontCollectionLoaderImpl::new(&[font_file.clone()]);
-        let collection = FontCollection::from_loader(collection_loader);
-        let family = collection.get_font_family(0);
-        let font = family.get_font(3);
-        let font_face = font.create_font_face();
+        let r = color.r();
+        let g = color.g();
+        let b = color.b();
 
-        let glyph_id = font_face
-            .get_glyph_indices(&[b'h' as u32])
-            .into_iter()
-            .next()
-            .and_then(|g| if g != 0 { Some(g as u32) } else { None })
-            .unwrap();
+        let ctx_width = self.width();
 
-        let advance = 0.0;
-        let point_size = 48.0;
-        let offset = GlyphOffset {
-            advanceOffset: 0.0,
-            ascenderOffset: 0.0,
-        };
+        'line: for line in text.lines() {
+            let mut glyph_x = x;
 
-        let glyph_run = DWRITE_GLYPH_RUN {
-            fontFace: unsafe { font_face.as_ptr() },
-            fontEmSize: point_size,
-            glyphCount: 1,
-            glyphIndices: &(glyph_id as u16),
-            glyphAdvances: &advance,
-            glyphOffsets: &offset,
-            isSideways: 0,
-            bidiLevel: 0,
-        };
-        let glyph_analysis = GlyphRunAnalysis::create(
-            &glyph_run,
-            1.0,
-            None,
-            // Some(dwrote::DWRITE_MATRIX {
-            //     m11: transform.m11(),
-            //     m12: transform.m12(),
-            //     m21: transform.m21(),
-            //     m22: transform.m22(),
-            //     dx: transform.vector.x(),
-            //     dy: transform.vector.y(),
-            // }),
-            DWRITE_RENDERING_MODE_NATURAL,
-            DWRITE_MEASURING_MODE_NATURAL,
-            0.0,
-            0.0,
-        )
-        .unwrap();
+            'char: for char in line.chars() {
+                let (width, height, bitmap) = dwrite.glyph(char, font_size as f32);
+                let advance_width = width;
+                let advance_height = 0;
+                let ymin = 0;
 
-        let texture_bounds = glyph_analysis
-            .get_alpha_texture_bounds(DWRITE_TEXTURE_CLEARTYPE_3x1)
-            .unwrap();
-        let texture_width = texture_bounds.right - texture_bounds.left;
-        let texture_height = texture_bounds.bottom - texture_bounds.top;
+                let glyph_y = y as f32 - (height as f32 - advance_height as f32) - ymin as f32;
 
-        if texture_width == 0 || texture_height == 0 {
-            panic!();
+                'y: for y in 0..height {
+                    'x: for x in 0..width {
+                        //Text doesn't fit on the screen.
+                        if (x + glyph_x as i32) >= ctx_width as i32 {
+                            continue;
+                        }
+
+                        //Should the text really be offset by the font size?
+                        //This allows the user to draw text at (0, 0).
+                        let offset = font_size as f32 + glyph_y + y as f32;
+
+                        if offset < 0.0 {
+                            continue;
+                        }
+
+                        if max_x < x as usize + glyph_x {
+                            max_x = x as usize + glyph_x;
+                        }
+
+                        if max_y < offset as usize {
+                            max_y = offset as usize;
+                        }
+
+                        let i = x as usize + glyph_x + self.area.width as usize * offset as usize;
+                        let j = (y as usize * width as usize + x as usize) * 3;
+
+                        if i >= self.buffer.len() {
+                            break 'x;
+                        }
+
+                        let r = bitmap[j];
+                        let g = bitmap[j + 1];
+                        let b = bitmap[j + 2];
+                        self.buffer[i] = rgb(255 - r, 255 - g, 255 - b);
+                    }
+                }
+
+                glyph_x += advance_width as usize;
+
+                //Check if the glyph position is off the screen.
+                if glyph_x >= self.area.width as usize {
+                    break 'line;
+                }
+            }
+
+            //CSS is probably line height * font size.
+            //1.2 is the default line height
+            //I'm guessing 1.0 is probably just adding the font size.
+            y += font_size as usize + line_height;
         }
 
-        let alpha_texture = glyph_analysis
-            .create_alpha_texture(DWRITE_TEXTURE_CLEARTYPE_3x1, texture_bounds)
-            .unwrap();
+        //Not sure why these are one off.
+        area.height = max_y as i32 + 1 - area.y;
+        area.width = max_x as i32 + 1 - area.x;
 
-        let start_x = 0;
-        let start_y = 0;
+        // let _ = self.draw_rectangle_outline(
+        //     area.x as usize,
+        //     area.y as usize,
+        //     area.width as usize,
+        //     area.height as usize,
+        //     Color::RED,
+        // );
+    }
+
+    pub fn draw_glyph_subpixel(&mut self) {
+        let start_x = 50;
+        let start_y = 50;
         let color = Color::BLACK;
+        let dwrite = DWrite::new();
+
+        let (texture_width, texture_height, alpha_texture) = dwrite.glyph('h', 32.0);
 
         for y in 0..texture_height as usize {
             for x in 0..texture_width as usize {
@@ -799,8 +832,7 @@ impl Context {
                 let b = alpha_texture[j + 2];
 
                 //TODO: Blend background, font color and rgb values together.
-
-                let alpha = ((r as u32 + b as u32 + g as u32) / 3) as u8;
+                // let alpha = ((r as u32 + b as u32 + g as u32) / 3) as u8;
                 // let r = blend(r, 0, color.r(), 255);
                 // let g = blend(g, 0, color.g(), 255);
                 // let b = blend(b, 0, color.b(), 255);
