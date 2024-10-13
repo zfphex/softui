@@ -1,8 +1,6 @@
-use std::sync::Arc;
-
-use dwrote::*;
-
 use super::FONT;
+use dwrote::*;
+use std::sync::Arc;
 
 pub struct Texture {
     pub data: Vec<u8>,
@@ -10,15 +8,17 @@ pub struct Texture {
     pub height: i32,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Metrics {
-    pub left_size_bearing: i32,
-    pub advance_width: u32,
-    pub right_side_bearing: i32,
-    pub top_side_bearing: i32,
-    pub advance_height: u32,
-    pub bottom_side_bearing: i32,
-    pub vertical_origin_y: i32,
+    // pub left_size_bearing: i32,
+    pub advance_width: f32,
+    // pub right_side_bearing: i32,
+    // pub top_side_bearing: i32,
+    pub advance_height: f32,
+    pub bottom_side_bearing: f32,
+    pub ascent: f32,
+    pub decent: f32,
+    // pub vertical_origin_y: i32,
 }
 
 pub struct DWrite {
@@ -45,37 +45,26 @@ impl DWrite {
             .and_then(|g| if g != 0 { Some(g) } else { None })
             .unwrap();
 
-        let glyph_metrics = self.font_face.get_design_glyph_metrics(&[glyph_id], false)[0];
         let metrics = self.font_face.metrics().metrics0();
+        let em = metrics.designUnitsPerEm as f32;
+        let ratio = point_size / em;
 
-        //object oriented programming at it's finest 🍷
+        // let gm = self.font_face.get_gdi_compatible_glyph_metrics(
+        //     point_size,
+        //     1.0,
+        //     core::ptr::null(),
+        //     true,
+        //     &[glyph_id],
+        //     false,
+        // )[0];
+
+        let gm = self.font_face.get_design_glyph_metrics(&[glyph_id], false)[0];
         let glyph_metrics = Metrics {
-            left_size_bearing: ((glyph_metrics.leftSideBearing as f32
-                / metrics.designUnitsPerEm as f32)
-                * point_size)
-                .round() as i32,
-            advance_width: ((glyph_metrics.advanceWidth as f32 / metrics.designUnitsPerEm as f32)
-                * point_size)
-                .round() as u32,
-            right_side_bearing: ((glyph_metrics.rightSideBearing as f32
-                / metrics.designUnitsPerEm as f32)
-                * point_size)
-                .round() as i32,
-            top_side_bearing: ((glyph_metrics.topSideBearing as f32
-                / metrics.designUnitsPerEm as f32)
-                * point_size)
-                .round() as i32,
-            advance_height: ((glyph_metrics.advanceHeight as f32 / metrics.designUnitsPerEm as f32)
-                * point_size)
-                .round() as u32,
-            bottom_side_bearing: ((glyph_metrics.bottomSideBearing as f32
-                / metrics.designUnitsPerEm as f32)
-                * point_size)
-                .round() as i32,
-            vertical_origin_y: ((glyph_metrics.verticalOriginY as f32
-                / metrics.designUnitsPerEm as f32)
-                * point_size)
-                .round() as i32,
+            advance_width: gm.advanceWidth as f32 * ratio,
+            advance_height: gm.advanceHeight as f32 * ratio,
+            bottom_side_bearing: gm.bottomSideBearing as f32 * ratio,
+            ascent: metrics.ascent as f32 * ratio,
+            decent: metrics.descent as f32 * ratio,
         };
 
         if char == ' ' {
@@ -102,11 +91,12 @@ impl DWrite {
             isSideways: 0,
             bidiLevel: 0,
         };
+
         let glyph_analysis = GlyphRunAnalysis::create(
             &glyph_run,
             1.0,
             None,
-            DWRITE_RENDERING_MODE_NATURAL,
+            DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC,
             DWRITE_MEASURING_MODE_NATURAL,
             0.0,
             0.0,

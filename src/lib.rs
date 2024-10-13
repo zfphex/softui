@@ -751,8 +751,11 @@ impl Context {
                 let advance_width = metrics.advance_width;
                 let advance_height = metrics.advance_height;
                 let ymin = metrics.bottom_side_bearing;
+                let ascent = metrics.ascent;
+                let decent = metrics.decent;
 
-                let glyph_y = y as f32 - (height as f32 - advance_height as f32) - ymin as f32;
+                // let glyph_y = (y as f32 - (height as f32 - advance_height) - ymin);
+                let glyph_y = (y as f32 - (height as f32 - advance_height) - ymin).round() as usize;
 
                 'y: for y in 0..height {
                     'x: for x in 0..width {
@@ -761,27 +764,29 @@ impl Context {
                             continue;
                         }
 
-                        let offset = glyph_y + y as f32;
+                        let offset = glyph_y + y as usize;
 
                         if max_x < x as usize + glyph_x {
                             max_x = x as usize + glyph_x;
                         }
 
-                        if max_y < offset as usize {
-                            max_y = offset as usize;
+                        if max_y < offset {
+                            max_y = offset;
                         }
 
-                        let i = x as usize + glyph_x + self.area.width as usize * offset as usize;
+                        let i = x as usize + glyph_x + self.area.width as usize * offset;
                         let j = (y as usize * width as usize + x as usize) * 3;
 
                         if i >= self.buffer.len() {
                             break 'x;
                         }
 
-                        let r = texture[j];
-                        let g = texture[j + 1];
-                        let b = texture[j + 2];
-                        self.buffer[i] = rgb(255 - r, 255 - g, 255 - b);
+                        // self.draw_rectangle_outline(glyph_x as usize, glyph_y as usize, width as usize, height as usize + 1, Color::RED).unwrap();
+
+                        let c = rgb(255 - texture[j], 255 - texture[j + 1], 255 - texture[j + 2]);
+
+                        self.buffer[i] = c;
+                        // self.buffer[i] = rgb(r, g, b);
                     }
                 }
 
@@ -812,13 +817,13 @@ impl Context {
         // );
     }
 
-    pub fn draw_glyph_subpixel(&mut self) {
+    pub fn draw_glyph_subpixel(&mut self, char: char, point_size: f32) {
         let start_x = 50;
         let start_y = 50;
         let color = Color::BLACK;
         let dwrite = DWrite::new();
 
-        let (metrics, texture) = dwrite.glyph('h', 32.0);
+        let (metrics, texture) = dwrite.glyph(char, point_size);
 
         for y in 0..texture.height as usize {
             for x in 0..texture.width as usize {
