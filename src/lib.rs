@@ -303,9 +303,10 @@ impl Context {
         cx: usize,
         cy: usize,
         radius: usize,
-        color: u32,
+        color: Color,
         quadrant: Quadrant,
     ) {
+        let color = color.as_u32();
         let (x1, y1, x2, y2) = match quadrant {
             Quadrant::TopLeft => (cx - radius, cy - radius, cx, cy),
             Quadrant::TopRight => (cx, cy - radius, cx + radius, cy),
@@ -525,8 +526,6 @@ impl Context {
             ));
         }
 
-        let color = color.as_u32();
-
         let canvas_width = self.window.area().width as usize;
 
         for i in y..y + height {
@@ -534,14 +533,14 @@ impl Context {
             if y <= radius || y >= height - radius {
                 let pos = x + radius + canvas_width * i;
                 for px in &mut self.window.buffer()[pos..pos + width - radius - radius] {
-                    *px = color;
+                    *px = color.as_u32();
                 }
                 continue;
             }
 
             let pos = x + canvas_width * i;
             for px in &mut self.window.buffer()[pos..pos + width] {
-                *px = color;
+                *px = color.as_u32();
             }
         }
 
@@ -576,7 +575,7 @@ impl Context {
     //TODO: If the text is longer than canvas width it needs to be clipped.
     //Currently it circles around and starts drawing from the front again.
 
-    fn draw_text(
+    pub fn draw_text(
         &mut self,
         text: &str,
         font: &fontdue::Font,

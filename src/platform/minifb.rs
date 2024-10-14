@@ -109,19 +109,19 @@ impl Backend for Window {
 
         //This just doesn't work ...
 
-        // if self.window.get_mouse_down(minifb::MouseButton::Left) {
-        //     return Some(Event::Input(
-        //         super::Key::LeftMouseDown,
-        //         super::Modifiers::new(),
-        //     ));
-        // }
+        if self.window.get_mouse_down(minifb::MouseButton::Left) {
+            return Some(Event::Input(
+                super::Key::LeftMouseDown,
+                super::Modifiers::new(),
+            ));
+        }
 
-        // if self.window.get_mouse_down(minifb::MouseButton::Right) {
-        //     return Some(Event::Input(
-        //         super::Key::RightMouseDown,
-        //         super::Modifiers::new(),
-        //     ));
-        // }
+        if self.window.get_mouse_down(minifb::MouseButton::Right) {
+            return Some(Event::Input(
+                super::Key::RightMouseDown,
+                super::Modifiers::new(),
+            ));
+        }
 
         return None;
 

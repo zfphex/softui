@@ -13,7 +13,6 @@ fn main() {
             _ => {}
         }
 
-
         ctx.fill(Color::BLACK);
 
         {
@@ -25,9 +24,8 @@ fn main() {
             // }
         }
 
-
         {
-            let text = text("Hello :)")
+            let text = text("Example")
                 .on_click(Left, |_| println!("Left"))
                 .on_click(Right, |_| println!("Right"))
                 .on_click(Middle, |_| println!("Middle"))

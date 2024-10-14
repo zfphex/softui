@@ -15,7 +15,7 @@ fn main() {
         //I'll need to find a better way to do this in the future.
         {
             let text = text("Example Text")
-                .on_click(Left, |_| println!("Left"))
+                .on_click(Left, |text| println!("Left {:?}", text.area))
                 .on_click(Right, |_| println!("Right"))
                 .on_click(Middle, |_| println!("Middle"))
                 .on_click(Back, |_| println!("Mouse4"))
