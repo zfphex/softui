@@ -575,6 +575,7 @@ impl Context {
     //TODO: If the text is longer than canvas width it needs to be clipped.
     //Currently it circles around and starts drawing from the front again.
 
+    //https://developer.apple.com/design/human-interface-guidelines/typography
     pub fn draw_text(
         &mut self,
         text: &str,
