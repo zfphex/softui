@@ -746,7 +746,7 @@ impl Context {
                 let (metrics, texture) = dwrite.glyph(char, font_size as f32);
                 let height = texture.height;
                 let width = texture.width;
-                let texture = texture.data;
+                let texture = &texture.data;
 
                 let advance_width = metrics.advance_width;
                 let advance_height = metrics.advance_height;
@@ -790,7 +790,7 @@ impl Context {
                     }
                 }
 
-                glyph_x += advance_width as usize;
+                glyph_x += advance_width.round() as usize;
 
                 //Check if the glyph position is off the screen.
                 if glyph_x >= self.area.width as usize {

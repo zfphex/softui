@@ -1,5 +1,9 @@
+//I don't like any of this code
+//We should probably cache n most recent glyphs accessed.
+//Do we ask dwrite to do layout too? I don't wanna.
 use super::FONT;
 use dwrote::*;
+use mini::profile;
 use std::sync::Arc;
 
 pub struct Texture {
@@ -21,11 +25,37 @@ pub struct Metrics {
     // pub vertical_origin_y: i32,
 }
 
+pub struct Glyph {
+    pub texture: Texture,
+    pub metrics: Metrics,
+}
+
 pub struct DWrite {
-    font_face: FontFace,
+    pub font_face: FontFace,
+    //How would we support multiple font sizes.
+    //This is basically useless as it is.
+    pub table: [(Vec<Glyph>); 127],
 }
 
 impl DWrite {
+    pub fn new_cached(point_size: f32) -> Self {
+        let mut dwrite = Self::new();
+
+        for char in 32..127 {
+            //TODO: Cleanup
+            let (metrics, texture) = dwrite.glyph(char as u8 as char, point_size);
+            //Box cannot be const so this will do for now. It's just a pointer really.
+            dwrite.table[char as usize] = vec![Glyph { texture, metrics }];
+        }
+
+        dwrite
+    }
+    //TODO: Too many nested structs bro.
+    pub fn glyph_cached(&self, char: char) -> (Metrics, &Texture) {
+        profile!();
+        let glyph = &self.table[char as usize][0];
+        (glyph.metrics, &glyph.texture)
+    }
     pub fn new() -> Self {
         let font_data = Arc::new(FONT);
         let font_file = FontFile::new_from_buffer(font_data.clone()).unwrap();
@@ -34,9 +64,13 @@ impl DWrite {
         let family = collection.get_font_family(0);
         let font = family.get_font(3);
         let font_face = font.create_font_face();
-        Self { font_face }
+        Self {
+            font_face,
+            table: [const { Vec::new() }; 127],
+        }
     }
     pub fn glyph(&self, char: char, point_size: f32) -> (Metrics, Texture) {
+        profile!();
         let glyph_id = self
             .font_face
             .get_glyph_indices(&[char as u32])
