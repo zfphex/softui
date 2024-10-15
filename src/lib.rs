@@ -715,6 +715,7 @@ impl Context {
     pub fn height(&self) -> usize {
         self.area.height as usize
     }
+
     pub fn draw_text_subpixel(
         &mut self,
         text: &str,

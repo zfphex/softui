@@ -6,8 +6,10 @@ resolver = "2"
 
 
 [dependencies]
-window = { version = "0.1.0", path = "../window" }
-mini = { version = "0.1.0", path = "../mini" }
+# window = { version = "0.1.0", path = "../window" }
+window = { version = "0.1.0", git = "https://github.com/zx3no/window" }
+# mini = { version = "0.1.0", path = "../mini" }
+mini = { version = "0.1.0", git = "https://github.com/zx3no/mini" }
 crossbeam-queue = "0.3.11"
 # fontdue = { version = "0.7.3", features = ["parallel"] }
 fontdue = { version = "0.9.0" }
