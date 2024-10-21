@@ -7,6 +7,12 @@ pub use rectangle_new::*;
 pub use layout::*;
 pub use rectangle::*;
 
+// #[cfg(feature = "image")]
+pub use image::*;
+
+// #[cfg(feature = "image")]
+pub mod image;
+
 #[cfg(feature = "svg")]
 pub mod svg;
 

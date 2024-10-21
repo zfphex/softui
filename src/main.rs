@@ -6,6 +6,8 @@ use softui::*;
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
+    let image = image("img/smol.png");
+
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
@@ -16,6 +18,10 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
+            draw_png(&image);
+        }
+
+        {
             // let mut w = text("hi");
             // w.force_draw();
             // if w.clicked(Left) {
@@ -24,16 +30,16 @@ fn main() {
             // }
         }
 
-        {
-            let text = text("Example")
-                .on_click(Left, |_| println!("Left"))
-                .on_click(Right, |_| println!("Right"))
-                .on_click(Middle, |_| println!("Middle"))
-                .on_click(Back, |_| println!("Mouse4"))
-                .on_click(Forward, |_| println!("Mouse5"));
+        // {
+        //     let text = text("Example")
+        //         .on_click(Left, |_| println!("Left"))
+        //         .on_click(Right, |_| println!("Right"))
+        //         .on_click(Middle, |_| println!("Middle"))
+        //         .on_click(Back, |_| println!("Mouse4"))
+        //         .on_click(Forward, |_| println!("Mouse5"));
 
-            vertical!(text.clone(), text.clone(), text);
-        }
+        //     vertical!(text.clone(), text.clone(), text);
+        // }
 
         ctx.draw_frame();
     }
