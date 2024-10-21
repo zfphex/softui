@@ -294,8 +294,7 @@ impl Context {
 
     ///Note color order is BGR_. The last byte is reserved.
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
-        let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
-        buffer[y * self.area.width as usize + x] = color;
+        self.buffer[y * self.area.width as usize + x] = color;
     }
 
     //TODO: https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
@@ -477,17 +476,16 @@ impl Context {
         color: Color,
     ) -> Result<(), String> {
         self.bounds_check(x, y, width, height)?;
-        let buffer = unsafe { self.buffer.align_to_mut::<u32>().1 };
         let canvas_width = self.area.width as usize;
         let color = color.as_u32();
 
         for i in y..y + height {
             if i > y && i < (y + height).saturating_sub(1) {
-                buffer[i * canvas_width + x] = color;
-                buffer[(i * canvas_width) + x + width - 1] = color;
+                self.buffer[i * canvas_width + x] = color;
+                self.buffer[(i * canvas_width) + x + width - 1] = color;
             } else {
                 let pos = i * canvas_width + x;
-                for px in &mut buffer[pos..pos + width] {
+                for px in &mut self.buffer[pos..pos + width] {
                     *px = color;
                 }
             }

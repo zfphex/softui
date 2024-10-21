@@ -12,6 +12,8 @@ fn main() {
     let font_size = 10;
     let font_size_large = 72;
 
+    let image = image("img/ben.png");
+
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
@@ -20,7 +22,9 @@ fn main() {
 
         ctx.fill(Color::WHITE);
 
-        ctx.draw_text_subpixel("Lorem", &dwrite, 16, 0, 36, 0, Color::WHITE);
+        draw_png(&image);
+
+        ctx.draw_text_subpixel("Lorem", &dwrite, 16, 0, 36 * 3, 0, Color::WHITE);
 
         ctx.draw_frame();
     }

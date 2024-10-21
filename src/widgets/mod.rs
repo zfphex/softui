@@ -13,6 +13,11 @@ pub mod svg;
 #[cfg(feature = "svg")]
 pub use svg::*;
 
+#[cfg(feature = "image")]
+pub mod image;
+#[cfg(feature = "image")]
+pub use image::*;
+
 pub mod text;
 pub use text::*;
 
