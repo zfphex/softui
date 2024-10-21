@@ -167,7 +167,6 @@ impl Context {
     pub fn event(&mut self) -> Option<Event> {
         profile!();
         match self.window.event() {
-            None => None,
             Some(event) => {
                 match event {
                     Event::Mouse(x, y) => {
@@ -205,9 +204,9 @@ impl Context {
                     }
                     _ => return Some(event),
                 }
-
                 None
             }
+            None => None,
         }
     }
 
