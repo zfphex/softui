@@ -56,6 +56,11 @@ pub enum Command {
     ///(Data, x, y, width, height, format)
     Image(Box<[u8]>, usize, usize, usize, usize, ImageFormat),
     ImageUnsafe(&'static [u8], usize, usize, usize, usize, ImageFormat),
+    // ImageByID(ID, ),
+    // We could use some id system and a function called allocate_image()
+    // This would allocate something and we would track the lifetime of it.
+    // Reference counting might also work for this, I'm not really sure what 
+    // would be the easiest to write and safest to use.
 }
 
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
