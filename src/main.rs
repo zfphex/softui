@@ -6,6 +6,7 @@ use softui::*;
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
+    #[cfg(feature = "image")]
     let image = image("img/smol.png");
 
     loop {
@@ -18,7 +19,8 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
-            draw_png(&image);
+            #[cfg(feature = "image")]
+            draw_image(&image, 100, 200);
         }
 
         {

@@ -1,15 +1,15 @@
 use softui::*;
 
-#[cfg(not(feature = "svg"))]
+#[cfg(not(feature = "image"))]
 fn main() {
     println!("Use --features 'svg'")
 }
 
-#[cfg(feature = "svg")]
+#[cfg(feature = "image")]
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
-
-    let ferris = svg("img/ferris.svg");
+    let png = image("img/smol.png");
+    let jpg = image("img/smol.jpg");
 
     loop {
         match ctx.event() {
@@ -18,9 +18,8 @@ fn main() {
         }
 
         ctx.fill(Color::BLACK);
-
-        draw_svg(ctx, &ferris);
-
+        draw_image(&png, 0, 0);
+        draw_image(&jpg, 0, 80);
         ctx.draw_frame();
     }
 }
