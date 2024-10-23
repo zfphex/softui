@@ -50,6 +50,12 @@ pub enum Command {
     CustomBoxed(Box<dyn FnOnce(&mut Context) -> ()>),
     Custom(&'static dyn Fn(&mut Context) -> ()),
     CustomFn(fn(&mut Context) -> ()),
+    //TODO: How can we do thread safe image draw calls.
+    // Images should be allocated up front and have a static lifetime.
+    // Const  images would be good
+    ///(Data, x, y, width, height, format)
+    Image(Box<[u8]>, usize, usize, usize, usize, ImageFormat),
+    ImageUnsafe(&'static [u8], usize, usize, usize, usize, ImageFormat),
 }
 
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
@@ -119,7 +125,7 @@ pub enum Quadrant {
 /// Also handles rendering.
 #[derive(Debug)]
 pub struct Context {
-    pub window: Window,
+    window: Window,
     //size is width * height.
     // pub buffer: Vec<u32>,
     //(width * height) / 4
@@ -233,6 +239,12 @@ impl Context {
                 Command::CustomBoxed(f) => f(self),
                 Command::Custom(f) => f(self),
                 Command::CustomFn(f) => f(self),
+                Command::Image(data, x, y, width, height, format) => {
+                    self.draw_image(&data, x, y, width, height, format)
+                }
+                Command::ImageUnsafe(data, x, y, width, height, format) => {
+                    self.draw_image(data, x, y, width, height, format)
+                }
             }
         }
 
@@ -699,5 +711,50 @@ impl Context {
     #[inline(always)]
     pub fn height(&self) -> usize {
         self.window.area().height as usize
+    }
+
+    pub fn draw_image(
+        &mut self,
+        data: &[u8],
+        mut x: usize,
+        mut y: usize,
+        width: usize,
+        height: usize,
+        format: ImageFormat,
+    ) {
+        let viewport_width = self.width();
+        let buffer = &mut self.window.buffer();
+        let len = buffer.len();
+
+        let chunk_size = if format == ImageFormat::PNG {
+            //4 bytes per channel rgba
+            4
+        } else {
+            //3 bytes per channel rgb
+            3
+        };
+
+        for pixel in data.chunks(chunk_size) {
+            let pos = y * viewport_width + x;
+
+            if pos >= len {
+                break;
+            }
+
+            let r = pixel[0];
+            let g = pixel[1];
+            let b = pixel[2];
+            // let a = pixel[3];
+            let color = rgb(r, g, b);
+
+            buffer[pos] = color;
+
+            x += 1;
+            if x >= width {
+                y += 1;
+                x = 0;
+                continue;
+            }
+        }
     }
 }

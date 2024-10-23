@@ -24,7 +24,6 @@ impl<'a> IntoVec for Text<'a> {
     }
 }
 
-
 impl IntoVec for Image {
     type T = Image;
 
@@ -171,6 +170,7 @@ macro_rules! layout {
 
                         $crate::iterate_widgets($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
                     )*
+
                     // $(
                     //     $crate::layout($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
                     // )*
@@ -186,14 +186,14 @@ macro_rules! layout {
                         }
                     }
 
-                    // let ctx = $crate::ctx();
-                    // ctx.draw_rectangle_outline(
-                    //     layout_area.x as usize,
-                    //     layout_area.y as usize,
-                    //     layout_area.width as usize,
-                    //     layout_area.height as usize,
-                    //     $crate::Color::RED,
-                    // );
+                    let ctx = $crate::ctx();
+                    ctx.draw_rectangle_outline(
+                        layout_area.x as usize,
+                        layout_area.y as usize,
+                        layout_area.width as usize,
+                        layout_area.height as usize,
+                        $crate::Color::RED,
+                    ).unwrap();
                 })
             };
 

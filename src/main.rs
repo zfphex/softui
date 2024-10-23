@@ -17,10 +17,11 @@ fn main() {
 
         ctx.fill(Color::BLACK);
 
-        //FIXME: This should not require a clone. 
-        //It also doesn't work :/
-        vertical!(image.clone(), image.clone());
+        // ctx.draw_image(&image.bitmap, 0, 0, image.width, image.height, image.format);
 
+        //FIXME: This should not require a clone.
+        //This is double dumb because it clones the entire image and then sends a draw call which also clones the entire image...
+        vertical!(image.clone(), image.clone(), image.clone());
 
         {
             // let mut w = text("hi");

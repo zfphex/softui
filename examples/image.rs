@@ -18,8 +18,8 @@ fn main() {
         }
 
         ctx.fill(Color::BLACK);
-        draw_image(&png, 0, 0);
-        draw_image(&jpg, 0, 80);
+        //FIXME: This jpeg doesn't render.
+        h!(png.clone(), text("test"), jpg.clone());
         ctx.draw_frame();
     }
 }
