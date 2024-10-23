@@ -9,7 +9,7 @@ fn main() {
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
-    let ferris = svg("img/ferris.svg");
+    let ferris = svg("img/ferris.svg", 0.1);
 
     loop {
         match ctx.event() {
@@ -19,7 +19,7 @@ fn main() {
 
         ctx.fill(Color::BLACK);
 
-        draw_svg(ctx, &ferris);
+        draw_svg(&ferris, 50, 400);
 
         ctx.draw_frame();
     }

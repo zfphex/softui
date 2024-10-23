@@ -4,20 +4,20 @@ use resvg::{
     usvg::{Options, Transform, Tree},
 };
 
-pub fn svg<P: AsRef<std::path::Path>>(path: P) -> Pixmap {
+pub fn svg<P: AsRef<std::path::Path>>(path: P, scale: f32) -> Pixmap {
     let ctx = ctx();
     let area = ctx.window.area();
     let tree = Tree::from_data(&std::fs::read(path).unwrap(), &Options::default()).unwrap();
     let mut pixmap = Pixmap::new(area.width as u32, area.height as u32).unwrap();
-    resvg::render(&tree, Transform::from_scale(0.5, 0.5), &mut pixmap.as_mut());
+    resvg::render(&tree, Transform::from_scale(scale, scale), &mut pixmap.as_mut());
     pixmap
 }
 
-pub fn draw_svg(ctx: &mut Context, pixmap: &Pixmap) {
-    let mut x = 0;
-    let mut y = 0;
-    for pixel in pixmap.pixels() {
-        if y >= pixmap.height() {
+pub fn draw_svg(svg: &Pixmap, mut x: usize, mut y: usize) {
+    let ctx = ctx();
+
+    for pixel in svg.pixels() {
+        if y >= svg.height() as usize {
             break;
         }
 
@@ -26,7 +26,7 @@ pub fn draw_svg(ctx: &mut Context, pixmap: &Pixmap) {
         ctx.draw_pixel(x as usize, y as usize, color);
 
         x += 1;
-        if x >= pixmap.width() {
+        if x >= svg.width() as usize {
             y += 1;
             x = 0;
             continue;
