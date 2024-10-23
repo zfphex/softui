@@ -26,8 +26,7 @@ pub fn image(path: impl AsRef<Path>) -> Image {
 
                     Image {
                         format: ImageFormat::JPEG,
-                        width,
-                        height,
+                        area: Rect::new(0, 0, width as i32, height as i32),
                         bitmap: decode,
                     }
                 }
@@ -38,8 +37,7 @@ pub fn image(path: impl AsRef<Path>) -> Image {
 
                     Image {
                         format: ImageFormat::PNG,
-                        width,
-                        height,
+                        area: Rect::new(0, 0, width as i32, height as i32),
                         bitmap: decode.u8().unwrap(),
                     }
                 }
@@ -81,7 +79,7 @@ pub fn draw_image(image: &Image, mut x: usize, mut y: usize) {
         buffer[pos] = color;
 
         x += 1;
-        if x >= image.width {
+        if x >= image.area.width as usize {
             y += 1;
             x = 0;
             continue;
@@ -89,21 +87,21 @@ pub fn draw_image(image: &Image, mut x: usize, mut y: usize) {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Image {
     pub format: ImageFormat,
-    pub width: usize,
-    pub height: usize,
+    pub area: Rect,
     pub bitmap: Vec<u8>,
 }
 
 impl Image {}
+
 impl Widget for Image {
     fn area(&mut self) -> Option<&mut Rect> {
-        todo!()
+        Some(&mut self.area)
     }
 
     fn layout_area(&mut self) -> Option<&mut Rect> {
-        todo!()
+        Some(&mut self.area)
     }
 }

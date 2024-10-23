@@ -24,6 +24,15 @@ impl<'a> IntoVec for Text<'a> {
     }
 }
 
+
+impl IntoVec for Image {
+    type T = Image;
+
+    fn into_vec(self) -> Vec<Self::T> {
+        vec![self]
+    }
+}
+
 #[inline]
 pub fn iterate_widgets<T: IntoVec>(
     mut widgets: T,

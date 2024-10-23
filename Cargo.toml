@@ -15,7 +15,7 @@ fontdue = { version = "0.9.0" }
 # TODO: Add this behind a feature flag, not really a fan of the extra 60 dependencies.
 # image = { version = "0.25.4", features = ["avif", "webp"], default-features = false }
 mini = { git = "https://github.com/zx3no/mini", version = "0.1.0" }
-resvg = { version = "0.42.0", optional = true }
+resvg = { version = "0.42.0", optional = true, default-features = false }
 zune-image = { version = "0.4.15", optional = true, default-features = false, features = [
     "jpeg",
     "png",

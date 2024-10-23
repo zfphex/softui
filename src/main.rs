@@ -6,7 +6,6 @@ use softui::*;
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
-    #[cfg(feature = "image")]
     let image = image("img/smol.png");
 
     loop {
@@ -18,10 +17,10 @@ fn main() {
 
         ctx.fill(Color::BLACK);
 
-        {
-            #[cfg(feature = "image")]
-            draw_image(&image, 100, 200);
-        }
+        //FIXME: This should not require a clone. 
+        //It also doesn't work :/
+        vertical!(image.clone(), image.clone());
+
 
         {
             // let mut w = text("hi");
