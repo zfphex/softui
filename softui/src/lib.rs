@@ -3,6 +3,14 @@ use core::ffi::c_void;
 use mini::profile;
 use std::{borrow::Cow, pin::Pin};
 
+//Re-export these types.
+//This exists because I want to keep window libraries for macos and windows,
+//somewhat seperate from the UI. They need to share events for easy interoperability.
+//A event crate is probably the best way to do this.
+//It's important to note that this is likely to confuse users, they may
+//jump to definition and be pulled into the other crate and not know what it's for.
+pub use softui_core::*;
+
 pub mod platform;
 pub use platform::*;
 
@@ -59,7 +67,7 @@ pub enum Command {
     // ImageByID(ID, ),
     // We could use some id system and a function called allocate_image()
     // This would allocate something and we would track the lifetime of it.
-    // Reference counting might also work for this, I'm not really sure what 
+    // Reference counting might also work for this, I'm not really sure what
     // would be the easiest to write and safest to use.
 }
 
@@ -157,11 +165,11 @@ impl Context {
         Self {
             window,
             mouse_pos: Rect::default(),
-            left_mouse: MouseState::new(),
-            right_mouse: MouseState::new(),
-            middle_mouse: MouseState::new(),
-            mouse_4: MouseState::new(),
-            mouse_5: MouseState::new(),
+             left_mouse: MouseState::new(MouseButton::Left),
+               right_mouse: MouseState::new(MouseButton::Right),
+               middle_mouse: MouseState::new(MouseButton::Middle),
+               mouse_4: MouseState::new(MouseButton::Back),
+               mouse_5: MouseState::new(MouseButton::Forward),
         }
     }
 
@@ -173,7 +181,7 @@ impl Context {
             None => None,
             Some(event) => {
                 match event {
-                    Event::Mouse(x, y) => {
+                    Event::MousePos(x, y) => {
                         self.mouse_pos = Rect::new(x, y, 1, 1);
                     }
                     Event::Input(Key::LeftMouseDown, _) => {

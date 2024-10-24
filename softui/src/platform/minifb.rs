@@ -1,6 +1,6 @@
 use crate::Rect;
 
-use super::{Backend, Event, Modifiers};
+use super::{Backend, Event};
 use minifb::*;
 
 #[derive(Debug)]
@@ -111,15 +111,15 @@ impl Backend for Window {
 
         if self.window.get_mouse_down(minifb::MouseButton::Left) {
             return Some(Event::Input(
-                super::Key::LeftMouseDown,
-                super::Modifiers::new(),
+                softui_core::Key::LeftMouseDown,
+                softui_core::Modifiers::new(),
             ));
         }
 
         if self.window.get_mouse_down(minifb::MouseButton::Right) {
             return Some(Event::Input(
-                super::Key::RightMouseDown,
-                super::Modifiers::new(),
+                softui_core::Key::RightMouseDown,
+                softui_core::Modifiers::new(),
             ));
         }
 

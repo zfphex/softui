@@ -161,7 +161,7 @@ macro_rules! layout {
             // let count = $crate::count_widgets!($($widget),*);
             let draw_layout_impl = $crate::DrawContainerImpl {
                 f: Some(|direction: $crate::Direction, mut x: i32, mut y: i32, margin: i32, padding: i32| {
-                    let mut layout_area = $crate::Rect::new(x, y, 0, 0);
+                    let mut layout_area = softui_core::Rect::new(x, y, 0, 0);
                     let mut max_width = 0;
                     let mut max_height = 0;
                     use $crate::IntoVec;
@@ -200,7 +200,7 @@ macro_rules! layout {
             $crate::Container {
                 f: Some(draw_layout_impl),
                 direction: $direction,
-                bounds: $crate::Rect::default(),
+                bounds: softui_core::Rect::default(),
                 padding: 0,
                 margin: 0
             }

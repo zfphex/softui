@@ -4,13 +4,13 @@ macro_rules! impl_click {
     ($struct: ident;  $($t:ident),*; $next:ident; $next_fn:ident; $($idx:tt),*) => {
         #[doc(hidden)]
         #[derive(Clone)]
-        pub struct $struct<T: Widget, $($t: FnMut(&mut T)),*> {
+        pub struct $struct<T: $crate::Widget, $($t: FnMut(&mut T)),*> {
             pub widget: T,
-            pub click: ($((MouseButton, $t)),*,),
+            pub click: ($(($crate::MouseButton, $t)),*,),
         }
 
-        impl<T: Widget, $($t: FnMut(&mut T)),*> $struct<T, $($t),*> {
-            pub fn on_click<$next_fn: FnMut(&mut T)>(self, button: MouseButton, f: $next_fn) -> $next<T, $($t),*, $next_fn> {
+        impl<T: $crate::Widget, $($t: FnMut(&mut T)),*> $struct<T, $($t),*> {
+            pub fn on_click<$next_fn: FnMut(&mut T)>(self, button: $crate::MouseButton, f: $next_fn) -> $next<T, $($t),*, $next_fn> {
                 $next {
                     widget: self.widget,
                     click: ($(self.click.$idx),*, (button, f)),
@@ -19,14 +19,14 @@ macro_rules! impl_click {
         }
 
         #[doc(hidden)]
-        impl<T: Widget, $($t: FnMut(&mut T)),*>Widget for $struct<T, $($t),*> {
+        impl<T: $crate::Widget, $($t: FnMut(&mut T)),*>$crate::Widget for $struct<T, $($t),*> {
             #[inline]
-            fn area(&mut self) -> Option<&mut super::Rect> {
+            fn area(&mut self) -> Option<&mut softui_core::Rect> {
                 self.widget.area()
             }
 
             #[inline]
-            fn layout_area(&mut self) -> Option<&mut super::Rect> {
+            fn layout_area(&mut self) -> Option<&mut softui_core::Rect> {
                 self.widget.layout_area()
             }
 
@@ -42,12 +42,12 @@ macro_rules! impl_click {
             }
 
             #[inline]
-            fn draw_command(&self) -> Option<Command> {
+            fn draw_command(&self) -> Option<$crate::Command> {
                 self.widget.draw_command()
             }
         }
 
-        impl<T: Widget, $($t: FnMut(&mut T)),*> std::fmt::Debug for $struct<T, $($t),*> {
+        impl<T: $crate::Widget, $($t: FnMut(&mut T)),*> std::fmt::Debug for $struct<T, $($t),*> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 f.debug_struct("Click0")
                     .field("widget", &self.widget)
@@ -56,7 +56,7 @@ macro_rules! impl_click {
             }
         }
 
-        impl<T: Widget, $($t: FnMut(&mut T)),*> $crate::IntoVec for $struct<T, $($t),*> {
+        impl<T: $crate::Widget, $($t: FnMut(&mut T)),*> $crate::IntoVec for $struct<T, $($t),*> {
                 type T = $struct<T, $($t),*>;
 
                 fn into_vec(self) -> Vec<Self::T> {

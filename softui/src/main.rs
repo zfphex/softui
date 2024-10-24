@@ -6,7 +6,7 @@ use softui::*;
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
-    let image = image("img/smol.png");
+    let image = image("softui/img/smol.png");
 
     loop {
         match ctx.event() {
