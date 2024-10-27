@@ -13,7 +13,7 @@ fn main() {
     let font_size_large = 72;
 
     #[cfg(feature = "image")]
-    let image = image("img/ben.png");
+    let image = image("img/smol.png");
 
     loop {
         match ctx.event() {
@@ -24,7 +24,14 @@ fn main() {
         ctx.fill(Color::WHITE);
 
         #[cfg(feature = "image")]
-        draw_png(&image);
+        ctx.draw_image(
+            &image.bitmap,
+            0,
+            0,
+            image.area.width as usize,
+            image.area.height as usize,
+            image.format,
+        );
 
         ctx.draw_text_subpixel("Lorem", &dwrite, 16, 0, 36 * 3, 0, Color::WHITE);
 

@@ -16,6 +16,14 @@ impl<'a, T: Widget + IntoVec> IntoVec for Vec<T> {
     }
 }
 
+impl IntoVec for Image {
+    type T = Image;
+
+    fn into_vec(self) -> Vec<Self::T> {
+        vec![self]
+    }
+}
+
 impl<'a> IntoVec for Text<'a> {
     type T = Text<'a>;
 

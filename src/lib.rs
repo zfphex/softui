@@ -48,6 +48,7 @@ pub enum Command {
     CustomBoxed(Box<dyn FnOnce(&mut Context) -> ()>),
     Custom(&'static dyn Fn(&mut Context) -> ()),
     CustomFn(fn(&mut Context) -> ()),
+    ImageUnsafe(&'static [u8], usize, usize, usize, usize, ImageFormat),
 }
 
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
@@ -240,6 +241,7 @@ impl Context {
                 Command::CustomBoxed(f) => f(self),
                 Command::Custom(f) => f(self),
                 Command::CustomFn(f) => f(self),
+                Command::ImageUnsafe(buffer, x, y, width, height, image_format) => {}
             }
         }
 
@@ -848,6 +850,51 @@ impl Context {
 
                 //White
                 // self.buffer[i] = rgb(r, g, b);
+            }
+        }
+    }
+
+    pub fn draw_image(
+        &mut self,
+        data: &[u8],
+        mut x: usize,
+        mut y: usize,
+        width: usize,
+        height: usize,
+        format: ImageFormat,
+    ) {
+        let viewport_width = self.width();
+        let buffer = &mut self.buffer;
+        let len = buffer.len();
+
+        let chunk_size = if format == ImageFormat::PNG {
+            //4 bytes per channel rgba
+            4
+        } else {
+            //3 bytes per channel rgb
+            3
+        };
+
+        for pixel in data.chunks(chunk_size) {
+            let pos = y * viewport_width + x;
+
+            if pos >= len {
+                break;
+            }
+
+            let r = pixel[0];
+            let g = pixel[1];
+            let b = pixel[2];
+            // let a = pixel[3];
+            let color = rgb(r, g, b);
+
+            buffer[pos] = color;
+
+            x += 1;
+            if x >= width {
+                y += 1;
+                x = 0;
+                continue;
             }
         }
     }
