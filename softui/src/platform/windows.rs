@@ -2,17 +2,6 @@ use crate::{Backend, Rect};
 use std::{ffi::c_void, pin::Pin};
 use window::{client_area, create_window, GetDC, StretchDIBits, BITMAPINFO, RECT, SRCCOPY};
 
-impl From<RECT> for Rect {
-    fn from(rect: RECT) -> Self {
-        Rect {
-            x: 0,
-            y: 0,
-            width: rect.width(),
-            height: rect.height(),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct Window {
     window: Pin<Box<window::Window>>,
@@ -50,10 +39,6 @@ impl Window {
 }
 
 impl Backend for Window {
-    fn size(&self) -> crate::Rect {
-        self.area
-    }
-
     fn buffer(&mut self) -> &mut [u32] {
         &mut self.buffer
     }
@@ -100,7 +85,7 @@ impl Backend for Window {
         match self.window.event() {
             Some(event) => match event {
                 window::Event::Quit => Some(crate::Event::Quit),
-                window::Event::Mouse(x, y) => Some(crate::Event::Mouse(x, y)),
+                window::Event::Mouse(x, y) => Some(crate::Event::MousePos(x, y)),
                 window::Event::Move => Some(crate::Event::Move),
                 window::Event::Dpi(dpi) => Some(crate::Event::Dpi(dpi)),
                 _ => None,
@@ -108,5 +93,13 @@ impl Backend for Window {
             },
             None => None,
         }
+    }
+
+    fn area(&self) -> Rect {
+        self.area
+    }
+
+    fn mouse_pos(&self) -> Rect {
+        Rect::default()
     }
 }

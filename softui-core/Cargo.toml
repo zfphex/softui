@@ -5,3 +5,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+[target.'cfg(windows)'.dependencies]
+window = { version = "0.1.0", path = "../../window" }
