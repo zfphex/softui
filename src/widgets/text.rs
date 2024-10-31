@@ -51,16 +51,6 @@ pub struct Text<'a> {
 }
 
 impl<'a> Text<'a> {
-    pub fn on_click<F: FnMut(&mut Self)>(
-        self,
-        button: MouseButton,
-        click_fn: F,
-    ) -> Click0<Self, F> {
-        Click0 {
-            widget: self,
-            click: ((button, click_fn),),
-        }
-    }
     pub fn font_size(mut self, font_size: usize) -> Self {
         self.font_size = font_size;
         self

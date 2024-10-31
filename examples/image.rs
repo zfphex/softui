@@ -8,8 +8,8 @@ fn main() {
 #[cfg(feature = "image")]
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
-    let mut png = image("img/smol.png");
-    let mut jpg = image("img/smol.jpg");
+    let mut png = image("img/smol.png").on_click(Left, |_| println!(":<"));
+    let mut jpg = image("img/smol.jpg").on_click(Left, |_| println!(">:"));
 
     loop {
         match ctx.event() {

@@ -48,6 +48,17 @@ pub trait Widget: std::fmt::Debug {
 
     fn area(&mut self) -> Option<&mut Rect>;
 
+    fn on_click<F: FnMut(&mut Self)>(self, button: MouseButton, click_fn: F) -> Click0<Self, F>
+    where
+        Self: Sized,
+    {
+        Click0 {
+            widget: self,
+            //Yes the comma is necassary.
+            click: ((button, click_fn),),
+        }
+    }
+
     #[inline]
     unsafe fn as_mut_ptr(&mut self) -> *mut Self {
         self
