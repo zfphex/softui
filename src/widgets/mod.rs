@@ -34,8 +34,11 @@ use crate::*;
 
 // #[diagnostic::on_unimplemented()]
 
-//Widgets should also be clone.
-pub trait Widget: std::fmt::Debug {
+//Widgets should really be clone + debug.
+//However having these restrictions can be annoying.
+
+// pub trait Widget: std::fmt::Debug {
+pub trait Widget {
     #[must_use]
     fn draw_command(&self) -> Option<Command> {
         None

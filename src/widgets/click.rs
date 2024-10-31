@@ -47,14 +47,14 @@ macro_rules! impl_click {
             }
         }
 
-        impl<T: Widget, $($t: FnMut(&mut T)),*> std::fmt::Debug for $struct<T, $($t),*> {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.debug_struct("Click0")
-                    .field("widget", &self.widget)
-                    // .field("click", &self.click)
-                    .finish()
-            }
-        }
+        // impl<T: Widget, $($t: FnMut(&mut T)),*> std::fmt::Debug for $struct<T, $($t),*> {
+        //     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        //         f.debug_struct("Click0")
+        //             // .field("widget", &self.widget)
+        //             // .field("click", &self.click)
+        //             .finish()
+        //     }
+        // }
 
         impl<T: Widget, $($t: FnMut(&mut T)),*> $crate::IntoVec for $struct<T, $($t),*> {
                 type T = $struct<T, $($t),*>;

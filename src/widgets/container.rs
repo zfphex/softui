@@ -85,8 +85,6 @@ pub fn layout<T: Widget>(
     if let Some(area) = widget.area() {
         area.x = *x;
         area.y = *y;
-    } else {
-        println!("This widget does not have any area: {:#?}", widget);
     }
 
     //Update the margin.
