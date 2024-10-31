@@ -40,7 +40,18 @@ pub trait Widget: std::fmt::Debug {
     fn draw_command(&self) -> Option<Command> {
         None
     }
+
+    /// Used only with text, since the area must be calculated after drawing unlike rect.
+    /// Why do we not just calculate the area before hand?
+    /// 🤤🤤🤤🤤🤤
+    fn calculate_area(&mut self) {}
+
     fn area(&mut self) -> Option<&mut Rect>;
+
+    #[inline]
+    unsafe fn as_mut_ptr(&mut self) -> *mut Self {
+        self
+    }
 
     //This should be called need_draw, need_compute_area, idk...
     //If we used Any we could just call self.type_id() == Container.
@@ -57,47 +68,6 @@ pub trait Widget: std::fmt::Debug {
     //https://stackoverflow.com/questions/77562161/is-there-a-way-to-prevent-a-struct-from-implementing-a-trait-method
     fn try_click(&mut self) {}
 
-    // fn on_clicked<F: FnMut(&mut Self) -> ()>(mut self, button: MouseButton, mut function: F) -> Self
-    // where
-    //     Self: Sized,
-    // {
-    //     let ctx = ctx();
-
-    //     if Self::is_container() {
-    //         todo!();
-    //         // self.adjust_position(0, 0);
-    //     }
-
-    //     let area = self.area().unwrap();
-
-    //     if !ctx.mouse_pos.intersects(area) {
-    //         return self;
-    //     }
-
-    //     let clicked = match button {
-    //         MouseButton::Left => {
-    //             ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
-    //         }
-    //         MouseButton::Right => {
-    //             ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
-    //         }
-    //         MouseButton::Middle => {
-    //             ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
-    //         }
-    //         MouseButton::Back => {
-    //             ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area)
-    //         }
-    //         MouseButton::Forward => {
-    //             ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area)
-    //         }
-    //     };
-
-    //     if clicked {
-    //         function(&mut self);
-    //     }
-
-    //     self
-    // }
     /// The user's cusor has been clicked and released on top of a widget.
     fn clicked(&mut self, button: MouseButton) -> bool
     where
@@ -167,17 +137,12 @@ pub trait Widget: std::fmt::Debug {
         }
     }
 
-    /// Used to modifiy x, y, width and height
-    /// Should return the `Rect` that stores the widget area/position.
-    /// I cannot remember why there are also area and area_mut functions.
-    fn layout_area(&mut self) -> Option<&mut Rect>;
-
     fn centered(mut self, parent: Rect) -> Self
     where
         Self: Sized,
     {
         let parent_area = parent.clone();
-        let area = self.layout_area().unwrap();
+        let area = self.area().unwrap();
         let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
         let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);
 
@@ -189,7 +154,7 @@ pub trait Widget: std::fmt::Debug {
     where
         Self: Sized,
     {
-        let area = self.layout_area().unwrap();
+        let area = self.area().unwrap();
         match x.into() {
             Unit::Px(px) => {
                 area.x = px as i32;
@@ -209,10 +174,10 @@ pub trait Widget: std::fmt::Debug {
     where
         Self: Sized,
     {
-        let area = self.layout_area().unwrap();
+        let area = self.area().unwrap();
         match y.into() {
             Unit::Px(px) => {
-                self.layout_area().unwrap().y = px as i32;
+                self.area().unwrap().y = px as i32;
                 // self.area.y = px as i32;
             }
             Unit::Em(_) => todo!(),
@@ -224,7 +189,7 @@ pub trait Widget: std::fmt::Debug {
     where
         Self: Sized,
     {
-        let area = self.layout_area().unwrap();
+        let area = self.area().unwrap();
         match length.into() {
             Unit::Px(px) => {
                 area.width = px as i32;
@@ -238,7 +203,7 @@ pub trait Widget: std::fmt::Debug {
     where
         Self: Sized,
     {
-        let area = self.layout_area().unwrap();
+        let area = self.area().unwrap();
         match length.into() {
             Unit::Px(px) => {
                 area.height = px as i32;
@@ -314,29 +279,24 @@ impl Widget for () {
     fn area(&mut self) -> Option<&mut Rect> {
         None
     }
-
-    #[inline]
-    fn layout_area(&mut self) -> Option<&mut Rect> {
-        None
-    }
 }
 
-impl Widget for &dyn Widget {
-    fn area(&mut self) -> Option<&mut Rect> {
-        None
-    }
+// impl Widget for &dyn Widget {
+//     fn area(&mut self) -> Option<&mut Rect> {
+//         None
+//     }
 
-    fn layout_area(&mut self) -> Option<&mut Rect> {
-        None
-    }
-}
+//     fn layout_area(&mut self) -> Option<&mut Rect> {
+//         None
+//     }
+// }
 
-impl Widget for &mut dyn Widget {
-    fn area(&mut self) -> Option<&mut Rect> {
-        (**self).area()
-    }
+// impl Widget for &mut dyn Widget {
+//     fn area(&mut self) -> Option<&mut Rect> {
+//         (**self).area()
+//     }
 
-    fn layout_area(&mut self) -> Option<&mut Rect> {
-        (**self).layout_area()
-    }
-}
+//     fn layout_area(&mut self) -> Option<&mut Rect> {
+//         (**self).layout_area()
+//     }
+// }

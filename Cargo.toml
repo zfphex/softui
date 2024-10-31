@@ -5,6 +5,7 @@ edition = "2021"
 resolver = "2"
 
 [features]
+default = ["image"]
 profile = ["mini/profile"]
 svg = ["dep:resvg"]
 image = ["dep:zune-image"]

@@ -50,10 +50,6 @@ impl<'a> Widget for Rectangle<'a> {
     fn area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }
-
-    fn layout_area(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.area)
-    }
 }
 
 impl<'a> Style for Rectangle<'a> {

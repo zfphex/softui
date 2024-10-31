@@ -8,59 +8,60 @@ pub trait IntoVec {
     fn into_vec(self) -> Vec<Self::T>;
 }
 
-impl<'a, T: Widget + IntoVec> IntoVec for Vec<T> {
-    type T = T;
+// impl<'a, T: Widget + IntoVec> IntoVec for Vec<T> {
+//     type T = T;
 
-    fn into_vec(self) -> Vec<Self::T> {
-        self
-    }
-}
+//     fn into_vec(self) -> Vec<Self::T> {
+//         self
+//     }
+// }
 
-impl IntoVec for Image {
-    type T = Image;
+// #[cfg(feature = "image")]
+// impl IntoVec for Image {
+//     type T = Image;
 
-    fn into_vec(self) -> Vec<Self::T> {
-        vec![self]
-    }
-}
+//     fn into_vec(self) -> Vec<Self::T> {
+//         vec![self]
+//     }
+// }
 
-impl<'a> IntoVec for Text<'a> {
-    type T = Text<'a>;
+// impl<'a> IntoVec for Text<'a> {
+//     type T = Text<'a>;
 
-    fn into_vec(self) -> Vec<Self::T> {
-        vec![self]
-    }
-}
+//     fn into_vec(self) -> Vec<Self::T> {
+//         vec![self]
+//     }
+// }
 
-#[inline]
-pub fn iterate_widgets<T: IntoVec>(
-    mut widgets: T,
-    margin: i32,
-    padding: i32,
-    max_width: &mut i32,
-    max_height: &mut i32,
-    x: &mut i32,
-    y: &mut i32,
-    layout_area: &mut Rect,
-    direction: Direction,
-) {
-    for widget in widgets.into_vec() {
-        layout(
-            widget,
-            margin,
-            padding,
-            max_width,
-            max_height,
-            x,
-            y,
-            layout_area,
-            direction,
-        );
-    }
-}
+// #[inline]
+// pub fn iterate_widgets<T: IntoVec>(
+//     mut widgets: T,
+//     margin: i32,
+//     padding: i32,
+//     max_width: &mut i32,
+//     max_height: &mut i32,
+//     x: &mut i32,
+//     y: &mut i32,
+//     layout_area: &mut Rect,
+//     direction: Direction,
+// ) {
+//     for widget in widgets.into_vec() {
+//         layout(
+//             widget,
+//             margin,
+//             padding,
+//             max_width,
+//             max_height,
+//             x,
+//             y,
+//             layout_area,
+//             direction,
+//         );
+//     }
+// }
 
 pub fn layout<T: Widget>(
-    mut widget: T,
+    widget: *mut T,
     margin: i32,
     padding: i32,
     max_width: &mut i32,
@@ -70,13 +71,17 @@ pub fn layout<T: Widget>(
     layout_area: &mut Rect,
     direction: Direction,
 ) {
+    let widget = unsafe { widget.as_mut().unwrap() };
+
     //Calculate the widget area.
     //Some widgets like text will need to have their layout pre-computed before they can be moved.
     //This will only really do something the second time, since the first widget isn't
     //positioned based on anything else.
     //I need to change how I do layout, this sucks :/
-    //Called first because it the area of the previous widget
-    //is added to x and y
+    //Called first because it modifies the area of the previous widget/is added to x and y.
+    //This is a no-op for most widgets.
+    widget.calculate_area();
+
     if let Some(area) = widget.area() {
         area.x = *x;
         area.y = *y;
@@ -166,13 +171,14 @@ macro_rules! layout {
                     let mut max_height = 0;
                     use $crate::IntoVec;
 
-                    $(
-
-                        $crate::iterate_widgets($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
-                    )*
                     // $(
-                    //     $crate::layout($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
+                    //     $crate::iterate_widgets($widget, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
                     // )*
+
+                    $(
+                        let reference = unsafe { $widget.as_mut_ptr() };
+                        $crate::layout(reference, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
+                    )*
 
                     match direction {
                         $crate::Direction::Vertical => {
@@ -192,14 +198,14 @@ macro_rules! layout {
                     //     layout_area.width as usize,
                     //     layout_area.height as usize,
                     //     $crate::Color::RED,
-                    // );
+                    // ).unwrap();
                 })
             };
 
             $crate::Container {
                 f: Some(draw_layout_impl),
                 direction: $direction,
-                bounds: $crate::Rect::default(),
+                area: $crate::Rect::default(),
                 padding: 0,
                 margin: 0
             }
@@ -225,8 +231,8 @@ where
         if let Some(f) = self.f.take() {
             (f)(
                 layout.direction,
-                layout.bounds.x,
-                layout.bounds.y,
+                layout.area.x,
+                layout.area.y,
                 layout.margin as i32,
                 layout.padding as i32,
             );
@@ -237,7 +243,7 @@ where
 pub struct Container<F: DrawContainer> {
     pub f: Option<F>,
     pub direction: Direction,
-    pub bounds: Rect,
+    pub area: Rect,
     ///Outer padding
     pub padding: usize,
     ///Inner padding
@@ -249,7 +255,7 @@ impl<F: DrawContainer> std::fmt::Debug for Container<F> {
         f.debug_struct("Container")
             // .field("f", &self.f)
             .field("direction", &self.direction)
-            .field("bounds", &self.bounds)
+            .field("area", &self.area)
             .field("padding", &self.padding)
             .field("margin", &self.margin)
             .finish()
@@ -257,17 +263,15 @@ impl<F: DrawContainer> std::fmt::Debug for Container<F> {
 }
 
 impl<F: DrawContainer> Widget for Container<F> {
-    fn layout_area(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.bounds)
+    #[inline]
+    fn area(&mut self) -> Option<&mut Rect> {
+        Some(&mut self.area)
     }
     fn is_container() -> bool
     where
         Self: Sized,
     {
         true
-    }
-    fn area(&mut self) -> Option<&mut Rect> {
-        None
     }
 }
 

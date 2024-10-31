@@ -14,7 +14,7 @@ fn main() {
         //Chain together up to 5 on click functions.
         //I'll need to find a better way to do this in the future.
         {
-            let text = text("Example Text")
+            let mut text = text("Example Text")
                 .on_click(Left, |_| println!("Left"))
                 .on_click(Right, |_| println!("Right"))
                 .on_click(Middle, |_| println!("Middle"))

@@ -104,10 +104,6 @@ impl Widget for RectangleNew {
     fn area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }
-
-    fn layout_area(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.area)
-    }
 }
 
 impl Style for RectangleNew {

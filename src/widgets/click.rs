@@ -26,8 +26,8 @@ macro_rules! impl_click {
             }
 
             #[inline]
-            fn layout_area(&mut self) -> Option<&mut super::Rect> {
-                self.widget.layout_area()
+            fn calculate_area(&mut self) {
+                self.widget.calculate_area()
             }
 
             #[inline]

@@ -73,21 +73,31 @@ impl<'a> Text<'a> {
         self.color = color;
         self
     }
-    fn calculate_area(&self, x: i32, y: i32) -> Rect {
+}
+
+impl<'a> Widget for Text<'a> {
+    fn draw_command(&self) -> Option<Command> {
+        //Because draw is immutable, the area must be calculated on each draw since it cannot store it's own state.
+        Some(Command::Text(
+            self.text.to_string(),
+            self.font_size,
+            self.area.x as usize,
+            self.area.y as usize,
+            Color::WHITE,
+        ))
+    }
+
+    #[inline]
+    fn calculate_area(&mut self) {
         let canvas_width = ctx().area.width as usize;
         let font = default_font().unwrap();
         let mut area = self.area;
 
-        //These are set up front because it's easier.
-        //This could be done when width and height is written.
-        area.x = x;
-        area.y = y;
-
         //TODO: Two text widgets with same y value have different heights.
         //Text needs to be aligned specifically over this y coordinate,
         //and not based on the largest character.
-        let mut y: usize = y as usize;
-        let x = x as usize;
+        let mut y: usize = area.y as usize;
+        let x = area.x as usize;
 
         let mut max_x = 0;
         let mut max_y = 0;
@@ -142,52 +152,15 @@ impl<'a> Text<'a> {
 
         area.height = (max_y as i32 + 1 - area.y);
         area.width = (max_x as i32 + 1 - area.x);
-        area
-    }
-}
 
-impl<'a> Widget for Text<'a> {
-    fn draw_command(&self) -> Option<Command> {
-        //Because draw is immutable, the area must be calculated on each draw since it cannot store it's own state.
-        Some(Command::Text(
-            self.text.to_string(),
-            self.font_size,
-            self.area.x as usize,
-            self.area.y as usize,
-            Color::WHITE,
-        ))
-    }
-
-    #[inline]
-    fn area(&mut self) -> Option<&mut Rect> {
-        //The user can set a custom width and height of the text.
-        //If we assigned the area directly to the calculated area
-        //we would override `.width()` and `.height()` user calls.
-        // let area = self.calculate_area(self.area.x, self.area.y);
-        // self.area.x = area.x;
-        // self.area.y = area.y;
-
-        // if area.width > self.area.width {
-        //     self.area.width = area.width;
-        // }
-
-        // if area.height > self.area.height {
-        //     self.area.height = area.height;
-        // }
-
-        //I'm not sure if I want the user modifying the text area...
-        //It doesn't do anything
-
-        self.area = self.calculate_area(self.area.x, self.area.y);
-
-        Some(&mut self.area)
+        self.area = area;
     }
 
     fn centered(self, parent: Rect) -> Self {
         todo!()
     }
 
-    fn layout_area(&mut self) -> Option<&mut Rect> {
+    fn area(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }
 }

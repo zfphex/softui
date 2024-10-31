@@ -26,24 +26,24 @@ pub fn image(path: impl AsRef<Path>) -> Image {
             match &*ext {
                 "jpg" | "jpeg" => {
                     let mut decoder = JpegDecoder::new_with_options(file, options);
-                    let decode = decoder.decode().unwrap();
+                    let bitmap = decoder.decode().unwrap();
                     let (width, height) = decoder.dimensions().unwrap();
 
                     Image {
                         format: ImageFormat::JPEG,
                         area: Rect::new(0, 0, width as i32, height as i32),
-                        bitmap: decode,
+                        bitmap,
                     }
                 }
                 "png" => {
                     let mut decoder = PngDecoder::new_with_options(file, options);
-                    let decode = decoder.decode().unwrap();
+                    let bitmap = decoder.decode().unwrap();
                     let (width, height) = decoder.dimensions().unwrap();
 
                     Image {
                         format: ImageFormat::PNG,
                         area: Rect::new(0, 0, width as i32, height as i32),
-                        bitmap: decode.u8().unwrap(),
+                        bitmap: bitmap.u8().unwrap(),
                     }
                 }
                 _ => panic!("{} is not a supported image extension.", ext),
@@ -120,12 +120,8 @@ impl Widget for Image {
         Some(&mut self.area)
     }
 
-    fn layout_area(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.area)
-    }
-
     fn draw_command(&self) -> Option<Command> {
-        //Just assume the image exists for now.
+        //TODO: Just assume the image exists for now.
         let bitmap = unsafe { extend_lifetime(&self.bitmap) };
         Some(Command::ImageUnsafe(
             bitmap,

@@ -48,6 +48,9 @@ pub enum Command {
     CustomBoxed(Box<dyn FnOnce(&mut Context) -> ()>),
     Custom(&'static dyn Fn(&mut Context) -> ()),
     CustomFn(fn(&mut Context) -> ()),
+
+    #[cfg(feature = "image")]
+    ///(bitmap, x, y, width, height, format)
     ImageUnsafe(&'static [u8], usize, usize, usize, usize, ImageFormat),
 }
 
@@ -241,7 +244,10 @@ impl Context {
                 Command::CustomBoxed(f) => f(self),
                 Command::Custom(f) => f(self),
                 Command::CustomFn(f) => f(self),
-                Command::ImageUnsafe(buffer, x, y, width, height, image_format) => {}
+                #[cfg(feature = "image")]
+                Command::ImageUnsafe(bitmap, x, y, width, height, image_format) => {
+                    self.draw_image(bitmap, x, y, width, height, image_format);
+                }
             }
         }
 
@@ -854,15 +860,18 @@ impl Context {
         }
     }
 
+    #[cfg(feature = "image")]
     pub fn draw_image(
         &mut self,
-        data: &[u8],
-        mut x: usize,
-        mut y: usize,
+        bitmap: &[u8],
+        x: usize,
+        y: usize,
         width: usize,
         height: usize,
         format: ImageFormat,
     ) {
+        let start_x = x;
+        let start_y = y;
         let viewport_width = self.width();
         let buffer = &mut self.buffer;
         let len = buffer.len();
@@ -875,8 +884,11 @@ impl Context {
             3
         };
 
-        for pixel in data.chunks(chunk_size) {
-            let pos = y * viewport_width + x;
+        let mut x = 0;
+        let mut y = 0;
+
+        for pixel in bitmap.chunks(chunk_size) {
+            let pos = (y + start_y) * viewport_width + (x + start_x);
 
             if pos >= len {
                 break;
