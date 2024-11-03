@@ -1,6 +1,6 @@
 #![allow(unused, static_mut_refs)]
 use core::ffi::c_void;
-use mini::profile;
+use mini::{info, profile, warn};
 use std::{borrow::Cow, pin::Pin};
 
 //Re-export the window functions.
@@ -230,7 +230,7 @@ impl Context {
                     //the size of the viewport could be different from when the
                     //user pushes a draw call.
                     //Containers should minimize the issues here.
-                    self.draw_rectangle(x, y, width, height, color).unwrap();
+                    self.draw_rectangle(x, y, width, height, color);
                 }
                 Command::RectangleOutline(x, y, width, height, color) => {
                     self.draw_rectangle_outline(x, y, width, height, color)
@@ -238,7 +238,7 @@ impl Context {
                 }
                 Command::Ellipse(x, y, width, height, radius, color) => {
                     if radius == 0 {
-                        self.draw_rectangle(x, y, width, height, color).unwrap();
+                        self.draw_rectangle(x, y, width, height, color);
                     } else {
                         self.draw_rectangle_rounded(x, y, width, height, radius, color)
                             .unwrap();
@@ -414,23 +414,42 @@ impl Context {
     //We mearly append what we want and then it's drawn later on.
     //Doesn't that mean renderer would be on a seperate thread?
 
-    #[must_use]
     pub fn draw_rectangle(
         &mut self,
         x: usize,
         y: usize,
-        width: usize,
+        mut width: usize,
         height: usize,
         color: Color,
-    ) -> Result<(), String> {
-        #[cfg(debug_assertions)]
-        self.bounds_check(x, y, width, height)?;
+    ) {
+        let viewport_width = self.width();
+
+        //Malformed rectangle
+        if x > viewport_width {
+            warn!(
+                "Malformed rectangle has x: {} but viewport width is {}.",
+                x, viewport_width
+            );
+            return;
+        }
+
+        //Safety: do not allow rectangles to be larger than the viewport
+        //the user should not crash for this.
+        if x + width > viewport_width {
+            info!(
+                "Clipping rectangle x: {}, width: {} because x + width = {} > viewport width: {}",
+                x,
+                width,
+                x + width,
+                viewport_width
+            );
+            width = viewport_width.saturating_sub(x);
+        }
 
         for i in y..y + height {
             let pos = x + self.area.width as usize * i;
             self.buffer[pos..pos + width].fill(color.as_u32());
         }
-        Ok(())
     }
 
     //An alternative way of rendering.

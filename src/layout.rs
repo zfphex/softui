@@ -62,20 +62,21 @@ pub struct WrapMetrics {
 //This allows for evenly spaced horizontal centering.
 #[macro_export]
 macro_rules! flex_center {
-    ($($widget:expr),*$(,)?) => {
+    ($name:ident:$wrap:expr, $($widget:expr),*$(,)?) => {
         let mut state = FlexState {};
         let count = $crate::count_expr!($($widget),*);
         let viewport_width = ctx().width();
         let mut tallest_widget = 0;
         let mut metrics: Vec<WrapMetrics> = vec![WrapMetrics::default(); count];
         let mut current_metrics = 0;
+        let wrap: bool = $wrap;
 
         $(
             let area = $widget.area().unwrap().clone();
             let next_total_width = metrics[current_metrics].total_width + area.width as usize;
 
             //Widget will wrap.
-            if next_total_width > viewport_width {
+            if next_total_width > viewport_width && wrap {
                 current_metrics += 1;
                 metrics[current_metrics].total_width = area.width as usize;
                 metrics[current_metrics].total_widgets = 1;
@@ -89,7 +90,6 @@ macro_rules! flex_center {
             }
         )*
 
-        let wrap = true;
         let mut x = 0;
         let mut y = 0;
         let mut gaps = 0;
@@ -130,18 +130,20 @@ macro_rules! flex_center {
             //the y co-ordinate. The amount would be determined by
             //either the tallest widget or the vertical spacing
             //when centering both horizontally and vertically.
-            if (area.x + area.width > viewport_width as i32) && wrap {
-                x = spacing;
-                //Assume their is no vertical centering.
-                y += tallest_widget;
-                area.x = x as i32;
-                area.y = y as i32;
+            if (area.x + area.width > viewport_width as i32) && wrap{
+                    x = spacing;
+                    //Assume their is no vertical centering.
+                    y += tallest_widget;
+                    area.x = x as i32;
+                    area.y = y as i32;
             }
+
 
             if let Some(command) = widget.draw_command() {
                 widget.try_click();
                 unsafe { COMMAND_QUEUE.push(command) };
             }
+
 
             i += 1;
         )*
@@ -169,7 +171,7 @@ mod tests {
             // );
 
             //The third widget should wrap here.
-            flex_center!(rect().wh(300), rect().wh(300), rect().wh(300));
+            flex_center!(wrap: true, rect().wh(300), rect().wh(300), rect().wh(300));
 
             ctx.draw_frame();
         }

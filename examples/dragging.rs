@@ -39,8 +39,7 @@ fn main() {
                 drag.width as usize,
                 drag.height as usize,
                 Color::RED,
-            )
-            .unwrap();
+            );
         }
 
         //Draw all queue commands.

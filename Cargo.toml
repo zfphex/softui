@@ -7,6 +7,9 @@ resolver = "2"
 [features]
 default = ["image"]
 profile = ["mini/profile"]
+info = ["mini/info"]
+warn = ["mini/warn"]
+error = ["mini/error"]
 svg = ["dep:resvg"]
 image = ["dep:zune-image"]
 
