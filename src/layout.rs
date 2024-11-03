@@ -62,10 +62,11 @@ pub struct WrapMetrics {
 //This allows for evenly spaced horizontal centering.
 #[macro_export]
 macro_rules! flex_center {
-    ($name:ident:$wrap:expr, $($widget:expr),*$(,)?) => {
+    ($name:ident:$wrap:expr,$name2:ident:$padding:expr, $($widget:expr),*$(,)?) => {
         let mut state = FlexState {};
         let count = $crate::count_expr!($($widget),*);
         let viewport_width = ctx().width();
+        let viewport_height = ctx().height();
         let mut tallest_widget = 0;
         let mut metrics: Vec<WrapMetrics> = vec![WrapMetrics::default(); count];
         let mut current_metrics = 0;
@@ -105,7 +106,7 @@ macro_rules! flex_center {
 
         //TODO: Vertical wrapping
         //called `Result::unwrap()` on an `Err` value: "Canvas height is 596, cannot draw at 600 (300y + 300h)"
-
+        let padding: i32 = $padding;
 
         $(
             if i > current_total {
@@ -135,7 +136,7 @@ macro_rules! flex_center {
                     //Assume their is no vertical centering.
                     y += tallest_widget;
                     area.x = x as i32;
-                    area.y = y as i32;
+                    area.y = y as i32 + padding;
             }
 
 
@@ -171,7 +172,10 @@ mod tests {
             // );
 
             //The third widget should wrap here.
-            flex_center!(wrap: true, rect().wh(300), rect().wh(300), rect().wh(300));
+            // flex_center!(wrap: true, rect().wh(300), rect().wh(300), rect().wh(300));
+
+            //The last widget doesn't wrap here at all...
+            flex_center!(wrap: true, padding: 20, rect().w(500).h(100), rect().w(500).h(100), rect().w(500).h(100));
 
             ctx.draw_frame();
         }
