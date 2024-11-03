@@ -103,6 +103,10 @@ macro_rules! flex_center {
         //I'll add the closure junk later.
         let mut x = spacing;
 
+        //TODO: Vertical wrapping
+        //called `Result::unwrap()` on an `Err` value: "Canvas height is 596, cannot draw at 600 (300y + 300h)"
+
+
         $(
             if i > current_total {
                 current_metrics += 1;
@@ -147,6 +151,8 @@ macro_rules! flex_center {
 #[cfg(test)]
 mod tests {
     use crate::*;
+
+    //cargo test --package softui --lib -- layout::tests::center --exact --show-output
     #[test]
     fn center() {
         let ctx = create_ctx("Softui", 800, 800);
