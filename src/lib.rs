@@ -225,6 +225,11 @@ impl Context {
             match cmd {
                 //This should idealy have a z index/depth parameter.
                 Command::Rectangle(x, y, width, height, color) => {
+                    //TODO: Don't just unwrap here.
+                    //One of the problems with a thread safe UI is that
+                    //the size of the viewport could be different from when the
+                    //user pushes a draw call.
+                    //Containers should minimize the issues here.
                     self.draw_rectangle(x, y, width, height, color).unwrap();
                 }
                 Command::RectangleOutline(x, y, width, height, color) => {

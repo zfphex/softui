@@ -161,7 +161,7 @@ macro_rules! vertical {
 macro_rules! layout {
     ($direction:expr, $($widget:expr),*$(,)?) => {
         {
-            // let count = $crate::count_widgets!($($widget),*);
+            // let count = $crate::count_expr!($($widget),*);
             let draw_layout_impl = $crate::DrawContainerImpl {
                 f: Some(|direction: $crate::Direction, mut x: i32, mut y: i32, margin: i32, padding: i32| {
                     let mut layout_area = $crate::Rect::new(x, y, 0, 0);
@@ -174,6 +174,7 @@ macro_rules! layout {
                     // )*
 
                     $(
+                        //HACK: bypass the lifetime on moved values here.
                         let reference = unsafe { $widget.as_mut_ptr() };
                         $crate::layout(reference, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
                     )*

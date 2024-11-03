@@ -14,7 +14,7 @@ macro_rules! builder {
 macro_rules! count_expr {
     () => { 0 };
     ($first:expr $(, $rest:expr)*) => {
-        1 + count_widgets!($($rest),*)
+        1 + count_expr!($($rest),*)
     };
 }
 
