@@ -31,12 +31,18 @@ fn main() {
         queue_command_fn(triangle);
 
         //or
-        queue_command(Command::CustomFn(triangle));
+        queue_command(Command {
+            area: Rect::default(),
+            primative: Primative::CustomFn(triangle),
+        });
 
         //or
         #[allow(static_mut_refs)]
         unsafe {
-            COMMAND_QUEUE.push(Command::CustomFn(triangle))
+            COMMAND_QUEUE.push(Command {
+                area: Rect::default(),
+                primative: Primative::CustomFn(triangle),
+            })
         };
 
         //Draw all queue commands.

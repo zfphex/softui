@@ -3,10 +3,10 @@ use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
 
 #[derive(Debug, Default)]
 pub struct AtomicRect {
-    x: AtomicI32,
-    y: AtomicI32,
-    width: AtomicI32,
-    height: AtomicI32,
+    pub x: AtomicI32,
+    pub y: AtomicI32,
+    pub width: AtomicI32,
+    pub height: AtomicI32,
 }
 
 impl AtomicRect {
@@ -28,10 +28,10 @@ impl AtomicRect {
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Rect {
-    pub x: i32,
-    pub y: i32,
-    pub width: i32,
-    pub height: i32,
+    pub x: usize,
+    pub y: usize,
+    pub width: usize,
+    pub height: usize,
 }
 
 impl From<RECT> for Rect {
@@ -39,8 +39,8 @@ impl From<RECT> for Rect {
         Rect {
             x: 0,
             y: 0,
-            width: rect.width(),
-            height: rect.height(),
+            width: rect.width() as usize,
+            height: rect.height() as usize,
         }
     }
 }
@@ -54,7 +54,7 @@ impl Rect {
             height: 0,
         }
     }
-    pub const fn new(x: i32, y: i32, width: i32, height: i32) -> Self {
+    pub const fn new(x: usize, y: usize, width: usize, height: usize) -> Self {
         Self {
             x,
             y,
@@ -62,10 +62,10 @@ impl Rect {
             height,
         }
     }
-    pub const fn right(&self) -> i32 {
+    pub const fn right(&self) -> usize {
         self.x + self.width
     }
-    pub const fn bottom(&self) -> i32 {
+    pub const fn bottom(&self) -> usize {
         self.y + self.height
     }
     // pub const fn centered(&self, width: u16, height: u16) -> Rect {
@@ -74,7 +74,7 @@ impl Rect {
 
     //     todo!();
     // }
-    // pub const fn area(&self) -> i32 {
+    // pub const fn area(&self) -> usize {
     //     self.width * self.height
     // }
 
@@ -87,7 +87,7 @@ impl Rect {
     }
 
     //TODO: Bounds checking
-    pub const fn inner(&self, w: i32, h: i32) -> Rect {
+    pub const fn inner(&self, w: usize, h: usize) -> Rect {
         Rect {
             x: self.x + w,
             y: self.y + h,

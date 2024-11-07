@@ -42,7 +42,7 @@ macro_rules! impl_click {
             }
 
             #[inline]
-            fn draw_command(&self) -> Option<Command> {
+            fn draw_command(&self) -> Option<$crate::Primative> {
                 self.widget.draw_command()
             }
         }

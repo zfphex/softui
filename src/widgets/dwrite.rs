@@ -13,7 +13,7 @@ pub struct Texture {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct Metrics {
+pub struct GlyphMetrics {
     // pub left_size_bearing: i32,
     pub advance_width: f32,
     // pub right_side_bearing: i32,
@@ -27,7 +27,7 @@ pub struct Metrics {
 
 pub struct Glyph {
     pub texture: Texture,
-    pub metrics: Metrics,
+    pub metrics: GlyphMetrics,
 }
 
 pub struct DWrite {
@@ -51,7 +51,7 @@ impl DWrite {
         dwrite
     }
     //TODO: Too many nested structs bro.
-    pub fn glyph_cached(&self, char: char) -> (Metrics, &Texture) {
+    pub fn glyph_cached(&self, char: char) -> (GlyphMetrics, &Texture) {
         profile!();
         let glyph = &self.table[char as usize][0];
         (glyph.metrics, &glyph.texture)
@@ -69,7 +69,7 @@ impl DWrite {
             table: [const { Vec::new() }; 127],
         }
     }
-    pub fn glyph(&self, char: char, point_size: f32) -> (Metrics, Texture) {
+    pub fn glyph(&self, char: char, point_size: f32) -> (GlyphMetrics, Texture) {
         profile!();
         let glyph_id = self
             .font_face
@@ -93,7 +93,7 @@ impl DWrite {
         // )[0];
 
         let gm = self.font_face.get_design_glyph_metrics(&[glyph_id], false)[0];
-        let glyph_metrics = Metrics {
+        let glyph_metrics = GlyphMetrics {
             advance_width: gm.advanceWidth as f32 * ratio,
             advance_height: gm.advanceHeight as f32 * ratio,
             bottom_side_bearing: gm.bottomSideBearing as f32 * ratio,

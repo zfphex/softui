@@ -33,19 +33,22 @@ pub use MouseButton::*;
 //I would like to append single commands to the buffer and large groups of commands.
 //There is no COMMAND_QUEUE.push_slice() unfortunately.
 
-pub enum Command {
-    /// (x, y, width, height, radius, color)
-    Ellipse(usize, usize, usize, usize, usize, Color),
-    /// (x, y, width, height, color)
-    Rectangle(usize, usize, usize, usize, Color),
-    /// (x, y, width, height, color)
-    RectangleOutline(usize, usize, usize, usize, Color),
-    /// (text, font_size, x, y, Color)
+#[derive(Debug)]
+pub struct Command {
+    pub area: Rect,
+    pub primative: Primative,
+}
+
+pub enum Primative {
+    /// (radius, color)
+    Ellipse(usize, Color),
+    RectangleOutline(Color),
+    /// (text, font_size,Color)
     /// This needs to include the desired font.
     /// Not sure how to do that yet.
     //TODO: Should font size be f32?
     //TODO: Could change text to Cow<'_, str>
-    Text(String, usize, usize, usize, Color),
+    Text(String, usize, Color),
 
     //But which to use?
     CustomBoxed(Box<dyn FnOnce(&mut Context) -> ()>),
@@ -54,7 +57,31 @@ pub enum Command {
 
     #[cfg(feature = "image")]
     ///(bitmap, x, y, width, height, format)
-    ImageUnsafe(&'static [u8], usize, usize, usize, usize, ImageFormat),
+    ImageUnsafe(&'static [u8], ImageFormat),
+}
+
+impl std::fmt::Debug for Primative {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ellipse(arg0, arg1) => f.debug_tuple("Ellipse").field(arg0).field(arg1).finish(),
+            Self::RectangleOutline(arg0) => f.debug_tuple("RectangleOutline").field(arg0).finish(),
+            Self::Text(arg0, arg1, arg2) => f
+                .debug_tuple("Text")
+                .field(arg0)
+                .field(arg1)
+                .field(arg2)
+                .finish(),
+            Self::CustomBoxed(arg0) => f.debug_tuple("CustomBoxed").finish(),
+            Self::Custom(arg0) => f.debug_tuple("Custom").finish(),
+            Self::CustomFn(arg0) => f.debug_tuple("CustomFn").field(arg0).finish(),
+            #[cfg(feature = "image")]
+            Self::ImageUnsafe(arg0, arg1) => f
+                .debug_tuple("ImageUnsafe")
+                .field(arg0)
+                .field(arg1)
+                .finish(),
+        }
+    }
 }
 
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
@@ -66,7 +93,12 @@ pub fn queue_command(command: Command) {
 
 #[inline]
 pub fn queue_command_fn(f: fn(&mut Context) -> ()) {
-    unsafe { COMMAND_QUEUE.push(Command::CustomFn(f)) }
+    unsafe {
+        COMMAND_QUEUE.push(Command {
+            area: Rect::default(),
+            primative: Primative::CustomFn(f),
+        });
+    }
 }
 
 // pub static mut CONTEXT: Context = Context {
@@ -93,6 +125,9 @@ pub fn queue_command_fn(f: fn(&mut Context) -> ()) {
 //This is definitely 100% thread safe.
 //No issues here at all.
 pub static mut CTX: Option<Context> = None;
+
+// pub static mut VIEWPORT: AtomicRect = AtomicRect::new(0, 0, 0, 0);
+// pub use std::sync::atomic::Ordering::SeqCst;
 
 #[inline(always)]
 pub fn ctx() -> &'static mut Context {
@@ -147,11 +182,15 @@ impl Context {
         //Convert top, left, right, bottom to x, y, width, height.
         let area = Rect::from(window.client_area());
 
+        // unsafe {
+        //     VIEWPORT = AtomicRect::new(area.x, area.y, area.width, area.height);
+        // }
+
         Self {
             window,
             dc: Some(dc),
             area,
-            buffer: vec![0; area.width as usize * area.height as usize],
+            buffer: vec![0; area.width * area.height],
             //4 RGBQUADS in u8x16 -> 16 / 4 = 4
             // simd16: vec![u8x16::splat(0); ((width * height) as f32 / 4.0).ceil() as usize],
             //8 RGBQUADS in u8x64 -> 32 / 4 = 8
@@ -160,7 +199,7 @@ impl Context {
             // simd64: vec![u32x16::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
             //16 RGBQUADS in u8x64 -> 64 / 4 = 16
             // simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
-            bitmap: BITMAPINFO::new(area.width, area.height),
+            bitmap: BITMAPINFO::new(area.width as i32, area.height as i32),
             mouse_pos: Rect::default(),
             left_mouse: MouseState::new(),
             right_mouse: MouseState::new(),
@@ -177,7 +216,10 @@ impl Context {
             Some(event) => {
                 match event {
                     Event::Mouse(x, y) => {
-                        self.mouse_pos = Rect::new(x, y, 1, 1);
+                        if x < 0 || y < 0 {
+                            todo!("Handle negative mouse co-ordinates with RECT instead of Rect");
+                        }
+                        self.mouse_pos = Rect::new(x as usize, y as usize, 1, 1);
                     }
                     Event::Input(Key::LeftMouseDown, _) => {
                         self.left_mouse.pressed(self.mouse_pos);
@@ -222,21 +264,21 @@ impl Context {
         profile!();
 
         while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
-            match cmd {
+            let x = cmd.area.x as usize;
+            let y = cmd.area.y as usize;
+            let width = cmd.area.width as usize;
+            let height = cmd.area.height as usize;
+
+            match cmd.primative {
                 //This should idealy have a z index/depth parameter.
-                Command::Rectangle(x, y, width, height, color) => {
-                    //TODO: Don't just unwrap here.
-                    //One of the problems with a thread safe UI is that
-                    //the size of the viewport could be different from when the
-                    //user pushes a draw call.
-                    //Containers should minimize the issues here.
-                    self.draw_rectangle(x, y, width, height, color);
-                }
-                Command::RectangleOutline(x, y, width, height, color) => {
+                // Command::Rectangle(x, y, width, height, color) => {
+                //     self.draw_rectangle(x, y, width, height, color);
+                // }
+                Primative::RectangleOutline(color) => {
                     self.draw_rectangle_outline(x, y, width, height, color)
                         .unwrap();
                 }
-                Command::Ellipse(x, y, width, height, radius, color) => {
+                Primative::Ellipse(radius, color) => {
                     if radius == 0 {
                         self.draw_rectangle(x, y, width, height, color);
                     } else {
@@ -244,16 +286,16 @@ impl Context {
                             .unwrap();
                     }
                 }
-                Command::Text(text, size, x, y, color) => {
+                Primative::Text(text, size, color) => {
                     //TODO: Specify the font with a font database and font ID.
                     let font = default_font().unwrap();
                     self.draw_text(&text, font, size, x, y, 0, color);
                 }
-                Command::CustomBoxed(f) => f(self),
-                Command::Custom(f) => f(self),
-                Command::CustomFn(f) => f(self),
+                Primative::CustomBoxed(f) => f(self),
+                Primative::Custom(f) => f(self),
+                Primative::CustomFn(f) => f(self),
                 #[cfg(feature = "image")]
-                Command::ImageUnsafe(bitmap, x, y, width, height, image_format) => {
+                Primative::ImageUnsafe(bitmap, image_format) => {
                     self.draw_image(bitmap, x, y, width, height, image_format);
                 }
             }
@@ -419,16 +461,25 @@ impl Context {
         x: usize,
         y: usize,
         mut width: usize,
-        height: usize,
+        mut height: usize,
         color: Color,
     ) {
         let viewport_width = self.width();
+        let viewport_height = self.width();
 
         //Malformed rectangle
         if x > viewport_width {
             warn!(
                 "Malformed rectangle has x: {} but viewport width is {}.",
                 x, viewport_width
+            );
+            return;
+        }
+
+        if y > viewport_height {
+            warn!(
+                "Malformed rectangle has y: {} but viewport height is {}.",
+                y, viewport_height
             );
             return;
         }
@@ -444,6 +495,17 @@ impl Context {
                 viewport_width
             );
             width = viewport_width.saturating_sub(x);
+        }
+
+        if y + height > viewport_height {
+            info!(
+                "Clipping rectangle y: {}, height: {} because y + height = {} > viewport height: {}",
+                y,
+                height,
+                y + height,
+                viewport_height
+            );
+            height = viewport_height.saturating_sub(y);
         }
 
         for i in y..y + height {
@@ -644,7 +706,7 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
-        let mut area = Rect::new(x as i32, y as i32, 0, 0);
+        let mut area = Rect::new(x, y, 0, 0);
         let mut y: usize = area.y.try_into().unwrap();
         let x = area.x as usize;
 
@@ -726,8 +788,8 @@ impl Context {
         }
 
         //Not sure why these are one off.
-        area.height = max_y as i32 + 1 - area.y;
-        area.width = max_x as i32 + 1 - area.x;
+        area.height = max_y + 1 - area.y;
+        area.width = max_x + 1 - area.x;
 
         // let _ = self.draw_rectangle_outline(
         //     area.x as usize,
@@ -759,7 +821,7 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
-        let mut area = Rect::new(x as i32, y as i32, 0, 0);
+        let mut area = Rect::new(x, y, 0, 0);
         let mut y: usize = area.y.try_into().unwrap();
         let x = area.x as usize;
 
@@ -838,8 +900,8 @@ impl Context {
         }
 
         //Not sure why these are one off.
-        area.height = max_y as i32 + 1 - area.y;
-        area.width = max_x as i32 + 1 - area.x;
+        area.height = max_y + 1 - area.y;
+        area.width = max_x + 1 - area.x;
 
         // let _ = self.draw_rectangle_outline(
         //     area.x as usize,

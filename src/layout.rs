@@ -3,7 +3,7 @@
 
 //There should be two types of flex, one for vertical and one for horizontal
 
-use crate::{Direction, Widget};
+use crate::{Command, Direction, Primative, Rect, Widget};
 
 #[derive(Default, Debug)]
 pub enum HorizontalAlignment {
@@ -47,23 +47,151 @@ fn h() -> Flex {
     }
 }
 
-pub fn flex<T: Widget>(widget: *mut T, state: &mut FlexState) {
-    let widget = unsafe { widget.as_mut().unwrap() };
+// pub fn flex<T: Widget>(widget: *mut T, state: &mut FlexState) {
+//     let widget = unsafe { widget.as_mut().unwrap() };
+// }
+
+// pub struct FlexState {}
+
+#[derive(Debug)]
+pub struct Segment {
+    pub direction: Direction,
+    ///Either the total height or width.
+    ///Depends on the direction.
+    pub size: usize,
+    ///Max width or max height
+    pub max: usize,
+    pub widgets: Vec<(Rect, Primative)>,
 }
 
-pub struct FlexState {}
+#[macro_export]
+macro_rules! flex_center_2 {
+    ($($widget:expr),*$(,)?) => {
+        let mut segments: Vec<Segment> = Vec::new();
+        // let mut widgets: Vec<(Rect, Command)> = Vec::new();
+        let viewport_width = ctx().area.width;
+        let viewport_height = ctx().area.height;
+        let mut total_width = 0;
+        let mut max_width = 0;
 
-#[derive(Debug, Clone, Default)]
-pub struct WrapMetrics {
-    pub total_width: usize,
-    pub total_widgets: usize,
+        // let mut total_height = 0;
+
+        //The total height of largest widget in each segment.
+        let mut total_height_of_largest = 0;
+        let mut total_hsegments = 0;
+
+        let mut max_height = 0;
+        let mut horizontal_wrap = 0;
+        let mut vertical_wrap = 0;
+
+        //Total width/height, number of widgets
+
+        //Maybe I could do, total width/height, widget slice
+        // let mut hwrap: Vec<(usize, usize)> = Vec::new();
+        // let mut vwrap: Vec<(usize, usize)> = Vec::new();
+
+        let mut widgets = Vec::new();
+        let count = $crate::count_expr!($($widget),*);
+        let mut i = 0;
+
+        $(
+            i += 1;
+            let mut widget = $widget;
+            widget.calculate_area();
+
+            let area = *widget.area().unwrap();
+
+            if total_width + area.width > viewport_width {
+                segments.push(Segment {
+                    direction: Direction::Horizontal,
+                    size: total_width,
+                    max: max_width,
+                    widgets: core::mem::take(&mut widgets),
+                });
+
+                total_hsegments += 1;
+                total_height_of_largest += max_height;
+                max_height = 0;
+                total_width = 0;
+                max_width = 0;
+            }
+
+            // if total_height + area.height > viewport_height {
+            //     segments.push(Segment {
+            //         direction: Direction::Vertical,
+            //         size: total_height,
+            //         max: max_height,
+            //         widgets: core::mem::take(&mut widgets),
+            //     });
+
+            //     total_height = 0;
+            //     max_height = 0;
+            // }
+
+            total_width += area.width;
+            // total_height += area.height;
+
+            if area.width > max_width {
+                max_width = area.width;
+            }
+
+            if area.height > max_height {
+                max_height = area.height;
+            }
+
+            if let Some(primative) = widget.draw_command() {
+                widgets.push((area, primative));
+            }
+
+            //Don't like this part.
+            if (i == count) {
+                total_hsegments += 1;
+                total_height_of_largest += max_height;
+                segments.push(Segment {
+                    direction: Direction::Horizontal,
+                    size: total_width,
+                    max: max_width,
+                    widgets: core::mem::take(&mut widgets),
+                })
+            }
+        )*
+
+
+        let mut vspacing = viewport_height.saturating_sub(total_height_of_largest) / (total_hsegments + 1);
+        let mut y = vspacing;
+
+        for segment in segments {
+            let mut spacing = viewport_width.saturating_sub(segment.size) / (segment.widgets.len()  + 1);
+            let mut x = spacing;
+            let mut max_height = 0;
+
+            match segment.direction {
+                Direction::Horizontal => {
+                    for (mut area, primative) in segment.widgets {
+                        if area.height > max_height {
+                            max_height = area.height;
+                        }
+
+                        //TODO: The height of the widgets is getting eating when the window gets smaller.
+                        area.x = x;
+                        area.y = y;
+                        unsafe { COMMAND_QUEUE.push(Command {area, primative}) };
+                        x += spacing + area.width;
+                    }
+                    y += max_height + vspacing;
+                }
+                Direction::Vertical => {
+                }
+            }
+        }
+    };
 }
 
 //This allows for evenly spaced horizontal centering.
 #[macro_export]
 macro_rules! flex_center {
     ($name:ident:$wrap:expr,$name2:ident:$padding:expr, $($widget:expr),*$(,)?) => {
-        let mut state = FlexState {};
+        // let mut state = FlexState {};
         let count = $crate::count_expr!($($widget),*);
         let viewport_width = ctx().width();
         let viewport_height = ctx().height();
@@ -131,7 +259,7 @@ macro_rules! flex_center {
             //the y co-ordinate. The amount would be determined by
             //either the tallest widget or the vertical spacing
             //when centering both horizontally and vertically.
-            if (area.x + area.width > viewport_width as i32) && wrap{
+            if (area.x + area.width > viewport_width as i32) && wrap {
                     x = spacing;
                     //Assume their is no vertical centering.
                     y += tallest_widget;
@@ -139,12 +267,10 @@ macro_rules! flex_center {
                     area.y = y as i32 + padding;
             }
 
-
             if let Some(command) = widget.draw_command() {
                 widget.try_click();
                 unsafe { COMMAND_QUEUE.push(command) };
             }
-
 
             i += 1;
         )*
@@ -175,7 +301,13 @@ mod tests {
             // flex_center!(wrap: true, rect().wh(300), rect().wh(300), rect().wh(300));
 
             //The last widget doesn't wrap here at all...
-            flex_center!(wrap: true, padding: 20, rect().w(500).h(100), rect().w(500).h(100), rect().w(500).h(100));
+            // flex_center!(wrap: true, padding: 20, rect().w(500).h(100), rect().w(500).h(100), rect().w(500).h(100));
+
+            flex_center_2!(
+                rect().w(500).h(100),
+                rect().w(500).h(100),
+                rect().w(500).h(100)
+            );
 
             ctx.draw_frame();
         }

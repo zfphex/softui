@@ -5,7 +5,7 @@ edition = "2021"
 resolver = "2"
 
 [features]
-default = ["image"]
+# default = ["image"]
 profile = ["mini/profile"]
 info = ["mini/info"]
 warn = ["mini/warn"]

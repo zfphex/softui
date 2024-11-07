@@ -40,7 +40,7 @@ use crate::*;
 // pub trait Widget: std::fmt::Debug {
 pub trait Widget {
     #[must_use]
-    fn draw_command(&self) -> Option<Command> {
+    fn draw_command(&self) -> Option<Primative> {
         None
     }
 
@@ -160,7 +160,7 @@ pub trait Widget {
         let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
         let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);
 
-        *area = Rect::new(x.round() as i32, y.round() as i32, area.width, area.height);
+        *area = Rect::new(x.round() as usize, y.round() as usize, area.width, area.height);
 
         self
     }
@@ -171,7 +171,7 @@ pub trait Widget {
         let area = self.area().unwrap();
         match x.into() {
             Unit::Px(px) => {
-                area.x = px as i32;
+                area.x = px;
             }
             Unit::Em(_) => todo!(),
             Unit::Percentage(p) => {
@@ -191,7 +191,7 @@ pub trait Widget {
         let area = self.area().unwrap();
         match y.into() {
             Unit::Px(px) => {
-                self.area().unwrap().y = px as i32;
+                self.area().unwrap().y = px;
                 // self.area.y = px as i32;
             }
             Unit::Em(_) => todo!(),
@@ -206,7 +206,7 @@ pub trait Widget {
         let area = self.area().unwrap();
         match length.into() {
             Unit::Px(px) => {
-                area.width = px as i32;
+                area.width = px;
             }
             Unit::Em(_) => todo!(),
             Unit::Percentage(_) => todo!(),
@@ -220,7 +220,7 @@ pub trait Widget {
         let area = self.area().unwrap();
         match length.into() {
             Unit::Px(px) => {
-                area.height = px as i32;
+                area.height = px;
             }
             Unit::Em(_) => todo!(),
             Unit::Percentage(_) => todo!(),

@@ -66,13 +66,11 @@ impl<'a> Text<'a> {
 }
 
 impl<'a> Widget for Text<'a> {
-    fn draw_command(&self) -> Option<Command> {
+    fn draw_command(&self) -> Option<Primative> {
         //Because draw is immutable, the area must be calculated on each draw since it cannot store it's own state.
-        Some(Command::Text(
+        Some(Primative::Text(
             self.text.to_string(),
             self.font_size,
-            self.area.x as usize,
-            self.area.y as usize,
             Color::WHITE,
         ))
     }
@@ -140,8 +138,8 @@ impl<'a> Widget for Text<'a> {
             y += self.font_size + line_height;
         }
 
-        area.height = (max_y as i32 + 1 - area.y);
-        area.width = (max_x as i32 + 1 - area.x);
+        area.height = (max_y + 1 - area.y);
+        area.width = (max_x + 1 - area.x);
 
         self.area = area;
     }

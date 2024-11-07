@@ -31,7 +31,7 @@ pub fn image(path: impl AsRef<Path>) -> Image {
 
                     Image {
                         format: ImageFormat::JPEG,
-                        area: Rect::new(0, 0, width as i32, height as i32),
+                        area: Rect::new(0, 0, width, height),
                         bitmap,
                     }
                 }
@@ -42,7 +42,7 @@ pub fn image(path: impl AsRef<Path>) -> Image {
 
                     Image {
                         format: ImageFormat::PNG,
-                        area: Rect::new(0, 0, width as i32, height as i32),
+                        area: Rect::new(0, 0, width, height),
                         bitmap: bitmap.u8().unwrap(),
                     }
                 }
@@ -120,17 +120,10 @@ impl Widget for Image {
         Some(&mut self.area)
     }
 
-    fn draw_command(&self) -> Option<Command> {
+    fn draw_command(&self) -> Option<Primative> {
         //TODO: Just assume the image exists for now.
         let bitmap = unsafe { extend_lifetime(&self.bitmap) };
-        Some(Command::ImageUnsafe(
-            bitmap,
-            self.area.x as usize,
-            self.area.y as usize,
-            self.area.width as usize,
-            self.area.height as usize,
-            self.format,
-        ))
+        Some(Primative::ImageUnsafe(bitmap, self.format))
         // Some(Command::Image(
         //     self.bitmap.clone().into_boxed_slice(),
         //     self.area.x as usize,

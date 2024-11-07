@@ -81,7 +81,7 @@ impl RectangleNew {
 }
 
 impl Widget for RectangleNew {
-    fn draw_command(&self) -> Option<Command> {
+    fn draw_command(&self) -> Option<Primative> {
         // self.temp_on_clicked(Left);
         // if let Some(click) = &mut self.on_clicked {
         //     click();

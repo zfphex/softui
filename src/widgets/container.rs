@@ -62,12 +62,12 @@ pub trait IntoVec {
 
 pub fn layout<T: Widget>(
     widget: *mut T,
-    margin: i32,
-    padding: i32,
-    max_width: &mut i32,
-    max_height: &mut i32,
-    x: &mut i32,
-    y: &mut i32,
+    margin: usize,
+    padding: usize,
+    max_width: &mut usize,
+    max_height: &mut usize,
+    x: &mut usize,
+    y: &mut usize,
     layout_area: &mut Rect,
     direction: Direction,
 ) {
@@ -94,9 +94,16 @@ pub fn layout<T: Widget>(
     }
 
     //Draw the widget once the layout is correct.
-    if let Some(command) = widget.draw_command() {
+    if let Some(primative) = widget.draw_command() {
         widget.try_click();
-        unsafe { COMMAND_QUEUE.push(command) };
+        if let Some(area) = widget.area() {
+            unsafe {
+                COMMAND_QUEUE.push(Command {
+                    area: *area,
+                    primative,
+                })
+            };
+        }
     }
 
     //Calculate the position of the next element.
@@ -163,7 +170,7 @@ macro_rules! layout {
         {
             // let count = $crate::count_expr!($($widget),*);
             let draw_layout_impl = $crate::DrawContainerImpl {
-                f: Some(|direction: $crate::Direction, mut x: i32, mut y: i32, margin: i32, padding: i32| {
+                f: Some(|direction: $crate::Direction, mut x: usize, mut y: usize, margin: usize, padding: usize| {
                     let mut layout_area = $crate::Rect::new(x, y, 0, 0);
                     let mut max_width = 0;
                     let mut max_height = 0;
@@ -224,7 +231,7 @@ pub struct DrawContainerImpl<F> {
 
 impl<F> DrawContainer for DrawContainerImpl<F>
 where
-    F: FnOnce(Direction, i32, i32, i32, i32),
+    F: FnOnce(Direction, usize, usize, usize, usize),
 {
     fn call(&mut self, layout: &mut Container<Self>) {
         if let Some(f) = self.f.take() {
@@ -232,8 +239,8 @@ where
                 layout.direction,
                 layout.area.x,
                 layout.area.y,
-                layout.margin as i32,
-                layout.padding as i32,
+                layout.margin as usize,
+                layout.padding as usize,
             );
         }
     }

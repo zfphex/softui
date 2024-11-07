@@ -21,7 +21,7 @@ fn main() {
             _ => {}
         }
 
-        ctx.fill(Color::WHITE);
+        ctx.fill(Color::BLACK);
 
         // #[cfg(feature = "image")]
         // ctx.draw_image(
@@ -32,9 +32,15 @@ fn main() {
         //     image.area.height as usize,
         //     image.format,
         // );
-        v!(image);
+        // v!(image);
 
-        ctx.draw_text_subpixel("Lorem", &dwrite, 16, 0, 36 * 3, 0, Color::WHITE);
+        // ctx.draw_text_subpixel("Lorem", &dwrite, 16, 0, 36 * 3, 0, Color::WHITE);
+
+        flex_center_2!(
+            rect().w(500).h(100),
+            rect().w(500).h(100),
+            rect().w(500).h(100)
+        );
 
         ctx.draw_frame();
     }
