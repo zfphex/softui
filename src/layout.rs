@@ -172,7 +172,6 @@ macro_rules! flex_center_2 {
                             max_height = area.height;
                         }
 
-                        //TODO: The height of the widgets is getting eating when the window gets smaller.
                         area.x = x;
                         area.y = y;
                         unsafe { COMMAND_QUEUE.push(Command {area, primative}) };

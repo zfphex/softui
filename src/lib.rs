@@ -465,7 +465,7 @@ impl Context {
         color: Color,
     ) {
         let viewport_width = self.width();
-        let viewport_height = self.width();
+        let viewport_height = self.height();
 
         //Malformed rectangle
         if x > viewport_width {
@@ -494,6 +494,7 @@ impl Context {
                 x + width,
                 viewport_width
             );
+
             width = viewport_width.saturating_sub(x);
         }
 
@@ -505,6 +506,7 @@ impl Context {
                 y + height,
                 viewport_height
             );
+
             height = viewport_height.saturating_sub(y);
         }
 
