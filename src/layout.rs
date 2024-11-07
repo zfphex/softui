@@ -162,8 +162,6 @@ macro_rules! flex_center_2 {
         //TODO: The inital y position is wrong when there is no horizontal space for a single widget.
         let mut y = vspacing;
 
-        dbg!(vspacing, total_hsegments);
-
         for segment in segments {
             let mut spacing = viewport_width.saturating_sub(segment.size) / (segment.widgets.len()  + 1);
             let mut x = spacing;
