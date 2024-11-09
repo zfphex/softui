@@ -49,6 +49,20 @@ pub trait Widget {
     /// 🤤🤤🤤🤤🤤
     fn calculate_area(&mut self) {}
 
+    /// Temp hack
+    fn as_mut_slice(&mut self) -> &mut [Self]
+    where
+        Self: Sized,
+    {
+        core::slice::from_mut(self)
+    }
+    // fn into_vec(self) -> Vec<Self>
+    // where
+    //     Self: Sized,
+    // {
+    //     vec![self]
+    // }
+
     fn area(&mut self) -> Option<&mut Rect>;
 
     #[inline]

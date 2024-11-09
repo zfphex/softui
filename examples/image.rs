@@ -2,7 +2,7 @@ use softui::*;
 
 #[cfg(not(feature = "image"))]
 fn main() {
-    println!("Use --features 'svg'")
+    println!("Use --features 'image'")
 }
 
 #[cfg(feature = "image")]

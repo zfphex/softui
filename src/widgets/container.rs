@@ -182,8 +182,12 @@ macro_rules! layout {
 
                     $(
                         //HACK: bypass the lifetime on moved values here.
-                        let reference = unsafe { $widget.as_mut_ptr() };
-                        $crate::layout(reference, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
+                        // let reference = unsafe { $widget.as_mut_ptr() };
+                        // let widget = unsafe { reference.as_mut().unwrap() };
+                        for widget in $widget.as_mut_slice() {
+                            $crate::layout(unsafe {widget.as_mut_ptr()}, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
+                        }
+                        // $crate::layout(reference, margin, padding, &mut max_width, &mut max_height, &mut x, &mut y, &mut layout_area, direction);
                     )*
 
                     match direction {

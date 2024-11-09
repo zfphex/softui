@@ -23,6 +23,26 @@ fn main() {
             _ => {}
         }
 
+        // ctx.fill(Color::WHITE);
+        // ctx.draw_text_subpixel(
+        //     "This is some text....",
+        //     &dwrite,
+        //     10,
+        //     0,
+        //     36 * 3,
+        //     0,
+        //     Color::WHITE,
+        // );
+        // ctx.draw_text(
+        //     "This is some text...",
+        //     &default_font().unwrap(),
+        //     10,
+        //     0,
+        //     36 * 3 + 10,
+        //     0,
+        //     Color::BLACK,
+        // );
+
         ctx.fill(Color::BLACK);
 
         // #[cfg(feature = "image")]
@@ -35,8 +55,6 @@ fn main() {
         //     image.format,
         // );
         // v!(image);
-
-        // ctx.draw_text_subpixel("Lorem", &dwrite, 16, 0, 36 * 3, 0, Color::WHITE);
 
         flex_center_2!(
             rect().bg(Color::RED).w(500).h(100),

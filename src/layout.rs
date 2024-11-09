@@ -64,25 +64,29 @@ pub struct Segment {
     pub widgets: Vec<(Rect, Primative)>,
 }
 
-pub fn flex_center(widgets: &[(Rect, Primative)]) {
+pub fn flex(widgets: &[(Rect, Primative)]) {
     for widget in widgets {}
+}
+
+/// Give a warning to the if they pass in something that does not implement `Widget`.
+/// This function basically strips the types out so they're easier to work with.
+/// It's not super important during the layout stage. Makes my life a pain in the ass though..
+#[inline]
+pub fn widget<T: Widget>(mut widget: T) -> (Rect, Primative) {
+    widget.calculate_area();
+    let area = *widget.area().unwrap();
+    let primative = widget.draw_command().unwrap();
+    (area, primative)
 }
 
 #[macro_export]
 macro_rules! flex_center_3 {
     ($($widget:expr),*$(,)?) => {
         let widgets = [$(
-            {
-                let mut widget = $widget;
-                widget.calculate_area();
-
-                let area = *widget.area().unwrap();
-                let primative = widget.draw_command().unwrap();
-                (area, primative)
-            },
+                widget($widget),
         )*];
 
-        flex_center(&widgets);
+        flex(&widgets);
     };
 }
 

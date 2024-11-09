@@ -708,6 +708,7 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
+        assert!(font_size > 0);
         let mut area = Rect::new(x, y, 0, 0);
         let mut y: usize = area.y.try_into().unwrap();
         let x = area.x as usize;
@@ -823,6 +824,7 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
+        assert!(font_size > 0);
         let mut area = Rect::new(x, y, 0, 0);
         let mut y: usize = area.y.try_into().unwrap();
         let x = area.x as usize;
