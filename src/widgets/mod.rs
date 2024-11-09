@@ -51,6 +51,7 @@ pub trait Widget {
 
     fn area(&mut self) -> Option<&mut Rect>;
 
+    #[inline]
     fn on_click<F: FnMut(&mut Self)>(self, button: MouseButton, click_fn: F) -> Click0<Self, F>
     where
         Self: Sized,
@@ -70,6 +71,7 @@ pub trait Widget {
     //This should be called need_draw, need_compute_area, idk...
     //If we used Any we could just call self.type_id() == Container.
     //Easy as that.
+    #[inline]
     fn is_container() -> bool
     where
         Self: Sized,
@@ -80,6 +82,7 @@ pub trait Widget {
     //This is used to run the click closure after calling on_click
     //This should be hidden from the user and only implemented on `Click`.
     //https://stackoverflow.com/questions/77562161/is-there-a-way-to-prevent-a-struct-from-implementing-a-trait-method
+    #[inline]
     fn try_click(&mut self) {}
 
     /// The user's cusor has been clicked and released on top of a widget.
@@ -160,7 +163,12 @@ pub trait Widget {
         let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
         let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);
 
-        *area = Rect::new(x.round() as usize, y.round() as usize, area.width, area.height);
+        *area = Rect::new(
+            x.round() as usize,
+            y.round() as usize,
+            area.width,
+            area.height,
+        );
 
         self
     }

@@ -4,22 +4,22 @@ pub trait Style {
 
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub struct Color(u32);
+pub struct Color(pub u32);
 
 impl Color {
-    pub const RED: Color = Color::new(0xFF0000);
-    pub const BLUE: Color = Color::new(0x0000FF);
-    pub const GREEN: Color = Color::new(0x00FF00);
-    pub const WHITE: Color = Color::new(0xFFFFFF);
-    pub const BLACK: Color = Color::new(0);
+    pub const RED: Color = Color(0xFF0000);
+    pub const BLUE: Color = Color(0x0000FF);
+    pub const GREEN: Color = Color(0x00FF00);
+    pub const WHITE: Color = Color(0xFFFFFF);
+    pub const BLACK: Color = Color(0);
+
+    // #[inline]
+    // pub const fn new(color: u32) -> Self {
+    //     Self(color)
+    // }
 
     #[inline]
-    pub const fn new(color: u32) -> Self {
-        Self(color)
-    }
-
-    #[inline]
-    pub const fn new_rgb(r: u8, g: u8, b: u8) -> Self {
+    pub const fn new(r: u8, g: u8, b: u8) -> Self {
         Self((r as u32) << 16 | (g as u32) << 8 | (b as u32))
     }
 
@@ -43,7 +43,7 @@ impl Color {
         let g = lerp(self.g() as f32, other.g() as f32, t) as u8;
         let b = lerp(self.b() as f32, other.b() as f32, t) as u8;
         // let a = lerp(self.a() as f32, other.a() as f32, t) as u8;
-        Self::new_rgb(r, g, b)
+        Self::new(r, g, b)
     }
 
     //Based debug mode optimizer. Note, this does literally nothing.

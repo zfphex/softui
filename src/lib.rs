@@ -766,7 +766,7 @@ impl Context {
                             break 'x;
                         }
 
-                        let bg = Color::new(self.buffer[i]);
+                        let bg = Color(self.buffer[i]);
 
                         let r = blend(r, alpha, bg.r(), 255 - alpha);
                         let g = blend(g, alpha, bg.g(), 255 - alpha);

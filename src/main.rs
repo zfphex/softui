@@ -7,7 +7,9 @@ use window::{Event, Key};
 
 fn main() {
     defer_results!();
-    let ctx = create_ctx("Softui", 800, 600);
+    // let ctx = create_ctx("Softui", 800, 600);
+    let ctx = create_ctx("Softui", 500, 800);
+    // let ctx = create_ctx("Softui", 600, 800);
     let dwrite = DWrite::new_cached(32.0);
     let font_size = 10;
     let font_size_large = 72;
@@ -37,9 +39,10 @@ fn main() {
         // ctx.draw_text_subpixel("Lorem", &dwrite, 16, 0, 36 * 3, 0, Color::WHITE);
 
         flex_center_2!(
-            rect().w(500).h(100),
-            rect().w(500).h(100),
-            rect().w(500).h(100)
+            rect().bg(Color::RED).w(500).h(100),
+            rect().bg(Color::GREEN).w(500).h(100),
+            rect().bg(Color::BLUE).w(500).h(100),
+            rect().bg(Color::new(20, 30, 100)).w(400).h(300)
         );
 
         ctx.draw_frame();

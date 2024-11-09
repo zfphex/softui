@@ -64,17 +64,36 @@ pub struct Segment {
     pub widgets: Vec<(Rect, Primative)>,
 }
 
+pub fn flex_center(widgets: &[(Rect, Primative)]) {
+    for widget in widgets {}
+}
+
+#[macro_export]
+macro_rules! flex_center_3 {
+    ($($widget:expr),*$(,)?) => {
+        let widgets = [$(
+            {
+                let mut widget = $widget;
+                widget.calculate_area();
+
+                let area = *widget.area().unwrap();
+                let primative = widget.draw_command().unwrap();
+                (area, primative)
+            },
+        )*];
+
+        flex_center(&widgets);
+    };
+}
+
 #[macro_export]
 macro_rules! flex_center_2 {
     ($($widget:expr),*$(,)?) => {
         let mut segments: Vec<Segment> = Vec::new();
-        // let mut widgets: Vec<(Rect, Command)> = Vec::new();
         let viewport_width = ctx().area.width;
         let viewport_height = ctx().area.height;
         let mut total_width = 0;
         let mut max_width = 0;
-
-        // let mut total_height = 0;
 
         //The total height of largest widget in each segment.
         let mut total_height_of_largest = 0;
@@ -83,12 +102,6 @@ macro_rules! flex_center_2 {
         let mut max_height = 0;
         let mut horizontal_wrap = 0;
         let mut vertical_wrap = 0;
-
-        //Total width/height, number of widgets
-
-        //Maybe I could do, total width/height, widget slice
-        // let mut hwrap: Vec<(usize, usize)> = Vec::new();
-        // let mut vwrap: Vec<(usize, usize)> = Vec::new();
 
         let mut widgets = Vec::new();
         let count = $crate::count_expr!($($widget),*);
@@ -101,7 +114,9 @@ macro_rules! flex_center_2 {
 
             let area = *widget.area().unwrap();
 
-            if total_width + area.width > viewport_width {
+            //Skip the zero width segment.
+            //This is pretty much a hack and should be removed in the third re-write.
+            if total_width + area.width > viewport_width && !(total_width == 0 || max_width == 0){
                 segments.push(Segment {
                     direction: Direction::Horizontal,
                     size: total_width,
@@ -115,18 +130,6 @@ macro_rules! flex_center_2 {
                 total_width = 0;
                 max_width = 0;
             }
-
-            // if total_height + area.height > viewport_height {
-            //     segments.push(Segment {
-            //         direction: Direction::Vertical,
-            //         size: total_height,
-            //         max: max_height,
-            //         widgets: core::mem::take(&mut widgets),
-            //     });
-
-            //     total_height = 0;
-            //     max_height = 0;
-            // }
 
             total_width += area.width;
             // total_height += area.height;
@@ -156,10 +159,7 @@ macro_rules! flex_center_2 {
             }
         )*
 
-
-
         let mut vspacing = viewport_height.saturating_sub(total_height_of_largest) / (total_hsegments + 1);
-        //TODO: The inital y position is wrong when there is no horizontal space for a single widget.
         let mut y = vspacing;
 
         for segment in segments {
