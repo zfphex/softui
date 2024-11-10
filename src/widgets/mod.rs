@@ -29,25 +29,6 @@ pub use dwrite::*;
 
 use crate::*;
 
-impl<T: Widget> Widget for Vec<T> {
-    type Layout = T;
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
-    }
-
-    #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
-    }
-
-    #[inline]
-    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
-        self.as_slice()
-    }
-}
-
 //Widgets should really be clone + debug.
 //However having these restrictions can be annoying.
 
@@ -346,5 +327,101 @@ impl Widget for () {
     #[inline]
     fn area(&self) -> Option<&Rect> {
         None
+    }
+}
+
+// Allow for containers of the same widget
+impl<T: Widget> Widget for &[T] {
+    type Layout = T;
+
+    #[inline]
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        None
+    }
+
+    #[inline]
+    fn area(&self) -> Option<&Rect> {
+        None
+    }
+
+    #[inline]
+    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
+        self
+    }
+}
+
+impl<T: Widget> Widget for &mut [T] {
+    type Layout = T;
+
+    #[inline]
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        None
+    }
+
+    #[inline]
+    fn area(&self) -> Option<&Rect> {
+        None
+    }
+
+    #[inline]
+    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
+        self
+    }
+}
+
+impl<T: Widget, const N: usize> Widget for [T; N] {
+    type Layout = T;
+
+    #[inline]
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        None
+    }
+
+    #[inline]
+    fn area(&self) -> Option<&Rect> {
+        None
+    }
+
+    #[inline]
+    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
+        self.as_slice()
+    }
+}
+
+impl<T: Widget> Widget for Vec<T> {
+    type Layout = T;
+
+    #[inline]
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        None
+    }
+
+    #[inline]
+    fn area(&self) -> Option<&Rect> {
+        None
+    }
+
+    #[inline]
+    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
+        self.as_slice()
+    }
+}
+
+impl<T: Widget> Widget for Box<[T]> {
+    type Layout = T;
+
+    #[inline]
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        None
+    }
+
+    #[inline]
+    fn area(&self) -> Option<&Rect> {
+        None
+    }
+
+    #[inline]
+    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
+        self
     }
 }
