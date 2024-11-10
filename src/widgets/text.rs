@@ -148,7 +148,12 @@ impl<'a> Widget for Text<'a> {
         todo!()
     }
 
-    fn area(&mut self) -> Option<&mut Rect> {
+    #[inline]
+    fn area(&self) -> Option<&Rect> {
+        None
+    }
+
+    fn area_mut(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }
 }

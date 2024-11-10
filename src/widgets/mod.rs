@@ -32,10 +32,17 @@ use crate::*;
 impl<T: Widget> Widget for Vec<T> {
     type Layout = T;
 
-    fn area(&mut self) -> Option<&mut Rect> {
+    #[inline]
+    fn area_mut(&mut self) -> Option<&mut Rect> {
         None
     }
 
+    #[inline]
+    fn area(&self) -> Option<&Rect> {
+        None
+    }
+
+    #[inline]
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         self.as_slice()
     }
@@ -82,7 +89,9 @@ where
     //     vec![self]
     // }
 
-    fn area(&mut self) -> Option<&mut Rect>;
+    //I haven't decided if the layout system should modifier the area or just copy it.
+    fn area(&self) -> Option<&Rect>;
+    fn area_mut(&mut self) -> Option<&mut Rect>;
 
     #[inline]
     fn on_click<F: FnMut(&mut Self)>(self, button: MouseButton, click_fn: F) -> Click0<Self, F>
@@ -126,7 +135,7 @@ where
         let ctx = ctx();
 
         //Use area_mut so widgets can calculate their area.
-        let area = *self.area().unwrap();
+        let area = *self.area_mut().unwrap();
 
         if !ctx.mouse_pos.intersects(area) {
             return false;
@@ -155,7 +164,7 @@ where
         Self: Sized,
     {
         let ctx = ctx();
-        let area = self.area().unwrap().clone();
+        let area = self.area_mut().unwrap().clone();
         if !ctx.mouse_pos.intersects(area) {
             return false;
         }
@@ -173,7 +182,7 @@ where
         Self: Sized,
     {
         let ctx = ctx();
-        let area = self.area().unwrap().clone();
+        let area = self.area_mut().unwrap().clone();
         if !ctx.mouse_pos.intersects(area) {
             return false;
         }
@@ -192,7 +201,7 @@ where
         Self: Sized,
     {
         let parent_area = parent.clone();
-        let area = self.area().unwrap();
+        let area = self.area_mut().unwrap();
         let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
         let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);
 
@@ -209,7 +218,7 @@ where
     where
         Self: Sized,
     {
-        let area = self.area().unwrap();
+        let area = self.area_mut().unwrap();
         match x.into() {
             Unit::Px(px) => {
                 area.x = px;
@@ -229,10 +238,10 @@ where
     where
         Self: Sized,
     {
-        let area = self.area().unwrap();
+        let area = self.area_mut().unwrap();
         match y.into() {
             Unit::Px(px) => {
-                self.area().unwrap().y = px;
+                self.area_mut().unwrap().y = px;
                 // self.area.y = px as i32;
             }
             Unit::Em(_) => todo!(),
@@ -244,7 +253,7 @@ where
     where
         Self: Sized,
     {
-        let area = self.area().unwrap();
+        let area = self.area_mut().unwrap();
         match length.into() {
             Unit::Px(px) => {
                 area.width = px;
@@ -258,7 +267,7 @@ where
     where
         Self: Sized,
     {
-        let area = self.area().unwrap();
+        let area = self.area_mut().unwrap();
         match length.into() {
             Unit::Px(px) => {
                 area.height = px;
@@ -331,27 +340,11 @@ where
 
 impl Widget for () {
     #[inline]
-    fn area(&mut self) -> Option<&mut Rect> {
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        None
+    }
+    #[inline]
+    fn area(&self) -> Option<&Rect> {
         None
     }
 }
-
-// impl Widget for &dyn Widget {
-//     fn area(&mut self) -> Option<&mut Rect> {
-//         None
-//     }
-
-//     fn layout_area(&mut self) -> Option<&mut Rect> {
-//         None
-//     }
-// }
-
-// impl Widget for &mut dyn Widget {
-//     fn area(&mut self) -> Option<&mut Rect> {
-//         (**self).area()
-//     }
-
-//     fn layout_area(&mut self) -> Option<&mut Rect> {
-//         (**self).layout_area()
-//     }
-// }

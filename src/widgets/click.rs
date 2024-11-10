@@ -20,9 +20,15 @@ macro_rules! impl_click {
 
         #[doc(hidden)]
         impl<T: Widget, $($t: FnMut(&mut T)),*>Widget for $struct<T, $($t),*> {
+
             #[inline]
-            fn area(&mut self) -> Option<&mut super::Rect> {
+            fn area(&self) -> Option<&super::Rect> {
                 self.widget.area()
+            }
+
+            #[inline]
+            fn area_mut(&mut self) -> Option<&mut super::Rect> {
+                self.widget.area_mut()
             }
 
             #[inline]

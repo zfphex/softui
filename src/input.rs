@@ -1,7 +1,7 @@
 use crate::*;
 
 pub fn clicked<T: Widget + Sized>(ctx: &Context, widget: &mut T, button: MouseButton) -> bool {
-    let area = widget.area().unwrap().clone();
+    let area = widget.area_mut().unwrap().clone();
     if !ctx.mouse_pos.intersects(area) {
         return false;
     }
@@ -24,7 +24,7 @@ pub fn clicked<T: Widget + Sized>(ctx: &Context, widget: &mut T, button: MouseBu
 }
 
 pub fn up<T: Widget>(ctx: &Context, widget: &mut T, button: MouseButton) -> bool {
-    let area = widget.area().unwrap().clone();
+    let area = widget.area_mut().unwrap().clone();
     if !ctx.mouse_pos.intersects(area) {
         return false;
     }
@@ -39,7 +39,7 @@ pub fn up<T: Widget>(ctx: &Context, widget: &mut T, button: MouseButton) -> bool
 }
 
 pub fn down<T: Widget>(ctx: &Context, widget: &mut T, button: MouseButton) -> bool {
-    let area = widget.area().unwrap().clone();
+    let area = widget.area_mut().unwrap().clone();
     if !ctx.mouse_pos.intersects(area) {
         return false;
     }

@@ -137,7 +137,7 @@ note: required by a bound in `xilem::view::flex`
    |
 19 | pub fn flex<State, Action, Seq: FlexSequence<State, Action>>(
    |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `flex`
-   = note: the full name for the type has been written to 'D:\Desktop\xilem\target\debug\examples\flex.long-type-3082561552280108783.txt'
+   = note: the full name for the type has been written to D:\Desktop\xilem\target\debug\examples\flex.long-type-3082561552280108783.txt
    = note: consider using `--verbose` to print the full type name to the console
 
 error[E0277]: the trait bound `(E, xilem::view::FlexSpacer, impl WidgetView<i32>, xilem::view::FlexSpacer, FlexItem<xilem::view::Label, _, _>, xilem::view::FlexSpacer, impl WidgetView<i32>, xilem::view::FlexSpacer): ViewSequence<i32, (), ViewCtx, FlexElement>` is not satisfied
@@ -158,11 +158,11 @@ error[E0277]: the trait bound `(E, xilem::view::FlexSpacer, impl WidgetView<i32>
            and 9 others
    = note: required for `(E, FlexSpacer, impl WidgetView<i32>, FlexSpacer, FlexItem<Label, _, _>, FlexSpacer, impl WidgetView<i32>, FlexSpacer)` to implement `FlexSequence<i32>`   = note: required for `Flex<(E, FlexSpacer, impl WidgetView<i32>, FlexSpacer, FlexItem<Label, _, _>, FlexSpacer, impl WidgetView<i32>, FlexSpacer), i32>` to implement `View<i32, (), ViewCtx>`
    = note: required for `Flex<(E, FlexSpacer, impl WidgetView<i32>, FlexSpacer, FlexItem<Label, _, _>, FlexSpacer, impl WidgetView<i32>, FlexSpacer), i32>` to implement `WidgetView<i32>`
-   = note: the full name for the type has been written to 'D:\Desktop\xilem\target\debug\examples\flex.long-type-12281210820452562655.txt'
+   = note: the full name for the type has been written to D:\Desktop\xilem\target\debug\examples\flex.long-type-12281210820452562655.txt
    = note: consider using `--verbose` to print the full type name to the console
-   = note: the full name for the type has been written to 'D:\Desktop\xilem\target\debug\examples\flex.long-type-12281210820452562655.txt'
+   = note: the full name for the type has been written to D:\Desktop\xilem\target\debug\examples\flex.long-type-12281210820452562655.txt
    = note: consider using `--verbose` to print the full type name to the console
-   = note: the full name for the type has been written to 'D:\Desktop\xilem\target\debug\examples\flex.long-type-2266967692064486613.txt'
+   = note: the full name for the type has been written to D:\Desktop\xilem\target\debug\examples\flex.long-type-2266967692064486613.txt
    = note: consider using `--verbose` to print the full type name to the console
 
 For more information about this error, try `rustc --explain E0277`.

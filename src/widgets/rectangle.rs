@@ -38,7 +38,12 @@ impl Widget for Rectangle {
     }
 
     #[inline]
-    fn area(&mut self) -> Option<&mut Rect> {
+    fn area(&self) -> Option<&Rect> {
+        None
+    }
+
+    #[inline]
+    fn area_mut(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }
 }

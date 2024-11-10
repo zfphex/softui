@@ -5,7 +5,7 @@ use softui::*;
 fn run<'a, T: Widget + 'a, C: IntoSlice<'a, T>>(c: &'a mut C) {
     let slice = c.into_slice();
     for w in slice {
-        dbg!(w.area());
+        dbg!(w.area_mut());
     }
 }
 

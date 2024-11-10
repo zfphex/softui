@@ -82,21 +82,21 @@ pub fn layout<T: Widget>(
     //This is a no-op for most widgets.
     widget.calculate_area();
 
-    if let Some(area) = widget.area() {
+    if let Some(area) = widget.area_mut() {
         area.x = *x;
         area.y = *y;
     }
 
     //Update the margin.
     if margin != 0 {
-        let area = widget.area().unwrap().inner(margin, margin);
-        *widget.area().unwrap() = area;
+        let area = widget.area_mut().unwrap().inner(margin, margin);
+        *widget.area_mut().unwrap() = area;
     }
 
     //Draw the widget once the layout is correct.
     if let Some(primative) = widget.draw_command() {
         widget.try_click();
-        if let Some(area) = widget.area() {
+        if let Some(area) = widget.area_mut() {
             unsafe {
                 COMMAND_QUEUE.push(Command {
                     area: *area,
@@ -107,7 +107,7 @@ pub fn layout<T: Widget>(
     }
 
     //Calculate the position of the next element.
-    if let Some(area) = widget.area() {
+    if let Some(area) = widget.area_mut() {
         let width = area.width;
         let height = area.height;
 
@@ -274,9 +274,15 @@ impl<F: DrawContainer> std::fmt::Debug for Container<F> {
 
 impl<F: DrawContainer> Widget for Container<F> {
     #[inline]
-    fn area(&mut self) -> Option<&mut Rect> {
+    fn area(&self) -> Option<&Rect> {
+        None
+    }
+
+    #[inline]
+    fn area_mut(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }
+
     fn is_container() -> bool
     where
         Self: Sized,
