@@ -1,9 +1,6 @@
 pub mod layout;
 pub mod rectangle;
 
-pub mod rectangle_new;
-pub use rectangle_new::*;
-
 pub use layout::*;
 pub use rectangle::*;
 
@@ -32,13 +29,28 @@ pub use dwrite::*;
 
 use crate::*;
 
-// #[diagnostic::on_unimplemented()]
+impl<T: Widget> Widget for Vec<T> {
+    type Layout = T;
+
+    fn area(&mut self) -> Option<&mut Rect> {
+        None
+    }
+
+    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
+        self.as_slice()
+    }
+}
 
 //Widgets should really be clone + debug.
 //However having these restrictions can be annoying.
 
 // pub trait Widget: std::fmt::Debug {
-pub trait Widget {
+pub trait Widget
+where
+    Self: Sized,
+{
+    type Layout = Self;
+
     #[must_use]
     fn draw_command(&self) -> Option<Primative> {
         None
@@ -49,13 +61,20 @@ pub trait Widget {
     /// 🤤🤤🤤🤤🤤
     fn calculate_area(&mut self) {}
 
-    /// Temp hack
+    ///This to allow the user to various references and collections into a macro.
+    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
+        //Not sure why the type system cannot figure this one out?
+        unsafe { core::mem::transmute(core::slice::from_ref(self)) }
+    }
+
+    //TODO: Remove me
     fn as_mut_slice(&mut self) -> &mut [Self]
     where
         Self: Sized,
     {
         core::slice::from_mut(self)
     }
+
     // fn into_vec(self) -> Vec<Self>
     // where
     //     Self: Sized,

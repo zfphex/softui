@@ -65,5 +65,5 @@ fn main() {
 
     run(&mut slice);
     run(&mut array);
-    run(&mut vec);
+    // run(&mut vec);
 }

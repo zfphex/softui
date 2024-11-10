@@ -22,7 +22,6 @@ fn main() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
-
         // ctx.fill(Color::WHITE);
         // ctx.draw_text_subpixel(
         //     "This is some text....",
@@ -55,13 +54,6 @@ fn main() {
         //     image.format,
         // );
         // v!(image);
-
-        flex_center_2!(
-            rect().bg(Color::RED).w(500).h(100),
-            rect().bg(Color::GREEN).w(500).h(100),
-            rect().bg(Color::BLUE).w(500).h(100),
-            rect().bg(Color::new(20, 30, 100)).w(400).h(300)
-        );
 
         ctx.draw_frame();
     }

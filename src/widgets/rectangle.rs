@@ -1,40 +1,38 @@
 use crate::*;
 
-//Old version for testing.
-pub fn rct(ctx: &Context) -> Rectangle {
-    Rectangle {
-        area: Rect::new(0, 0, 10, 10),
-        bg: Color::WHITE,
-        radius: 0,
-        ctx,
-    }
-}
+//Old version.
+// pub fn rct(ctx: &Context) -> Rectangle {
+//     Rectangle {
+//         area: Rect::new(0, 0, 10, 10),
+//         bg: Color::WHITE,
+//         radius: 0,
+//         ctx,
+//     }
+// }
 
-pub fn rect() -> Rectangle<'static> {
+pub fn rect() -> Rectangle {
     Rectangle {
         area: Rect::new(0, 0, 10, 10),
         bg: Color::WHITE,
         radius: 0,
-        ctx: ctx(),
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct Rectangle<'a> {
+pub struct Rectangle {
     pub area: Rect,
-    pub ctx: &'a Context,
     pub radius: usize,
     bg: Color,
 }
 
-impl<'a> Rectangle<'a> {
+impl Rectangle {
     pub fn radius(mut self, radius: usize) -> Self {
         self.radius = radius;
         self
     }
 }
 
-impl<'a> Widget for Rectangle<'a> {
+impl Widget for Rectangle {
     fn draw_command(&self) -> Option<Primative> {
         Some(Primative::Ellipse(self.radius, self.bg))
     }
@@ -45,7 +43,7 @@ impl<'a> Widget for Rectangle<'a> {
     }
 }
 
-impl<'a> Style for Rectangle<'a> {
+impl Style for Rectangle {
     fn bg(mut self, color: Color) -> Self {
         self.bg = color;
         self

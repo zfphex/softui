@@ -1,4 +1,5 @@
 #![allow(unused, static_mut_refs)]
+#![feature(associated_type_defaults)]
 use core::ffi::c_void;
 use mini::{info, profile, warn};
 use std::{borrow::Cow, pin::Pin};
@@ -77,7 +78,7 @@ impl std::fmt::Debug for Primative {
             #[cfg(feature = "image")]
             Self::ImageUnsafe(arg0, arg1) => f
                 .debug_tuple("ImageUnsafe")
-                .field(arg0)
+                // .field(arg0)
                 .field(arg1)
                 .finish(),
         }

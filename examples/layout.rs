@@ -1,15 +1,7 @@
 use softui::*;
 
-#[cfg(not(feature = "image"))]
-fn main() {
-    println!("Use --features 'image'")
-}
-
-#[cfg(feature = "image")]
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
-    let mut png = image("img/smol.png").on_click(Left, |_| println!(":<"));
-    let mut jpg = image("img/smol.jpg").on_click(Left, |_| println!(">:"));
 
     loop {
         match ctx.event() {
@@ -20,7 +12,12 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
-            h!(png, text("test"), jpg);
+            flex_center_2!(
+                rect().bg(Color::RED).w(500).h(100),
+                rect().bg(Color::GREEN).w(500).h(100),
+                rect().bg(Color::BLUE).w(500).h(100),
+                rect().bg(Color::new(20, 30, 100)).w(400).h(300)
+            );
         }
 
         ctx.draw_frame();

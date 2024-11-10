@@ -73,17 +73,23 @@ pub fn flex(widgets: &[(Rect, Primative)]) {
 /// It's not super important during the layout stage. Makes my life a pain in the ass though..
 #[inline]
 pub fn widget<T: Widget>(mut widget: T) -> (Rect, Primative) {
-    widget.calculate_area();
-    let area = *widget.area().unwrap();
-    let primative = widget.draw_command().unwrap();
-    (area, primative)
+    let widgets = widget.as_uniform_layout_type();
+
+    if widgets.len() == 1 {
+        widget.calculate_area();
+        let area = *widget.area().unwrap();
+        let primative = widget.draw_command().unwrap();
+        (area, primative)
+    } else {
+        todo!("Not sure how to do this...probably just need to use a vector :(")
+    }
 }
 
 #[macro_export]
 macro_rules! flex_center_3 {
     ($($widget:expr),*$(,)?) => {
         let widgets = [$(
-                widget($widget),
+            widget($widget),
         )*];
 
         flex(&widgets);
