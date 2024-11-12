@@ -30,7 +30,14 @@ fn main() {
 
         {
             //FIXME: This does not wrap correctly.
-            flex_center_4!(rectangle, many_rectangles, collection, _r, _rmut);
+            flex_center_4!(
+                rectangle,
+                many_rectangles,
+                collection,
+                _r,
+                _rmut,
+                "test".font_size(32)
+            );
 
             // flex_center_4!(
             //     rect().bg(Color::RED).w(500).h(100),

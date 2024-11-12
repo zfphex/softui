@@ -143,7 +143,7 @@ pub static mut CTX: Option<Context> = None;
 // pub static mut VIEWPORT: AtomicRect = AtomicRect::new(0, 0, 0, 0);
 // pub use std::sync::atomic::Ordering::SeqCst;
 
-#[inline(always)]
+#[inline]
 pub fn ctx() -> &'static mut Context {
     unsafe { CTX.as_mut().unwrap() }
 }
@@ -288,10 +288,6 @@ impl Context {
                 // Command::Rectangle(x, y, width, height, color) => {
                 //     self.draw_rectangle(x, y, width, height, color);
                 // }
-                Primative::RectangleOutline(color) => {
-                    self.draw_rectangle_outline(x, y, width, height, color)
-                        .unwrap();
-                }
                 Primative::Ellipse(radius, color) => {
                     if radius == 0 {
                         self.draw_rectangle(x, y, width, height, color);
@@ -299,6 +295,10 @@ impl Context {
                         self.draw_rectangle_rounded(x, y, width, height, radius, color)
                             .unwrap();
                     }
+                }
+                Primative::RectangleOutline(color) => {
+                    self.draw_rectangle_outline(x, y, width, height, color)
+                        .unwrap();
                 }
                 Primative::Text(text, size, color) => {
                     //TODO: Specify the font with a font database and font ID.
@@ -986,13 +986,8 @@ impl Context {
         let buffer = &mut self.buffer;
         let len = buffer.len();
 
-        let chunk_size = if format == ImageFormat::PNG {
-            //4 bytes per channel rgba
-            4
-        } else {
-            //3 bytes per channel rgb
-            3
-        };
+        //4 bytes RGBA, 3 bytes RGB
+        let chunk_size = if format == ImageFormat::PNG { 4 } else { 3 };
 
         let mut x = 0;
         let mut y = 0;

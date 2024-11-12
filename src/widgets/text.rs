@@ -7,6 +7,32 @@ pub const FONT: &[u8] = include_bytes!("../../fonts/JetBrainsMono.ttf");
 static mut DEFAULT_FONT_SIZE: AtomicUsize = AtomicUsize::new(18);
 static mut DEFAULT_FONT: Option<Font> = None;
 
+pub trait IntoText<'a> {
+    fn x<U: Into<Unit>>(self, x: U) -> Text<'a>;
+    fn y<U: Into<Unit>>(self, y: U) -> Text<'a>;
+    fn font_size(self, font_size: usize) -> Text<'a>;
+}
+
+//TOOD: &str should essentially implement Widget but every function
+//that is supposed to return self should return Text.
+//For example.
+impl<'a> IntoText<'a> for &'static str {
+    #[inline]
+    fn x<U: Into<Unit>>(self, x: U) -> Text<'a> {
+        text(self).x(x)
+    }
+
+    #[inline]
+    fn y<U: Into<Unit>>(self, y: U) -> Text<'a> {
+        text(self).y(y)
+    }
+
+    #[inline]
+    fn font_size(self, font_size: usize) -> Text<'a> {
+        text(self).font_size(font_size)
+    }
+}
+
 pub fn load_default_font() {
     profile!();
     set_default_font(fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap());

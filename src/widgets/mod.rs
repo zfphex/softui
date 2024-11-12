@@ -40,12 +40,14 @@ pub trait Widget
 where
     Self: Sized,
 {
+    //NOTE: Nightly associated type default.
     type Layout = Self;
 
     #[must_use]
     fn primative(&self) -> Primative;
 
     ///Turns all widget types into a slice so they can be concatenated for layouting.
+    #[inline]
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         //Not sure why the type system cannot figure this one out?
         unsafe { core::mem::transmute(core::slice::from_ref(self)) }
@@ -317,7 +319,10 @@ where
 }
 
 impl Widget for () {
-    type Layout = Self;
+    #[inline]
+    fn area(&self) -> Rect {
+        unreachable!()
+    }
 
     #[inline]
     fn area_mut(&mut self) -> Option<&mut Rect> {
@@ -325,12 +330,43 @@ impl Widget for () {
     }
 
     #[inline]
-    fn area(&self) -> Rect {
-        unreachable!()
-    }
-
     fn primative(&self) -> Primative {
         unreachable!()
+    }
+}
+
+impl<T: Widget> Widget for &T {
+    #[inline]
+    fn primative(&self) -> Primative {
+        (*self).primative()
+    }
+
+    #[inline]
+    fn area(&self) -> Rect {
+        (*self).area()
+    }
+
+    #[inline]
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        None
+    }
+}
+
+//Holy this is 😰😰😰
+impl<T: Widget> Widget for &mut T {
+    #[inline]
+    fn primative(&self) -> Primative {
+        (*(*self)).primative()
+    }
+
+    #[inline]
+    fn area(&self) -> Rect {
+        (*(*self)).area()
+    }
+
+    #[inline]
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        (*(*self)).area_mut()
     }
 }
 
@@ -353,6 +389,7 @@ impl<T: Widget> Widget for &[T] {
         self
     }
 
+    #[inline]
     fn primative(&self) -> Primative {
         unreachable!()
     }
@@ -376,41 +413,9 @@ impl<T: Widget> Widget for &mut [T] {
         self
     }
 
+    #[inline]
     fn primative(&self) -> Primative {
         unreachable!()
-    }
-}
-
-impl<T: Widget> Widget for &T {
-    type Layout = Self;
-
-    fn primative(&self) -> Primative {
-        (*self).primative()
-    }
-
-    fn area(&self) -> Rect {
-        (*self).area()
-    }
-
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
-    }
-}
-
-//Holy this is 😰😰😰
-impl<T: Widget> Widget for &mut T {
-    type Layout = Self;
-
-    fn primative(&self) -> Primative {
-        (*(*self)).primative()
-    }
-
-    fn area(&self) -> Rect {
-        (*(*self)).area()
-    }
-
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        (*(*self)).area_mut()
     }
 }
 
@@ -431,6 +436,8 @@ impl<T: Widget, const N: usize> Widget for [T; N] {
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         self.as_slice()
     }
+
+    #[inline]
     fn primative(&self) -> Primative {
         unreachable!()
     }
@@ -454,6 +461,7 @@ impl<T: Widget> Widget for Vec<T> {
         self.as_slice()
     }
 
+    #[inline]
     fn primative(&self) -> Primative {
         unreachable!()
     }
@@ -477,6 +485,7 @@ impl<T: Widget> Widget for Box<[T]> {
         self
     }
 
+    #[inline]
     fn primative(&self) -> Primative {
         unreachable!()
     }
