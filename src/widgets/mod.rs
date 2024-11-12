@@ -42,7 +42,7 @@ where
     #[must_use]
     fn primative(&self) -> Primative;
 
-    ///This to allow the user to various references and collections into a macro.
+    ///Turns all widget types into a slice so they can be concatenated for layouting.
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         //Not sure why the type system cannot figure this one out?
         unsafe { core::mem::transmute(core::slice::from_ref(self)) }
@@ -375,6 +375,39 @@ impl<T: Widget> Widget for &mut [T] {
 
     fn primative(&self) -> Primative {
         unreachable!()
+    }
+}
+
+impl<T: Widget> Widget for &T {
+    type Layout = Self;
+
+    fn primative(&self) -> Primative {
+        (*self).primative()
+    }
+
+    fn area(&self) -> Rect {
+        (*self).area()
+    }
+
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        None
+    }
+}
+
+//Holy this is 😰😰😰
+impl<T: Widget> Widget for &mut T {
+    type Layout = Self;
+
+    fn primative(&self) -> Primative {
+        (*(*self)).primative()
+    }
+
+    fn area(&self) -> Rect {
+        (*(*self)).area()
+    }
+
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        (*(*self)).area_mut()
     }
 }
 

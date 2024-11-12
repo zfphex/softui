@@ -1,8 +1,8 @@
 use softui::*;
 
-fn run<T: Widget>(t: &mut T)
+fn run<T: Widget + std::fmt::Debug>(t: &mut T)
 where
-    <T as softui::Widget>::Layout: std::fmt::Debug,
+    T::Layout: Widget + std::fmt::Debug,
 {
     let test = t.as_uniform_layout_type();
     dbg!(test);

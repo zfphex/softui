@@ -22,14 +22,24 @@ fn main() {
     let _r = &rectangle;
     let _rmut = &mut rectangle2;
 
-    flex_center_4!(rectangle, many_rectangles, collection);
-
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
         ctx.fill(Color::BLACK);
+
+        {
+            //FIXME: This does not wrap correctly.
+            flex_center_4!(rectangle, many_rectangles, collection, _r, _rmut);
+
+            // flex_center_4!(
+            //     rect().bg(Color::RED).w(500).h(100),
+            //     rect().bg(Color::GREEN).w(500).h(100),
+            //     rect().bg(Color::BLUE).w(500).h(100),
+            //     rect().bg(Color::new(20, 30, 100)).w(400).h(300)
+            // );
+        }
 
         {
             //There is some mistake in the font rendering or layout.

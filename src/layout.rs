@@ -3,7 +3,7 @@
 
 //There should be two types of flex, one for vertical and one for horizontal
 
-use crate::{Command, Direction, Primative, Rect, Widget};
+use crate::{ctx, Command, Direction, Primative, Rect, Widget, COMMAND_QUEUE};
 
 #[derive(Default, Debug)]
 pub enum HorizontalAlignment {
@@ -65,7 +65,98 @@ pub struct Segment {
 }
 
 pub fn flex(widgets: &[(Rect, Primative)]) {
-    for widget in widgets {}
+    let mut segments: Vec<Segment> = Vec::new();
+    let viewport_width = ctx().area.width;
+    let viewport_height = ctx().area.height;
+    let mut total_width = 0;
+    let mut max_width = 0;
+
+    //The total height of largest widget in each segment.
+    let mut total_height_of_largest = 0;
+    let mut total_hsegments = 0;
+
+    let mut max_height = 0;
+    let mut horizontal_wrap = 0;
+    let mut vertical_wrap = 0;
+
+    let mut segment_widgets = Vec::new();
+    let count = widgets.len();
+    let mut i = 0;
+
+    for (area, primative) in widgets {
+        i += 1;
+
+        //Skip the zero width segment.
+        //This is pretty much a hack and should be removed in the third re-write.
+        if total_width + area.width > viewport_width && !(total_width == 0 || max_width == 0) {
+            segments.push(Segment {
+                direction: Direction::Horizontal,
+                size: total_width,
+                max: max_width,
+                widgets: core::mem::take(&mut segment_widgets),
+            });
+
+            total_hsegments += 1;
+            total_height_of_largest += max_height;
+            max_height = 0;
+            total_width = 0;
+            max_width = 0;
+        }
+
+        total_width += area.width;
+        // total_height += area.height;
+
+        if area.width > max_width {
+            max_width = area.width;
+        }
+
+        if area.height > max_height {
+            max_height = area.height;
+        }
+
+        //TODO: Could just have a start and end index into widgets
+        //This would be faster and less stupid.
+        segment_widgets.push((*area, primative.clone()));
+
+        //Don't like this part.
+        if (i == count) {
+            total_hsegments += 1;
+            total_height_of_largest += max_height;
+            segments.push(Segment {
+                direction: Direction::Horizontal,
+                size: total_width,
+                max: max_width,
+                widgets: core::mem::take(&mut segment_widgets),
+            })
+        }
+    }
+
+    let mut vspacing =
+        viewport_height.saturating_sub(total_height_of_largest) / (total_hsegments + 1);
+    let mut y = vspacing;
+
+    for segment in segments {
+        let mut spacing = viewport_width.saturating_sub(segment.size) / (segment.widgets.len() + 1);
+        let mut x = spacing;
+        let mut max_height = 0;
+
+        match segment.direction {
+            Direction::Horizontal => {
+                for (mut area, primative) in segment.widgets {
+                    if area.height > max_height {
+                        max_height = area.height;
+                    }
+
+                    area.x = x;
+                    area.y = y;
+                    unsafe { COMMAND_QUEUE.push(Command { area, primative }) };
+                    x += spacing + area.width;
+                }
+                y += max_height + vspacing;
+            }
+            Direction::Vertical => {}
+        }
+    }
 }
 
 /// Give a warning to the user if they pass something in that does not implement `Widget`.
@@ -83,7 +174,7 @@ pub fn widget<T: Widget>(mut widget: T) -> (Rect, Primative) {
 }
 
 //There is no easy way to concatinate slices without creating a vector in rust.
-pub fn widget_slice<T: Widget>(mut widget: T) -> Vec<(Rect, Primative)>
+pub fn widget_slice<T: Widget>(widget: &T) -> Vec<(Rect, Primative)>
 //This is why associated types are garbage.
 where
     // T::Layout: Widget,
@@ -101,7 +192,23 @@ macro_rules! flex_center_4 {
     ($($widget:expr),*$(,)?) => {
         let widgets = [
             $(
-                widget_slice($widget),
+                {
+                    //What is this reference???
+                    //I think because of this reference the macro is unable to underline,
+                    //which expr in the macro is failing to satisfy the trait bounds.
+                    widget_slice(&$widget)
+
+                    //This skips the pointer indirection but probably has worse error messages.
+                    //The compiler also struggles here with the type inference.
+
+                    // let uniform = $widget.as_uniform_layout_type();
+                    // uniform
+                    //     .into_iter()
+                    //     .map(|widget| (widget.area(), widget.primative()))
+                    //     .collect::<Vec<_>>()
+
+                    //Both suck TBH
+                },
             )*
         ].concat();
 
