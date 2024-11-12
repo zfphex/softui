@@ -55,6 +55,7 @@ pub enum Primative {
     CustomBoxed(Box<dyn FnOnce(&mut Context) -> ()>),
     Custom(&'static dyn Fn(&mut Context) -> ()),
     CustomFn(fn(&mut Context) -> ()),
+    CustomAreaFn(fn(&mut Context, Rect) -> ()),
 
     #[cfg(feature = "image")]
     ///(bitmap, x, y, width, height, format)
@@ -75,6 +76,7 @@ impl std::fmt::Debug for Primative {
             Self::CustomBoxed(arg0) => f.debug_tuple("CustomBoxed").finish(),
             Self::Custom(arg0) => f.debug_tuple("Custom").finish(),
             Self::CustomFn(arg0) => f.debug_tuple("CustomFn").field(arg0).finish(),
+            Self::CustomAreaFn(arg0) => f.debug_tuple("CustomAreaFn").field(arg0).finish(),
             #[cfg(feature = "image")]
             Self::ImageUnsafe(arg0, arg1) => f
                 .debug_tuple("ImageUnsafe")
@@ -93,11 +95,21 @@ pub fn queue_command(command: Command) {
 }
 
 #[inline]
-pub fn queue_command_fn(f: fn(&mut Context) -> ()) {
+pub fn queue_fn(f: fn(&mut Context) -> ()) {
     unsafe {
         COMMAND_QUEUE.push(Command {
             area: Rect::default(),
             primative: Primative::CustomFn(f),
+        });
+    }
+}
+
+#[inline]
+pub fn queue_area_fn(f: fn(&mut Context, Rect) -> (), area: Rect) {
+    unsafe {
+        COMMAND_QUEUE.push(Command {
+            area,
+            primative: Primative::CustomAreaFn(f),
         });
     }
 }
@@ -295,6 +307,7 @@ impl Context {
                 Primative::CustomBoxed(f) => f(self),
                 Primative::Custom(f) => f(self),
                 Primative::CustomFn(f) => f(self),
+                Primative::CustomAreaFn(f) => f(self, cmd.area),
                 #[cfg(feature = "image")]
                 Primative::ImageUnsafe(bitmap, image_format) => {
                     self.draw_image(bitmap, x, y, width, height, image_format);
