@@ -24,7 +24,10 @@ pub use container::*;
 pub mod click;
 pub use click::*;
 
+#[cfg(feature = "dwrote")]
 pub mod dwrite;
+
+#[cfg(feature = "dwrote")]
 pub use dwrite::*;
 
 use crate::*;

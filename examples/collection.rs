@@ -11,8 +11,6 @@ fn main() {
                 .on_click(Left, move |_| println!("Clicked on button #{i}"))
                 .on_click(Right, move |_| println!("Right clicked on button #{i}"))
         })
-        //TODO: What about using an array here instead?
-        // .collect::<[_; 30]>())
         .collect::<Vec<_>>();
 
     let rectangle = rect();
@@ -27,6 +25,7 @@ fn main() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
+
         ctx.fill(Color::BLACK);
 
         {

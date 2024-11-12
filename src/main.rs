@@ -7,10 +7,11 @@ use window::{Event, Key};
 
 fn main() {
     defer_results!();
-    // let ctx = create_ctx("Softui", 800, 600);
-    let ctx = create_ctx("Softui", 500, 800);
-    // let ctx = create_ctx("Softui", 600, 800);
+    let ctx = create_ctx("Softui", 800, 600);
+
+    #[cfg(feature = "dwrote")]
     let dwrite = DWrite::new_cached(32.0);
+
     let font_size = 10;
     let font_size_large = 72;
 
@@ -22,7 +23,6 @@ fn main() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
-
 
         // ctx.fill(Color::WHITE);
         // ctx.draw_text_subpixel(
@@ -43,7 +43,6 @@ fn main() {
         //     0,
         //     Color::BLACK,
         // );
-
 
         ctx.draw_frame();
     }
