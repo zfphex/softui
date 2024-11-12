@@ -33,13 +33,13 @@ impl Rectangle {
 }
 
 impl Widget for Rectangle {
-    fn draw_command(&self) -> Option<Primative> {
-        Some(Primative::Ellipse(self.radius, self.bg))
+    fn primative(&self) -> Primative {
+       Primative::Ellipse(self.radius, self.bg)
     }
 
     #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
+    fn area(&self) -> Rect {
+        self.area
     }
 
     #[inline]

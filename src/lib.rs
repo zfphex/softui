@@ -40,6 +40,7 @@ pub struct Command {
     pub primative: Primative,
 }
 
+#[derive(Clone)]
 pub enum Primative {
     /// (radius, color)
     Ellipse(usize, Color),
@@ -52,7 +53,7 @@ pub enum Primative {
     Text(String, usize, Color),
 
     //But which to use?
-    CustomBoxed(Box<dyn FnOnce(&mut Context) -> ()>),
+    // CustomBoxed(Box<dyn FnOnce(&mut Context) -> ()>),
     Custom(&'static dyn Fn(&mut Context) -> ()),
     CustomFn(fn(&mut Context) -> ()),
     CustomAreaFn(fn(&mut Context, Rect) -> ()),
@@ -73,7 +74,7 @@ impl std::fmt::Debug for Primative {
                 .field(arg1)
                 .field(arg2)
                 .finish(),
-            Self::CustomBoxed(arg0) => f.debug_tuple("CustomBoxed").finish(),
+            // Self::CustomBoxed(arg0) => f.debug_tuple("CustomBoxed").finish(),
             Self::Custom(arg0) => f.debug_tuple("Custom").finish(),
             Self::CustomFn(arg0) => f.debug_tuple("CustomFn").field(arg0).finish(),
             Self::CustomAreaFn(arg0) => f.debug_tuple("CustomAreaFn").field(arg0).finish(),
@@ -304,7 +305,7 @@ impl Context {
                     let font = default_font().unwrap();
                     self.draw_text(&text, font, size, x, y, 0, color);
                 }
-                Primative::CustomBoxed(f) => f(self),
+                // Primative::CustomBoxed(f) => f(self),
                 Primative::Custom(f) => f(self),
                 Primative::CustomFn(f) => f(self),
                 Primative::CustomAreaFn(f) => f(self, cmd.area),

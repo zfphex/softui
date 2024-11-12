@@ -4,7 +4,7 @@ use softui::*;
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
-    let mut collection = (0..30)
+    let collection = (0..30)
         .map(|i| {
             text(format!("{i}"))
                 .font_size(30)
@@ -15,28 +15,14 @@ fn main() {
         // .collect::<[_; 30]>())
         .collect::<Vec<_>>();
 
-    struct Example<F: FnOnce()> {
-        pub func: F,
-    }
-
     let rectangle = rect();
     let many_rectangles = vec![rect(), rect()];
-    let r = &rectangle;
     let mut rectangle2 = rect();
-    let rmut = &mut rectangle2;
 
-    let e = Example {
-        func: || {
-            let a = rectangle.as_uniform_layout_type();
-            let b = many_rectangles.as_uniform_layout_type();
-            let c = r.as_uniform_layout_type();
-            let d = rmut.as_uniform_layout_type();
+    let _r = &rectangle;
+    let _rmut = &mut rectangle2;
 
-            dbg!(a, b, c, d);
-        },
-    };
-
-    (e.func)();
+    flex_center_4!(rectangle, many_rectangles, collection);
 
     loop {
         match ctx.event() {
@@ -47,7 +33,7 @@ fn main() {
 
         {
             //There is some mistake in the font rendering or layout.
-            h!(collection).padding(10);
+            // h!(collection).padding(10);
         }
 
         //TODO: This will crash immediately because of the dumb lifetime hack in the layout system.

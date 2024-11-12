@@ -70,18 +70,43 @@ pub fn flex(widgets: &[(Rect, Primative)]) {
 
 /// Give a warning to the user if they pass something in that does not implement `Widget`.
 /// This function basically strips the types out so they're easier to work with.
-#[inline]
 pub fn widget<T: Widget>(mut widget: T) -> (Rect, Primative) {
     let widgets = widget.as_uniform_layout_type();
 
     if widgets.len() == 1 {
-        widget.calculate_area();
-        let area = *widget.area_mut().unwrap();
-        let primative = widget.draw_command().unwrap();
+        let area = widget.area();
+        let primative = widget.primative();
         (area, primative)
     } else {
         todo!("Not sure how to do this...probably just need to use a vector :(")
     }
+}
+
+//There is no easy way to concatinate slices without creating a vector in rust.
+pub fn widget_slice<T: Widget>(mut widget: T) -> Vec<(Rect, Primative)>
+//This is why associated types are garbage.
+where
+    // T::Layout: Widget,
+    T::Layout: Widget + std::fmt::Debug,
+{
+    widget
+        .as_uniform_layout_type()
+        .into_iter()
+        .map(|widget| (widget.area(), widget.primative()))
+        .collect()
+}
+
+#[macro_export]
+macro_rules! flex_center_4 {
+    ($($widget:expr),*$(,)?) => {
+        let widgets = [
+            $(
+                widget_slice($widget),
+            )*
+        ].concat();
+
+        flex(&widgets)
+    };
 }
 
 #[macro_export]
@@ -119,9 +144,8 @@ macro_rules! flex_center_2 {
         $(
             i += 1;
             let mut widget = $widget;
-            widget.calculate_area();
 
-            let area = *widget.area().unwrap();
+            let area = widget.area();
 
             //Skip the zero width segment.
             //This is pretty much a hack and should be removed in the third re-write.
@@ -151,9 +175,7 @@ macro_rules! flex_center_2 {
                 max_height = area.height;
             }
 
-            if let Some(primative) = widget.draw_command() {
-                widgets.push((area, primative));
-            }
+            widgets.push((area, widget.primative()));
 
             //Don't like this part.
             if (i == count) {

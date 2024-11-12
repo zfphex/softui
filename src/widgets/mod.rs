@@ -40,14 +40,7 @@ where
     type Layout = Self;
 
     #[must_use]
-    fn draw_command(&self) -> Option<Primative> {
-        None
-    }
-
-    /// Used only with text, since the area must be calculated after drawing unlike rect.
-    /// Why do we not just calculate the area before hand?
-    /// 🤤🤤🤤🤤🤤
-    fn calculate_area(&mut self) {}
+    fn primative(&self) -> Primative;
 
     ///This to allow the user to various references and collections into a macro.
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
@@ -70,8 +63,9 @@ where
     //     vec![self]
     // }
 
-    //I haven't decided if the layout system should modifier the area or just copy it.
-    fn area(&self) -> Option<&Rect>;
+    //This one copies
+    fn area(&self) -> Rect;
+    //This one does not
     fn area_mut(&mut self) -> Option<&mut Rect>;
 
     #[inline]
@@ -320,13 +314,20 @@ where
 }
 
 impl Widget for () {
+    type Layout = Self;
+
     #[inline]
     fn area_mut(&mut self) -> Option<&mut Rect> {
         None
     }
+
     #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
+    fn area(&self) -> Rect {
+        unreachable!()
+    }
+
+    fn primative(&self) -> Primative {
+        unreachable!()
     }
 }
 
@@ -340,13 +341,17 @@ impl<T: Widget> Widget for &[T] {
     }
 
     #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
+    fn area(&self) -> Rect {
+        unreachable!()
     }
 
     #[inline]
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         self
+    }
+
+    fn primative(&self) -> Primative {
+        unreachable!()
     }
 }
 
@@ -359,13 +364,17 @@ impl<T: Widget> Widget for &mut [T] {
     }
 
     #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
+    fn area(&self) -> Rect {
+        unreachable!()
     }
 
     #[inline]
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         self
+    }
+
+    fn primative(&self) -> Primative {
+        unreachable!()
     }
 }
 
@@ -378,13 +387,16 @@ impl<T: Widget, const N: usize> Widget for [T; N] {
     }
 
     #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
+    fn area(&self) -> Rect {
+        unreachable!()
     }
 
     #[inline]
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         self.as_slice()
+    }
+    fn primative(&self) -> Primative {
+        unreachable!()
     }
 }
 
@@ -397,13 +409,17 @@ impl<T: Widget> Widget for Vec<T> {
     }
 
     #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
+    fn area(&self) -> Rect {
+        unreachable!()
     }
 
     #[inline]
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         self.as_slice()
+    }
+
+    fn primative(&self) -> Primative {
+        unreachable!()
     }
 }
 
@@ -416,12 +432,16 @@ impl<T: Widget> Widget for Box<[T]> {
     }
 
     #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
+    fn area(&self) -> Rect {
+        unreachable!()
     }
 
     #[inline]
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         self
+    }
+
+    fn primative(&self) -> Primative {
+        unreachable!()
     }
 }

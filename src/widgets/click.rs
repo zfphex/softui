@@ -22,18 +22,13 @@ macro_rules! impl_click {
         impl<T: Widget, $($t: FnMut(&mut T)),*>Widget for $struct<T, $($t),*> {
 
             #[inline]
-            fn area(&self) -> Option<&super::Rect> {
+            fn area(&self) -> $crate::Rect {
                 self.widget.area()
             }
 
             #[inline]
             fn area_mut(&mut self) -> Option<&mut super::Rect> {
                 self.widget.area_mut()
-            }
-
-            #[inline]
-            fn calculate_area(&mut self) {
-                self.widget.calculate_area()
             }
 
             #[inline]
@@ -48,19 +43,19 @@ macro_rules! impl_click {
             }
 
             #[inline]
-            fn draw_command(&self) -> Option<$crate::Primative> {
-                self.widget.draw_command()
+            fn primative(&self) -> $crate::Primative {
+                self.widget.primative()
             }
         }
 
-        // impl<T: Widget, $($t: FnMut(&mut T)),*> std::fmt::Debug for $struct<T, $($t),*> {
-        //     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        //         f.debug_struct("Click0")
-        //             // .field("widget", &self.widget)
-        //             // .field("click", &self.click)
-        //             .finish()
-        //     }
-        // }
+        impl<T: Widget, $($t: FnMut(&mut T)),*> std::fmt::Debug for $struct<T, $($t),*> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.debug_struct(stringify!($struct))
+                    // .field("widget", &self.widget)
+                    // .field("click", &self.click)
+                    .finish()
+            }
+        }
 
         impl<T: Widget, $($t: FnMut(&mut T)),*> $crate::IntoVec for $struct<T, $($t),*> {
                 type T = $struct<T, $($t),*>;

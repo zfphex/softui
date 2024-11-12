@@ -22,6 +22,8 @@ fn main() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
+
+
         // ctx.fill(Color::WHITE);
         // ctx.draw_text_subpixel(
         //     "This is some text....",
@@ -42,18 +44,6 @@ fn main() {
         //     Color::BLACK,
         // );
 
-        ctx.fill(Color::BLACK);
-
-        // #[cfg(feature = "image")]
-        // ctx.draw_image(
-        //     &image.bitmap,
-        //     0,
-        //     0,
-        //     image.area.width as usize,
-        //     image.area.height as usize,
-        //     image.format,
-        // );
-        // v!(image);
 
         ctx.draw_frame();
     }

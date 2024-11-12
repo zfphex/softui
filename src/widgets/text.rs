@@ -37,6 +37,7 @@ pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
         area: Rect::default(),
         drawn: false,
     }
+    .draw()
 }
 
 #[derive(Debug, Clone)]
@@ -63,20 +64,7 @@ impl<'a> Text<'a> {
         self.color = color;
         self
     }
-}
-
-impl<'a> Widget for Text<'a> {
-    fn draw_command(&self) -> Option<Primative> {
-        //Because draw is immutable, the area must be calculated on each draw since it cannot store it's own state.
-        Some(Primative::Text(
-            self.text.to_string(),
-            self.font_size,
-            Color::WHITE,
-        ))
-    }
-
-    #[inline]
-    fn calculate_area(&mut self) {
+    fn draw(mut self) -> Self {
         let canvas_width = ctx().area.width as usize;
         let font = default_font().unwrap();
         let mut area = self.area;
@@ -142,6 +130,13 @@ impl<'a> Widget for Text<'a> {
         area.width = (max_x + 1 - area.x);
 
         self.area = area;
+        self
+    }
+}
+
+impl<'a> Widget for Text<'a> {
+    fn primative(&self) -> Primative {
+        Primative::Text(self.text.to_string(), self.font_size, Color::WHITE)
     }
 
     fn centered(self, parent: Rect) -> Self {
@@ -149,8 +144,8 @@ impl<'a> Widget for Text<'a> {
     }
 
     #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
+    fn area(&self) -> Rect {
+        self.area
     }
 
     fn area_mut(&mut self) -> Option<&mut Rect> {

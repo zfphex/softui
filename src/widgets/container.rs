@@ -73,15 +73,6 @@ pub fn layout<T: Widget>(
 ) {
     let widget = unsafe { widget.as_mut().unwrap() };
 
-    //Calculate the widget area.
-    //Some widgets like text will need to have their layout pre-computed before they can be moved.
-    //This will only really do something the second time, since the first widget isn't
-    //positioned based on anything else.
-    //I need to change how I do layout, this sucks :/
-    //Called first because it modifies the area of the previous widget/is added to x and y.
-    //This is a no-op for most widgets.
-    widget.calculate_area();
-
     if let Some(area) = widget.area_mut() {
         area.x = *x;
         area.y = *y;
@@ -94,16 +85,14 @@ pub fn layout<T: Widget>(
     }
 
     //Draw the widget once the layout is correct.
-    if let Some(primative) = widget.draw_command() {
-        widget.try_click();
-        if let Some(area) = widget.area_mut() {
-            unsafe {
-                COMMAND_QUEUE.push(Command {
-                    area: *area,
-                    primative,
-                })
-            };
-        }
+    widget.try_click();
+    if let Some(area) = widget.area_mut() {
+        unsafe {
+            COMMAND_QUEUE.push(Command {
+                area: *area,
+                primative: widget.primative(),
+            })
+        };
     }
 
     //Calculate the position of the next element.
@@ -273,9 +262,11 @@ impl<F: DrawContainer> std::fmt::Debug for Container<F> {
 }
 
 impl<F: DrawContainer> Widget for Container<F> {
+    type Layout = Self;
+
     #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
+    fn area(&self) -> Rect {
+        unreachable!();
     }
 
     #[inline]
@@ -288,6 +279,10 @@ impl<F: DrawContainer> Widget for Container<F> {
         Self: Sized,
     {
         true
+    }
+
+    fn primative(&self) -> Primative {
+        unreachable!()
     }
 }
 

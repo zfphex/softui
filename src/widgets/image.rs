@@ -117,8 +117,8 @@ impl Widget for Image {
     }
 
     #[inline]
-    fn area(&self) -> Option<&Rect> {
-        None
+    fn area(&self) -> Rect {
+        self.area
     }
 
     #[inline]
@@ -126,10 +126,10 @@ impl Widget for Image {
         Some(&mut self.area)
     }
 
-    fn draw_command(&self) -> Option<Primative> {
+    fn primative(&self) -> Primative {
         //TODO: Just assume the image exists for now.
         let bitmap = unsafe { extend_lifetime(&self.bitmap) };
-        Some(Primative::ImageUnsafe(bitmap, self.format))
+        Primative::ImageUnsafe(bitmap, self.format)
         // Some(Command::Image(
         //     self.bitmap.clone().into_boxed_slice(),
         //     self.area.x as usize,
