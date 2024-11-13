@@ -809,13 +809,13 @@ impl Context {
         area.height = max_y + 1 - area.y;
         area.width = max_x + 1 - area.x;
 
-        // let _ = self.draw_rectangle_outline(
-        //     area.x as usize,
-        //     area.y as usize,
-        //     area.width as usize,
-        //     area.height as usize,
-        //     Color::RED,
-        // );
+        let _ = self.draw_rectangle_outline(
+            area.x as usize,
+            area.y as usize,
+            area.width as usize,
+            area.height as usize,
+            Color::RED,
+        );
     }
 
     #[inline(always)]

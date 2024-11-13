@@ -13,7 +13,7 @@ fn main() {
         })
         .collect::<Vec<_>>();
 
-    let rectangle = rect();
+    let mut rectangle = rect();
     let many_rectangles = vec![rect(), rect()];
     let mut rectangle2 = rect();
 
@@ -29,15 +29,16 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
-            //FIXME: This does not wrap correctly.
-            flex_center_4!(
-                rectangle,
-                many_rectangles,
-                collection,
-                _r,
-                _rmut,
-                "test".font_size(32)
-            );
+            // flex_center_4!(
+            //     rectangle,
+            //     many_rectangles,
+            //     collection,
+            //     _r,
+            //     _rmut,
+            //     "test".font_size(32).on_click(Left, |_| println!(":)"))
+            // );
+
+            // v!(rectangle, "hi".font_size(32));
 
             // flex_center_4!(
             //     rect().bg(Color::RED).w(500).h(100),

@@ -63,7 +63,7 @@ pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
         area: Rect::default(),
         drawn: false,
     }
-    .draw()
+    .calculate_area()
 }
 
 #[derive(Debug, Clone)]
@@ -80,17 +80,17 @@ pub struct Text<'a> {
 impl<'a> Text<'a> {
     pub fn font_size(mut self, font_size: usize) -> Self {
         self.font_size = font_size;
-        self
+        self.calculate_area()
     }
     pub fn line_heigth(mut self, line_height: usize) -> Self {
         self.line_height = Some(line_height);
-        self
+        self.calculate_area()
     }
     pub fn color(mut self, color: Color) -> Self {
         self.color = color;
         self
     }
-    fn draw(mut self) -> Self {
+    fn calculate_area(mut self) -> Self {
         let canvas_width = ctx().area.width as usize;
         let font = default_font().unwrap();
         let mut area = self.area;

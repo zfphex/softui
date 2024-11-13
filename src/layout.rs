@@ -186,6 +186,19 @@ where
         .map(|widget| (widget.area(), widget.primative()))
         .collect()
 }
+#[macro_export]
+macro_rules! flex_center_5 {
+    ($($widget:expr),*$(,)?) => {
+            let mut widgets = Vec::new();
+
+            $(
+                let widget = &$widget;
+                for widget in widget.as_uniform_layout_type() {
+                    widgets.push();
+                }
+            )*
+    }
+}
 
 #[macro_export]
 macro_rules! flex_center_4 {

@@ -1,4 +1,4 @@
-use super::{clicked, ctx, Command, IntoVec, MouseButton, Widget};
+use super::{clicked, ctx, Command, MouseButton, Widget};
 
 macro_rules! impl_click {
     ($struct: ident;  $($t:ident),*; $next:ident; $next_fn:ident; $($idx:tt),*) => {
@@ -55,14 +55,6 @@ macro_rules! impl_click {
                     // .field("click", &self.click)
                     .finish()
             }
-        }
-
-        impl<T: Widget, $($t: FnMut(&mut T)),*> $crate::IntoVec for $struct<T, $($t),*> {
-                type T = $struct<T, $($t),*>;
-
-                fn into_vec(self) -> Vec<Self::T> {
-                    vec![self]
-                }
         }
     };
 }
