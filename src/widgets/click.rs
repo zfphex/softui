@@ -36,7 +36,7 @@ macro_rules! impl_click {
                 //TODO: Thread safety
                 let ctx = ctx();
                 $(
-                    if clicked(ctx, &mut self.widget, self.click.$idx.0) {
+                    if clicked(ctx, self.widget.area(), self.click.$idx.0) {
                         self.click.$idx.1(&mut self.widget);
                     }
                 )*

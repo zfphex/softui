@@ -24,10 +24,10 @@ pub use container::*;
 pub mod click;
 pub use click::*;
 
-#[cfg(feature = "dwrote")]
+#[cfg(feature = "dwrite")]
 pub mod dwrite;
 
-#[cfg(feature = "dwrote")]
+#[cfg(feature = "dwrite")]
 pub use dwrite::*;
 
 use crate::*;
@@ -113,9 +113,7 @@ where
         Self: Sized,
     {
         let ctx = ctx();
-
-        //Use area_mut so widgets can calculate their area.
-        let area = *self.area_mut().unwrap();
+        let area = self.area();
 
         if !ctx.mouse_pos.intersects(area) {
             return false;

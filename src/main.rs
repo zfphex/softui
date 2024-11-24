@@ -9,7 +9,7 @@ fn main() {
     defer_results!();
     let ctx = create_ctx("Softui", 800, 600);
 
-    #[cfg(feature = "dwrote")]
+    #[cfg(feature = "dwrite")]
     let dwrite = DWrite::new_cached(32.0);
 
     let font_size = 10;
@@ -24,25 +24,27 @@ fn main() {
             _ => {}
         }
 
-        // ctx.fill(Color::WHITE);
-        // ctx.draw_text_subpixel(
-        //     "This is some text....",
-        //     &dwrite,
-        //     10,
-        //     0,
-        //     36 * 3,
-        //     0,
-        //     Color::WHITE,
-        // );
-        // ctx.draw_text(
-        //     "This is some text...",
-        //     &default_font().unwrap(),
-        //     10,
-        //     0,
-        //     36 * 3 + 10,
-        //     0,
-        //     Color::BLACK,
-        // );
+        ctx.fill(Color::WHITE);
+
+        #[cfg(feature = "dwrite")]
+        ctx.draw_text_subpixel(
+            "This is some text....",
+            &dwrite,
+            10,
+            0,
+            36 * 3,
+            0,
+            Color::WHITE,
+        );
+        ctx.draw_text(
+            "This is some text...",
+            &default_font().unwrap(),
+            10,
+            0,
+            36 * 3 + 10,
+            0,
+            Color::BLACK,
+        );
 
         ctx.draw_frame();
     }

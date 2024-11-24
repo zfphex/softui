@@ -12,7 +12,7 @@ warn = ["mini/warn"]
 error = ["mini/error"]
 svg = ["dep:resvg"]
 image = ["dep:zune-image"]
-dwrote = ["dep:dwrote"]
+dwrite = ["dep:dwrote"]
 
 [dependencies]
 window = { version = "0.1.0", git = "https://github.com/zx3no/window" }

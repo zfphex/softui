@@ -828,7 +828,7 @@ impl Context {
         self.area.height as usize
     }
 
-    #[cfg(feature = "dwrote")]
+    #[cfg(feature = "dwrite")]
     pub fn draw_text_subpixel(
         &mut self,
         text: &str,
@@ -932,7 +932,7 @@ impl Context {
         // );
     }
 
-    #[cfg(feature = "dwrote")]
+    #[cfg(feature = "dwrite")]
     pub fn draw_glyph_subpixel(&mut self, char: char, point_size: f32) {
         let start_x = 50;
         let start_y = 50;

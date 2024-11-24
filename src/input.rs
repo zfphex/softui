@@ -1,7 +1,6 @@
 use crate::*;
 
-pub fn clicked<T: Widget + Sized>(ctx: &Context, widget: &mut T, button: MouseButton) -> bool {
-    let area = widget.area_mut().unwrap().clone();
+pub fn clicked(ctx: &Context, area: Rect, button: MouseButton) -> bool {
     if !ctx.mouse_pos.intersects(area) {
         return false;
     }
