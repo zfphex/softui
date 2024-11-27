@@ -18,6 +18,8 @@ fn main() {
     #[cfg(feature = "image")]
     let mut image = image("img/smol.png");
 
+    let mut r = rect().bg(Color::BLACK).on_click(Left, |_| println!("hi"));
+
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
@@ -44,6 +46,17 @@ fn main() {
             36 * 3 + 10,
             0,
             Color::BLACK,
+        );
+
+        flex!(
+            Flex::TopLeft,
+            Direction::Horizontal,
+            ctx.area.width,
+            ctx.area.height,
+            r,
+            r,
+            r,
+            r
         );
 
         ctx.draw_frame();

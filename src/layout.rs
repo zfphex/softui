@@ -22,7 +22,7 @@ pub enum VerticalAlignment {
 }
 
 #[derive(Default, Debug)]
-pub struct Flex {
+pub struct F {
     pub direction: Direction,
     pub halign: HorizontalAlignment,
     pub valign: VerticalAlignment,
@@ -30,8 +30,8 @@ pub struct Flex {
     pub fill: bool,
 }
 
-fn v() -> Flex {
-    Flex {
+fn v() -> F {
+    F {
         direction: Direction::Vertical,
         halign: HorizontalAlignment::Left,
         valign: VerticalAlignment::Top,
@@ -40,8 +40,8 @@ fn v() -> Flex {
     }
 }
 
-fn h() -> Flex {
-    Flex {
+fn h() -> F {
+    F {
         direction: Direction::Horizontal,
         ..Default::default()
     }
@@ -429,39 +429,136 @@ macro_rules! flex_center {
     };
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::*;
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Flex {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+}
 
-    //cargo test --package softui --lib -- layout::tests::center --exact --show-output
-    #[test]
-    fn center() {
-        let ctx = create_ctx("Softui", 800, 800);
-        while ctx.event() != Some(Event::Quit) {
-            ctx.fill(Color::BLACK);
-
-            // flex_center!(
-            //     rect().wh(10),
-            //     rect().wh(17),
-            //     rect().wh(20),
-            //     rect().wh(232),
-            //     rect().wh(10),
-            //     rect().wh(32)
-            // );
-
-            //The third widget should wrap here.
-            // flex_center!(wrap: true, rect().wh(300), rect().wh(300), rect().wh(300));
-
-            //The last widget doesn't wrap here at all...
-            // flex_center!(wrap: true, padding: 20, rect().w(500).h(100), rect().w(500).h(100), rect().w(500).h(100));
-
-            flex_center_2!(
-                rect().w(500).h(100),
-                rect().w(500).h(100),
-                rect().w(500).h(100)
-            );
-
-            ctx.draw_frame();
-        }
+pub fn flex_xy(
+    start: Flex,
+    viewport_width: usize,
+    viewport_height: usize,
+    x: usize,
+    y: usize,
+) -> (usize, usize) {
+    match start {
+        Flex::TopLeft => (x, y),
+        Flex::TopRight => (viewport_width - x, y),
+        Flex::BottomLeft => (x, viewport_height - y),
+        Flex::BottomRight => (viewport_width - x, viewport_height - y),
     }
+}
+
+pub fn widget_new<T: Widget>(widget: &mut T) -> &mut T {
+    widget
+}
+
+#[macro_export]
+macro_rules! flex {
+    ($flex:expr, $direction:expr, $vw:expr, $vh:expr, $($widget:expr),*) => {{
+        let viewport_width: usize = $vw;
+        let viewport_height: usize = $vh;
+
+        let flex: Flex = $flex;
+        let direction: Direction = $direction;
+
+        let _x = 0;
+        let _y = 0;
+        let (mut x, mut y) = flex_xy(flex, viewport_width, viewport_height, _x, _y);
+        let start_x = x;
+        let start_y = y;
+
+        let mut max_height = 0;
+        let mut max_width = 0;
+
+        $(
+            let w = widget_new(&mut $widget);
+            let area = w.area_mut().unwrap();
+
+            match direction {
+                Direction::Horizontal => {
+                    if match flex {
+                        Flex::TopLeft => (x + area.width) >= viewport_width,
+                        Flex::TopRight => x.checked_sub(area.width).is_none(),
+                        _ => false,
+                    } {
+                        x = start_x;
+                        y += max_height;
+                        max_height = 0;
+                    }
+
+                    if match flex {
+                        Flex::BottomLeft => (x + area.width) >= viewport_width,
+                        Flex::BottomRight => x.checked_sub(area.width).is_none(),
+                        _ => false,
+                    } {
+                        x = start_x;
+                        y -= max_height;
+                        max_height = 0;
+                    }
+                }
+                Direction::Vertical => {
+                    if match flex {
+                        Flex::TopLeft => (y + area.height) >= viewport_height,
+                        Flex::BottomLeft => y.checked_sub(area.height).is_none(),
+                        _ => false,
+                    } {
+                        y = start_y;
+                        x += max_width;
+                        max_width = 0;
+                    }
+
+                    if match flex {
+                        Flex::TopRight => (y + area.height) >= viewport_height,
+                        Flex::BottomRight => y.checked_sub(area.height).is_none(),
+                        _ => false,
+                    } {
+                        y = start_y;
+                        x -= max_width;
+                        max_width = 0;
+                    }
+                }
+            }
+
+            if area.height > max_height {
+                max_height = area.height;
+            }
+
+            if area.width > max_width {
+                max_width = area.width;
+            }
+
+            area.x = x;
+            area.y = y;
+
+            //Stop the mutable borrow.
+            let area = w.area();
+
+            //Click the widget once the layout is calculated.
+            w.try_click();
+
+            //This is where the draw call would typically be issued.
+            // test.push((area, w.primative()));
+            unsafe { COMMAND_QUEUE.push(Command {area, primative: w.primative()}) };
+
+            match direction {
+                Direction::Horizontal => {
+                    match flex {
+                        Flex::TopLeft | Flex::BottomLeft => x += area.width,
+                        Flex::TopRight | Flex::BottomRight => x -= area.width,
+                    };
+                }
+                Direction::Vertical =>  {
+                    match flex {
+                        Flex::TopLeft | Flex::TopRight => y += area.height,
+                        Flex::BottomLeft | Flex::BottomRight => y -= area.height,
+                    };
+                }
+            }
+        )*
+
+    }};
 }
