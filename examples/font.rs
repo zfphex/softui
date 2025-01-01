@@ -1,5 +1,11 @@
 use softui::*;
 
+#[cfg(not(feature = "dwrite"))]
+fn main() {
+    println!("Use --features 'dwrite'")
+}
+
+#[cfg(feature = "dwrite")]
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
 
