@@ -21,7 +21,7 @@ fn main() {
                 .on_click(Back, |_| println!("Mouse4"))
                 .on_click(Forward, |_| println!("Mouse5"));
 
-            vertical!(text);
+            v!(text);
         }
 
         ctx.draw_frame();

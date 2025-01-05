@@ -1,5 +1,3 @@
-use softui::*;
-
 #[cfg(not(feature = "image"))]
 fn main() {
     println!("Use --features 'image'")
@@ -7,9 +5,12 @@ fn main() {
 
 #[cfg(feature = "image")]
 fn main() {
+    use softui::*;
+
     let ctx = create_ctx("Softui", 800, 600);
     let mut png = image("img/smol.png").on_click(Left, |_| println!(":<"));
     let mut jpg = image("img/smol.jpg").on_click(Left, |_| println!(">:"));
+    let mut text = text("test");
 
     loop {
         match ctx.event() {
@@ -20,7 +21,7 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
-            h!(png, text("test"), jpg);
+            v!(png, text, jpg);
         }
 
         ctx.draw_frame();

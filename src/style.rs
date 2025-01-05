@@ -24,6 +24,11 @@ impl Color {
     }
 
     #[inline]
+    pub const fn default() -> Self {
+        Self(0)
+    }
+
+    #[inline]
     pub const fn r(self) -> u8 {
         r(self.0)
     }

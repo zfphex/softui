@@ -13,9 +13,6 @@ pub mod macros;
 pub mod style;
 pub mod widgets;
 
-pub mod layout;
-pub use layout::*;
-
 pub use input::*;
 pub use macros::*;
 pub use style::*;
@@ -33,6 +30,9 @@ pub use MouseButton::*;
 //I think this is a good approach, if multiple threads are being used.
 //I would like to append single commands to the buffer and large groups of commands.
 //There is no COMMAND_QUEUE.push_slice() unfortunately.
+
+pub mod layout;
+pub use layout::*;
 
 #[derive(Debug)]
 pub struct Command {
@@ -153,13 +153,6 @@ pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Cont
         CTX = Some(Context::new(title, width, height));
         CTX.as_mut().unwrap()
     }
-}
-
-pub enum Quadrant {
-    TopLeft,
-    TopRight,
-    BottomLeft,
-    BottomRight,
 }
 
 /// Holds the framebuffer and input state.

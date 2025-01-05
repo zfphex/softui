@@ -1,7 +1,4 @@
-pub mod layout;
 pub mod rectangle;
-
-pub use layout::*;
 pub use rectangle::*;
 
 #[cfg(feature = "svg")]
@@ -17,9 +14,6 @@ pub use image::*;
 
 pub mod text;
 pub use text::*;
-
-pub mod container;
-pub use container::*;
 
 pub mod click;
 pub use click::*;

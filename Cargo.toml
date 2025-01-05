@@ -30,3 +30,6 @@ zune-image = { version = "0.4.15", optional = true, default-features = false, fe
     # "simd",
     # "all"
 ] }
+# lay_out = { version = "0.1.0", path = "../lay_out" }
+
+# lay_out = { git = "https://github.com/zX3no/lay_out", version = "0.1.0" }
