@@ -1,8 +1,3 @@
-pub mod basic;
-
-#[cfg(test)]
-mod tests;
-
 use crate::RECT;
 use crate::*;
 

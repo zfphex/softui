@@ -9,11 +9,13 @@ pub use window::*;
 
 pub mod atomic_float;
 pub mod input;
+pub mod layout;
 pub mod macros;
 pub mod style;
 pub mod widgets;
 
 pub use input::*;
+pub use layout::*;
 pub use macros::*;
 pub use style::*;
 pub use widgets::*;
@@ -30,9 +32,6 @@ pub use MouseButton::*;
 //I think this is a good approach, if multiple threads are being used.
 //I would like to append single commands to the buffer and large groups of commands.
 //There is no COMMAND_QUEUE.push_slice() unfortunately.
-
-pub mod layout;
-pub use layout::*;
 
 #[derive(Debug)]
 pub struct Command {
