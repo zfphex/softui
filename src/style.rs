@@ -2,6 +2,11 @@ pub trait Style {
     fn bg(self, color: Color) -> Self;
 }
 
+#[inline]
+pub const fn rgb(r: u8, g: u8, b: u8) -> Color {
+    Color::new(r, g, b)
+}
+
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Color(pub u32);
@@ -59,6 +64,7 @@ impl Color {
     }
 
     #[inline(always)]
+    //Takes in a hex color.
     pub const fn from(color: u32) -> Self {
         Self(color)
     }
@@ -73,11 +79,6 @@ pub fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
 #[inline]
 pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
     (a * (1.0 - t)) + (b * t)
-}
-
-#[inline]
-pub const fn rgb(r: u8, g: u8, b: u8) -> u32 {
-    (r as u32) << 16 | (g as u32) << 8 | (b as u32)
 }
 
 #[inline]

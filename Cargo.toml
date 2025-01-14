@@ -15,9 +15,9 @@ image = ["dep:zune-image"]
 dwrite = ["dep:dwrote"]
 
 [dependencies]
-window = { version = "0.1.0", git = "https://github.com/zx3no/window" }
+# window = { version = "0.1.0", git = "https://github.com/zx3no/window" }
+window = { version = "0.1.0", path = "../window" }
 mini = { version = "0.1.0", git = "https://github.com/zx3no/mini" }
-# window = { version = "0.1.0", path = "../window" }
 # mini = { version = "0.1.0", path = "../mini" }
 crossbeam-queue = "0.3.11"
 fontdue = { version = "0.9.0" }

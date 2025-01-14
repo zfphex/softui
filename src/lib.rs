@@ -149,7 +149,20 @@ pub fn ctx() -> &'static mut Context {
 
 pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Context {
     unsafe {
-        CTX = Some(Context::new(title, width, height));
+        CTX = Some(Context::new(title, width, height, WindowStyle::Default));
+        CTX.as_mut().unwrap()
+    }
+}
+
+//TODO: Consolidate, can't be bothered fixing all the other functions that don't take style into account.
+pub fn create_ctx_ex(
+    title: &str,
+    width: usize,
+    height: usize,
+    style: WindowStyle,
+) -> &'static mut Context {
+    unsafe {
+        CTX = Some(Context::new(title, width, height, style));
         CTX.as_mut().unwrap()
     }
 }
@@ -179,11 +192,11 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(title: &str, width: usize, height: usize) -> Self {
+    pub fn new(title: &str, width: usize, height: usize, style: WindowStyle) -> Self {
         //TODO: Remove me.
         load_default_font();
 
-        let window = create_window(title, width as i32, height as i32);
+        let window = create_window(title, width as i32, height as i32, style);
         let dc = unsafe { GetDC(window.hwnd) };
         //Convert top, left, right, bottom to x, y, width, height.
         let area = Rect::from(window.client_area());
@@ -221,7 +234,7 @@ impl Context {
         match self.window.event() {
             Some(event) => {
                 match event {
-                    Event::Mouse(x, y) => {
+                    Event::MouseMoveInsideWindow(x, y) => {
                         if x < 0 || y < 0 {
                             todo!("Handle negative mouse co-ordinates with RECT instead of Rect");
                         }
@@ -779,7 +792,7 @@ impl Context {
                         let r = blend(r, alpha, bg.r(), 255 - alpha);
                         let g = blend(g, alpha, bg.g(), 255 - alpha);
                         let b = blend(b, alpha, bg.b(), 255 - alpha);
-                        self.buffer[i] = rgb(r, g, b);
+                        self.buffer[i] = rgb(r, g, b).as_u32();
                     }
                 }
 
@@ -801,13 +814,13 @@ impl Context {
         area.height = max_y + 1 - area.y;
         area.width = max_x + 1 - area.x;
 
-        let _ = self.draw_rectangle_outline(
-            area.x as usize,
-            area.y as usize,
-            area.width as usize,
-            area.height as usize,
-            Color::RED,
-        );
+        // let _ = self.draw_rectangle_outline(
+        //     area.x as usize,
+        //     area.y as usize,
+        //     area.width as usize,
+        //     area.height as usize,
+        //     Color::RED,
+        // );
     }
 
     #[inline(always)]
@@ -890,7 +903,8 @@ impl Context {
 
                         // self.draw_rectangle_outline(glyph_x as usize, glyph_y as usize, width as usize, height as usize + 1, Color::RED).unwrap();
 
-                        let c = rgb(255 - texture[j], 255 - texture[j + 1], 255 - texture[j + 2]);
+                        let c = rgb(255 - texture[j], 255 - texture[j + 1], 255 - texture[j + 2])
+                            .as_u32();
 
                         self.buffer[i] = c;
                         // self.buffer[i] = rgb(r, g, b);
@@ -954,7 +968,7 @@ impl Context {
                 // let b = blend(b, alpha, bg.b(), alpha);
 
                 //Black
-                self.buffer[i] = rgb(255 - r, 255 - g, 255 - b);
+                self.buffer[i] = rgb(255 - r, 255 - g, 255 - b).as_u32();
 
                 //White
                 // self.buffer[i] = rgb(r, g, b);
@@ -997,7 +1011,7 @@ impl Context {
             // let a = pixel[3];
             let color = rgb(r, g, b);
 
-            buffer[pos] = color;
+            buffer[pos] = color.as_u32();
 
             x += 1;
             if x >= width {

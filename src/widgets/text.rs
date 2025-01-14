@@ -241,7 +241,7 @@ pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
             let g = bitmap[j + 1];
             let b = bitmap[j + 2];
 
-            ctx.buffer[i] = rgb(r, g, b);
+            ctx.buffer[i] = rgb(r, g, b).as_u32();
         }
     }
 }
