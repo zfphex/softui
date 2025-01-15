@@ -149,7 +149,7 @@ pub fn ctx() -> &'static mut Context {
 
 pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Context {
     unsafe {
-        CTX = Some(Context::new(title, width, height, WindowStyle::Default));
+        CTX = Some(Context::new(title, width, height, WindowStyle::DEFAULT));
         CTX.as_mut().unwrap()
     }
 }

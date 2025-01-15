@@ -19,7 +19,8 @@ const Y_OFFSET: i32 = 11;
 const X_OFFSET: i32 = 3;
 
 fn main() {
-    let ctx = create_ctx_ex("Softui", VWIDTH, VHEIGHT, WindowStyle::Borderless);
+    let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST);
+    let ctx = create_ctx_ex("Softui", VWIDTH, VHEIGHT, style);
 
     let hdc = unsafe { GetDC(0) };
     assert!(!hdc.is_null());
