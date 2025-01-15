@@ -12,7 +12,7 @@ const X_OFFSET: i32 = 3;
 
 fn main() {
     let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST);
-    let ctx = create_ctx_ex("Softui", VWIDTH, VHEIGHT, style);
+    let ctx = create_ctx_ex("Color Picker", VWIDTH, VHEIGHT, style);
     //This should never fail.
     let hdc = unsafe { GetDC(0) };
 
