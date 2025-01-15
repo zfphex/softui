@@ -584,6 +584,7 @@ impl Context {
     }
 
     //TODO: Allow for variable length outlines.
+    //TODO: This does not bounds check correctly, see WindowStyle::DEFAULT in the color picker example.
     #[must_use]
     pub fn draw_rectangle_outline(
         &mut self,

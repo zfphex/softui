@@ -1,29 +1,20 @@
+//TODO: Zooming with 4 zoom levels
+//TODO: Tray icon.
+
 use softui::*;
 
 const BORDER: Color = rgb(89, 87, 91);
 const BACKGROUND: Color = rgb(32, 32, 32);
-
-//109, 40 size of picker at 1080p
-
-//36, 34 color rectangle at 1080p
-
-//TODO: Doesn't work at the bottom of the desktop. WS_EX_TOPMOST
-//TODO: Stay on top.
-//TODO: Zooming with 4 zoom levels
-//TODO: Tray icon.
-
 const VWIDTH: usize = 109;
 const VHEIGHT: usize = 40;
-
 const Y_OFFSET: i32 = 11;
 const X_OFFSET: i32 = 3;
 
 fn main() {
     let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST);
     let ctx = create_ctx_ex("Softui", VWIDTH, VHEIGHT, style);
-
+    //This should never fail.
     let hdc = unsafe { GetDC(0) };
-    assert!(!hdc.is_null());
 
     loop {
         match ctx.event() {
@@ -31,7 +22,8 @@ fn main() {
             _ => {}
         }
 
-        let (x, y) = physical_mouse_pos();
+        //TODO: Check if this needs to be physical coordinates or not.
+        let (x, y) = mouse_pos();
         let width = ctx.width();
         let height = ctx.height();
 
@@ -62,16 +54,12 @@ fn main() {
         let color = Color::new(b, g, r);
 
         ctx.fill(BACKGROUND);
-
         ctx.draw_rectangle_outline(0, 0, width - 1, height - 1, BORDER)
             .unwrap();
-
         ctx.draw_rectangle_outline(3, 3, 36, 33, BORDER).unwrap();
-
         ctx.draw_rectangle(4, 4, 34, 31, color);
-
         ctx.draw_text(
-            &format!("{:0>6x}", color.as_u32()),
+            &color.to_string(),
             default_font().unwrap(),
             16,
             46,

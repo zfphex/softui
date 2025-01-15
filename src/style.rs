@@ -70,6 +70,13 @@ impl Color {
     }
 }
 
+impl ToString for Color {
+    #[inline]
+    fn to_string(&self) -> String {
+        format!("{:0>6x}", self.as_u32())
+    }
+}
+
 #[inline]
 ///Blend the background and the text color.
 pub fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
