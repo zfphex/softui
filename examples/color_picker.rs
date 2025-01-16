@@ -1,5 +1,11 @@
+#![allow(dead_code)]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 //TODO: Zooming with 4 zoom levels
-//TODO: Tray icon.
+//TODO: DPI awareness
+//TODO: Tray icon
+//TODO: After clicking the picker cannot be closed
+//TODO: Left click to pick color and show picker menu
 
 use softui::*;
 
@@ -7,8 +13,24 @@ const BORDER: Color = rgb(89, 87, 91);
 const BACKGROUND: Color = rgb(32, 32, 32);
 const VWIDTH: usize = 109;
 const VHEIGHT: usize = 40;
+
+const COLOR_WIDTH: usize = 34;
+const COLOR_HEIGHT: usize = 31;
+
 const Y_OFFSET: i32 = 11;
 const X_OFFSET: i32 = 3;
+
+const ZOOM_OUTER_BORDER: Color = rgb(66, 66, 66); //1px
+const ZOOM_INNER_BORDER: Color = rgb(39, 39, 39); //3px
+
+const LEVEL_1_ZOOM: usize = 50; //50x50 square
+const LEVEL_2_ZOOM: usize = 100; //100x100 square
+const LEVEL_3_ZOOM: usize = 200; //200x200 square
+
+//58x58 square 3 pixel grey border, 1 pixel light grey, 4 + 4 each side.
+// const LEVEL_1_ZOOM_BORDER: usize = LEVEL_1_ZOOM + 8;
+// const LEVEL_2_ZOOM_BORDER: usize = LEVEL_2_ZOOM + 8;
+// const LEVEL_3_ZOOM_BORDER: usize = LEVEL_3_ZOOM + 8;
 
 fn main() {
     let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST);
@@ -54,10 +76,17 @@ fn main() {
         let color = Color::new(b, g, r);
 
         ctx.fill(BACKGROUND);
-        ctx.draw_rectangle_outline(0, 0, width - 1, height - 1, BORDER)
-            .unwrap();
-        ctx.draw_rectangle_outline(3, 3, 36, 33, BORDER).unwrap();
-        ctx.draw_rectangle(4, 4, 34, 31, color);
+        ctx.draw_rectangle_outline(
+            0,
+            0,
+            width.saturating_sub(1),
+            height.saturating_sub(1),
+            BORDER,
+        );
+
+        ctx.draw_rectangle_outline(3, 3, COLOR_WIDTH + 2, COLOR_HEIGHT + 2, BORDER);
+        ctx.draw_rectangle(4, 4, COLOR_WIDTH, COLOR_HEIGHT, color);
+
         ctx.draw_text(
             &color.to_string(),
             default_font().unwrap(),

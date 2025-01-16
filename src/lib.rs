@@ -167,6 +167,12 @@ pub fn create_ctx_ex(
     }
 }
 
+//Used with display scaling. May not be pixel accurate at certain scale settings.
+#[inline]
+pub const fn scale(value: usize, scale: f32) -> usize {
+    (value as f32 * scale) as usize
+}
+
 /// Holds the framebuffer and input state.
 /// Also handles rendering.
 #[derive(Debug)]
@@ -189,6 +195,7 @@ pub struct Context {
     pub middle_mouse: MouseState,
     pub mouse_4: MouseState,
     pub mouse_5: MouseState,
+    pub display_scale: f32,
 }
 
 impl Context {
@@ -198,8 +205,12 @@ impl Context {
 
         let window = create_window(title, width as i32, height as i32, style);
         let dc = unsafe { GetDC(window.hwnd) };
+        let display_scale = window.display_scale();
+
         //Convert top, left, right, bottom to x, y, width, height.
-        let area = Rect::from(window.client_area());
+        let mut area = Rect::from(window.client_area());
+        area.width = (area.width as f32 * display_scale) as usize;
+        area.height = (area.height as f32 * display_scale) as usize;
 
         // unsafe {
         //     VIEWPORT = AtomicRect::new(area.x, area.y, area.width, area.height);
@@ -225,6 +236,7 @@ impl Context {
             middle_mouse: MouseState::new(),
             mouse_4: MouseState::new(),
             mouse_5: MouseState::new(),
+            display_scale,
         }
     }
 
@@ -234,6 +246,11 @@ impl Context {
         match self.window.event() {
             Some(event) => {
                 match event {
+                    //TODO: This is not called at all 😡
+                    // Event::Dpi(dpi) => {
+                    //     panic!("{}", dpi);
+                    //     self.display_scale = dpi as f32 / window::DEFAULT_DPI;
+                    // }
                     Event::MouseMoveInsideWindow(x, y) => {
                         if x < 0 || y < 0 {
                             todo!("Handle negative mouse co-ordinates with RECT instead of Rect");
@@ -302,8 +319,7 @@ impl Context {
                     }
                 }
                 Primative::RectangleOutline(color) => {
-                    self.draw_rectangle_outline(x, y, width, height, color)
-                        .unwrap();
+                    self.draw_rectangle_outline(x, y, width, height, color);
                 }
                 Primative::Text(text, size, color) => {
                     //TODO: Specify the font with a font database and font ID.
@@ -322,12 +338,20 @@ impl Context {
         }
 
         //Resize the window if needed.
-        let area = Rect::from(self.window.client_area());
-        if self.area != area {
+        let mut area = Rect::from(self.window.client_area());
+        let display_scale = self.window.display_scale();
+
+        if self.area != area || self.display_scale != display_scale {
+            // dbg!(display_scale);
+            //TODO: This doesn't work at all.
+            //Scale the width and height.
+            area.width = (area.width as f32 * display_scale) as usize;
+            area.height = (area.height as f32 * display_scale) as usize;
+
+            self.display_scale = display_scale;
             self.area = area;
             self.buffer.clear();
-            self.buffer
-                .resize(self.area.width as usize * self.area.height as usize, 0);
+            self.buffer.resize(self.area.width * self.area.height, 0);
             self.bitmap = BITMAPINFO::new(self.area.width as i32, self.area.height as i32);
         }
 
@@ -487,6 +511,11 @@ impl Context {
         let viewport_width = self.width();
         let viewport_height = self.height();
 
+        let x = scale(x, self.display_scale);
+        let y = scale(y, self.display_scale);
+        let mut width = scale(width, self.display_scale);
+        let mut height = scale(height, self.display_scale);
+
         //Malformed rectangle
         if x > viewport_width {
             warn!(
@@ -539,27 +568,26 @@ impl Context {
     //An alternative way of rendering.
     //I don't think it's much faster.
     //Can't really optimise something this simple.
-    pub fn draw_rectangle_2(
-        &mut self,
-        x: usize,
-        y: usize,
-        width: usize,
-        height: usize,
-        color: u32,
-    ) -> Result<(), String> {
-        #[cfg(debug_assertions)]
-        self.bounds_check(x, y, width, height)?;
+    // pub fn draw_rectangle_2(
+    //     &mut self,
+    //     x: usize,
+    //     y: usize,
+    //     width: usize,
+    //     height: usize,
+    //     color: u32,
+    // ) -> Result<(), String> {
+    //     #[cfg(debug_assertions)]
+    //     self.bounds_check(x, y, width, height)?;
 
-        let mut i = x + (y * self.area.width as usize);
-        for _ in 0..height {
-            unsafe { self.buffer.get_unchecked_mut(i..i + width).fill(color) };
-            i += self.area.width as usize;
-        }
+    //     let mut i = x + (y * self.area.width as usize);
+    //     for _ in 0..height {
+    //         unsafe { self.buffer.get_unchecked_mut(i..i + width).fill(color) };
+    //         i += self.area.width as usize;
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    #[must_use]
     pub fn draw_linear_gradient(
         &mut self,
         x: usize,
@@ -569,7 +597,7 @@ impl Context {
         color1: Color,
         color2: Color,
     ) -> Result<(), String> {
-        self.bounds_check(x, y, width, height)?;
+        // self.bounds_check(x, y, width, height)?;
 
         for i in y..y + height {
             let start = x + self.area.width as usize * i;
@@ -585,7 +613,6 @@ impl Context {
 
     //TODO: Allow for variable length outlines.
     //TODO: This does not bounds check correctly, see WindowStyle::DEFAULT in the color picker example.
-    #[must_use]
     pub fn draw_rectangle_outline(
         &mut self,
         x: usize,
@@ -593,58 +620,112 @@ impl Context {
         width: usize,
         height: usize,
         color: Color,
-    ) -> Result<(), String> {
-        self.bounds_check(x, y, width, height)?;
-        let canvas_width = self.area.width as usize;
-        let color = color.as_u32();
+    ) {
+        let x = scale(x, self.display_scale);
+        let y = scale(y, self.display_scale);
+        let mut width = scale(width, self.display_scale);
+        let mut height = scale(height, self.display_scale);
 
-        for i in y..y + height {
-            if i > y && i < (y + height).saturating_sub(1) {
-                self.buffer[i * canvas_width + x] = color;
-                self.buffer[(i * canvas_width) + x + width - 1] = color;
-            } else {
-                let pos = i * canvas_width + x;
-                for px in &mut self.buffer[pos..pos + width] {
-                    *px = color;
-                }
-            }
+        let color = color.as_u32();
+        let viewport_width = self.width();
+        let viewport_height = self.height();
+
+        if x + width >= viewport_width {
+            warn!(
+                "Clipping rectangle outline x: {}, width: {} because x + width = {} >= viewport width: {}",
+                x,
+                width,
+                x + width,
+                viewport_width
+            );
+            return;
         }
 
-        return Ok(());
+        if y + height >= viewport_height {
+            warn!(
+                "Clipping rectangle outline y: {}, height: {} because y + height = {} >= viewport height: {}",
+                y,
+                height,
+                y + height,
+                viewport_height
+            );
+            return;
+        }
+
+        // if self.is_invalid_bounds(x, y, width, height) {
+        //     return;
+        // };
+
+        //Draw the first line
+        let pos = x + self.area.width as usize * y;
+        self.buffer[pos..=pos + width].fill(color);
+
+        //Draw the middle pixels
+        //Skip the first line.
+        for i in (y + 1)..(y + height) {
+            let left = x + self.area.width as usize * i;
+            self.buffer[left] = color;
+
+            let right = x + width + self.area.width as usize * i;
+            self.buffer[right] = color;
+        }
+
+        //Draw the last line
+        let pos = x + self.area.width as usize * (y + height);
+        self.buffer[pos..=pos + width].fill(color);
     }
 
     #[inline]
-    pub fn bounds_check(
-        &self,
-        x: usize,
-        y: usize,
-        width: usize,
-        height: usize,
-    ) -> Result<(), String> {
+    fn is_invalid_bounds(&self, x: usize, y: usize, width: usize, height: usize) -> bool {
         #[cfg(debug_assertions)]
         {
-            if x + width >= self.area.width as usize {
-                return Err(format!(
-                    "Canvas width is {}, cannot draw at {} ({}x + {}w)",
-                    self.area.width,
-                    x + width,
-                    x,
-                    width,
-                ));
+            let viewport_width = self.width();
+            let viewport_height = self.height();
+            //Malformed rectangle
+            if x > viewport_width {
+                warn!(
+                    "Malformed rectangle has x: {} but viewport width is {}.",
+                    x, viewport_width
+                );
+                return true;
             }
 
-            if y + height >= self.area.height as usize {
-                return Err(format!(
-                    "Canvas height is {}, cannot draw at {} ({}y + {}h)",
-                    self.area.height,
-                    y + height,
-                    y,
-                    height,
-                ));
+            if y > viewport_height {
+                warn!(
+                    "Malformed rectangle has y: {} but viewport height is {}.",
+                    y, viewport_height
+                );
+                return true;
             }
+
+            //Safety: do not allow rectangles to be larger than the viewport
+            //the user should not crash for this.
+            // if x + width > viewport_width {
+            //     info!(
+            //         "Clipping rectangle x: {}, width: {} because x + width = {} > viewport width: {}",
+            //         x,
+            //         width,
+            //         x + width,
+            //         viewport_width
+            //     );
+
+            //     width = viewport_width.saturating_sub(x);
+            // }
+
+            // if y + height > viewport_height {
+            //     info!(
+            //         "Clipping rectangle y: {}, height: {} because y + height = {} > viewport height: {}",
+            //         y,
+            //         height,
+            //         y + height,
+            //         viewport_height
+            //     );
+
+            //     height = viewport_height.saturating_sub(y);
+            // }
         }
 
-        Ok(())
+        false
     }
 
     //https://en.wikipedia.org/wiki/Superellipse
@@ -659,7 +740,7 @@ impl Context {
         radius: usize,
         color: Color,
     ) -> Result<(), String> {
-        self.bounds_check(x, y, width, height)?;
+        // self.bounds_check(x, y, width, height)?;
 
         if (2 * radius) > (width) {
             return Err(format!(
