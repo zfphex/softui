@@ -205,7 +205,7 @@ impl Context {
 
         let window = create_window(title, width as i32, height as i32, style);
         let dc = unsafe { GetDC(window.hwnd) };
-        let display_scale = window.display_scale();
+        let display_scale = window.display_scale;
 
         //Convert top, left, right, bottom to x, y, width, height.
         let mut area = Rect::from(window.client_area());
@@ -246,11 +246,12 @@ impl Context {
         match self.window.event() {
             Some(event) => {
                 match event {
-                    //TODO: This is not called at all 😡
-                    // Event::Dpi(dpi) => {
-                    //     panic!("{}", dpi);
-                    //     self.display_scale = dpi as f32 / window::DEFAULT_DPI;
-                    // }
+                    //Why is this never called?
+                    Event::Dpi(dpi) => {
+                        // panic!("{}", dpi);
+                        //TODO: This is quite scuffed.
+                        // self.window.display_scale = dpi as f32 / window::DEFAULT_DPI;
+                    }
                     Event::MouseMoveInsideWindow(x, y) => {
                         if x < 0 || y < 0 {
                             todo!("Handle negative mouse co-ordinates with RECT instead of Rect");
@@ -339,21 +340,22 @@ impl Context {
 
         //Resize the window if needed.
         let mut area = Rect::from(self.window.client_area());
-        let display_scale = self.window.display_scale();
 
-        if self.area != area || self.display_scale != display_scale {
-            // dbg!(display_scale);
-            //TODO: This doesn't work at all.
-            //Scale the width and height.
-            area.width = (area.width as f32 * display_scale) as usize;
-            area.height = (area.height as f32 * display_scale) as usize;
+        //Spamming this does not work.
+        // let display_scale = self.window.display_scale;
+        // dbg!(self.window.display_scale, self.display_scale);
 
-            self.display_scale = display_scale;
-            self.area = area;
-            self.buffer.clear();
-            self.buffer.resize(self.area.width * self.area.height, 0);
-            self.bitmap = BITMAPINFO::new(self.area.width as i32, self.area.height as i32);
-        }
+        // if self.area != area || self.display_scale != display_scale {
+        //     //Scale the width and height.
+        //     area.width = (area.width as f32 * display_scale) as usize;
+        //     area.height = (area.height as f32 * display_scale) as usize;
+
+        //     self.display_scale = display_scale;
+        //     self.area = area;
+        //     self.buffer.clear();
+        //     self.buffer.resize(self.area.width * self.area.height, 0);
+        //     self.bitmap = BITMAPINFO::new(self.area.width as i32, self.area.height as i32);
+        // }
 
         unsafe {
             StretchDIBits(

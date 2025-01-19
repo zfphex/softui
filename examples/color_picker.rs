@@ -44,6 +44,8 @@ fn main() {
             _ => {}
         }
 
+        // dbg!(ctx.window.display_scale);
+
         //TODO: Check if this needs to be physical coordinates or not.
         let (x, y) = mouse_pos();
         let width = ctx.width();
@@ -52,7 +54,7 @@ fn main() {
         //Check if the color picker would get off the screen.
         //If it would move it to the other side of the cursor.
 
-        //TODO: Use the device context width.
+        // TODO: Use the device context width.
         let mx = if (x + width as i32 + X_OFFSET) > 1920 {
             x - width as i32 - X_OFFSET
         } else {
@@ -66,13 +68,14 @@ fn main() {
             y + Y_OFFSET
         };
 
-        ctx.window.set_pos(mx, my);
+        //This does not work.
+        // ctx.window.set_pos(mx, my);
 
         let color = unsafe { GetPixel(hdc, x, y) };
         let r = (color >> 16 & 0xFF) as u8;
         let g = (color >> 8 & 0xFF) as u8;
         let b = (color & 0xFF) as u8;
-        //WHY IS THIS BACKWARDS?????????
+        // WHY IS THIS BACKWARDS?????????
         let color = Color::new(b, g, r);
 
         ctx.fill(BACKGROUND);
