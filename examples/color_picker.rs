@@ -70,6 +70,7 @@ fn main() {
 
         //This does not work.
         // ctx.window.set_pos(mx, my);
+        // ctx.window.set_pos(0, 0);
 
         let color = unsafe { GetPixel(hdc, x, y) };
         let r = (color >> 16 & 0xFF) as u8;
@@ -79,6 +80,7 @@ fn main() {
         let color = Color::new(b, g, r);
 
         ctx.fill(BACKGROUND);
+
         ctx.draw_rectangle_outline(
             0,
             0,

@@ -183,6 +183,7 @@ pub struct Context {
     // pub simd16: Vec<u8x16>,
     // pub simd32: Vec<u32x8>,
     // pub simd64: Vec<u32x16>,
+    //This is dpi scaled.
     pub area: Rect,
     pub window: Pin<Box<Window>>,
     pub dc: Option<*mut c_void>,
@@ -195,6 +196,7 @@ pub struct Context {
     pub middle_mouse: MouseState,
     pub mouse_4: MouseState,
     pub mouse_5: MouseState,
+    //We need to store the display scale so that we can check when it's changed.
     pub display_scale: f32,
 }
 
@@ -246,11 +248,9 @@ impl Context {
         match self.window.event() {
             Some(event) => {
                 match event {
-                    //Why is this never called?
                     Event::Dpi(dpi) => {
-                        // panic!("{}", dpi);
-                        //TODO: This is quite scuffed.
-                        // self.window.display_scale = dpi as f32 / window::DEFAULT_DPI;
+                        self.window.display_scale = dpi as f32 / window::DEFAULT_DPI;
+                        eprintln!("display scale: {}", self.window.display_scale);
                     }
                     Event::MouseMoveInsideWindow(x, y) => {
                         if x < 0 || y < 0 {
@@ -342,20 +342,25 @@ impl Context {
         let mut area = Rect::from(self.window.client_area());
 
         //Spamming this does not work.
-        // let display_scale = self.window.display_scale;
-        // dbg!(self.window.display_scale, self.display_scale);
+        let display_scale = self.window.display_scale;
 
-        // if self.area != area || self.display_scale != display_scale {
-        //     //Scale the width and height.
-        //     area.width = (area.width as f32 * display_scale) as usize;
-        //     area.height = (area.height as f32 * display_scale) as usize;
+        //Scale the width and height.
+        area.width = (area.width as f32 * display_scale) as usize;
+        area.height = (area.height as f32 * display_scale) as usize;
 
-        //     self.display_scale = display_scale;
-        //     self.area = area;
-        //     self.buffer.clear();
-        //     self.buffer.resize(self.area.width * self.area.height, 0);
-        //     self.bitmap = BITMAPINFO::new(self.area.width as i32, self.area.height as i32);
-        // }
+        if self.area != area || self.display_scale != display_scale {
+            // println!("old: {:?} new: {:?}", self.area, area);
+            // println!("old: {} new: {}", self.display_scale, display_scale);
+
+            dbg!(area.width, area.height, display_scale);
+
+            self.buffer.clear();
+            self.buffer.resize(area.width * area.height, 0);
+            self.bitmap = BITMAPINFO::new(area.width as i32, area.height as i32);
+
+            self.display_scale = display_scale;
+            self.area = area;
+        }
 
         unsafe {
             StretchDIBits(
@@ -513,10 +518,10 @@ impl Context {
         let viewport_width = self.width();
         let viewport_height = self.height();
 
-        let x = scale(x, self.display_scale);
-        let y = scale(y, self.display_scale);
-        let mut width = scale(width, self.display_scale);
-        let mut height = scale(height, self.display_scale);
+        // let x = scale(x, self.display_scale);
+        // let y = scale(y, self.display_scale);
+        // let mut width = scale(width, self.display_scale);
+        // let mut height = scale(height, self.display_scale);
 
         //Malformed rectangle
         if x > viewport_width {
@@ -623,10 +628,10 @@ impl Context {
         height: usize,
         color: Color,
     ) {
-        let x = scale(x, self.display_scale);
-        let y = scale(y, self.display_scale);
-        let mut width = scale(width, self.display_scale);
-        let mut height = scale(height, self.display_scale);
+        // let x = scale(x, self.display_scale);
+        // let y = scale(y, self.display_scale);
+        // let mut width = scale(width, self.display_scale);
+        // let mut height = scale(height, self.display_scale);
 
         let color = color.as_u32();
         let viewport_width = self.width();
