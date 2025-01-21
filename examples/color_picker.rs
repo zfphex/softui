@@ -15,7 +15,7 @@ const VWIDTH: usize = 109;
 const VHEIGHT: usize = 40;
 
 const COLOR_WIDTH: usize = 34;
-const COLOR_HEIGHT: usize = 31;
+const COLOR_HEIGHT: usize = 32;
 
 const Y_OFFSET: i32 = 11;
 const X_OFFSET: i32 = 3;
@@ -68,8 +68,19 @@ fn main() {
             y + Y_OFFSET
         };
 
-        //This does not work.
-        // ctx.window.set_pos(mx, my);
+        //This does not work with display scaling.
+        // unsafe {
+        //     SetWindowPos(
+        //         ctx.window.hwnd,
+        //         0,
+        //         mx,
+        //         my,
+        //         0,
+        //         0,
+        //         SWP_FRAMECHANGED | SWP_NOSIZE,
+        //     )
+        // };
+        
         // ctx.window.set_pos(0, 0);
 
         let color = unsafe { GetPixel(hdc, x, y) };
@@ -89,7 +100,7 @@ fn main() {
             BORDER,
         );
 
-        ctx.draw_rectangle_outline(3, 3, COLOR_WIDTH + 2, COLOR_HEIGHT + 2, BORDER);
+        ctx.draw_rectangle_outline(3, 3, COLOR_WIDTH + 1, COLOR_HEIGHT + 1, BORDER);
         ctx.draw_rectangle(4, 4, COLOR_WIDTH, COLOR_HEIGHT, color);
 
         ctx.draw_text(

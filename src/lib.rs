@@ -349,23 +349,7 @@ impl Context {
         if self.area != area || self.display_scale != display_scale {
             //Resize the window to the correct scale.
             if self.display_scale != display_scale {
-                let a = self.window.client_area();
-
-                let (width, height) = if display_scale == 1.0 {
-                    //Restore the original scale
-                    (
-                        a.width() as f32 / self.display_scale,
-                        a.height() as f32 / self.display_scale,
-                    )
-                } else {
-                    (
-                        a.width() as f32 * display_scale,
-                        a.height() as f32 * display_scale,
-                    )
-                };
-
-                self.window
-                    .set_pos(a.left, a.top, width as i32, height as i32);
+                self.window.rescale_window();
             }
 
             self.buffer.clear();
@@ -617,8 +601,14 @@ impl Context {
         height: usize,
         color1: Color,
         color2: Color,
-    ) -> Result<(), String> {
-        // self.bounds_check(x, y, width, height)?;
+    ) {
+        let viewport_width = self.width();
+        let viewport_height = self.height();
+
+        let x = scale(x, self.display_scale);
+        let y = scale(y, self.display_scale);
+        let mut width = scale(width, self.display_scale);
+        let mut height = scale(height, self.display_scale);
 
         for i in y..y + height {
             let start = x + self.area.width as usize * i;
@@ -629,7 +619,6 @@ impl Context {
                 *px = color1.lerp(color2, t).as_u32();
             }
         }
-        Ok(())
     }
 
     //TODO: Allow for variable length outlines.
@@ -642,14 +631,15 @@ impl Context {
         height: usize,
         color: Color,
     ) {
-        // let x = scale(x, self.display_scale);
-        // let y = scale(y, self.display_scale);
-        // let mut width = scale(width, self.display_scale);
-        // let mut height = scale(height, self.display_scale);
-
-        let color = color.as_u32();
         let viewport_width = self.width();
         let viewport_height = self.height();
+
+        let x = scale(x, self.display_scale);
+        let y = scale(y, self.display_scale);
+        let mut width = scale(width, self.display_scale);
+        let mut height = scale(height, self.display_scale);
+
+        let color = color.as_u32();
 
         if x + width >= viewport_width {
             warn!(
