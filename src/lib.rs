@@ -338,21 +338,35 @@ impl Context {
             }
         }
 
-        //Resize the window if needed.
-        let mut area = Rect::from(self.window.client_area());
-
-        //Spamming this does not work.
         let display_scale = self.window.display_scale;
+        let mut area = Rect::from(self.window.client_area());
 
         //Scale the width and height.
         area.width = (area.width as f32 * display_scale) as usize;
         area.height = (area.height as f32 * display_scale) as usize;
 
+        //TODO: This logic should be moved into window.
         if self.area != area || self.display_scale != display_scale {
-            // println!("old: {:?} new: {:?}", self.area, area);
-            // println!("old: {} new: {}", self.display_scale, display_scale);
+            //Resize the window to the correct scale.
+            if self.display_scale != display_scale {
+                let a = self.window.client_area();
 
-            dbg!(area.width, area.height, display_scale);
+                let (width, height) = if display_scale == 1.0 {
+                    //Restore the original scale
+                    (
+                        a.width() as f32 / self.display_scale,
+                        a.height() as f32 / self.display_scale,
+                    )
+                } else {
+                    (
+                        a.width() as f32 * display_scale,
+                        a.height() as f32 * display_scale,
+                    )
+                };
+
+                self.window
+                    .set_pos(a.left, a.top, width as i32, height as i32);
+            }
 
             self.buffer.clear();
             self.buffer.resize(area.width * area.height, 0);
@@ -518,10 +532,10 @@ impl Context {
         let viewport_width = self.width();
         let viewport_height = self.height();
 
-        // let x = scale(x, self.display_scale);
-        // let y = scale(y, self.display_scale);
-        // let mut width = scale(width, self.display_scale);
-        // let mut height = scale(height, self.display_scale);
+        let x = scale(x, self.display_scale);
+        let y = scale(y, self.display_scale);
+        let mut width = scale(width, self.display_scale);
+        let mut height = scale(height, self.display_scale);
 
         //Malformed rectangle
         if x > viewport_width {
