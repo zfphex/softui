@@ -44,8 +44,6 @@ fn main() {
             _ => {}
         }
 
-        // dbg!(ctx.window.display_scale);
-
         //TODO: Check if this needs to be physical coordinates or not.
         let (x, y) = mouse_pos();
         let width = ctx.width();
@@ -68,20 +66,17 @@ fn main() {
             y + Y_OFFSET
         };
 
-        //This does not work with display scaling.
-        // unsafe {
-        //     SetWindowPos(
-        //         ctx.window.hwnd,
-        //         0,
-        //         mx,
-        //         my,
-        //         0,
-        //         0,
-        //         SWP_FRAMECHANGED | SWP_NOSIZE,
-        //     )
-        // };
-        
-        // ctx.window.set_pos(0, 0);
+        unsafe {
+            SetWindowPos(
+                ctx.window.hwnd,
+                0,
+                mx,
+                my,
+                0,
+                0,
+                SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
+            )
+        };
 
         let color = unsafe { GetPixel(hdc, x, y) };
         let r = (color >> 16 & 0xFF) as u8;

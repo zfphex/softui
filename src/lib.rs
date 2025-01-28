@@ -248,10 +248,6 @@ impl Context {
         match self.window.event() {
             Some(event) => {
                 match event {
-                    Event::Dpi(dpi) => {
-                        self.window.display_scale = dpi as f32 / window::DEFAULT_DPI;
-                        eprintln!("display scale: {}", self.window.display_scale);
-                    }
                     Event::MouseMoveInsideWindow(x, y) => {
                         if x < 0 || y < 0 {
                             todo!("Handle negative mouse co-ordinates with RECT instead of Rect");
@@ -348,9 +344,9 @@ impl Context {
         //TODO: This logic should be moved into window.
         if self.area != area || self.display_scale != display_scale {
             //Resize the window to the correct scale.
-            if self.display_scale != display_scale {
-                self.window.rescale_window();
-            }
+            // if self.display_scale != display_scale {
+            //     self.window.rescale_window();
+            // }
 
             self.buffer.clear();
             self.buffer.resize(area.width * area.height, 0);
