@@ -6,10 +6,11 @@ resolver = "2"
 
 [features]
 # default = ["image"]
-profile = ["mini/profile"]
-info = ["mini/info"]
-warn = ["mini/warn"]
-error = ["mini/error"]
+# TODO: How can I make this less braindead?
+profile = ["mini/profile", "window/profile"]
+info = ["mini/info", "window/info"]
+warn = ["mini/warn", "window/warn"]
+error = ["mini/error", "window/error"]
 svg = ["dep:resvg"]
 image = ["dep:zune-image"]
 dwrite = ["dep:dwrote"]
@@ -31,5 +32,4 @@ zune-image = { version = "0.4.15", optional = true, default-features = false, fe
     # "all"
 ] }
 # lay_out = { version = "0.1.0", path = "../lay_out" }
-
 # lay_out = { git = "https://github.com/zX3no/lay_out", version = "0.1.0" }
