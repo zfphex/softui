@@ -169,8 +169,8 @@ pub fn create_ctx_ex(
 
 //Used with display scaling. May not be pixel accurate at certain scale settings.
 #[inline]
-pub const fn scale(value: usize, scale: f32) -> usize {
-    (value as f32 * scale) as usize
+pub fn scale(value: usize, scale: f32) -> usize {
+    (value as f32 * scale).round() as usize
 }
 
 /// Holds the framebuffer and input state.
@@ -196,8 +196,6 @@ pub struct Context {
     pub middle_mouse: MouseState,
     pub mouse_4: MouseState,
     pub mouse_5: MouseState,
-    //We need to store the display scale so that we can check when it's changed.
-    pub display_scale: f32,
 }
 
 impl Context {
@@ -238,7 +236,6 @@ impl Context {
             middle_mouse: MouseState::new(),
             mouse_4: MouseState::new(),
             mouse_5: MouseState::new(),
-            display_scale,
         }
     }
 
@@ -311,8 +308,7 @@ impl Context {
                     if radius == 0 {
                         self.draw_rectangle(x, y, width, height, color);
                     } else {
-                        self.draw_rectangle_rounded(x, y, width, height, radius, color)
-                            .unwrap();
+                        self.draw_rectangle_rounded(x, y, width, height, color, radius);
                     }
                 }
                 Primative::RectangleOutline(color) => {
@@ -334,25 +330,13 @@ impl Context {
             }
         }
 
-        let display_scale = self.window.display_scale;
-        let mut area = Rect::from(self.window.client_area());
+        let area = Rect::from(self.window.client_area());
 
-        //Scale the width and height.
-        area.width = (area.width as f32 * display_scale) as usize;
-        area.height = (area.height as f32 * display_scale) as usize;
-
-        //TODO: This logic should be moved into window.
-        if self.area != area || self.display_scale != display_scale {
-            //Resize the window to the correct scale.
-            // if self.display_scale != display_scale {
-            //     self.window.rescale_window();
-            // }
-
+        //When the window area is changed update the bitmap aswell.
+        if self.area != area {
             self.buffer.clear();
             self.buffer.resize(area.width * area.height, 0);
             self.bitmap = BITMAPINFO::new(area.width as i32, area.height as i32);
-
-            self.display_scale = display_scale;
             self.area = area;
         }
 
@@ -512,10 +496,10 @@ impl Context {
         let viewport_width = self.width();
         let viewport_height = self.height();
 
-        let x = scale(x, self.display_scale);
-        let y = scale(y, self.display_scale);
-        let mut width = scale(width, self.display_scale);
-        let mut height = scale(height, self.display_scale);
+        let x = scale(x, self.window.display_scale);
+        let y = scale(y, self.window.display_scale);
+        let mut width = scale(width, self.window.display_scale);
+        let mut height = scale(height, self.window.display_scale);
 
         //Malformed rectangle
         if x > viewport_width {
@@ -601,10 +585,10 @@ impl Context {
         let viewport_width = self.width();
         let viewport_height = self.height();
 
-        let x = scale(x, self.display_scale);
-        let y = scale(y, self.display_scale);
-        let mut width = scale(width, self.display_scale);
-        let mut height = scale(height, self.display_scale);
+        let x = scale(x, self.window.display_scale);
+        let y = scale(y, self.window.display_scale);
+        let mut width = scale(width, self.window.display_scale);
+        let mut height = scale(height, self.window.display_scale);
 
         for i in y..y + height {
             let start = x + self.area.width as usize * i;
@@ -630,10 +614,10 @@ impl Context {
         let viewport_width = self.width();
         let viewport_height = self.height();
 
-        let x = scale(x, self.display_scale);
-        let y = scale(y, self.display_scale);
-        let mut width = scale(width, self.display_scale);
-        let mut height = scale(height, self.display_scale);
+        let x = scale(x, self.window.display_scale);
+        let y = scale(y, self.window.display_scale);
+        let mut width = scale(width, self.window.display_scale);
+        let mut height = scale(height, self.window.display_scale);
 
         let color = color.as_u32();
 
@@ -737,40 +721,43 @@ impl Context {
 
     //https://en.wikipedia.org/wiki/Superellipse
     //https://en.wikipedia.org/wiki/Squircle
-    #[must_use]
     pub fn draw_rectangle_rounded(
         &mut self,
         x: usize,
         y: usize,
         width: usize,
         height: usize,
-        radius: usize,
         color: Color,
-    ) -> Result<(), String> {
-        // self.bounds_check(x, y, width, height)?;
+        radius: usize,
+    ) {
+        let viewport_width = self.width();
+        let viewport_height = self.height();
 
-        if (2 * radius) > (width) {
-            return Err(format!(
-                "Radius {} is larger than the width {}.",
-                radius, width
-            ));
-        }
-
+        let x = scale(x, self.window.display_scale);
+        let y = scale(y, self.window.display_scale);
+        let mut width = scale(width, self.window.display_scale);
+        let mut height = scale(height, self.window.display_scale);
         let color = color.as_u32();
 
-        let canvas_width = self.area.width as usize;
+        if (2 * radius) > (width) {
+            panic!(
+                "Diameter {} is larger than the width {}.",
+                radius * 2,
+                width
+            );
+        }
 
         for i in y..y + height {
             let y = i - y;
             if y <= radius || y >= height - radius {
-                let pos = x + radius + canvas_width * i;
+                let pos = x + radius + viewport_width * i;
                 for px in &mut self.buffer[pos..pos + width - radius - radius] {
                     *px = color;
                 }
                 continue;
             }
 
-            let pos = x + canvas_width * i;
+            let pos = x + viewport_width * i;
             for px in &mut self.buffer[pos..pos + width] {
                 *px = color;
             }
@@ -797,8 +784,6 @@ impl Context {
         let (brx, bry) = ((x + width) - radius, (y + height) - radius);
         self.draw_arc(brx, bry, radius, color, Quadrant::BottomRight);
         // self.draw_circle(brx, bly, radius, color);
-
-        Ok(())
     }
 
     //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
@@ -817,6 +802,14 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
+        let viewport_width = self.width();
+        let viewport_height = self.height();
+
+        let x = scale(x, self.window.display_scale);
+        let y = scale(y, self.window.display_scale);
+        let font_size = scale(font_size, self.window.display_scale);
+        let line_height = scale(line_height, self.window.display_scale);
+
         assert!(font_size > 0);
         let mut area = Rect::new(x, y, 0, 0);
         let mut y: usize = area.y.try_into().unwrap();

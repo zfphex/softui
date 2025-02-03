@@ -11,11 +11,25 @@ use softui::*;
 
 const BORDER: Color = rgb(89, 87, 91);
 const BACKGROUND: Color = rgb(32, 32, 32);
-const VWIDTH: usize = 109;
-const VHEIGHT: usize = 40;
+
+const PICKER_WIDTH: usize = 107;
+const PICKER_HEIGHT: usize = 40;
+
+const PICKER_WIDTH_125: usize = 134;
+const PICKER_HEIGHT_125: usize = 50;
+
+const PICKER_WIDTH_150: usize = 161;
+const PICKER_HEIGHT_150: usize = 60;
+
+//Could also be 185, it's hard to tell with the anti-aliasing.
+//107 * 1.75 = 187.25, so not sure.
+const PICKER_WIDTH_175: usize = 184;
+const PICKER_HEIGHT_175: usize = 70;
 
 const COLOR_WIDTH: usize = 34;
 const COLOR_HEIGHT: usize = 32;
+const COLOR_X: usize = 3;
+const COLOR_Y: usize = 3;
 
 const Y_OFFSET: i32 = 11;
 const X_OFFSET: i32 = 3;
@@ -34,7 +48,7 @@ const LEVEL_3_ZOOM: usize = 200; //200x200 square
 
 fn main() {
     let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST);
-    let ctx = create_ctx_ex("Color Picker", VWIDTH, VHEIGHT, style);
+    let ctx = create_ctx_ex("Color Picker", PICKER_WIDTH, PICKER_HEIGHT, style);
     //This should never fail.
     let hdc = unsafe { GetDC(0) };
 
@@ -87,11 +101,13 @@ fn main() {
 
         ctx.fill(BACKGROUND);
 
+        //Cannot use the window width here because that is already scaled...
+        //Not sure what to do about that???
         ctx.draw_rectangle_outline(
             0,
             0,
-            width.saturating_sub(1),
-            height.saturating_sub(1),
+            PICKER_WIDTH.saturating_sub(2),
+            PICKER_HEIGHT.saturating_sub(2),
             BORDER,
         );
 
@@ -107,10 +123,6 @@ fn main() {
             0,
             Color::WHITE,
         );
-
-        //TODO: Just crashes?
-        // ctx.draw_rectangle_rounded(0, 0, width - 5, height - 5, 0, )
-        //     .unwrap();
 
         ctx.draw_frame();
     }
