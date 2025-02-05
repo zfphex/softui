@@ -117,9 +117,9 @@ fn main() {
         ctx.draw_text(
             &color.to_string(),
             default_font().unwrap(),
-            16,
             46,
             10,
+            16,
             0,
             Color::WHITE,
         );

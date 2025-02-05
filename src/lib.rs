@@ -712,9 +712,9 @@ impl Context {
         &mut self,
         text: &str,
         font: &fontdue::Font,
-        font_size: usize,
         x: usize,
         y: usize,
+        font_size: usize,
         //Zero is fine
         line_height: usize,
         color: Color,
@@ -852,9 +852,9 @@ impl Context {
         &mut self,
         text: &str,
         dwrite: &DWrite,
-        font_size: usize,
         x: usize,
         y: usize,
+        font_size: usize,
         //Zero is fine
         line_height: usize,
         color: Color,
@@ -1084,6 +1084,11 @@ mod tests {
         //Circle
         {
             ctx.draw_arc(700, 300, 800, Color::RED, Quadrant::BottomRight);
+        }
+
+        //Text
+        {
+            ctx.draw_text("hi", default_font().unwrap(), 0, 0, 1000, 0, Color::WHITE);
         }
 
         ctx.draw_frame();

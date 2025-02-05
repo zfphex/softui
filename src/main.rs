@@ -32,18 +32,18 @@ fn main() {
         ctx.draw_text_subpixel(
             "This is some text....",
             &dwrite,
-            10,
             0,
             36 * 3,
+            10,
             0,
             Color::WHITE,
         );
         ctx.draw_text(
             "This is some text...",
             &default_font().unwrap(),
-            10,
             0,
             36 * 3 + 10,
+            10,
             0,
             Color::BLACK,
         );
