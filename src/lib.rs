@@ -1,7 +1,7 @@
 #![allow(unused, static_mut_refs)]
 #![feature(associated_type_defaults)]
 use core::ffi::c_void;
-use mini::{info, profile, warn};
+use mini::{error, info, profile, warn};
 use std::{borrow::Cow, pin::Pin};
 
 //Re-export the window functions.
@@ -239,6 +239,27 @@ impl Context {
         }
     }
 
+    #[inline]
+    ///Clamp the values to allow the user to use `ctx.width()` instead of `ctx.width() - 1`.
+    ///Scale the values to work with different display scaling.
+    pub fn scale(
+        &self,
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+    ) -> (usize, usize, usize, usize) {
+        let vw = self.width();
+        let vh = self.height();
+        let display_scale = self.window.display_scale;
+        (
+            scale(x, display_scale),
+            scale(y, display_scale),
+            scale(width, display_scale),
+            scale(height, display_scale),
+        )
+    }
+
     //TODO: Cleanup and remove.
     pub fn event(&mut self) -> Option<Event> {
         profile!();
@@ -378,113 +399,20 @@ impl Context {
         self.buffer.fill(color.as_u32());
     }
 
-    ///Note color order is BGR_. The last byte is reserved.
-    pub fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
-        self.buffer[y * self.area.width as usize + x] = color;
+    #[inline]
+    #[track_caller]
+    pub fn draw_pixel(&mut self, x: usize, y: usize, color: Color) {
+        self.buffer[y * self.area.width as usize + x] = color.as_u32();
     }
 
-    //TODO: https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
-    //https://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
-    //Is it worth having a 2D projection matrix to convert top left orgin
-    //into a center origin cartesian plane
-    //FIXME: Disallow negative numbers, this can crash easily.
-    pub unsafe fn draw_circle_outline(&mut self, x: i32, y: i32, r: usize, color: Color) {
-        //Bresenham algorithm
-        let mut x1: i32 = -(r as i32);
-        let mut y1: i32 = 0;
-        let mut err: i32 = 2 - 2 * (r as i32);
-
-        loop {
-            self.draw_pixel((x - x1) as usize, (y + y1) as usize, color.as_u32());
-            self.draw_pixel((x - y1) as usize, (y - x1) as usize, color.as_u32());
-            self.draw_pixel((x + x1) as usize, (y - y1) as usize, color.as_u32());
-            self.draw_pixel((x + y1) as usize, (y + x1) as usize, color.as_u32());
-            let r = err;
-            if r > x1 {
-                x1 += 1;
-                err += x1 * 2 + 1;
-            }
-            if r <= y1 {
-                y1 += 1;
-                err += y1 * 2 + 1;
-            }
-            if x1 >= 0 {
-                break;
-            }
+    #[inline]
+    pub fn try_draw_pixel(&mut self, x: usize, y: usize, color: Color) {
+        if let Some(px) = self.buffer.get_mut(y * self.area.width as usize + x) {
+            *px = color.as_u32();
         }
     }
 
-    pub fn draw_arc(
-        &mut self,
-        cx: usize,
-        cy: usize,
-        radius: usize,
-        color: u32,
-        quadrant: Quadrant,
-    ) {
-        let (x1, y1, x2, y2) = match quadrant {
-            Quadrant::TopLeft => (cx - radius, cy - radius, cx, cy),
-            Quadrant::TopRight => (cx, cy - radius, cx + radius, cy),
-            Quadrant::BottomLeft => (cx - radius, cy, cx, cy + radius),
-            Quadrant::BottomRight => (cx, cy, cx + radius, cy + radius),
-        };
-
-        for y in y1..=y2 {
-            for x in x1..=x2 {
-                let dist_x = x as f32 - cx as f32 + 0.5;
-                let dist_y = y as f32 - cy as f32 + 0.5;
-                let distance = (dist_x * dist_x + dist_y * dist_y).sqrt();
-                if distance <= radius as f32 {
-                    self.draw_pixel(x, y, color);
-                }
-            }
-        }
-    }
-
-    pub fn draw_circle(&mut self, cx: usize, cy: usize, radius: usize, color: Color) {
-        let (x1, y1) = (cx - radius, cy - radius);
-        let (x2, y2) = (cx + radius, cy + radius);
-
-        for y in y1..y2 {
-            for x in x1..x2 {
-                let dist_x = x as f32 - cx as f32 + 0.5;
-                let dist_y = y as f32 - cy as f32 + 0.5;
-                let distance = (dist_x * dist_x + dist_y * dist_y).sqrt();
-                if distance <= radius as f32 {
-                    self.draw_pixel(x, y, color.as_u32());
-                }
-            }
-        }
-    }
-
-    //https://github.com/ssloy/tinyrenderer/wiki/Lesson-1:-Bresenham%E2%80%99s-Line-Drawing-Algorithm
-    //TODO: Only works when the slope is >= 0 & <=1
-    pub fn draw_line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, color: Color) {
-        let mut error = 0.0;
-        let dx = x1 as f32 - x0 as f32;
-        let dy = y1 as f32 - y0 as f32;
-        let m = dy / dx;
-
-        let mut x = x0;
-        let mut y = y0;
-
-        while x < x1 {
-            self.draw_pixel(x, y, color.as_u32());
-            x += 1;
-            error += m;
-            if error > 0.5 {
-                y += 1;
-                error -= 1.0;
-            }
-        }
-    }
-
-    //I think the way things are drawn should be changed.
-    //This is not thread safe which is cringe.
-    //We could use a lock free queue and have something equivalent to draw calls.
-    //We mearly append what we want and then it's drawn later on.
-    //Doesn't that mean renderer would be on a seperate thread?
-
+    ///If the user draws an invalid rectangle outside the bounds it will be clipped without error.
     pub fn draw_rectangle(
         &mut self,
         x: usize,
@@ -495,52 +423,21 @@ impl Context {
     ) {
         let viewport_width = self.width();
         let viewport_height = self.height();
+        let (x, y, mut width, mut height) = self.scale(x, y, width, height);
 
-        let x = scale(x, self.window.display_scale);
-        let y = scale(y, self.window.display_scale);
-        let mut width = scale(width, self.window.display_scale);
-        let mut height = scale(height, self.window.display_scale);
-
-        //Malformed rectangle
-        if x > viewport_width {
-            warn!(
-                "Malformed rectangle has x: {} but viewport width is {}.",
-                x, viewport_width
-            );
+        //The rectangle is malformed and out of bounds.
+        //TODO: I was warning the user before but it spammed the log which was unpleasent.
+        if x > viewport_width || y > viewport_height {
             return;
         }
 
-        if y > viewport_height {
-            warn!(
-                "Malformed rectangle has y: {} but viewport height is {}.",
-                y, viewport_height
-            );
-            return;
-        }
-
-        //Safety: do not allow rectangles to be larger than the viewport
+        //Do not allow rectangles to be larger than the viewport
         //the user should not crash for this.
         if x + width > viewport_width {
-            info!(
-                "Clipping rectangle x: {}, width: {} because x + width = {} > viewport width: {}",
-                x,
-                width,
-                x + width,
-                viewport_width
-            );
-
             width = viewport_width.saturating_sub(x);
         }
 
         if y + height > viewport_height {
-            info!(
-                "Clipping rectangle y: {}, height: {} because y + height = {} > viewport height: {}",
-                y,
-                height,
-                y + height,
-                viewport_height
-            );
-
             height = viewport_height.saturating_sub(y);
         }
 
@@ -550,59 +447,8 @@ impl Context {
         }
     }
 
-    //An alternative way of rendering.
-    //I don't think it's much faster.
-    //Can't really optimise something this simple.
-    // pub fn draw_rectangle_2(
-    //     &mut self,
-    //     x: usize,
-    //     y: usize,
-    //     width: usize,
-    //     height: usize,
-    //     color: u32,
-    // ) -> Result<(), String> {
-    //     #[cfg(debug_assertions)]
-    //     self.bounds_check(x, y, width, height)?;
-
-    //     let mut i = x + (y * self.area.width as usize);
-    //     for _ in 0..height {
-    //         unsafe { self.buffer.get_unchecked_mut(i..i + width).fill(color) };
-    //         i += self.area.width as usize;
-    //     }
-
-    //     Ok(())
-    // }
-
-    pub fn draw_linear_gradient(
-        &mut self,
-        x: usize,
-        y: usize,
-        width: usize,
-        height: usize,
-        color1: Color,
-        color2: Color,
-    ) {
-        let viewport_width = self.width();
-        let viewport_height = self.height();
-
-        let x = scale(x, self.window.display_scale);
-        let y = scale(y, self.window.display_scale);
-        let mut width = scale(width, self.window.display_scale);
-        let mut height = scale(height, self.window.display_scale);
-
-        for i in y..y + height {
-            let start = x + self.area.width as usize * i;
-            let end = start + width;
-
-            for (x, px) in self.buffer[start..end].iter_mut().enumerate() {
-                let t = (x as f32) / (end as f32 - start as f32);
-                *px = color1.lerp(color2, t).as_u32();
-            }
-        }
-    }
-
-    //TODO: Allow for variable length outlines.
-    //TODO: This does not bounds check correctly, see WindowStyle::DEFAULT in the color picker example.
+    /// Draw a rectangle with a single pixel outline.
+    /// TODO: Allow for variable length outlines.
     pub fn draw_rectangle_outline(
         &mut self,
         x: usize,
@@ -613,110 +459,34 @@ impl Context {
     ) {
         let viewport_width = self.width();
         let viewport_height = self.height();
-
-        let x = scale(x, self.window.display_scale);
-        let y = scale(y, self.window.display_scale);
-        let mut width = scale(width, self.window.display_scale);
-        let mut height = scale(height, self.window.display_scale);
-
+        let (x, y, mut width, mut height) = self.scale(x, y, width, height);
         let color = color.as_u32();
 
-        if x + width >= viewport_width {
-            warn!(
-                "Clipping rectangle outline x: {}, width: {} because x + width = {} >= viewport width: {}",
-                x,
-                width,
-                x + width,
-                viewport_width
-            );
-            return;
-        }
-
-        if y + height >= viewport_height {
-            warn!(
-                "Clipping rectangle outline y: {}, height: {} because y + height = {} >= viewport height: {}",
-                y,
-                height,
-                y + height,
-                viewport_height
-            );
-            return;
-        }
-
-        // if self.is_invalid_bounds(x, y, width, height) {
-        //     return;
-        // };
-
         //Draw the first line
-        let pos = x + self.area.width as usize * y;
-        self.buffer[pos..=pos + width].fill(color);
+        let pos = x + viewport_width * y;
+        if let Some(buffer) = self.buffer.get_mut(pos..=pos + width) {
+            buffer.fill(color);
+        }
 
         //Draw the middle pixels
         //Skip the first line.
         for i in (y + 1)..(y + height) {
-            let left = x + self.area.width as usize * i;
-            self.buffer[left] = color;
+            let left = x + viewport_width * i;
+            if let Some(buffer) = self.buffer.get_mut(left) {
+                *buffer = color;
+            }
 
-            let right = x + width + self.area.width as usize * i;
-            self.buffer[right] = color;
+            let right = x + width + viewport_width * i;
+            if let Some(buffer) = self.buffer.get_mut(right) {
+                *buffer = color;
+            }
         }
 
         //Draw the last line
-        let pos = x + self.area.width as usize * (y + height);
-        self.buffer[pos..=pos + width].fill(color);
-    }
-
-    #[inline]
-    fn is_invalid_bounds(&self, x: usize, y: usize, width: usize, height: usize) -> bool {
-        #[cfg(debug_assertions)]
-        {
-            let viewport_width = self.width();
-            let viewport_height = self.height();
-            //Malformed rectangle
-            if x > viewport_width {
-                warn!(
-                    "Malformed rectangle has x: {} but viewport width is {}.",
-                    x, viewport_width
-                );
-                return true;
-            }
-
-            if y > viewport_height {
-                warn!(
-                    "Malformed rectangle has y: {} but viewport height is {}.",
-                    y, viewport_height
-                );
-                return true;
-            }
-
-            //Safety: do not allow rectangles to be larger than the viewport
-            //the user should not crash for this.
-            // if x + width > viewport_width {
-            //     info!(
-            //         "Clipping rectangle x: {}, width: {} because x + width = {} > viewport width: {}",
-            //         x,
-            //         width,
-            //         x + width,
-            //         viewport_width
-            //     );
-
-            //     width = viewport_width.saturating_sub(x);
-            // }
-
-            // if y + height > viewport_height {
-            //     info!(
-            //         "Clipping rectangle y: {}, height: {} because y + height = {} > viewport height: {}",
-            //         y,
-            //         height,
-            //         y + height,
-            //         viewport_height
-            //     );
-
-            //     height = viewport_height.saturating_sub(y);
-            // }
+        let pos = x + viewport_width * (y + height);
+        if let Some(buffer) = self.buffer.get_mut(pos..=pos + width) {
+            buffer.fill(color);
         }
-
-        false
     }
 
     //https://en.wikipedia.org/wiki/Superellipse
@@ -732,12 +502,7 @@ impl Context {
     ) {
         let viewport_width = self.width();
         let viewport_height = self.height();
-
-        let x = scale(x, self.window.display_scale);
-        let y = scale(y, self.window.display_scale);
-        let mut width = scale(width, self.window.display_scale);
-        let mut height = scale(height, self.window.display_scale);
-        let color = color.as_u32();
+        let (x, y, mut width, mut height) = self.scale(x, y, width, height);
 
         if (2 * radius) > (width) {
             panic!(
@@ -752,14 +517,14 @@ impl Context {
             if y <= radius || y >= height - radius {
                 let pos = x + radius + viewport_width * i;
                 for px in &mut self.buffer[pos..pos + width - radius - radius] {
-                    *px = color;
+                    *px = color.as_u32();
                 }
                 continue;
             }
 
             let pos = x + viewport_width * i;
             for px in &mut self.buffer[pos..pos + width] {
-                *px = color;
+                *px = color.as_u32();
             }
         }
 
@@ -784,6 +549,158 @@ impl Context {
         let (brx, bry) = ((x + width) - radius, (y + height) - radius);
         self.draw_arc(brx, bry, radius, color, Quadrant::BottomRight);
         // self.draw_circle(brx, bly, radius, color);
+    }
+
+    pub fn draw_linear_gradient(
+        &mut self,
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+        color1: Color,
+        color2: Color,
+    ) {
+        let viewport_width = self.width();
+        let viewport_height = self.height();
+        let (x, y, mut width, mut height) = self.scale(x, y, width, height);
+
+        if x > viewport_width || y > viewport_height {
+            return;
+        }
+
+        if x + width > viewport_width {
+            width = viewport_width.saturating_sub(x);
+        }
+
+        if y + height > viewport_height {
+            height = viewport_height.saturating_sub(y);
+        }
+
+        for i in y..y + height {
+            let start = x + self.area.width as usize * i;
+            let end = start + width;
+
+            for (x, px) in self.buffer[start..end].iter_mut().enumerate() {
+                let t = (x as f32) / (end as f32 - start as f32);
+                *px = color1.lerp(color2, t).as_u32();
+            }
+        }
+    }
+
+    //This could be smarter by checking what radius is visable and clipping to only render the visable part.
+    //This is not aliased and looks like shit so probably not worth it.
+    pub fn draw_circle(&mut self, cx: usize, cy: usize, radius: usize, color: Color) {
+        let (x1, y1) = (cx - radius, cy - radius);
+        let (x2, y2) = (cx + radius, cy + radius);
+
+        for y in y1..y2 {
+            for x in x1..x2 {
+                let dist_x = x as f32 - cx as f32 + 0.5;
+                let dist_y = y as f32 - cy as f32 + 0.5;
+                let distance = (dist_x * dist_x + dist_y * dist_y).sqrt();
+                if distance <= radius as f32 {
+                    self.try_draw_pixel(x, y, color);
+                }
+            }
+        }
+    }
+
+    //TODO: https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
+    //https://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
+    //Is it worth having a 2D projection matrix to convert top left orgin
+    //into a center origin cartesian plane
+    pub fn draw_circle_outline(&mut self, x: usize, y: usize, mut radius: usize, color: Color) {
+        if radius > x || radius > y {
+            radius = x.min(y);
+        }
+
+        let x = x as i32;
+        let y = y as i32;
+
+        //Bresenham algorithm
+        let mut x1: i32 = -(radius as i32);
+        let mut y1: i32 = 0;
+        let mut err: i32 = 2 - 2 * (radius as i32);
+
+        loop {
+            self.try_draw_pixel((x - x1) as usize, (y + y1) as usize, color);
+            self.try_draw_pixel((x - y1) as usize, (y - x1) as usize, color);
+            self.try_draw_pixel((x + x1) as usize, (y - y1) as usize, color);
+            self.try_draw_pixel((x + y1) as usize, (y + x1) as usize, color);
+            let r = err;
+            if r > x1 {
+                x1 += 1;
+                err += x1 * 2 + 1;
+            }
+            if r <= y1 {
+                y1 += 1;
+                err += y1 * 2 + 1;
+            }
+            if x1 >= 0 {
+                break;
+            }
+        }
+    }
+
+    ///Radius must *not* be larger than `cx` or `cy`.
+    pub fn draw_arc(
+        &mut self,
+        cx: usize,
+        cy: usize,
+        mut radius: usize,
+        color: Color,
+        quadrant: Quadrant,
+    ) {
+        //Can't see it, don't draw it.
+        if cx > self.area.width || cy > self.area.height {
+            return;
+        }
+
+        if radius > cx || radius > cy {
+            //Use the largest radius possible.
+            //In this case the smallest of cx and cy is the largest.
+            radius = cx.min(cy);
+        }
+
+        let (x1, y1, x2, y2) = match quadrant {
+            Quadrant::TopLeft => (cx - radius, cy - radius, cx, cy),
+            Quadrant::TopRight => (cx, cy - radius, cx + radius, cy),
+            Quadrant::BottomLeft => (cx - radius, cy, cx, cy + radius),
+            Quadrant::BottomRight => (cx, cy, cx + radius, cy + radius),
+        };
+
+        for y in y1..=y2 {
+            for x in x1..=x2 {
+                let dist_x = x as f32 - cx as f32 + 0.5;
+                let dist_y = y as f32 - cy as f32 + 0.5;
+                let distance = (dist_x * dist_x + dist_y * dist_y).sqrt();
+                if distance <= radius as f32 {
+                    self.try_draw_pixel(x, y, color);
+                }
+            }
+        }
+    }
+
+    //https://github.com/ssloy/tinyrenderer/wiki/Lesson-1:-Bresenham%E2%80%99s-Line-Drawing-Algorithm
+    //TODO: Only works when the slope is >= 0 & <=1
+    pub fn draw_line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, color: Color) {
+        let mut error = 0.0;
+        let dx = x1 as f32 - x0 as f32;
+        let dy = y1 as f32 - y0 as f32;
+        let m = dy / dx;
+
+        let mut x = x0;
+        let mut y = y0;
+
+        while x < x1 {
+            self.try_draw_pixel(x, y, color);
+            x += 1;
+            error += m;
+            if error > 0.5 {
+                y += 1;
+                error -= 1.0;
+            }
+        }
     }
 
     //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
@@ -874,7 +791,12 @@ impl Context {
                         let r = blend(r, alpha, bg.r(), 255 - alpha);
                         let g = blend(g, alpha, bg.g(), 255 - alpha);
                         let b = blend(b, alpha, bg.b(), 255 - alpha);
-                        self.buffer[i] = rgb(r, g, b).as_u32();
+
+                        if let Some(px) = self.buffer.get_mut(i) {
+                            *px = rgb(r, g, b).as_u32();
+                        }
+
+                        // self.buffer[i] = rgb(r, g, b).as_u32();
                     }
                 }
 
@@ -907,12 +829,22 @@ impl Context {
 
     #[inline(always)]
     pub fn width(&self) -> usize {
-        self.area.width as usize
+        self.area.width
     }
 
     #[inline(always)]
     pub fn height(&self) -> usize {
-        self.area.height as usize
+        self.area.height
+    }
+
+    #[inline(always)]
+    pub fn w(&self) -> usize {
+        self.area.width.saturating_sub(1)
+    }
+
+    #[inline(always)]
+    pub fn h(&self) -> usize {
+        self.area.height.saturating_sub(1)
     }
 
     #[cfg(feature = "dwrite")]
@@ -988,7 +920,11 @@ impl Context {
                         let c = rgb(255 - texture[j], 255 - texture[j + 1], 255 - texture[j + 2])
                             .as_u32();
 
-                        self.buffer[i] = c;
+                        if let Some(px) = self.buffer.get_mut(i) {
+                            *px = c;
+                        }
+
+                        // self.buffer[i] = c;
                         // self.buffer[i] = rgb(r, g, b);
                     }
                 }
@@ -1102,5 +1038,54 @@ impl Context {
                 continue;
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    #[test]
+    fn rectangle() {
+        let ctx = create_ctx("Softui", 800, 600);
+
+        ctx.fill(Color::BLACK);
+
+        //Rectangle
+        {
+            //The x position is out of bounds
+            ctx.draw_rectangle(ctx.width() + 100, 0, 100, 100, Color::RED);
+
+            //The y position is out of bounds
+            ctx.draw_rectangle(0, ctx.height() + 100, 100, 100, Color::RED);
+
+            //The width is larger than the viewport
+            ctx.draw_rectangle(0, 0, ctx.width() + 100, 100, Color::RED);
+
+            //The height is larger than the viewport
+            ctx.draw_rectangle(0, 0, 100, ctx.height() + 100, Color::RED);
+        }
+
+        //Rectangle Outlines
+        {
+            //The x position is out of bounds
+            ctx.draw_rectangle_outline(ctx.width() + 100, 0, 100, 100, Color::RED);
+
+            //The y position is out of bounds
+            ctx.draw_rectangle_outline(0, ctx.height() + 100, 100, 100, Color::RED);
+
+            //The width is larger than the viewport
+            ctx.draw_rectangle_outline(0, 0, ctx.width() + 100, 100, Color::RED);
+
+            //The height is larger than the viewport
+            ctx.draw_rectangle_outline(0, 0, 100, ctx.height() + 100, Color::RED);
+        }
+
+        //Circle
+        {
+            ctx.draw_arc(700, 300, 800, Color::RED, Quadrant::BottomRight);
+        }
+
+        ctx.draw_frame();
     }
 }

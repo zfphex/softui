@@ -7,6 +7,7 @@ pub const fn rgb(r: u8, g: u8, b: u8) -> Color {
     Color::new(r, g, b)
 }
 
+//TODO: Is this RGB or BGR I forget?
 #[repr(transparent)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Color(pub u32);
@@ -67,6 +68,12 @@ impl Color {
     //Takes in a hex color.
     pub const fn from(color: u32) -> Self {
         Self(color)
+    }
+}
+
+impl From<u32> for Color {
+    fn from(val: u32) -> Self {
+        Color(val)
     }
 }
 

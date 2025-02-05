@@ -96,7 +96,7 @@ fn main() {
         let r = (color >> 16 & 0xFF) as u8;
         let g = (color >> 8 & 0xFF) as u8;
         let b = (color & 0xFF) as u8;
-        // WHY IS THIS BACKWARDS?????????
+        //Convert from BGR to RGB.
         let color = Color::new(b, g, r);
 
         ctx.fill(BACKGROUND);
