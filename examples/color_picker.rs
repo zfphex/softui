@@ -64,10 +64,12 @@ const LEVEL_3_ZOOM: usize = 200; //200x200 square
 //https://github.com/microsoft/PowerToys/blob/5008d77105fc807f0530b3beadb98a941c91c8a0/src/modules/colorPicker/ColorPickerUI/Views/MainView.xaml
 
 fn main() {
-    let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST);
+    let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
     let ctx = create_ctx_ex("Color Picker", WIDTH + 1, HEIGHT + 1, style);
     //This should never fail.
     let hdc = unsafe { GetDC(0) };
+
+    let mut last_printed = 0;
 
     loop {
         match ctx.event() {
@@ -115,6 +117,12 @@ fn main() {
         let b = (color & 0xFF) as u8;
         //Convert from BGR to RGB.
         let color = Color::new(b, g, r);
+
+        //Copy the selected color to the clipboard.
+        if is_down(VK_LBUTTON) && last_printed != color.as_u32() {
+            last_printed = color.as_u32();
+            set_clipboard(&color.to_string());
+        }
 
         // Skip the extra work.
         // ctx.fill(BACKGROUND);

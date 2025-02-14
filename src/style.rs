@@ -71,18 +71,24 @@ impl Color {
     }
 }
 
+impl std::fmt::Display for Color {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:0>6x}", self.0)
+    }
+}
+
 impl From<u32> for Color {
     fn from(val: u32) -> Self {
         Color(val)
     }
 }
 
-impl ToString for Color {
-    #[inline]
-    fn to_string(&self) -> String {
-        format!("{:0>6x}", self.as_u32())
-    }
-}
+// impl ToString for Color {
+//     #[inline]
+//     fn to_string(&self) -> String {
+//         format!("{:0>6x}", self.0)
+//     }
+// }
 
 #[inline]
 ///Blend the background and the text color.
