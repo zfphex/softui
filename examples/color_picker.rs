@@ -127,7 +127,7 @@ fn main() {
         //Copy the selected color to the clipboard.
         if is_down(VK_LBUTTON) && last_printed != color.as_u32() {
             last_printed = color.as_u32();
-            set_clipboard(&color.to_string());
+            copy_to_clipboard(&color.to_string());
         }
 
         // Skip the extra work.
