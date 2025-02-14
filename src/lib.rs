@@ -11,12 +11,14 @@ pub mod atomic_float;
 pub mod input;
 pub mod layout;
 pub mod macros;
+pub mod scaling;
 pub mod style;
 pub mod widgets;
 
 pub use input::*;
 pub use layout::*;
 pub use macros::*;
+pub use scaling::*;
 pub use style::*;
 pub use widgets::*;
 pub use MouseButton::*;
@@ -167,12 +169,6 @@ pub fn create_ctx_ex(
     }
 }
 
-//Used with display scaling. May not be pixel accurate at certain scale settings.
-#[inline]
-pub fn scale(value: usize, scale: f32) -> usize {
-    (value as f32 * scale).round() as usize
-}
-
 /// Holds the framebuffer and input state.
 /// Also handles rendering.
 #[derive(Debug)]
@@ -240,24 +236,13 @@ impl Context {
     }
 
     #[inline]
-    ///Clamp the values to allow the user to use `ctx.width()` instead of `ctx.width() - 1`.
-    ///Scale the values to work with different display scaling.
-    pub fn scale(
-        &self,
-        x: usize,
-        y: usize,
-        width: usize,
-        height: usize,
-    ) -> (usize, usize, usize, usize) {
-        let vw = self.width();
-        let vh = self.height();
-        let display_scale = self.window.display_scale;
-        (
-            scale(x, display_scale),
-            scale(y, display_scale),
-            scale(width, display_scale),
-            scale(height, display_scale),
-        )
+    pub const fn width(&self) -> ScaledUnit {
+        ScaledUnit::ViewportWidth(0)
+    }
+
+    #[inline]
+    pub const fn height(&self) -> ScaledUnit {
+        ScaledUnit::ViewportHeight(0)
     }
 
     //TODO: Cleanup and remove.
@@ -327,7 +312,8 @@ impl Context {
                 // }
                 Primative::Ellipse(radius, color) => {
                     if radius == 0 {
-                        self.draw_rectangle(x, y, width, height, color);
+                        todo!();
+                        // self.draw_rectangle(x, y, width, height, color);
                     } else {
                         self.draw_rectangle_rounded(x, y, width, height, color, radius);
                     }
@@ -360,6 +346,58 @@ impl Context {
             self.bitmap = BITMAPINFO::new(area.width as i32, area.height as i32);
             self.area = area;
         }
+
+        //TODO: Transparency
+        //https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-alphablend
+        //https://learn.microsoft.com/en-au/windows/win32/api/wingdi/nf-wingdi-transparentblt
+        // unsafe {
+        //     let hdc_dest = self.dc.unwrap();
+        //     let hdc_src = CreateCompatibleDC(hdc_dest);
+        //     let src_width = self.area.width as i32;
+        //     let src_height = self.area.height as i32;
+        //     let mut bits = core::ptr::null_mut();
+
+        //     let hbitmap = CreateDIBSection(
+        //         hdc_src,
+        //         &self.bitmap,
+        //         DIB_RGB_COLORS,
+        //         &mut bits,
+        //         core::ptr::null_mut(),
+        //         0,
+        //     );
+
+        //     if hbitmap.is_null() {
+        //         panic!();
+        //         // DeleteDC(hdc_src);
+        //         // return;
+        //     }
+
+        //     let buf = vec![0x967ac0u32; (src_width * src_height) as usize];
+
+        //     core::ptr::copy_nonoverlapping(
+        //         buf.as_ptr() as *const u8,
+        //         // self.buffer.as_ptr() as *const u8,
+        //         bits as *mut u8,
+        //         (src_width * src_height * 4) as usize,
+        //     );
+
+        //     SelectObject(hdc_src, hbitmap);
+
+        //     let blend = BLENDFUNCTION {
+        //         BlendOp: AC_SRC_OVER,
+        //         BlendFlags: 0,
+        //         SourceConstantAlpha: 255,
+        //         AlphaFormat: AC_SRC_ALPHA,
+        //     };
+
+        //     AlphaBlend(
+        //         hdc_dest, 0, 0, src_width, src_height, hdc_src, 0, 0, src_width, src_height, blend,
+        //     );
+
+        //     // Clean up
+        //     // DeleteObject(hbitmap);
+        //     // DeleteDC(hdc_src);
+        // }
 
         unsafe {
             StretchDIBits(
@@ -412,6 +450,55 @@ impl Context {
         }
     }
 
+    pub fn draw_rectangle_scaled<X, Y, WIDTH, HEIGHT>(
+        &mut self,
+        x: X,
+        y: Y,
+        width: WIDTH,
+        height: HEIGHT,
+        color: Color,
+        border: usize,
+        border_color: Color,
+        radius: usize,
+    ) where
+        X: Into<GenericUnit>,
+        Y: Into<GenericUnit>,
+        WIDTH: Into<GenericUnit> + Copy,
+        HEIGHT: Into<GenericUnit>,
+    {
+        let viewport_width = self.area.width;
+        let viewport_height = self.area.height;
+        let scale = self.window.display_scale;
+
+        let x = scale_temp(x.into(), self.area, scale);
+        let y = scale_temp(y.into(), self.area, scale);
+        let width = scale_temp(width.into(), self.area, scale);
+        let height = scale_temp(height.into(), self.area, scale);
+
+        //Draw the rectangle border.
+        if border != 0 {
+            if radius != 0 {
+                todo!("Currently no rounded rectangle outline or draw arc outline")
+            } else {
+                self.draw_rectangle_outline(x, y, width, height, border_color);
+            }
+        }
+
+        //Calculate inner rectangle bounds.
+        let (x, y, mut width, mut height) = (
+            x + border,
+            x + border,
+            width.saturating_sub(border),
+            height.saturating_sub(border),
+        );
+
+        if radius != 0 {
+            self.draw_rectangle_rounded(x, y, width, height, color, radius);
+        } else {
+            self.draw_rectangle(x, y, width, height, color);
+        }
+    }
+
     ///If the user draws an invalid rectangle outside the bounds it will be clipped without error.
     pub fn draw_rectangle(
         &mut self,
@@ -421,9 +508,8 @@ impl Context {
         mut height: usize,
         color: Color,
     ) {
-        let viewport_width = self.width();
-        let viewport_height = self.height();
-        let (x, y, mut width, mut height) = self.scale(x, y, width, height);
+        let viewport_width = self.area.width;
+        let viewport_height = self.area.height;
 
         //The rectangle is malformed and out of bounds.
         //TODO: I was warning the user before but it spammed the log which was unpleasent.
@@ -457,9 +543,8 @@ impl Context {
         height: usize,
         color: Color,
     ) {
-        let viewport_width = self.width();
-        let viewport_height = self.height();
-        let (x, y, mut width, mut height) = self.scale(x, y, width, height);
+        let viewport_width = self.area.width;
+        let viewport_height = self.area.height;
         let color = color.as_u32();
 
         //Draw the first line
@@ -500,9 +585,8 @@ impl Context {
         color: Color,
         radius: usize,
     ) {
-        let viewport_width = self.width();
-        let viewport_height = self.height();
-        let (x, y, mut width, mut height) = self.scale(x, y, width, height);
+        let viewport_width = self.area.width;
+        let viewport_height = self.area.height;
 
         if (2 * radius) > (width) {
             panic!(
@@ -555,14 +639,13 @@ impl Context {
         &mut self,
         x: usize,
         y: usize,
-        width: usize,
-        height: usize,
+        mut width: usize,
+        mut height: usize,
         color1: Color,
         color2: Color,
     ) {
-        let viewport_width = self.width();
-        let viewport_height = self.height();
-        let (x, y, mut width, mut height) = self.scale(x, y, width, height);
+        let viewport_width = self.area.width;
+        let viewport_height = self.area.height;
 
         if x > viewport_width || y > viewport_height {
             return;
@@ -719,8 +802,8 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
-        let viewport_width = self.width();
-        let viewport_height = self.height();
+        let viewport_width = self.area.width;
+        let viewport_height = self.area.height;
 
         let x = scale(x, self.window.display_scale);
         let y = scale(y, self.window.display_scale);
@@ -827,26 +910,6 @@ impl Context {
         // );
     }
 
-    #[inline(always)]
-    pub fn width(&self) -> usize {
-        self.area.width
-    }
-
-    #[inline(always)]
-    pub fn height(&self) -> usize {
-        self.area.height
-    }
-
-    #[inline(always)]
-    pub fn w(&self) -> usize {
-        self.area.width.saturating_sub(1)
-    }
-
-    #[inline(always)]
-    pub fn h(&self) -> usize {
-        self.area.height.saturating_sub(1)
-    }
-
     #[cfg(feature = "dwrite")]
     pub fn draw_text_subpixel(
         &mut self,
@@ -871,7 +934,7 @@ impl Context {
         let g = color.g();
         let b = color.b();
 
-        let ctx_width = self.width();
+        let viewport_width = self.area.width;
 
         'line: for line in text.lines() {
             let mut glyph_x = x;
@@ -894,7 +957,7 @@ impl Context {
                 'y: for y in 0..height {
                     'x: for x in 0..width {
                         //Text doesn't fit on the screen.
-                        if (x + glyph_x as i32) >= ctx_width as i32 {
+                        if (x + glyph_x as i32) >= viewport_width as i32 {
                             continue;
                         }
 
@@ -967,7 +1030,7 @@ impl Context {
 
         for y in 0..texture.height as usize {
             for x in 0..texture.width as usize {
-                let i = ((start_y + y) * self.width() + start_x + x);
+                let i = ((start_y + y) * self.area.width + start_x + x);
                 let j = (y * texture.width as usize + x) * 3;
 
                 let r = texture.data[j];
@@ -1006,7 +1069,7 @@ impl Context {
     ) {
         let start_x = x;
         let start_y = y;
-        let viewport_width = self.width();
+        let viewport_width = self.area.width;
         let buffer = &mut self.buffer;
         let len = buffer.len();
 
@@ -1054,31 +1117,31 @@ mod tests {
         //Rectangle
         {
             //The x position is out of bounds
-            ctx.draw_rectangle(ctx.width() + 100, 0, 100, 100, Color::RED);
+            ctx.draw_rectangle(ctx.area.width + 100, 0, 100, 100, Color::RED);
 
             //The y position is out of bounds
-            ctx.draw_rectangle(0, ctx.height() + 100, 100, 100, Color::RED);
+            ctx.draw_rectangle(0, ctx.area.height + 100, 100, 100, Color::RED);
 
             //The width is larger than the viewport
-            ctx.draw_rectangle(0, 0, ctx.width() + 100, 100, Color::RED);
+            ctx.draw_rectangle(0, 0, ctx.area.width + 100, 100, Color::RED);
 
             //The height is larger than the viewport
-            ctx.draw_rectangle(0, 0, 100, ctx.height() + 100, Color::RED);
+            ctx.draw_rectangle(0, 0, 100, ctx.area.height + 100, Color::RED);
         }
 
         //Rectangle Outlines
         {
             //The x position is out of bounds
-            ctx.draw_rectangle_outline(ctx.width() + 100, 0, 100, 100, Color::RED);
+            ctx.draw_rectangle_outline(ctx.area.width + 100, 0, 100, 100, Color::RED);
 
             //The y position is out of bounds
-            ctx.draw_rectangle_outline(0, ctx.height() + 100, 100, 100, Color::RED);
+            ctx.draw_rectangle_outline(0, ctx.area.height + 100, 100, 100, Color::RED);
 
             //The width is larger than the viewport
-            ctx.draw_rectangle_outline(0, 0, ctx.width() + 100, 100, Color::RED);
+            ctx.draw_rectangle_outline(0, 0, ctx.area.width + 100, 100, Color::RED);
 
             //The height is larger than the viewport
-            ctx.draw_rectangle_outline(0, 0, 100, ctx.height() + 100, Color::RED);
+            ctx.draw_rectangle_outline(0, 0, 100, ctx.area.height + 100, Color::RED);
         }
 
         //Circle
