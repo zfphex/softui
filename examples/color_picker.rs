@@ -72,6 +72,12 @@ fn main() {
     let mut last_printed = 0;
 
     loop {
+        //Cannot exit because the tool window is out of focus.
+        //Handle the input globally instead.
+        if is_down(VK_ESCAPE) {
+            break;
+        }
+
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
