@@ -414,6 +414,12 @@ impl Context {
         self.middle_mouse.reset();
         self.mouse_4.reset();
         self.mouse_5.reset();
+
+        //Limit the framerate to the primary monitors refresh rate.
+        //TODO: Wait timers are likely better for all refresh rates.
+        //Unsure why my limiters are inaccurate at higher refresh rates though.
+        //Doesn't seem to work on the secondary monitor, seeing huge cpu usage.
+        unsafe { DwmFlush() };
     }
 
     pub fn get_pixel(&mut self, x: usize, y: usize) -> Option<&mut u32> {

@@ -55,6 +55,7 @@ const LEVEL_3_ZOOM: usize = 200; //200x200 square
 
 //https://github.com/microsoft/PowerToys/blob/5008d77105fc807f0530b3beadb98a941c91c8a0/src/modules/colorPicker/ColorPickerUI/Views/MainView.xaml
 
+//TODO: EnumDisplaySettingsA and lock the framerate to the current monitor refresh rate.
 fn main() {
     let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
     let ctx = create_ctx_ex("Color Picker", WIDTH + 1, HEIGHT + 1, style);
