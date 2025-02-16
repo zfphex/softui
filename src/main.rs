@@ -29,15 +29,7 @@ fn main() {
         ctx.fill(Color::WHITE);
 
         #[cfg(feature = "dwrite")]
-        ctx.draw_text_subpixel(
-            "This is some text....",
-            &dwrite,
-            0,
-            36 * 3,
-            10,
-            0,
-            Color::WHITE,
-        );
+        ctx.draw_text_subpixel("This is some text....", &dwrite, 0, 36 * 3, 10, 0, Color::WHITE);
         ctx.draw_text(
             "This is some text...",
             &default_font().unwrap(),

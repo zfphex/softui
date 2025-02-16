@@ -114,21 +114,11 @@ where
         }
 
         match button {
-            MouseButton::Left => {
-                ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Right => {
-                ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Middle => {
-                ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Back => {
-                ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area)
-            }
-            MouseButton::Forward => {
-                ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area)
-            }
+            MouseButton::Left => ctx.left_mouse.released && ctx.left_mouse.inital_position.intersects(area),
+            MouseButton::Right => ctx.right_mouse.released && ctx.right_mouse.inital_position.intersects(area),
+            MouseButton::Middle => ctx.middle_mouse.released && ctx.middle_mouse.inital_position.intersects(area),
+            MouseButton::Back => ctx.mouse_4.released && ctx.mouse_4.inital_position.intersects(area),
+            MouseButton::Forward => ctx.mouse_5.released && ctx.mouse_5.inital_position.intersects(area),
         }
     }
     fn up(&mut self, button: MouseButton) -> bool
@@ -177,12 +167,7 @@ where
         let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
         let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);
 
-        *area = Rect::new(
-            x.round() as usize,
-            y.round() as usize,
-            area.width,
-            area.height,
-        );
+        *area = Rect::new(x.round() as usize, y.round() as usize, area.width, area.height);
 
         self
     }

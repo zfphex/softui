@@ -57,12 +57,7 @@ impl Rect {
         }
     }
     pub const fn new(x: usize, y: usize, width: usize, height: usize) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
+        Self { x, y, width, height }
     }
     pub const fn right(&self) -> usize {
         self.x + self.width
@@ -542,13 +537,7 @@ pub fn draw_segments<T: Widget>(
     (widget_index, segment_index, x, y, spacing)
 }
 
-pub fn flex_xy(
-    start: Quadrant,
-    viewport_width: usize,
-    viewport_height: usize,
-    x: usize,
-    y: usize,
-) -> (usize, usize) {
+pub fn flex_xy(start: Quadrant, viewport_width: usize, viewport_height: usize, x: usize, y: usize) -> (usize, usize) {
     match start {
         Quadrant::TopLeft => (x, y),
         Quadrant::TopRight => (viewport_width - x, y),

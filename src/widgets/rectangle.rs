@@ -34,7 +34,7 @@ impl Rectangle {
 
 impl Widget for Rectangle {
     fn primative(&self) -> Primative {
-       Primative::Ellipse(self.radius, self.bg)
+        Primative::Ellipse(self.radius, self.bg)
     }
 
     #[inline]

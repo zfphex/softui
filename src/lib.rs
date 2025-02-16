@@ -69,12 +69,7 @@ impl std::fmt::Debug for Primative {
         match self {
             Self::Ellipse(arg0, arg1) => f.debug_tuple("Ellipse").field(arg0).field(arg1).finish(),
             Self::RectangleOutline(arg0) => f.debug_tuple("RectangleOutline").field(arg0).finish(),
-            Self::Text(arg0, arg1, arg2) => f
-                .debug_tuple("Text")
-                .field(arg0)
-                .field(arg1)
-                .field(arg2)
-                .finish(),
+            Self::Text(arg0, arg1, arg2) => f.debug_tuple("Text").field(arg0).field(arg1).field(arg2).finish(),
             // Self::CustomBoxed(arg0) => f.debug_tuple("CustomBoxed").finish(),
             Self::Custom(arg0) => f.debug_tuple("Custom").finish(),
             Self::CustomFn(arg0) => f.debug_tuple("CustomFn").field(arg0).finish(),
@@ -157,12 +152,7 @@ pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Cont
 }
 
 //TODO: Consolidate, can't be bothered fixing all the other functions that don't take style into account.
-pub fn create_ctx_ex(
-    title: &str,
-    width: usize,
-    height: usize,
-    style: WindowStyle,
-) -> &'static mut Context {
+pub fn create_ctx_ex(title: &str, width: usize, height: usize, style: WindowStyle) -> &'static mut Context {
     unsafe {
         CTX = Some(Context::new(title, width, height, style));
         CTX.as_mut().unwrap()
@@ -500,14 +490,7 @@ impl Context {
     }
 
     ///If the user draws an invalid rectangle outside the bounds it will be clipped without error.
-    pub fn draw_rectangle(
-        &mut self,
-        x: usize,
-        y: usize,
-        mut width: usize,
-        mut height: usize,
-        color: Color,
-    ) {
+    pub fn draw_rectangle(&mut self, x: usize, y: usize, mut width: usize, mut height: usize, color: Color) {
         let viewport_width = self.area.width;
         let viewport_height = self.area.height;
 
@@ -535,14 +518,7 @@ impl Context {
 
     /// Draw a rectangle with a single pixel outline.
     /// TODO: Allow for variable length outlines.
-    pub fn draw_rectangle_outline(
-        &mut self,
-        x: usize,
-        y: usize,
-        width: usize,
-        height: usize,
-        color: Color,
-    ) {
+    pub fn draw_rectangle_outline(&mut self, x: usize, y: usize, width: usize, height: usize, color: Color) {
         let viewport_width = self.area.width;
         let viewport_height = self.area.height;
         let color = color.as_u32();
@@ -589,11 +565,7 @@ impl Context {
         let viewport_height = self.area.height;
 
         if (2 * radius) > (width) {
-            panic!(
-                "Diameter {} is larger than the width {}.",
-                radius * 2,
-                width
-            );
+            panic!("Diameter {} is larger than the width {}.", radius * 2, width);
         }
 
         for i in y..y + height {
@@ -726,14 +698,7 @@ impl Context {
     }
 
     ///Radius must *not* be larger than `cx` or `cy`.
-    pub fn draw_arc(
-        &mut self,
-        cx: usize,
-        cy: usize,
-        mut radius: usize,
-        color: Color,
-        quadrant: Quadrant,
-    ) {
+    pub fn draw_arc(&mut self, cx: usize, cy: usize, mut radius: usize, color: Color, quadrant: Quadrant) {
         //Can't see it, don't draw it.
         if cx > self.area.width || cy > self.area.height {
             return;
@@ -828,9 +793,7 @@ impl Context {
             'char: for char in line.chars() {
                 let (metrics, bitmap) = font.rasterize(char, font_size as f32);
 
-                let glyph_y = y as f32
-                    - (metrics.height as f32 - metrics.advance_height)
-                    - metrics.ymin as f32;
+                let glyph_y = y as f32 - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
 
                 'y: for y in 0..metrics.height {
                     'x: for x in 0..metrics.width {
@@ -980,8 +943,7 @@ impl Context {
 
                         // self.draw_rectangle_outline(glyph_x as usize, glyph_y as usize, width as usize, height as usize + 1, Color::RED).unwrap();
 
-                        let c = rgb(255 - texture[j], 255 - texture[j + 1], 255 - texture[j + 2])
-                            .as_u32();
+                        let c = rgb(255 - texture[j], 255 - texture[j + 1], 255 - texture[j + 2]).as_u32();
 
                         if let Some(px) = self.buffer.get_mut(i) {
                             *px = c;
@@ -1058,15 +1020,7 @@ impl Context {
     }
 
     #[cfg(feature = "image")]
-    pub fn draw_image(
-        &mut self,
-        bitmap: &[u8],
-        x: usize,
-        y: usize,
-        width: usize,
-        height: usize,
-        format: ImageFormat,
-    ) {
+    pub fn draw_image(&mut self, bitmap: &[u8], x: usize, y: usize, width: usize, height: usize, format: ImageFormat) {
         let start_x = x;
         let start_y = y;
         let viewport_width = self.area.width;

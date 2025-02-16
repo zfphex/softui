@@ -102,9 +102,7 @@ impl<
     > Click5<T, F0, F1, F2, F3, F4, F5>
 {
     pub fn on_click<F6: FnMut(&mut Self)>(self, _button: MouseButton, _f: F6) {
-        unimplemented!(
-            "On click chains are only support up to 5 times. Left, Right, Middle, Forward, Back."
-        );
+        unimplemented!("On click chains are only support up to 5 times. Left, Right, Middle, Forward, Back.");
     }
 }
 

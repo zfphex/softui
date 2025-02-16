@@ -11,10 +11,7 @@ fn main() {
 
     let mut _image = image("img/smol.jpg");
 
-    while !matches!(
-        _ctx.event(),
-        Some(Event::Quit) | Some(Event::Input(Key::Escape, _))
-    ) {
+    while !matches!(_ctx.event(), Some(Event::Quit) | Some(Event::Input(Key::Escape, _))) {
 
         // This will not build
         // v!(_image.x(120));

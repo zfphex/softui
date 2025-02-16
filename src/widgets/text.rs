@@ -111,9 +111,7 @@ impl<'a> Text<'a> {
             'char: for char in line.chars() {
                 let (metrics, _) = font.rasterize(char, self.font_size as f32);
 
-                let glyph_y = y as f32
-                    - (metrics.height as f32 - metrics.advance_height)
-                    - metrics.ymin as f32;
+                let glyph_y = y as f32 - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
 
                 for y in 0..metrics.height {
                     for x in 0..metrics.width {

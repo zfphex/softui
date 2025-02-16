@@ -20,8 +20,7 @@ pub fn draw_svg(ctx: &mut Context, pixmap: &Pixmap) {
             break;
         }
 
-        let color =
-            (pixel.red() as u32) << 16 | (pixel.green() as u32) << 8 | (pixel.blue() as u32);
+        let color = (pixel.red() as u32) << 16 | (pixel.green() as u32) << 8 | (pixel.blue() as u32);
         ctx.draw_pixel(x as usize, y as usize, color.into());
 
         x += 1;
