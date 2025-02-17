@@ -91,7 +91,7 @@ impl<'a> Text<'a> {
         self
     }
     fn calculate_area(mut self) -> Self {
-        let canvas_width = ctx().area.width as usize;
+        let canvas_width = ctx().window.width();
         let font = default_font().unwrap();
         let mut area = self.area;
 
@@ -232,14 +232,14 @@ pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
 
     for y in 0..metrics.height {
         for x in 0..metrics.width {
-            let i = ((start_y + y) * ctx.area.width as usize + start_x + x);
+            let i = ((start_y + y) * ctx.window.width() + start_x + x);
             let j = (y * metrics.width + x) * 3;
 
             let r = bitmap[j];
             let g = bitmap[j + 1];
             let b = bitmap[j + 2];
 
-            ctx.buffer[i] = rgb(r, g, b).as_u32();
+            ctx.window.buffer[i] = rgb(r, g, b).as_u32();
         }
     }
 }

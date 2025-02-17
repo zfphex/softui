@@ -1,113 +1,31 @@
-use crate::RECT;
 use crate::*;
 
-use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
+// use std::sync::atomic::{AtomicI32, Ordering::SeqCst};
 
-#[derive(Debug, Default)]
-pub struct AtomicRect {
-    pub x: AtomicI32,
-    pub y: AtomicI32,
-    pub width: AtomicI32,
-    pub height: AtomicI32,
-}
+// #[derive(Debug, Default)]
+// pub struct AtomicRect {
+//     pub x: AtomicI32,
+//     pub y: AtomicI32,
+//     pub width: AtomicI32,
+//     pub height: AtomicI32,
+// }
 
-impl AtomicRect {
-    pub const fn new(x: i32, y: i32, width: i32, height: i32) -> Self {
-        Self {
-            x: AtomicI32::new(x),
-            y: AtomicI32::new(y),
-            width: AtomicI32::new(width),
-            height: AtomicI32::new(height),
-        }
-    }
-    pub fn right(&self) -> i32 {
-        self.x.load(SeqCst) + self.width.load(SeqCst)
-    }
-    pub fn bottom(&self) -> i32 {
-        self.y.load(SeqCst) + self.height.load(SeqCst)
-    }
-}
-
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Rect {
-    pub x: usize,
-    pub y: usize,
-    pub width: usize,
-    pub height: usize,
-}
-
-impl From<RECT> for Rect {
-    fn from(rect: RECT) -> Self {
-        Rect {
-            x: 0,
-            y: 0,
-            width: rect.width() as usize,
-            height: rect.height() as usize,
-        }
-    }
-}
-
-impl Rect {
-    pub const fn default() -> Self {
-        Self {
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-        }
-    }
-    pub const fn new(x: usize, y: usize, width: usize, height: usize) -> Self {
-        Self { x, y, width, height }
-    }
-    pub const fn right(&self) -> usize {
-        self.x + self.width
-    }
-    pub const fn bottom(&self) -> usize {
-        self.y + self.height
-    }
-    // pub const fn centered(&self, width: u16, height: u16) -> Rect {
-    //     let v = self.width() / 2;
-    //     let h = self.height() / 2;
-
-    //     todo!();
-    // }
-    // pub const fn area(&self) -> usize {
-    //     self.width * self.height
-    // }
-
-    //TODO: Write some tests.
-    pub const fn intersects(&self, other: Rect) -> bool {
-        self.x < other.x + other.width
-            && self.x + self.width > other.x
-            && self.y < other.y + other.height
-            && self.y + self.height > other.y
-    }
-
-    //TODO: Bounds checking
-    pub const fn inner(&self, w: usize, h: usize) -> Rect {
-        Rect {
-            x: self.x + w,
-            y: self.y + h,
-            width: self.width - 2 * w,
-            height: self.height - 2 * h,
-        }
-    }
-
-    // pub const fn inner(self, w: u16, h: u16) -> Result<Rect, &'static str> {
-    //     if self.width < 2 * w {
-    //         Err("Inner area exceeded outside area. Reduce margin width.")
-    //     } else if self.height < 2 * h {
-    //         Err("Inner area exceeded outside area. Reduce margin height.")
-    //     } else {
-    //         Ok(Rect {
-    //             x: self.x + w,
-    //             y: self.y + h,
-    //             width: self.width - 2 * w,
-    //             height: self.height - 2 * h,
-    //         })
-    //     }
-    // }
-}
+// impl AtomicRect {
+//     pub const fn new(x: i32, y: i32, width: i32, height: i32) -> Self {
+//         Self {
+//             x: AtomicI32::new(x),
+//             y: AtomicI32::new(y),
+//             width: AtomicI32::new(width),
+//             height: AtomicI32::new(height),
+//         }
+//     }
+//     pub fn right(&self) -> i32 {
+//         self.x.load(SeqCst) + self.width.load(SeqCst)
+//     }
+//     pub fn bottom(&self) -> i32 {
+//         self.y.load(SeqCst) + self.height.load(SeqCst)
+//     }
+// }
 
 //Unused
 pub trait Metrics {

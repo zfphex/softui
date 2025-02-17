@@ -163,17 +163,8 @@ pub fn create_ctx_ex(title: &str, width: usize, height: usize, style: WindowStyl
 /// Also handles rendering.
 #[derive(Debug)]
 pub struct Context {
-    //size is width * height.
-    pub buffer: Vec<u32>,
-    //(width * height) / 4
-    // pub simd16: Vec<u8x16>,
-    // pub simd32: Vec<u32x8>,
-    // pub simd64: Vec<u32x16>,
-    //This is dpi scaled.
-    pub area: Rect,
     pub window: Pin<Box<Window>>,
-    pub dc: Option<*mut c_void>,
-    pub bitmap: BITMAPINFO,
+    pub child_windows: Vec<Pin<Box<Window>>>,
     //This should really be a Vec2 or (usize, usize), but this makes checking
     //rectangle intersections really easy.
     pub mouse_pos: Rect,
@@ -190,32 +181,10 @@ impl Context {
         load_default_font();
 
         let window = create_window(title, width as i32, height as i32, style);
-        let dc = unsafe { GetDC(window.hwnd) };
-        let display_scale = window.display_scale;
-
-        //Convert top, left, right, bottom to x, y, width, height.
-        let mut area = Rect::from(window.client_area());
-        area.width = (area.width as f32 * display_scale) as usize;
-        area.height = (area.height as f32 * display_scale) as usize;
-
-        // unsafe {
-        //     VIEWPORT = AtomicRect::new(area.x, area.y, area.width, area.height);
-        // }
 
         Self {
             window,
-            dc: Some(dc),
-            area,
-            buffer: vec![0; area.width * area.height],
-            //4 RGBQUADS in u8x16 -> 16 / 4 = 4
-            // simd16: vec![u8x16::splat(0); ((width * height) as f32 / 4.0).ceil() as usize],
-            //8 RGBQUADS in u8x64 -> 32 / 4 = 8
-            // simd32: vec![u8x32::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
-            // simd32: vec![u32x8::splat(0); ((width * height) as f32 / 8.0).ceil() as usize],
-            // simd64: vec![u32x16::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
-            //16 RGBQUADS in u8x64 -> 64 / 4 = 16
-            // simd64: vec![u8x64::splat(0); ((width * height) as f32 / 16.0).ceil() as usize],
-            bitmap: BITMAPINFO::new(area.width as i32, area.height as i32),
+            child_windows: Vec::new(),
             mouse_pos: Rect::default(),
             left_mouse: MouseState::new(),
             right_mouse: MouseState::new(),
@@ -223,6 +192,11 @@ impl Context {
             mouse_4: MouseState::new(),
             mouse_5: MouseState::new(),
         }
+    }
+
+    pub fn create_child_window(&mut self, title: &str, width: i32, height: i32, style: WindowStyle) {
+        let window = create_window(title, width, height, style);
+        self.child_windows.push(window);
     }
 
     #[inline]
@@ -327,85 +301,7 @@ impl Context {
             }
         }
 
-        let area = Rect::from(self.window.client_area());
-
-        //When the window area is changed update the bitmap aswell.
-        if self.area != area {
-            self.buffer.clear();
-            self.buffer.resize(area.width * area.height, 0);
-            self.bitmap = BITMAPINFO::new(area.width as i32, area.height as i32);
-            self.area = area;
-        }
-
-        //TODO: Transparency
-        //https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-alphablend
-        //https://learn.microsoft.com/en-au/windows/win32/api/wingdi/nf-wingdi-transparentblt
-        // unsafe {
-        //     let hdc_dest = self.dc.unwrap();
-        //     let hdc_src = CreateCompatibleDC(hdc_dest);
-        //     let src_width = self.area.width as i32;
-        //     let src_height = self.area.height as i32;
-        //     let mut bits = core::ptr::null_mut();
-
-        //     let hbitmap = CreateDIBSection(
-        //         hdc_src,
-        //         &self.bitmap,
-        //         DIB_RGB_COLORS,
-        //         &mut bits,
-        //         core::ptr::null_mut(),
-        //         0,
-        //     );
-
-        //     if hbitmap.is_null() {
-        //         panic!();
-        //         // DeleteDC(hdc_src);
-        //         // return;
-        //     }
-
-        //     let buf = vec![0x967ac0u32; (src_width * src_height) as usize];
-
-        //     core::ptr::copy_nonoverlapping(
-        //         buf.as_ptr() as *const u8,
-        //         // self.buffer.as_ptr() as *const u8,
-        //         bits as *mut u8,
-        //         (src_width * src_height * 4) as usize,
-        //     );
-
-        //     SelectObject(hdc_src, hbitmap);
-
-        //     let blend = BLENDFUNCTION {
-        //         BlendOp: AC_SRC_OVER,
-        //         BlendFlags: 0,
-        //         SourceConstantAlpha: 255,
-        //         AlphaFormat: AC_SRC_ALPHA,
-        //     };
-
-        //     AlphaBlend(
-        //         hdc_dest, 0, 0, src_width, src_height, hdc_src, 0, 0, src_width, src_height, blend,
-        //     );
-
-        //     // Clean up
-        //     // DeleteObject(hbitmap);
-        //     // DeleteDC(hdc_src);
-        // }
-
-        unsafe {
-            StretchDIBits(
-                self.dc.unwrap(),
-                0,
-                0,
-                self.area.width as i32,
-                self.area.height as i32,
-                0,
-                0,
-                self.area.width as i32,
-                self.area.height as i32,
-                self.buffer.as_mut_ptr() as *const c_void,
-                &self.bitmap,
-                0,
-                SRCCOPY,
-            );
-        }
+        self.window.draw();
 
         //Reset the important state at the end of a frame.
         //Does this break dragging?
@@ -423,25 +319,27 @@ impl Context {
     }
 
     pub fn get_pixel(&mut self, x: usize, y: usize) -> Option<&mut u32> {
-        let pos = x + (self.area.width as usize * y);
-        self.buffer.get_mut(pos)
+        let pos = x + (self.window.width() * y);
+        self.window.buffer.get_mut(pos)
     }
 
     //This is essentially just a memset.
     pub fn fill(&mut self, color: Color) {
         profile!();
-        self.buffer.fill(color.as_u32());
+        self.window.buffer.fill(color.as_u32());
     }
 
     #[inline]
     #[track_caller]
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: Color) {
-        self.buffer[y * self.area.width as usize + x] = color.as_u32();
+        let width = self.window.width();
+        self.window.buffer[y * width + x] = color.as_u32();
     }
 
     #[inline]
     pub fn try_draw_pixel(&mut self, x: usize, y: usize, color: Color) {
-        if let Some(px) = self.buffer.get_mut(y * self.area.width as usize + x) {
+        let width = self.window.width();
+        if let Some(px) = self.window.buffer.get_mut(y * width + x) {
             *px = color.as_u32();
         }
     }
@@ -462,14 +360,14 @@ impl Context {
         WIDTH: Into<GenericUnit> + Copy,
         HEIGHT: Into<GenericUnit>,
     {
-        let viewport_width = self.area.width;
-        let viewport_height = self.area.height;
+        let viewport_width = self.window.width();
+        let viewport_height = self.window.area.height;
         let scale = self.window.display_scale;
 
-        let x = scale_temp(x.into(), self.area, scale);
-        let y = scale_temp(y.into(), self.area, scale);
-        let width = scale_temp(width.into(), self.area, scale);
-        let height = scale_temp(height.into(), self.area, scale);
+        let x = scale_temp(x.into(), self.window.area, scale);
+        let y = scale_temp(y.into(), self.window.area, scale);
+        let width = scale_temp(width.into(), self.window.area, scale);
+        let height = scale_temp(height.into(), self.window.area, scale);
 
         //Draw the rectangle border.
         if border != 0 {
@@ -497,8 +395,8 @@ impl Context {
 
     ///If the user draws an invalid rectangle outside the bounds it will be clipped without error.
     pub fn draw_rectangle(&mut self, x: usize, y: usize, mut width: usize, mut height: usize, color: Color) {
-        let viewport_width = self.area.width;
-        let viewport_height = self.area.height;
+        let viewport_width = self.window.width();
+        let viewport_height = self.window.area.height;
 
         //The rectangle is malformed and out of bounds.
         //TODO: I was warning the user before but it spammed the log which was unpleasent.
@@ -517,21 +415,23 @@ impl Context {
         }
 
         for i in y..y + height {
-            let pos = x + self.area.width as usize * i;
-            self.buffer[pos..pos + width].fill(color.as_u32());
+            let pos = x + self.window.width() * i;
+            if let Some(buffer) = self.window.buffer.get_mut(pos..pos + width) {
+                buffer.fill(color.as_u32());
+            }
         }
     }
 
     /// Draw a rectangle with a single pixel outline.
     /// TODO: Allow for variable length outlines.
     pub fn draw_rectangle_outline(&mut self, x: usize, y: usize, width: usize, height: usize, color: Color) {
-        let viewport_width = self.area.width;
-        let viewport_height = self.area.height;
+        let viewport_width = self.window.width();
+        let viewport_height = self.window.area.height;
         let color = color.as_u32();
 
         //Draw the first line
         let pos = x + viewport_width * y;
-        if let Some(buffer) = self.buffer.get_mut(pos..=pos + width) {
+        if let Some(buffer) = self.window.buffer.get_mut(pos..=pos + width) {
             buffer.fill(color);
         }
 
@@ -539,19 +439,19 @@ impl Context {
         //Skip the first line.
         for i in (y + 1)..(y + height) {
             let left = x + viewport_width * i;
-            if let Some(buffer) = self.buffer.get_mut(left) {
+            if let Some(buffer) = self.window.buffer.get_mut(left) {
                 *buffer = color;
             }
 
             let right = x + width + viewport_width * i;
-            if let Some(buffer) = self.buffer.get_mut(right) {
+            if let Some(buffer) = self.window.buffer.get_mut(right) {
                 *buffer = color;
             }
         }
 
         //Draw the last line
         let pos = x + viewport_width * (y + height);
-        if let Some(buffer) = self.buffer.get_mut(pos..=pos + width) {
+        if let Some(buffer) = self.window.buffer.get_mut(pos..=pos + width) {
             buffer.fill(color);
         }
     }
@@ -567,8 +467,8 @@ impl Context {
         color: Color,
         radius: usize,
     ) {
-        let viewport_width = self.area.width;
-        let viewport_height = self.area.height;
+        let viewport_width = self.window.width();
+        let viewport_height = self.window.area.height;
 
         if (2 * radius) > (width) {
             panic!("Diameter {} is larger than the width {}.", radius * 2, width);
@@ -578,14 +478,14 @@ impl Context {
             let y = i - y;
             if y <= radius || y >= height - radius {
                 let pos = x + radius + viewport_width * i;
-                for px in &mut self.buffer[pos..pos + width - radius - radius] {
+                for px in &mut self.window.buffer[pos..pos + width - radius - radius] {
                     *px = color.as_u32();
                 }
                 continue;
             }
 
             let pos = x + viewport_width * i;
-            for px in &mut self.buffer[pos..pos + width] {
+            for px in &mut self.window.buffer[pos..pos + width] {
                 *px = color.as_u32();
             }
         }
@@ -622,8 +522,8 @@ impl Context {
         color1: Color,
         color2: Color,
     ) {
-        let viewport_width = self.area.width;
-        let viewport_height = self.area.height;
+        let viewport_width = self.window.width();
+        let viewport_height = self.window.area.height;
 
         if x > viewport_width || y > viewport_height {
             return;
@@ -638,10 +538,10 @@ impl Context {
         }
 
         for i in y..y + height {
-            let start = x + self.area.width as usize * i;
+            let start = x + self.window.width() * i;
             let end = start + width;
 
-            for (x, px) in self.buffer[start..end].iter_mut().enumerate() {
+            for (x, px) in self.window.buffer[start..end].iter_mut().enumerate() {
                 let t = (x as f32) / (end as f32 - start as f32);
                 *px = color1.lerp(color2, t).as_u32();
             }
@@ -706,7 +606,7 @@ impl Context {
     ///Radius must *not* be larger than `cx` or `cy`.
     pub fn draw_arc(&mut self, cx: usize, cy: usize, mut radius: usize, color: Color, quadrant: Quadrant) {
         //Can't see it, don't draw it.
-        if cx > self.area.width || cy > self.area.height {
+        if cx > self.window.width() || cy > self.window.area.height {
             return;
         }
 
@@ -773,8 +673,8 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
-        let viewport_width = self.area.width;
-        let viewport_height = self.area.height;
+        let viewport_width = self.window.width();
+        let viewport_height = self.window.area.height;
 
         let x = scale(x, self.window.display_scale);
         let y = scale(y, self.window.display_scale);
@@ -804,7 +704,7 @@ impl Context {
                 'y: for y in 0..metrics.height {
                     'x: for x in 0..metrics.width {
                         //Text doesn't fit on the screen.
-                        if (x + glyph_x) >= self.area.width as usize {
+                        if (x + glyph_x) >= self.window.width() {
                             continue;
                         }
 
@@ -832,30 +732,30 @@ impl Context {
                             max_y = offset as usize;
                         }
 
-                        let i = x + glyph_x + self.area.width as usize * offset as usize;
+                        let i = x + glyph_x + self.window.width() * offset as usize;
 
-                        if i >= self.buffer.len() {
+                        if i >= self.window.buffer.len() {
                             break 'x;
                         }
 
-                        let bg = Color(self.buffer[i]);
+                        let bg = Color(self.window.buffer[i]);
 
                         let r = blend(r, alpha, bg.r(), 255 - alpha);
                         let g = blend(g, alpha, bg.g(), 255 - alpha);
                         let b = blend(b, alpha, bg.b(), 255 - alpha);
 
-                        if let Some(px) = self.buffer.get_mut(i) {
+                        if let Some(px) = self.window.buffer.get_mut(i) {
                             *px = rgb(r, g, b).as_u32();
                         }
 
-                        // self.buffer[i] = rgb(r, g, b).as_u32();
+                        // self.window.buffer[i] = rgb(r, g, b).as_u32();
                     }
                 }
 
                 glyph_x += metrics.advance_width as usize;
 
                 //Check if the glyph position is off the screen.
-                if glyph_x >= self.area.width as usize {
+                if glyph_x >= self.window.width() {
                     break 'line;
                 }
             }
@@ -903,7 +803,7 @@ impl Context {
         let g = color.g();
         let b = color.b();
 
-        let viewport_width = self.area.width;
+        let viewport_width = self.window.width();
 
         'line: for line in text.lines() {
             let mut glyph_x = x;
@@ -940,10 +840,10 @@ impl Context {
                             max_y = offset;
                         }
 
-                        let i = x as usize + glyph_x + self.area.width as usize * offset;
+                        let i = x as usize + glyph_x + self.window.width() * offset;
                         let j = (y as usize * width as usize + x as usize) * 3;
 
-                        if i >= self.buffer.len() {
+                        if i >= self.window.buffer.len() {
                             break 'x;
                         }
 
@@ -951,19 +851,19 @@ impl Context {
 
                         let c = rgb(255 - texture[j], 255 - texture[j + 1], 255 - texture[j + 2]).as_u32();
 
-                        if let Some(px) = self.buffer.get_mut(i) {
+                        if let Some(px) = self.window.buffer.get_mut(i) {
                             *px = c;
                         }
 
-                        // self.buffer[i] = c;
-                        // self.buffer[i] = rgb(r, g, b);
+                        // self.window.buffer[i] = c;
+                        // self.window.buffer[i] = rgb(r, g, b);
                     }
                 }
 
                 glyph_x += advance_width.round() as usize;
 
                 //Check if the glyph position is off the screen.
-                if glyph_x >= self.area.width as usize {
+                if glyph_x >= self.window.width() {
                     break 'line;
                 }
             }
@@ -998,7 +898,7 @@ impl Context {
 
         for y in 0..texture.height as usize {
             for x in 0..texture.width as usize {
-                let i = ((start_y + y) * self.area.width + start_x + x);
+                let i = ((start_y + y) * self.window.width() + start_x + x);
                 let j = (y * texture.width as usize + x) * 3;
 
                 let r = texture.data[j];
@@ -1011,16 +911,16 @@ impl Context {
                 // let g = blend(g, 0, color.g(), 255);
                 // let b = blend(b, 0, color.b(), 255);
 
-                // let bg = Color::new(self.buffer[i]);
+                // let bg = Color::new(self.window.buffer[i]);
                 // let r = blend(r, alpha, bg.r(), alpha);
                 // let g = blend(g, alpha, bg.g(), alpha);
                 // let b = blend(b, alpha, bg.b(), alpha);
 
                 //Black
-                self.buffer[i] = rgb(255 - r, 255 - g, 255 - b).as_u32();
+                self.window.buffer[i] = rgb(255 - r, 255 - g, 255 - b).as_u32();
 
                 //White
-                // self.buffer[i] = rgb(r, g, b);
+                // self.window.buffer[i] = rgb(r, g, b);
             }
         }
     }
@@ -1029,8 +929,8 @@ impl Context {
     pub fn draw_image(&mut self, bitmap: &[u8], x: usize, y: usize, width: usize, height: usize, format: ImageFormat) {
         let start_x = x;
         let start_y = y;
-        let viewport_width = self.area.width;
-        let buffer = &mut self.buffer;
+        let viewport_width = self.window.width();
+        let buffer = &mut self.window.buffer;
         let len = buffer.len();
 
         //4 bytes RGBA, 3 bytes RGB
@@ -1077,31 +977,31 @@ mod tests {
         //Rectangle
         {
             //The x position is out of bounds
-            ctx.draw_rectangle(ctx.area.width + 100, 0, 100, 100, Color::RED);
+            ctx.draw_rectangle(ctx.window.width() + 100, 0, 100, 100, Color::RED);
 
             //The y position is out of bounds
-            ctx.draw_rectangle(0, ctx.area.height + 100, 100, 100, Color::RED);
+            ctx.draw_rectangle(0, ctx.window.height() + 100, 100, 100, Color::RED);
 
             //The width is larger than the viewport
-            ctx.draw_rectangle(0, 0, ctx.area.width + 100, 100, Color::RED);
+            ctx.draw_rectangle(0, 0, ctx.window.width() + 100, 100, Color::RED);
 
             //The height is larger than the viewport
-            ctx.draw_rectangle(0, 0, 100, ctx.area.height + 100, Color::RED);
+            ctx.draw_rectangle(0, 0, 100, ctx.window.height() + 100, Color::RED);
         }
 
         //Rectangle Outlines
         {
             //The x position is out of bounds
-            ctx.draw_rectangle_outline(ctx.area.width + 100, 0, 100, 100, Color::RED);
+            ctx.draw_rectangle_outline(ctx.window.width() + 100, 0, 100, 100, Color::RED);
 
             //The y position is out of bounds
-            ctx.draw_rectangle_outline(0, ctx.area.height + 100, 100, 100, Color::RED);
+            ctx.draw_rectangle_outline(0, ctx.window.height() + 100, 100, 100, Color::RED);
 
             //The width is larger than the viewport
-            ctx.draw_rectangle_outline(0, 0, ctx.area.width + 100, 100, Color::RED);
+            ctx.draw_rectangle_outline(0, 0, ctx.window.width() + 100, 100, Color::RED);
 
             //The height is larger than the viewport
-            ctx.draw_rectangle_outline(0, 0, 100, ctx.area.height + 100, Color::RED);
+            ctx.draw_rectangle_outline(0, 0, 100, ctx.window.height() + 100, Color::RED);
         }
 
         //Circle

@@ -2,13 +2,13 @@ use softui::*;
 
 //Create a custom draw function.
 fn triangle(ctx: &mut Context) {
-    for y in 0..ctx.area.height {
+    for y in 0..ctx.window.height() {
         if y % 2 == 0 {
             ctx.draw_line(
                 0,
                 y as usize,
-                ctx.area.width as usize - 1,
-                ctx.area.height as usize - 1,
+                ctx.window.width() - 1,
+                ctx.window.height() - 1,
                 Color::RED,
             );
             // ctx.draw_line(0, y as usize, ctx.area.width as usize - 1, 0, Color::RED);

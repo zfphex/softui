@@ -55,10 +55,34 @@ const LEVEL_3_ZOOM: usize = 200; //200x200 square
 
 //https://github.com/microsoft/PowerToys/blob/5008d77105fc807f0530b3beadb98a941c91c8a0/src/modules/colorPicker/ColorPickerUI/Views/MainView.xaml
 
+//Take a screenshot of a 50x50 area around the users cursor.
+//Create a new borderless window that is also 50x50 and display the screenshot.
+//This window does not need to be updated, until the last zoom level.
+//When the user scrolls it should change the zoom level.
+
 //TODO: EnumDisplaySettingsA and lock the framerate to the current monitor refresh rate.
 fn main() {
     let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
     let ctx = create_ctx_ex("Color Picker", WIDTH + 1, HEIGHT + 1, style);
+
+    let zoom_size = 50;
+    let mut zwin = create_window(
+        "Zoom",
+        zoom_size,
+        zoom_size,
+        WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
+    );
+
+    let mut point = POINT::default();
+    unsafe { GetCursorPos(&mut point) };
+
+    zwin.set_pos(
+        point.x as usize,
+        point.y as usize,
+        zwin.width(),
+        zwin.height(),
+        SWP_FRAMECHANGED,
+    );
 
     let hdc = unsafe { GetDC(0) };
     assert!(!hdc.is_null());
@@ -72,42 +96,42 @@ fn main() {
             break;
         }
 
-        //TODO: Not strictly necessary, could be removed.
+        // if scroll_up() {
+
+        // let _ = zwin.event();
+        // zwin.buffer.fill(0x1f1f1f);
+        // zwin.draw();
+        // }
+
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
 
         let (x, y) = physical_mouse_pos();
-        let width = ctx.area.width as i32;
-        let height = ctx.area.height as i32;
+        let width = ctx.window.width() as i32;
+        let height = ctx.window.height() as i32;
 
-        let (monitor_x, monitor_y, monitor_width, monitor_height) = unsafe {
+        let monitor = unsafe {
             let monitor = MonitorFromPoint(POINT { x, y }, MONITOR_DEFAULTTONULL);
             assert!(!monitor.is_null());
 
             let mut info = MONITORINFO::default();
             assert!(GetMonitorInfoA(monitor, &mut info) != 0);
-
-            (
-                info.rcMonitor.x(),
-                info.rcMonitor.y(),
-                info.rcMonitor.width(),
-                info.rcMonitor.height(),
-            )
+            Rect::from_windows(info.rcMonitor)
         };
 
         // Adjust position based on monitor bounds
-        let mx = if x + width + OVERFLOW_X_OFFSET > monitor_x + monitor_width {
-            x - width - OVERFLOW_X_OFFSET
+        let mx = if x + width + OVERFLOW_X_OFFSET > monitor.x as i32 + monitor.width as i32 {
+            (x - width - OVERFLOW_X_OFFSET) as usize
         } else {
-            x + DEFAULT_X_OFFSET
+            (x + DEFAULT_X_OFFSET) as usize
         };
 
-        let my = if y + height + OVERFLOW_Y_OFFSET > monitor_y + monitor_height {
-            y - height - OVERFLOW_Y_OFFSET
+        let my = if y + height + OVERFLOW_Y_OFFSET > monitor.y as i32 + monitor.height as i32 {
+            (y - height - OVERFLOW_Y_OFFSET) as usize
         } else {
-            y + DEFAULT_Y_OFFSET
+            (y + DEFAULT_Y_OFFSET) as usize
         };
 
         //Move the window around with the cursor.
@@ -130,8 +154,8 @@ fn main() {
         ctx.draw_rectangle_scaled(
             0,
             0,
-            ctx.area.width.saturating_sub(1).unscaled(),
-            ctx.area.height.saturating_sub(1).unscaled(),
+            ctx.window.width().saturating_sub(1).unscaled(),
+            ctx.window.height().saturating_sub(1).unscaled(),
             BACKGROUND,
             1,
             BORDER,
