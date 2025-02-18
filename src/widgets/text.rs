@@ -33,8 +33,8 @@ impl<'a> IntoText<'a> for &'static str {
     }
 }
 
+//TODO: This is slow
 pub fn load_default_font() {
-    profile!();
     set_default_font(fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap());
 }
 

@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 //TODO: Zooming with 4 zoom levels
 //TODO: Tray icon
@@ -61,7 +61,9 @@ const LEVEL_3_ZOOM: usize = 200; //200x200 square
 //When the user scrolls it should change the zoom level.
 
 //TODO: EnumDisplaySettingsA and lock the framerate to the current monitor refresh rate.
+
 fn main() {
+    mini::defer_results!();
     let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
     let ctx = create_ctx_ex("Color Picker", WIDTH + 1, HEIGHT + 1, style);
 
@@ -76,35 +78,42 @@ fn main() {
     let mut point = POINT::default();
     unsafe { GetCursorPos(&mut point) };
 
-    zwin.set_pos(
-        point.x as usize,
-        point.y as usize,
-        zwin.width(),
-        zwin.height(),
-        SWP_FRAMECHANGED,
-    );
+    let width = zwin.width();
+    let height = zwin.height();
+    zwin.set_pos(point.x as usize, point.y as usize, width, height, SWP_FRAMECHANGED);
 
-    let hdc = unsafe { GetDC(0) };
-    assert!(!hdc.is_null());
+    let dc = unsafe { GetDC(0) };
+    assert!(!dc.is_null());
 
     let mut last_printed = 0;
+    let mut color = Color::default();
+
+    let (mut prev_x, mut prev_y) = physical_mouse_pos();
 
     loop {
+        mini::profile!();
         //Cannot exit normally because window is out of focus.
         //Handle the input globally instead.
         if is_down(VK_ESCAPE) {
             break;
         }
 
-        // if scroll_up() {
-
-        // let _ = zwin.event();
-        // zwin.buffer.fill(0x1f1f1f);
-        // zwin.draw();
-        // }
+        let _ = zwin.event();
 
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
+            _ => {}
+        }
+
+        match poll_global_events() {
+            Some(Event::Input(Key::ScrollUp, _)) => {
+                zwin.buffer.fill(0x1f1f1f);
+                zwin.draw();
+            }
+            Some(Event::Input(Key::LeftMouseDown, _)) if last_printed != color.as_u32() => {
+                last_printed = color.as_u32();
+                copy_to_clipboard(&color.to_string());
+            }
             _ => {}
         }
 
@@ -112,6 +121,7 @@ fn main() {
         let width = ctx.window.width() as i32;
         let height = ctx.window.height() as i32;
 
+        // TODO: Get all the monitors at program start.
         let monitor = unsafe {
             let monitor = MonitorFromPoint(POINT { x, y }, MONITOR_DEFAULTTONULL);
             assert!(!monitor.is_null());
@@ -135,19 +145,21 @@ fn main() {
         };
 
         //Move the window around with the cursor.
-        ctx.window.set_pos(mx, my, 0, 0, SWP_NOSIZE | SWP_FRAMECHANGED);
+        ctx.window.set_pos(mx, my, 0, 0, SWP_NOSIZE);
 
-        let color = unsafe { GetPixel(hdc, x, y) };
-        let r = (color >> 16 & 0xFF) as u8;
-        let g = (color >> 8 & 0xFF) as u8;
-        let b = (color & 0xFF) as u8;
-        //Convert from BGR to RGB.
-        let color = Color::new(b, g, r);
+        //Check if the color needs to be updated.
+        if x != prev_x || y != prev_y {
+            mini::profile!("GetPixel");
+            //This call takes ~4ms
+            let pixel = unsafe { GetPixel(dc, x, y) };
+            let r = (pixel >> 16 & 0xFF) as u8;
+            let g = (pixel >> 8 & 0xFF) as u8;
+            let b = (pixel & 0xFF) as u8;
+            //Convert from BGR to RGB.
+            color = Color::new(b, g, r);
 
-        //Copy the selected color to the clipboard.
-        if is_down(VK_LBUTTON) && last_printed != color.as_u32() {
-            last_printed = color.as_u32();
-            copy_to_clipboard(&color.to_string());
+            prev_x = x;
+            prev_y = y;
         }
 
         //Background

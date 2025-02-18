@@ -211,7 +211,6 @@ impl Context {
 
     //TODO: Cleanup and remove.
     pub fn event(&mut self) -> Option<Event> {
-        profile!();
         match self.window.event() {
             Some(event) => {
                 match event {
