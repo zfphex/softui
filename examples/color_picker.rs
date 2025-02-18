@@ -5,6 +5,7 @@
 //TODO: Tray icon
 //TODO: Left click to show picker menu
 
+use core::ptr::{null, null_mut};
 use std::ffi::c_void;
 
 use softui::*;
@@ -65,121 +66,145 @@ const LEVEL_3_ZOOM: usize = 200; //200x200 square
 //TODO: EnumDisplaySettingsA and lock the framerate to the current monitor refresh rate.
 
 fn main() {
-    mini::defer_results!();
-    let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
-    let ctx = create_ctx_ex("Color Picker", WIDTH + 1, HEIGHT + 1, style);
-
-    let zoom_size = 50;
-    let mut zwin = create_window(
-        "Zoom",
-        zoom_size,
-        zoom_size,
-        WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
-    );
-
-    let mut point = POINT::default();
-    unsafe { GetCursorPos(&mut point) };
-
-    let width = zwin.width();
-    let height = zwin.height();
-    zwin.set_pos(point.x as usize, point.y as usize, width, height, SWP_FRAMECHANGED);
-
-    let dc = unsafe { GetDC(0) };
-    assert!(!dc.is_null());
-
-    let mut last_printed = 0;
-    let mut color = Color::default();
-
-    let (mut prev_x, mut prev_y) = physical_mouse_pos();
-
-    loop {
+    unsafe {
+        mini::defer_results!();
         mini::profile!();
-        //Cannot exit normally because window is out of focus.
-        //Handle the input globally instead.
-        if is_down(VK_ESCAPE) {
-            break;
-        }
 
-        let _ = zwin.event();
+        //This function is very slow so it should be done in another thread.
+        let thread = std::thread::spawn(|| capture_virtual_screen());
+        let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
+        let ctx = create_ctx_ex("Color Picker", WIDTH + 1, HEIGHT + 1, style);
 
-        match ctx.event() {
-            Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
-            _ => {}
-        }
-
-        match poll_global_events() {
-            Some(Event::Input(Key::ScrollUp, _)) => {
-                zwin.buffer.fill(0x1f1f1f);
-                zwin.draw();
-            }
-            Some(Event::Input(Key::LeftMouseDown, _)) if last_printed != color.as_u32() => {
-                last_printed = color.as_u32();
-                copy_to_clipboard(&color.to_string());
-            }
-            _ => {}
-        }
-
-        let (x, y) = physical_mouse_pos();
-        let width = ctx.window.width() as i32;
-        let height = ctx.window.height() as i32;
-
-        // TODO: Get all the monitors at program start.
-        let monitor = unsafe {
-            let monitor = MonitorFromPoint(POINT { x, y }, MONITOR_DEFAULTTONULL);
-            assert!(!monitor.is_null());
-
-            let mut info = MONITORINFO::default();
-            assert!(GetMonitorInfoA(monitor, &mut info) != 0);
-            Rect::from_windows(info.rcMonitor)
-        };
-
-        // Adjust position based on monitor bounds
-        let mx = if x + width + OVERFLOW_X_OFFSET > monitor.x as i32 + monitor.width as i32 {
-            (x - width - OVERFLOW_X_OFFSET) as usize
-        } else {
-            (x + DEFAULT_X_OFFSET) as usize
-        };
-
-        let my = if y + height + OVERFLOW_Y_OFFSET > monitor.y as i32 + monitor.height as i32 {
-            (y - height - OVERFLOW_Y_OFFSET) as usize
-        } else {
-            (y + DEFAULT_Y_OFFSET) as usize
-        };
-
-        //Move the window around with the cursor.
-        ctx.window.set_pos(mx, my, 0, 0, SWP_NOSIZE);
-
-        //Check if the color needs to be updated.
-        if x != prev_x || y != prev_y {
-            mini::profile!("GetPixel");
-            //This call takes ~4ms
-            let pixel = unsafe { GetPixel(dc, x, y) };
-            let r = (pixel >> 16 & 0xFF) as u8;
-            let g = (pixel >> 8 & 0xFF) as u8;
-            let b = (pixel & 0xFF) as u8;
-            //Convert from BGR to RGB.
-            color = Color::new(b, g, r);
-
-            prev_x = x;
-            prev_y = y;
-        }
-
-        //Background
-        ctx.draw_rectangle_scaled(
-            0,
-            0,
-            ctx.window.width().saturating_sub(1).unscaled(),
-            ctx.window.height().saturating_sub(1).unscaled(),
-            BACKGROUND,
-            1,
-            BORDER,
-            0,
+        let zoom_size = 50;
+        let mut zwin = create_window(
+            "Zoom",
+            zoom_size,
+            zoom_size,
+            WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
         );
 
-        //Color Details
-        ctx.draw_rectangle_scaled(3, 3, COLOR_WIDTH + 1, COLOR_HEIGHT + 1, color, 1, BORDER, 0);
-        ctx.draw_text(&color.to_string(), default_font().unwrap(), 46, 10, 16, 0, Color::WHITE);
+        let mut point = POINT::default();
+        GetCursorPos(&mut point);
 
-        ctx.draw_frame();
+        let width = zwin.width();
+        let height = zwin.height();
+        zwin.set_pos(point.x as usize, point.y as usize, width, height, SWP_FRAMECHANGED);
+
+        let dc = GetDC(0);
+        assert!(!dc.is_null());
+
+        let mut last_printed = 0;
+        let mut color = Color::default();
+
+        let (mut prev_x, mut prev_y) = (0, 0);
+
+        //Copy the pixels of all monitors into a buffer.
+        //This adds about 10ms of startup time.
+        let (screen, vx, vy, vwidth, vheight) = thread.join().unwrap();
+
+        loop {
+            mini::profile!();
+            //Cannot exit normally because window is out of focus.
+            //Handle the input globally instead.
+            if is_down(VK_ESCAPE) {
+                break;
+            }
+
+            let _ = zwin.event();
+
+            match ctx.event() {
+                Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
+                _ => {}
+            }
+
+            match poll_global_events() {
+                Some(Event::Input(Key::ScrollUp, _)) => {
+                    zwin.buffer.fill(0x1f1f1f);
+                    zwin.draw();
+                }
+                Some(Event::Input(Key::LeftMouseDown, _)) if last_printed != color.as_u32() => {
+                    last_printed = color.as_u32();
+                    copy_to_clipboard(&color.to_string());
+                }
+                _ => {}
+            }
+
+            let (x, y) = physical_mouse_pos();
+            let width = ctx.window.width() as i32;
+            let height = ctx.window.height() as i32;
+
+            // TODO: Get all the monitors at program start.
+            let monitor = {
+                let monitor = MonitorFromPoint(POINT { x, y }, MONITOR_DEFAULTTONULL);
+                assert!(!monitor.is_null());
+
+                let mut info = MONITORINFO::default();
+                assert!(GetMonitorInfoA(monitor, &mut info) != 0);
+                Rect::from_windows(info.rcMonitor)
+            };
+
+            // Adjust position based on monitor bounds
+            let mx = if x + width + OVERFLOW_X_OFFSET > monitor.x as i32 + monitor.width as i32 {
+                (x - width - OVERFLOW_X_OFFSET) as usize
+            } else {
+                (x + DEFAULT_X_OFFSET) as usize
+            };
+
+            let my = if y + height + OVERFLOW_Y_OFFSET > monitor.y as i32 + monitor.height as i32 {
+                (y - height - OVERFLOW_Y_OFFSET) as usize
+            } else {
+                (y + DEFAULT_Y_OFFSET) as usize
+            };
+
+            //Move the window around with the cursor.
+            ctx.window.set_pos(mx, my, 0, 0, SWP_NOSIZE);
+
+            //Check if the color needs to be updated.
+            if x != prev_x || y != prev_y {
+                //Map the screen coordinates to the bitmap coordinates, these cannot be negative.
+                //x = 793, vx = -1920
+                //x = 793 - (-1920) = 2713
+                let x = x - vx;
+                let y = y - vy;
+
+                if let Some(pixel) = screen.get((x + (vwidth * y)) as usize) {
+                    let r = (pixel >> 16 & 0xFF) as u8;
+                    let g = (pixel >> 8 & 0xFF) as u8;
+                    let b = (pixel & 0xFF) as u8;
+                    color = Color::new(r, g, b);
+
+                    prev_x = x;
+                    prev_y = y;
+                }
+
+                //This call takes ~4ms
+                // let pixel = unsafe { GetPixel(dc, x, y) };
+                // let r = (pixel >> 16 & 0xFF) as u8;
+                // let g = (pixel >> 8 & 0xFF) as u8;
+                // let b = (pixel & 0xFF) as u8;
+                //Convert from BGR to RGB.
+                // color = Color::new(b, g, r);
+                // prev_x = x;
+                // prev_y = y;
+            }
+
+            //Background
+            ctx.draw_rectangle_scaled(
+                0,
+                0,
+                ctx.window.width().saturating_sub(1).unscaled(),
+                ctx.window.height().saturating_sub(1).unscaled(),
+                BACKGROUND,
+                1,
+                BORDER,
+                0,
+            );
+
+            //Color Details
+            ctx.draw_rectangle_scaled(3, 3, COLOR_WIDTH + 1, COLOR_HEIGHT + 1, color, 1, BORDER, 0);
+            ctx.draw_text(&color.to_string(), default_font().unwrap(), 46, 10, 16, 0, Color::WHITE);
+
+            ctx.draw_frame();
+        }
     }
 }
