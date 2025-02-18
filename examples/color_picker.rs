@@ -1,9 +1,11 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused)]
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 //TODO: Zooming with 4 zoom levels
 //TODO: Tray icon
 //TODO: Left click to show picker menu
+
+use std::ffi::c_void;
 
 use softui::*;
 
