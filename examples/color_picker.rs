@@ -90,12 +90,10 @@ fn main() {
             WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
         );
 
-        let mut point = POINT::default();
-        GetCursorPos(&mut point);
-
+        let (zmx, zmy) = mouse_pos();
         let width = zwin.width();
         let height = zwin.height();
-        zwin.set_pos(point.x as usize, point.y as usize, width, height, SWP_FRAMECHANGED);
+        zwin.set_pos(zmx as usize, zmy as usize, width, height, SWP_FRAMECHANGED);
 
         let dc = GetDC(0);
         assert!(!dc.is_null());
@@ -127,21 +125,43 @@ fn main() {
             }
 
             //TODO: Flickering when scrolling.
+            //TODO: Block the users ability to scroll when active.
+            //TODO: Scale up buffer at higher zoom levels, maybe cache the data?
             match poll_global_events() {
                 Some(Event::Input(Key::ScrollUp, _)) => {
                     //Don't move the window around at the highest zoom level.
-                    if zoom != ZOOM_400 {
-                        if zoom == 0 {
-                            zoom = ZOOM_200;
-                        } else if zoom == ZOOM_50 {
+                    if zoom == 0 {
+                        zoom = ZOOM_50;
+                        let (x, y) = (x - (zoom / 2), y - (zoom / 2));
+                        zwin.set_pos(x as usize, y as usize, zoom as usize, zoom as usize, 0);
+                        let x = x - vx;
+                        let y = y - vy;
+                        let width = ZOOM_50;
+                        let height = ZOOM_50;
+
+                        //Get a 50x50 rect above the users cursor and copy it to the zoom window.
+                        for i in y..y + height {
+                            let pos = (x + vwidth * i) as usize;
+                            if let Some(buffer) = screen.get(pos..pos + width as usize) {
+                                //We want y to start at 0, ending at 50.
+                                let zwiny = i - y;
+                                let pos = (0 + width * zwiny) as usize;
+                                if let Some(zoom) = zwin.buffer.get_mut(pos..pos + width as usize) {
+                                    zoom.copy_from_slice(buffer);
+                                }
+                            }
+                        }
+                        zwin.draw();
+                    } else if zoom != ZOOM_400 {
+                        if zoom == ZOOM_50 {
                             zoom = ZOOM_100;
                         } else if zoom == ZOOM_100 {
                             zoom = ZOOM_200;
                         } else if zoom == ZOOM_200 {
                             zoom = ZOOM_400;
                         }
-
                         let (x, y) = (x - (zoom / 2), y - (zoom / 2));
+
                         zwin.set_pos(x as usize, y as usize, zoom as usize, zoom as usize, 0);
                         zwin.buffer.fill(0xf8f8f9);
                         zwin.draw();
@@ -149,7 +169,13 @@ fn main() {
                 }
                 Some(Event::Input(Key::ScrollDown, _)) => {
                     //Don't move the window around at the lowest zoom level.
-                    if zoom != ZOOM_50 {
+                    if zoom == ZOOM_50 {
+                        //There is probably a better way to do this.
+                        zoom = 0;
+                        zwin.set_pos(0, 0, 0, 0, 0);
+                        zwin.buffer.clear();
+                        zwin.draw();
+                    } else {
                         if zoom == ZOOM_400 {
                             zoom = ZOOM_200;
                         } else if zoom == ZOOM_200 {
