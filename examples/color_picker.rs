@@ -47,9 +47,10 @@ const DEFAULT_Y_OFFSET: i32 = 10;
 const ZOOM_OUTER_BORDER: Color = rgb(66, 66, 66); //1px
 const ZOOM_INNER_BORDER: Color = rgb(39, 39, 39); //3px
 
-const LEVEL_1_ZOOM: usize = 50; //50x50 square
-const LEVEL_2_ZOOM: usize = 100; //100x100 square
-const LEVEL_3_ZOOM: usize = 200; //200x200 square
+const ZOOM_50: i32 = 50; //50x50 square
+const ZOOM_100: i32 = 100; //100x100 square
+const ZOOM_200: i32 = 200; //200x200 square
+const ZOOM_400: i32 = 400;
 
 //58x58 square 3 pixel grey border, 1 pixel light grey, 4 + 4 each side.
 // const LEVEL_1_ZOOM_BORDER: usize = LEVEL_1_ZOOM + 8;
@@ -65,21 +66,27 @@ const LEVEL_3_ZOOM: usize = 200; //200x200 square
 
 //TODO: EnumDisplaySettingsA and lock the framerate to the current monitor refresh rate.
 
-fn main() {
-    unsafe {
-        mini::defer_results!();
-        mini::profile!();
+#[cfg(feature = "dhat-heap")]
+#[global_allocator]
+static ALLOC: dhat::Alloc = dhat::Alloc;
 
+fn main() {
+    #[cfg(feature = "dhat-heap")]
+    let _profiler = dhat::Profiler::new_heap();
+
+    mini::defer_results!();
+
+    unsafe {
         //This function is very slow so it should be done in another thread.
         let thread = std::thread::spawn(|| capture_virtual_screen());
         let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
         let ctx = create_ctx_ex("Color Picker", WIDTH + 1, HEIGHT + 1, style);
 
-        let zoom_size = 50;
+        let mut zoom = 0;
         let mut zwin = create_window(
             "Zoom",
-            zoom_size,
-            zoom_size,
+            ZOOM_50,
+            ZOOM_50,
             WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
         );
 
@@ -110,6 +117,8 @@ fn main() {
                 break;
             }
 
+            let (x, y) = physical_mouse_pos();
+
             let _ = zwin.event();
 
             match ctx.event() {
@@ -117,10 +126,41 @@ fn main() {
                 _ => {}
             }
 
+            //TODO: Flickering when scrolling.
             match poll_global_events() {
                 Some(Event::Input(Key::ScrollUp, _)) => {
-                    zwin.buffer.fill(0x1f1f1f);
-                    zwin.draw();
+                    //Don't move the window around at the highest zoom level.
+                    if zoom != ZOOM_400 {
+                        if zoom == 0 {
+                            zoom = ZOOM_200;
+                        } else if zoom == ZOOM_50 {
+                            zoom = ZOOM_100;
+                        } else if zoom == ZOOM_100 {
+                            zoom = ZOOM_200;
+                        } else if zoom == ZOOM_200 {
+                            zoom = ZOOM_400;
+                        }
+
+                        let (x, y) = (x - (zoom / 2), y - (zoom / 2));
+                        zwin.set_pos(x as usize, y as usize, zoom as usize, zoom as usize, 0);
+                        zwin.buffer.fill(0xf8f8f9);
+                        zwin.draw();
+                    }
+                }
+                Some(Event::Input(Key::ScrollDown, _)) => {
+                    //Don't move the window around at the lowest zoom level.
+                    if zoom != ZOOM_50 {
+                        if zoom == ZOOM_400 {
+                            zoom = ZOOM_200;
+                        } else if zoom == ZOOM_200 {
+                            zoom = ZOOM_100;
+                        } else if zoom == ZOOM_100 {
+                            zoom = ZOOM_50;
+                        }
+
+                        let (x, y) = (x - (zoom / 2), y - (zoom / 2));
+                        zwin.set_pos(x as usize, y as usize, zoom as usize, zoom as usize, 0);
+                    }
                 }
                 Some(Event::Input(Key::LeftMouseDown, _)) if last_printed != color.as_u32() => {
                     last_printed = color.as_u32();
@@ -129,11 +169,7 @@ fn main() {
                 _ => {}
             }
 
-            let (x, y) = physical_mouse_pos();
-            let width = ctx.window.width() as i32;
-            let height = ctx.window.height() as i32;
-
-            // TODO: Get all the monitors at program start.
+            //TODO: Get all the monitors at program start.
             let monitor = {
                 let monitor = MonitorFromPoint(POINT { x, y }, MONITOR_DEFAULTTONULL);
                 assert!(!monitor.is_null());
@@ -143,7 +179,11 @@ fn main() {
                 Rect::from_windows(info.rcMonitor)
             };
 
-            // Adjust position based on monitor bounds
+            let width = ctx.window.width() as i32;
+            let height = ctx.window.height() as i32;
+
+            //TODO: This stopped working with my second monitor.
+            //Adjust position based on monitor bounds
             let mx = if x + width + OVERFLOW_X_OFFSET > monitor.x as i32 + monitor.width as i32 {
                 (x - width - OVERFLOW_X_OFFSET) as usize
             } else {
@@ -177,15 +217,19 @@ fn main() {
                     prev_y = y;
                 }
 
-                //This call takes ~4ms
-                // let pixel = unsafe { GetPixel(dc, x, y) };
-                // let r = (pixel >> 16 & 0xFF) as u8;
-                // let g = (pixel >> 8 & 0xFF) as u8;
-                // let b = (pixel & 0xFF) as u8;
-                //Convert from BGR to RGB.
-                // color = Color::new(b, g, r);
-                // prev_x = x;
-                // prev_y = y;
+                //TODO: Swap back to GetPixel, user might want to capture the pixel of a video or move a window around etc.
+                if false {
+                    //This call takes ~4ms
+                    let pixel = unsafe { GetPixel(dc, x, y) };
+                    let r = (pixel >> 16 & 0xFF) as u8;
+                    let g = (pixel >> 8 & 0xFF) as u8;
+                    let b = (pixel & 0xFF) as u8;
+                    // Convert from BGR to RGB.
+                    color = Color::new(b, g, r);
+
+                    prev_x = x;
+                    prev_y = y;
+                }
             }
 
             //Background
@@ -200,7 +244,7 @@ fn main() {
                 0,
             );
 
-            //Color Details
+            //Color
             ctx.draw_rectangle_scaled(3, 3, COLOR_WIDTH + 1, COLOR_HEIGHT + 1, color, 1, BORDER, 0);
             ctx.draw_text(&color.to_string(), default_font().unwrap(), 46, 10, 16, 0, Color::WHITE);
 

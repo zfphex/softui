@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 resolver = "2"
 
+[profile.release]
+# debug = 1
+
 [features]
 # default = ["image"]
 # TODO: How can I make this less braindead?
@@ -14,6 +17,7 @@ error = ["mini/error", "window/error"]
 svg = ["dep:resvg"]
 image = ["dep:zune-image"]
 dwrite = ["dep:dwrote"]
+dhat-heap = ["dep:dhat"]
 
 [dependencies]
 # window = { version = "0.1.0", git = "https://github.com/zx3no/window" }
@@ -31,5 +35,6 @@ zune-image = { version = "0.4.15", optional = true, default-features = false, fe
     # "simd",
     # "all"
 ] }
+dhat = {version = "0.3.3", optional = true}
 # lay_out = { version = "0.1.0", path = "../lay_out" }
 # lay_out = { git = "https://github.com/zX3no/lay_out", version = "0.1.0" }
