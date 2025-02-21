@@ -17,8 +17,8 @@ const BACKGROUND: Color = rgb(32, 32, 32);
 // const PICKER_WIDTH: usize = 120;
 // const PICKER_HEIGHT: usize = 64;
 
-const WIDTH: usize = 106;
-const HEIGHT: usize = 39;
+const WIDTH: i32 = 106;
+const HEIGHT: i32 = 39;
 
 // const PICKER_WIDTH: usize = 107;
 // const PICKER_HEIGHT: usize = 40;
@@ -80,11 +80,14 @@ fn main() {
         //This function is very slow so it should be done in another thread.
         let thread = std::thread::spawn(|| capture_virtual_screen());
         let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
-        let ctx = create_ctx_ex("Color Picker", WIDTH + 1, HEIGHT + 1, style);
+        let window = create_window("Color Picker", 0, 0, WIDTH + 1, HEIGHT + 1, style);
+        let ctx = create_ctx_ex("Color Picker", window);
 
         let mut zoom = 0;
         let mut zwin = create_window(
             "Zoom",
+            0,
+            0,
             ZOOM_50,
             ZOOM_50,
             WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),

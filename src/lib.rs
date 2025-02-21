@@ -1,8 +1,9 @@
 #![allow(unused, static_mut_refs)]
 #![feature(associated_type_defaults)]
-use core::ffi::c_void;
 use mini::{error, info, profile, warn};
 use std::{borrow::Cow, pin::Pin};
+
+pub use core::ffi::c_void;
 
 //Re-export the window functions.
 pub use window::*;
@@ -146,15 +147,16 @@ pub fn ctx() -> &'static mut Context {
 
 pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Context {
     unsafe {
-        CTX = Some(Context::new(title, width, height, WindowStyle::DEFAULT));
+        let window = create_window(title, 0, 0, width as i32, height as i32, WindowStyle::DEFAULT);
+        CTX = Some(Context::new(title, window));
         CTX.as_mut().unwrap()
     }
 }
 
 //TODO: Consolidate, can't be bothered fixing all the other functions that don't take style into account.
-pub fn create_ctx_ex(title: &str, width: usize, height: usize, style: WindowStyle) -> &'static mut Context {
+pub fn create_ctx_ex(title: &str, window: Pin<Box<Window>>) -> &'static mut Context {
     unsafe {
-        CTX = Some(Context::new(title, width, height, style));
+        CTX = Some(Context::new(title, window));
         CTX.as_mut().unwrap()
     }
 }
@@ -176,11 +178,9 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(title: &str, width: usize, height: usize, style: WindowStyle) -> Self {
+    pub fn new(title: &str, window: Pin<Box<Window>>) -> Self {
         //TODO: Remove me.
         load_default_font();
-
-        let window = create_window(title, width as i32, height as i32, style);
 
         Self {
             window,
@@ -194,10 +194,10 @@ impl Context {
         }
     }
 
-    pub fn create_child_window(&mut self, title: &str, width: i32, height: i32, style: WindowStyle) {
-        let window = create_window(title, width, height, style);
-        self.child_windows.push(window);
-    }
+    // pub fn create_child_window(&mut self, title: &str, width: i32, height: i32, style: WindowStyle) {
+    //     let window = create_window(title, width, height, style);
+    //     self.child_windows.push(window);
+    // }
 
     #[inline]
     pub const fn width(&self) -> ScaledUnit {
@@ -367,6 +367,7 @@ impl Context {
         let y = scale_temp(y.into(), self.window.area, scale);
         let width = scale_temp(width.into(), self.window.area, scale);
         let height = scale_temp(height.into(), self.window.area, scale);
+        dbg!(y);
 
         //Draw the rectangle border.
         if border != 0 {
