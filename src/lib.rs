@@ -356,7 +356,7 @@ impl Context {
     ) where
         X: Into<GenericUnit>,
         Y: Into<GenericUnit>,
-        WIDTH: Into<GenericUnit> + Copy,
+        WIDTH: Into<GenericUnit>,
         HEIGHT: Into<GenericUnit>,
     {
         let viewport_width = self.window.width();
@@ -367,7 +367,6 @@ impl Context {
         let y = scale_temp(y.into(), self.window.area, scale);
         let width = scale_temp(width.into(), self.window.area, scale);
         let height = scale_temp(height.into(), self.window.area, scale);
-        dbg!(y);
 
         //Draw the rectangle border.
         if border != 0 {
@@ -381,7 +380,7 @@ impl Context {
         //Calculate inner rectangle bounds.
         let (x, y, mut width, mut height) = (
             x + border,
-            x + border,
+            y + border,
             width.saturating_sub(border),
             height.saturating_sub(border),
         );

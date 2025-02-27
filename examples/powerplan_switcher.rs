@@ -6,9 +6,6 @@ const GUID_MAX_POWER_SAVINGS: GUID = GUID::from_u128(0xa1841308_3541_4fab_bc81_f
 const GUID_MIN_POWER_SAVINGS: GUID = GUID::from_u128(0x8c5e7fda_e8bf_4a96_9a85_a6e23a8c635c);
 const GUID_TYPICAL_POWER_SAVINGS: GUID = GUID::from_u128(0x381b4222_f694_41f0_9685_ff5bb260df2e);
 
-const WIDTH: i32 = 360;
-const HEIGHT: i32 = 100;
-
 #[link(name = "powrprof")]
 unsafe extern "system" {
     pub fn PowerSetActiveScheme(UserRootPowerKey: *mut c_void, SchemeGuid: *const GUID) -> u32;
@@ -56,34 +53,26 @@ fn accent_color() -> Color {
 }
 
 fn main() {
+    let padding = 10;
+    let font_size = 20;
+    let rect_height = 30;
+
+    let width = 360;
+    let height = 3 * (font_size as i32 + padding as i32);
+
     let window = create_window(
         "Power Plan Switcher",
-        1920 - WIDTH,
-        1080 - HEIGHT,
-        WIDTH,
-        HEIGHT,
+        1920 - width,
+        1080 - height,
+        width,
+        height,
         WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
     );
 
     let ctx = create_ctx_ex("Softui", window);
-    let font_size = 20;
-    let rect_height = 30;
-    let padding = 10;
     let accent = accent_color();
 
     set_default_font_size(font_size);
-
-    //TODO: This is not drawing at the correct y position.
-    // ctx.draw_rectangle_scaled(
-    //     0,
-    //     font_size + padding,
-    //     20,
-    //     rect_height,
-    //     accent,
-    //     0,
-    //     Color::default(),
-    //     0,
-    // );
 
     loop {
         //TODO: If the user didn't click in the window, close the program.
@@ -102,9 +91,6 @@ fn main() {
             // Some(Event::Input(Key::LeftMouseUp, _)) => {
             //     clicked = false;
             // }
-            Some(event) => {
-                dbg!(event);
-            }
             _ => {}
         }
 
@@ -155,7 +141,7 @@ fn main() {
         ctx.draw_text(
             "High performance",
             default_font().unwrap(),
-            hp.x,
+            hp.x + padding,
             hp.y,
             font_size,
             0,
@@ -165,7 +151,7 @@ fn main() {
         ctx.draw_text(
             "Balanced",
             default_font().unwrap(),
-            b.x,
+            b.x + padding,
             b.y,
             font_size,
             0,
@@ -175,7 +161,7 @@ fn main() {
         ctx.draw_text(
             "Power saver",
             default_font().unwrap(),
-            p.x,
+            p.x + padding,
             p.y,
             font_size,
             0,
