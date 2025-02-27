@@ -72,6 +72,9 @@ impl MouseState {
             release_position: None,
         }
     }
+    pub fn clicked(&self, area: Rect) -> bool {
+        self.released && self.inital_position.intersects(area)
+    }
     pub fn reset(&mut self) {
         self.pressed = false;
         self.released = false;

@@ -66,86 +66,115 @@ fn main() {
         HEIGHT,
         WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
     );
-    let ctx = create_ctx_ex("Softui", window);
 
+    let ctx = create_ctx_ex("Softui", window);
     let font_size = 20;
     let rect_height = 30;
     let padding = 10;
     let accent = accent_color();
 
+    //TODO: This is not drawing at the correct y position.
+    // ctx.draw_rectangle_scaled(
+    //     0,
+    //     font_size + padding,
+    //     20,
+    //     rect_height,
+    //     accent,
+    //     0,
+    //     Color::default(),
+    //     0,
+    // );
+
     loop {
+        //TODO: If the user didn't click in the window, close the program.
+        // match wait_for_global_events() {
+        //     Some(Event::Input(Key::LeftMouseDown, _)) => {}
+        //     _ => {}
+        // }
+
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
+            //TODO: The event is not exposed by this api...
+            //The context handles the clicked events.
+            // Some(Event::Input(Key::LeftMouseDown, _)) => {
+            //     clicked = true;
+            // }
+            // Some(Event::Input(Key::LeftMouseUp, _)) => {
+            //     clicked = false;
+            // }
+            Some(event) => {
+                dbg!(event);
+            }
             _ => {}
         }
 
         let power = current_plan();
 
         ctx.fill(0x202020.into());
-        // ctx.draw_rectangle_scaled(
-        //     0,
-        //     0,
-        //     ctx.window.width().unscaled(),
-        //     rect_height,
-        //     accent,
-        //     0,
-        //     Color::default(),
-        //     0,
-        // );
+
+        //Yeah this is pretty fast what can I say...?
+
+        let hp = Rect::new(0, 0, ctx.window.width(), rect_height);
+        let b = Rect::new(0, font_size + padding, ctx.window.width(), rect_height);
+        let p = Rect::new(0, 2 * (font_size + padding), ctx.window.width(), rect_height);
+
+        //TODO: The system takes a while to register the update.
+        //Maybe just draw based on what the user clicks and not what windows does.
+        match power {
+            "High performance" => {
+                ctx.draw_rectangle(hp.x, hp.y, hp.width, hp.height, accent);
+            }
+            "Balanced" => {
+                ctx.draw_rectangle(b.x, b.y, b.width, b.height, accent);
+            }
+            "Power saver" => {
+                ctx.draw_rectangle(p.x, p.y, p.width, p.height, accent);
+            }
+            _ => unreachable!(),
+        }
+
+        if ctx.left_mouse.clicked(hp) {
+            high_performance();
+        }
+
+        if ctx.left_mouse.clicked(b) {
+            balanced();
+        }
+
+        if ctx.left_mouse.clicked(p) {
+            power_saver();
+        }
 
         ctx.draw_text(
             "High performance",
             default_font().unwrap(),
-            0,
-            0,
+            hp.x,
+            hp.y,
             font_size,
             0,
             Color::WHITE,
         );
 
-        ctx.draw_rectangle(0, font_size + padding, ctx.window.width(), rect_height, accent);
-
-        //TODO: This is not drawing at the correct y position.
-        // ctx.draw_rectangle_scaled(
-        //     0,
-        //     font_size + padding,
-        //     20,
-        //     rect_height,
-        //     accent,
-        //     0,
-        //     Color::default(),
-        //     0,
-        // );
         ctx.draw_text(
             "Balanced",
             default_font().unwrap(),
-            0,
-            font_size + padding,
+            b.x,
+            b.y,
             font_size,
             0,
             Color::WHITE,
         );
 
-        // ctx.draw_rectangle(0, 2 * (font_size + padding), ctx.window.width(), rect_height, accent);
-        // ctx.draw_rectangle_scaled(
-        //     0,
-        //     font_size + font_size + 2 * padding,
-        //     ctx.window.width().unscaled(),
-        //     rect_height,
-        //     accent,
-        //     0,
-        //     Color::default(),
-        //     0,
-        // );
         ctx.draw_text(
             "Power saver",
             default_font().unwrap(),
-            0,
-            2 * (font_size + padding),
+            p.x,
+            p.y,
             font_size,
             0,
             Color::WHITE,
         );
+
         ctx.draw_frame();
     }
 }
