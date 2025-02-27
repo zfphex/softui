@@ -31,12 +31,10 @@ fn power_saver() {
 
 fn current_plan() -> &'static str {
     unsafe {
-        let mut policy = std::mem::zeroed();
+        let mut policy = core::mem::zeroed();
         assert!(PowerGetActiveScheme(core::ptr::null_mut(), &mut policy) == 0);
         assert!(!policy.is_null());
-        let p = &(*policy);
-
-        match *p {
+        match *policy {
             GUID_MAX_POWER_SAVINGS => "Power saver",
             GUID_MIN_POWER_SAVINGS => "High performance",
             GUID_TYPICAL_POWER_SAVINGS => "Balanced",
@@ -59,7 +57,7 @@ fn accent_color() -> Color {
 
 fn main() {
     let window = create_window(
-        "PowerPlanSwitcher",
+        "Power Plan Switcher",
         1920 - WIDTH,
         1080 - HEIGHT,
         WIDTH,
@@ -72,6 +70,8 @@ fn main() {
     let rect_height = 30;
     let padding = 10;
     let accent = accent_color();
+
+    set_default_font_size(font_size);
 
     //TODO: This is not drawing at the correct y position.
     // ctx.draw_rectangle_scaled(
@@ -108,19 +108,17 @@ fn main() {
             _ => {}
         }
 
-        let power = current_plan();
-
         ctx.fill(0x202020.into());
 
-        //Yeah this is pretty fast what can I say...?
-
+        //Great layout code right here.
         let hp = Rect::new(0, 0, ctx.window.width(), rect_height);
-        let b = Rect::new(0, font_size + padding, ctx.window.width(), rect_height);
-        let p = Rect::new(0, 2 * (font_size + padding), ctx.window.width(), rect_height);
+        let b = hp.y(font_size + padding);
+        let p = hp.y(2 * (font_size + padding));
 
+        //Yeah this is pretty fast what can I say...?
         //TODO: The system takes a while to register the update.
         //Maybe just draw based on what the user clicks and not what windows does.
-        match power {
+        match current_plan() {
             "High performance" => {
                 ctx.draw_rectangle(hp.x, hp.y, hp.width, hp.height, accent);
             }
@@ -144,6 +142,15 @@ fn main() {
         if ctx.left_mouse.clicked(p) {
             power_saver();
         }
+
+        //This is the code I want.
+        //How would I add the selection highlight?
+        //I need `text().selected(|| {})` and  `text.hover(|| {})` functions
+        // v!(
+        //     text("High performance"),
+        //     text("Balanced"),
+        //     text("Power saver")
+        // ).padding(padding);
 
         ctx.draw_text(
             "High performance",
