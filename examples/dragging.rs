@@ -12,9 +12,13 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         //Dragging example.
-        if ctx.left_mouse.inital_position != Rect::default() {
-            let inital = ctx.left_mouse.inital_position;
-            let end = ctx.left_mouse.release_position.unwrap_or(ctx.mouse_pos);
+        if ctx.window.left_mouse.inital_position != Rect::default() {
+            let inital = ctx.window.left_mouse.inital_position;
+            let end = ctx
+                .window
+                .left_mouse
+                .release_position
+                .unwrap_or(ctx.window.mouse_position);
             let mut drag = Rect::default();
 
             if end.x > inital.x {

@@ -167,14 +167,6 @@ pub fn create_ctx_ex(title: &str, window: Pin<Box<Window>>) -> &'static mut Cont
 pub struct Context {
     pub window: Pin<Box<Window>>,
     pub child_windows: Vec<Pin<Box<Window>>>,
-    //This should really be a Vec2 or (usize, usize), but this makes checking
-    //rectangle intersections really easy.
-    pub mouse_pos: Rect,
-    pub left_mouse: MouseState,
-    pub right_mouse: MouseState,
-    pub middle_mouse: MouseState,
-    pub mouse_4: MouseState,
-    pub mouse_5: MouseState,
 }
 
 impl Context {
@@ -185,12 +177,6 @@ impl Context {
         Self {
             window,
             child_windows: Vec::new(),
-            mouse_pos: Rect::default(),
-            left_mouse: MouseState::new(),
-            right_mouse: MouseState::new(),
-            middle_mouse: MouseState::new(),
-            mouse_4: MouseState::new(),
-            mouse_5: MouseState::new(),
         }
     }
 
@@ -209,53 +195,9 @@ impl Context {
         ScaledUnit::ViewportHeight(0)
     }
 
-    //TODO: Cleanup and remove.
+    #[inline]
     pub fn event(&mut self) -> Option<Event> {
-        match self.window.event() {
-            Some(event) => {
-                match event {
-                    Event::MouseMoveInsideWindow(x, y) => {
-                        if x < 0 || y < 0 {
-                            todo!("Handle negative mouse co-ordinates with RECT instead of Rect");
-                        }
-                        self.mouse_pos = Rect::new(x as usize, y as usize, 1, 1);
-                    }
-                    Event::Input(Key::LeftMouseDown, _) => {
-                        self.left_mouse.pressed(self.mouse_pos);
-                    }
-                    Event::Input(Key::LeftMouseUp, _) => {
-                        self.left_mouse.released(self.mouse_pos);
-                    }
-                    Event::Input(Key::RightMouseDown, _) => {
-                        self.right_mouse.pressed(self.mouse_pos);
-                    }
-                    Event::Input(Key::RightMouseUp, _) => {
-                        self.right_mouse.released(self.mouse_pos);
-                    }
-                    Event::Input(Key::MiddleMouseDown, _) => {
-                        self.middle_mouse.pressed(self.mouse_pos);
-                    }
-                    Event::Input(Key::MiddleMouseUp, _) => {
-                        self.middle_mouse.released(self.mouse_pos);
-                    }
-                    Event::Input(Key::Mouse4Down, _) => {
-                        self.mouse_4.pressed(self.mouse_pos);
-                    }
-                    Event::Input(Key::Mouse4Up, _) => {
-                        self.mouse_4.released(self.mouse_pos);
-                    }
-                    Event::Input(Key::Mouse5Down, _) => {
-                        self.mouse_5.pressed(self.mouse_pos);
-                    }
-                    Event::Input(Key::Mouse5Up, _) => {
-                        self.mouse_5.released(self.mouse_pos);
-                    }
-                    _ => return Some(event),
-                }
-                None
-            }
-            None => None,
-        }
+        self.window.event()
     }
 
     //TODO: There is no support for depth.
@@ -301,14 +243,6 @@ impl Context {
         }
 
         self.window.draw();
-
-        //Reset the important state at the end of a frame.
-        //Does this break dragging?
-        self.left_mouse.reset();
-        self.right_mouse.reset();
-        self.middle_mouse.reset();
-        self.mouse_4.reset();
-        self.mouse_5.reset();
 
         //Limit the framerate to the primary monitors refresh rate.
         //TODO: Wait timers are likely better for all refresh rates.

@@ -83,14 +83,6 @@ fn main() {
 
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
-            //TODO: The event is not exposed by this api...
-            //The context handles the clicked events.
-            // Some(Event::Input(Key::LeftMouseDown, _)) => {
-            //     clicked = true;
-            // }
-            // Some(Event::Input(Key::LeftMouseUp, _)) => {
-            //     clicked = false;
-            // }
             _ => {}
         }
 
@@ -117,15 +109,15 @@ fn main() {
             _ => unreachable!(),
         }
 
-        if ctx.left_mouse.clicked(hp) {
+        if ctx.window.left_mouse.clicked(hp) {
             high_performance();
         }
 
-        if ctx.left_mouse.clicked(b) {
+        if ctx.window.left_mouse.clicked(b) {
             balanced();
         }
 
-        if ctx.left_mouse.clicked(p) {
+        if ctx.window.left_mouse.clicked(p) {
             power_saver();
         }
 

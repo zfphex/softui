@@ -18,8 +18,8 @@ fn main() {
                 .on_click(Left, |_| println!("Left"))
                 .on_click(Right, |_| println!("Right"))
                 .on_click(Middle, |_| println!("Middle"))
-                .on_click(Back, |_| println!("Mouse4"))
-                .on_click(Forward, |_| println!("Mouse5"));
+                .on_click(Mouse4, |_| println!("Mouse4"))
+                .on_click(Mouse5, |_| println!("Mouse5"));
 
             v!(text);
         }

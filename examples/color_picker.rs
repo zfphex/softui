@@ -93,7 +93,7 @@ fn main() {
             WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
         );
 
-        let (zmx, zmy) = mouse_pos();
+        let (zmx, zmy) = get_mouse_position();
         let width = zwin.width();
         let height = zwin.height();
         zwin.set_pos(zmx as usize, zmy as usize, width, height, SWP_FRAMECHANGED);
@@ -118,7 +118,7 @@ fn main() {
                 break;
             }
 
-            let (x, y) = physical_mouse_pos();
+            let (x, y) = get_physical_mouse_position();
 
             let _ = zwin.event();
 
@@ -191,10 +191,11 @@ fn main() {
                         zwin.set_pos(x as usize, y as usize, zoom as usize, zoom as usize, 0);
                     }
                 }
-                Some(Event::Input(Key::LeftMouseDown, _)) if last_printed != color.as_u32() => {
-                    last_printed = color.as_u32();
-                    copy_to_clipboard(&color.to_string());
-                }
+                //TODO: Global mouse input was broken in the refactor.
+                // Some(Event::Input(Key::LeftMouseDown, _)) if last_printed != color.as_u32() => {
+                //     last_printed = color.as_u32();
+                //     copy_to_clipboard(&color.to_string());
+                // }
                 _ => {}
             }
 
