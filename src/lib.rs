@@ -112,33 +112,9 @@ pub fn queue_area_fn(f: fn(&mut Context, Rect) -> (), area: Rect) {
     }
 }
 
-// pub static mut CONTEXT: Context = Context {
-//     buffer: Vec::new(),
-//     area: Rect::default(),
-//     width: 0,
-//     height: 0,
-//     // window: Pin::new(Box::new(Window {
-//     //     hwnd: 0,
-//     //     screen_mouse_pos: (0, 0),
-//     //     queue: SegQueue::new(),
-//     // })),
-//     window: todo!(),
-//     context: None,
-//     bitmap: BITMAPINFO::new(0, 0),
-//     mouse_pos: Rect::default(),
-//     left_mouse: MouseState::new(),
-//     right_mouse: MouseState::new(),
-//     middle_mouse: MouseState::new(),
-//     mouse_4: MouseState::new(),
-//     mouse_5: MouseState::new(),
-// };
-
-//This is definitely 100% thread safe.
-//No issues here at all.
+//TODO: Rework the global context.
+//Use atomics and support multiple windows.
 pub static mut CTX: Option<Context> = None;
-
-// pub static mut VIEWPORT: AtomicRect = AtomicRect::new(0, 0, 0, 0);
-// pub use std::sync::atomic::Ordering::SeqCst;
 
 #[inline]
 pub fn ctx() -> &'static mut Context {
@@ -161,12 +137,9 @@ pub fn create_ctx_ex(title: &str, window: Pin<Box<Window>>) -> &'static mut Cont
     }
 }
 
-/// Holds the framebuffer and input state.
-/// Also handles rendering.
 #[derive(Debug)]
 pub struct Context {
     pub window: Pin<Box<Window>>,
-    pub child_windows: Vec<Pin<Box<Window>>>,
 }
 
 impl Context {
@@ -174,16 +147,8 @@ impl Context {
         //TODO: Remove me.
         load_default_font();
 
-        Self {
-            window,
-            child_windows: Vec::new(),
-        }
+        Self { window }
     }
-
-    // pub fn create_child_window(&mut self, title: &str, width: i32, height: i32, style: WindowStyle) {
-    //     let window = create_window(title, width, height, style);
-    //     self.child_windows.push(window);
-    // }
 
     #[inline]
     pub const fn width(&self) -> ScaledUnit {
