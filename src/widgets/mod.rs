@@ -1,4 +1,6 @@
 pub mod rectangle;
+use std::{ops::Deref, slice::Iter};
+
 pub use rectangle::*;
 
 #[cfg(feature = "svg")]
@@ -301,175 +303,52 @@ where
     }
 }
 
-impl Widget for () {
-    #[inline]
-    fn area(&self) -> Rect {
-        unreachable!()
-    }
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
-    }
-
-    #[inline]
-    fn primative(&self) -> Primative {
-        unreachable!()
-    }
-}
-
-impl<T: Widget> Widget for &T {
-    #[inline]
-    fn primative(&self) -> Primative {
-        (*self).primative()
-    }
-
-    #[inline]
-    fn area(&self) -> Rect {
-        (*self).area()
-    }
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
-    }
-}
-
-//Holy this is 😰😰😰
-impl<T: Widget> Widget for &mut T {
-    #[inline]
-    fn primative(&self) -> Primative {
-        (*(*self)).primative()
-    }
-
-    #[inline]
-    fn area(&self) -> Rect {
-        (*(*self)).area()
-    }
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        (*(*self)).area_mut()
-    }
-}
-
-// Allow for containers of the same widget
-impl<T: Widget> Widget for &[T] {
-    type Layout = T;
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
-    }
-
-    #[inline]
-    fn area(&self) -> Rect {
-        unreachable!()
-    }
-
-    #[inline]
-    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
-        self
-    }
-
-    #[inline]
-    fn primative(&self) -> Primative {
-        unreachable!()
-    }
-}
-
 impl<T: Widget> Widget for &mut [T] {
     type Layout = T;
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
-    }
-
-    #[inline]
     fn area(&self) -> Rect {
         unreachable!()
     }
-
-    #[inline]
-    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
-        self
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        unreachable!()
     }
-
-    #[inline]
     fn primative(&self) -> Primative {
         unreachable!()
     }
+    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
+        self
+    }
 }
 
-impl<T: Widget, const N: usize> Widget for [T; N] {
+impl<const N: usize, T: Widget> Widget for [T; N] {
     type Layout = T;
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
-    }
-
-    #[inline]
     fn area(&self) -> Rect {
         unreachable!()
     }
-
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        unreachable!()
+    }
+    fn primative(&self) -> Primative {
+        unreachable!()
+    }
     #[inline]
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         self.as_slice()
-    }
-
-    #[inline]
-    fn primative(&self) -> Primative {
-        unreachable!()
     }
 }
 
 impl<T: Widget> Widget for Vec<T> {
     type Layout = T;
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
-    }
-
-    #[inline]
     fn area(&self) -> Rect {
         unreachable!()
     }
-
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        unreachable!()
+    }
+    fn primative(&self) -> Primative {
+        unreachable!()
+    }
     #[inline]
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
         self.as_slice()
-    }
-
-    #[inline]
-    fn primative(&self) -> Primative {
-        unreachable!()
-    }
-}
-
-impl<T: Widget> Widget for Box<[T]> {
-    type Layout = T;
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        None
-    }
-
-    #[inline]
-    fn area(&self) -> Rect {
-        unreachable!()
-    }
-
-    #[inline]
-    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
-        self
-    }
-
-    #[inline]
-    fn primative(&self) -> Primative {
-        unreachable!()
     }
 }

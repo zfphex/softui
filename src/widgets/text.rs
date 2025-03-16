@@ -163,10 +163,6 @@ impl<'a> Widget for Text<'a> {
         Primative::Text(self.text.to_string(), self.font_size, Color::WHITE)
     }
 
-    fn centered(self, parent: Rect) -> Self {
-        todo!()
-    }
-
     #[inline]
     fn area(&self) -> Rect {
         self.area

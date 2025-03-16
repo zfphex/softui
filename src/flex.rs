@@ -308,10 +308,14 @@ macro_rules! h {
 
             $(
                 let w = &mut $widget;
-                let area = w.area();
-                height = area.height.max(height);
-                width += area.width;
-                widgets.push((area, w.primative()));
+
+                //TODO: Make sure this works with most types.
+                for w in w.as_uniform_layout_type() {
+                    let area = w.area();
+                    height = area.height.max(height);
+                    width += area.width;
+                    widgets.push((area, w.primative()));
+                }
             )*
 
             //If there is only one element the gap is not important.

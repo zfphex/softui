@@ -1,5 +1,5 @@
-#![allow(unused, static_mut_refs)]
-#![feature(associated_type_defaults)]
+#![allow(unused, static_mut_refs, incomplete_features)]
+#![feature(associated_type_defaults, specialization)]
 use mini::{error, info, profile, warn};
 use std::{borrow::Cow, pin::Pin};
 
@@ -9,6 +9,7 @@ pub use core::ffi::c_void;
 pub use window::*;
 
 pub mod atomic_float;
+pub mod color;
 pub mod flex;
 pub mod input;
 pub mod layout;
@@ -16,8 +17,8 @@ pub mod macros;
 pub mod scaling;
 pub mod style;
 pub mod widgets;
-pub mod color;
 
+pub use color::*;
 pub use flex::*;
 pub use input::*;
 pub use layout::*;
@@ -26,7 +27,6 @@ pub use scaling::*;
 pub use style::*;
 pub use widgets::*;
 pub use MouseButton::*;
-pub use color::*;
 
 //Ideally the user could write there own commands
 //Then they would send custom commands to the context.
@@ -62,7 +62,7 @@ pub enum Primative {
     /// (radius, color)
     Ellipse(usize, Color),
     RectangleOutline(Color),
-    /// (text, font_size,Color)
+    /// (text, font_size, Color)
     /// This needs to include the desired font.
     /// Not sure how to do that yet.
     //TODO: Should font size be f32?
@@ -219,10 +219,10 @@ impl Context {
                 Primative::RectangleOutline(color) => {
                     self.draw_rectangle_outline(x, y, width, height, color);
                 }
-                Primative::Text(text, size, color) => {
+                Primative::Text(text, font_size, color) => {
                     //TODO: Specify the font with a font database and font ID.
                     let font = default_font().unwrap();
-                    self.draw_text(&text, font, size, x, y, 0, color);
+                    self.draw_text(&text, &font, cmd.area.x, cmd.area.y, font_size, 0, color);
                 }
                 // Primative::CustomBoxed(f) => f(self),
                 Primative::Custom(f) => f(self),

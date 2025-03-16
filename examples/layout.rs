@@ -7,18 +7,11 @@ fn main() {
     let mut r2 = rect().bg(Color::GREEN).wh(50);
     let mut r3 = rect().bg(Color::BLUE).wh(50);
     let mut r4 = rect().bg(Color::new(20, 30, 100)).wh(60);
+    let mut texts = [text("test"), text("test2")];
 
     ctx.fill(Color::BLACK);
 
-    flex!(
-        h!(r1, r2, r3, r4).gap(32),
-        h!(rect().wh(20).bg(Color::BLACK), rect().wh(300).bg(Color::RED))
-    )
-    .gap(32)
-    .padding(32)
-    .bg(Color::WHITE);
-
-    // flex!(h!(rect().wh(300).bg(pink()), rect().w(300).h(200)).gap(32)).bg(gray());
+    flex!(h!(r1, r2, r3, r4, text("hi"), texts).gap(32));
 
     ctx.draw_frame();
 
