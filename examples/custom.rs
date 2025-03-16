@@ -45,10 +45,7 @@ fn main() {
         queue_fn(triangle);
 
         //or
-        queue_command(Command {
-            area: Rect::default(),
-            primative: Primative::CustomFn(triangle),
-        });
+        queue_command(Rect::default(), Primative::CustomFn(triangle));
 
         //or
         #[allow(static_mut_refs)]

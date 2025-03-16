@@ -9,13 +9,16 @@ pub use core::ffi::c_void;
 pub use window::*;
 
 pub mod atomic_float;
+pub mod flex;
 pub mod input;
 pub mod layout;
 pub mod macros;
 pub mod scaling;
 pub mod style;
 pub mod widgets;
+pub mod color;
 
+pub use flex::*;
 pub use input::*;
 pub use layout::*;
 pub use macros::*;
@@ -23,6 +26,7 @@ pub use scaling::*;
 pub use style::*;
 pub use widgets::*;
 pub use MouseButton::*;
+pub use color::*;
 
 //Ideally the user could write there own commands
 //Then they would send custom commands to the context.
@@ -40,6 +44,17 @@ pub use MouseButton::*;
 pub struct Command {
     pub area: Rect,
     pub primative: Primative,
+}
+
+impl Command {
+    fn queue(self) {
+        unsafe {
+            COMMAND_QUEUE.push(Command {
+                area: self.area,
+                primative: self.primative,
+            })
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -88,8 +103,8 @@ impl std::fmt::Debug for Primative {
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
 
 #[inline]
-pub fn queue_command(command: Command) {
-    unsafe { COMMAND_QUEUE.push(command) }
+pub fn queue_command(area: Rect, primative: Primative) {
+    unsafe { COMMAND_QUEUE.push(Command { area, primative }) }
 }
 
 #[inline]
@@ -108,6 +123,15 @@ pub fn queue_area_fn(f: fn(&mut Context, Rect) -> (), area: Rect) {
         COMMAND_QUEUE.push(Command {
             area,
             primative: Primative::CustomAreaFn(f),
+        });
+    }
+}
+
+pub fn draw_widget<W: Widget>(widget: W) {
+    unsafe {
+        COMMAND_QUEUE.push(Command {
+            area: widget.area(),
+            primative: widget.primative(),
         });
     }
 }
@@ -165,6 +189,11 @@ impl Context {
         self.window.event()
     }
 
+    #[inline]
+    pub fn event_blocking(&mut self) -> Option<Event> {
+        self.window.event_blocking()
+    }
+
     //TODO: There is no support for depth.
     pub fn draw_frame(&mut self) {
         profile!();
@@ -182,8 +211,7 @@ impl Context {
                 // }
                 Primative::Ellipse(radius, color) => {
                     if radius == 0 {
-                        todo!();
-                        // self.draw_rectangle(x, y, width, height, color);
+                        self.draw_rectangle(x, y, width, height, color);
                     } else {
                         self.draw_rectangle_rounded(x, y, width, height, color, radius);
                     }

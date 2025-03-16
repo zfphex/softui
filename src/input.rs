@@ -7,8 +7,12 @@ pub fn clicked(ctx: &Context, area: Rect, button: MouseButton) -> bool {
 
     match button {
         MouseButton::Left => ctx.window.left_mouse.released && ctx.window.left_mouse.inital_position.intersects(area),
-        MouseButton::Right => ctx.window.right_mouse.released && ctx.window.right_mouse.inital_position.intersects(area),
-        MouseButton::Middle => ctx.window.middle_mouse.released && ctx.window.middle_mouse.inital_position.intersects(area),
+        MouseButton::Right => {
+            ctx.window.right_mouse.released && ctx.window.right_mouse.inital_position.intersects(area)
+        }
+        MouseButton::Middle => {
+            ctx.window.middle_mouse.released && ctx.window.middle_mouse.inital_position.intersects(area)
+        }
         MouseButton::Mouse4 => ctx.window.mouse_4.released && ctx.window.mouse_4.inital_position.intersects(area),
         MouseButton::Mouse5 => ctx.window.mouse_5.released && ctx.window.mouse_5.inital_position.intersects(area),
     }

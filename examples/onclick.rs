@@ -21,7 +21,8 @@ fn main() {
                 .on_click(Mouse4, |_| println!("Mouse4"))
                 .on_click(Mouse5, |_| println!("Mouse5"));
 
-            v!(text);
+            todo!()
+            // v!(text);
         }
 
         ctx.draw_frame();
