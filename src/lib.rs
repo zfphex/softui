@@ -1,7 +1,7 @@
 #![allow(unused, static_mut_refs, incomplete_features)]
 #![feature(associated_type_defaults, specialization)]
 use mini::{error, info, profile, warn};
-use std::{borrow::Cow, pin::Pin};
+use std::{any::Any, borrow::Cow, pin::Pin, sync::Arc};
 
 pub use core::ffi::c_void;
 
@@ -69,15 +69,20 @@ pub enum Primative {
     //TODO: Could change text to Cow<'_, str>
     Text(String, usize, Color),
 
-    //But which to use?
+    // TODO: Now idea how to allow this properly.
     // CustomBoxed(Box<dyn FnOnce(&mut Context) -> ()>),
-    Custom(&'static dyn Fn(&mut Context) -> ()),
-    CustomFn(fn(&mut Context) -> ()),
-    CustomAreaFn(fn(&mut Context, Rect) -> ()),
-
+    // Custom(&'static dyn Fn(&mut Context) -> ()),
+    // CustomFn(fn(&mut Context) -> ()),
+    // Custom(fn(&mut Context, Box<dyn std::any::Any>) -> (), Box<dyn DynClone>),
     #[cfg(feature = "image")]
     ///(bitmap, x, y, width, height, format)
     ImageUnsafe(&'static [u8], ImageFormat),
+
+    Custom(fn(&mut Context, Rect) -> ()),
+    CustomAny {
+        data: Arc<dyn Any + Send + Sync>,
+        f: fn(&mut Context, Rect, &dyn Any),
+    },
 }
 
 impl std::fmt::Debug for Primative {
@@ -87,15 +92,15 @@ impl std::fmt::Debug for Primative {
             Self::RectangleOutline(arg0) => f.debug_tuple("RectangleOutline").field(arg0).finish(),
             Self::Text(arg0, arg1, arg2) => f.debug_tuple("Text").field(arg0).field(arg1).field(arg2).finish(),
             // Self::CustomBoxed(arg0) => f.debug_tuple("CustomBoxed").finish(),
-            Self::Custom(arg0) => f.debug_tuple("Custom").finish(),
-            Self::CustomFn(arg0) => f.debug_tuple("CustomFn").field(arg0).finish(),
-            Self::CustomAreaFn(arg0) => f.debug_tuple("CustomAreaFn").field(arg0).finish(),
+            // Self::CustomFn(arg0) => f.debug_tuple("CustomFn").field(arg0).finish(),
+            // Self::CustomAreaFn(arg0) => f.debug_tuple("CustomAreaFn").field(arg0).finish(),
             #[cfg(feature = "image")]
             Self::ImageUnsafe(arg0, arg1) => f
                 .debug_tuple("ImageUnsafe")
                 // .field(arg0)
                 .field(arg1)
                 .finish(),
+            _ => f.debug_tuple("Unknown").finish(),
         }
     }
 }
@@ -108,22 +113,22 @@ pub fn queue_command(area: Rect, primative: Primative) {
 }
 
 #[inline]
-pub fn queue_fn(f: fn(&mut Context) -> ()) {
+pub fn queue_custom_any(f: fn(&mut Context, Rect, &dyn Any), area: Rect, data: Arc<(dyn Any + Send + Sync + 'static)>) {
     unsafe {
         COMMAND_QUEUE.push(Command {
-            area: Rect::default(),
-            primative: Primative::CustomFn(f),
-        });
+            area,
+            primative: Primative::CustomAny { data, f },
+        })
     }
 }
 
 #[inline]
-pub fn queue_area_fn(f: fn(&mut Context, Rect) -> (), area: Rect) {
+pub fn queue_custom(f: fn(&mut Context, Rect), area: Rect) {
     unsafe {
         COMMAND_QUEUE.push(Command {
             area,
-            primative: Primative::CustomAreaFn(f),
-        });
+            primative: Primative::Custom(f),
+        })
     }
 }
 
@@ -225,13 +230,13 @@ impl Context {
                     self.draw_text(&text, &font, cmd.area.x, cmd.area.y, font_size, 0, color);
                 }
                 // Primative::CustomBoxed(f) => f(self),
-                Primative::Custom(f) => f(self),
-                Primative::CustomFn(f) => f(self),
-                Primative::CustomAreaFn(f) => f(self, cmd.area),
+                // Primative::Custom(f, data) => f(self, data),
                 #[cfg(feature = "image")]
                 Primative::ImageUnsafe(bitmap, image_format) => {
                     self.draw_image(bitmap, x, y, width, height, image_format);
                 }
+                Primative::CustomAny { data, f } => f(self, cmd.area, &*data),
+                Primative::Custom(f) => f(self, cmd.area),
             }
         }
 
