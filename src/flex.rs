@@ -72,11 +72,9 @@ pub fn calculate_offset(direction: FlexDirection, padding: Padding) -> usize {
     }
 }
 
-
 pub fn draw_widgets(
     commands: &mut Vec<Command>,
     container: &mut Container,
-    direction: FlexDirection,
     offset: &mut usize,
     padding: Padding,
 ) {
@@ -84,13 +82,16 @@ pub fn draw_widgets(
     for (i, (area, primative)) in container.widgets.iter().enumerate() {
         let mut area = area.clone();
 
-        match direction {
+        match container.direction {
             FlexDirection::LeftRight => {
                 area.x = *offset;
                 area.y += padding.top
             }
             FlexDirection::RightLeft => todo!(),
-            FlexDirection::TopBottom => todo!(),
+            FlexDirection::TopBottom => {
+                area.x += padding.left;
+                area.y = *offset;
+            },
             FlexDirection::BottomTop => todo!(),
         }
 
@@ -104,19 +105,29 @@ pub fn draw_widgets(
             *offset += container.gap;
         }
 
-        *offset += area.width;
+        match container.direction {
+            FlexDirection::LeftRight => *offset += area.width,
+            FlexDirection::RightLeft => todo!(),
+            FlexDirection::TopBottom => *offset += area.height,
+            FlexDirection::BottomTop => todo!(),
+        }
     }
 }
 
-pub fn calculate_sizing(container: &mut Container, area: &mut Rect, direction: FlexDirection) {
-    match direction {
+/// Calculate the sizing of the flex container
+/// This is the total size of all containers and widgets.
+pub fn calculate_sizing(container: &mut Container, area: &mut Rect) {
+    match container.direction {
         FlexDirection::LeftRight => {
             area.width += container.area.width;
             //Padding would have been overwritten here.
             area.height = area.height.max(container.area.height)
         }
         FlexDirection::RightLeft => todo!(),
-        FlexDirection::TopBottom => todo!(),
+        FlexDirection::TopBottom => {
+            area.width = area.width.max(container.area.width);
+            area.height += container.area.height;
+        },
         FlexDirection::BottomTop => todo!(),
     }
 }
@@ -135,13 +146,16 @@ macro_rules! flex {
                 let mut container = $container.call_mut();
                 //TODO: This function may not be needed.
                 //See using the `offset`` as `width` bellow.
-                $crate::calculate_sizing(&mut container, &mut area, direction);
-                $crate::draw_widgets(&mut commands, &mut container, direction, &mut offset, padding);
+                $crate::calculate_sizing(&mut container, &mut area);
+                $crate::draw_widgets(&mut commands, &mut container,  &mut offset, padding);
                 offset += gap;
             )*
 
             //Since we don't check the last iteration.
             //The gap is added an extra time at the end.
+            //This is the direction of the root flex container 
+            //flex!(v!(text()), v!(text))
+            //This would be layed out horzontially since v! only affects it's children.
             match direction {
                 FlexDirection::LeftRight => {
                     area.width = offset - gap;
@@ -156,8 +170,6 @@ macro_rules! flex {
                 FlexDirection::BottomTop => todo!(),
             }
 
-
-
             $crate::Flex { commands, area }
         };
 
@@ -171,6 +183,7 @@ macro_rules! flex {
     }}
 }
 
+#[derive(Debug)]
 pub struct Flex {
     pub commands: Vec<Command>,
     pub area: Rect,
@@ -235,6 +248,7 @@ impl<F: FnMut(FlexDirection, Padding, usize) -> Flex> Defer for DeferFlex<F> {
 #[derive(Debug)]
 pub struct Container {
     pub widgets: Vec<(Rect, Primative)>,
+    pub direction: FlexDirection,
     pub area: Rect,
     pub gap: usize,
 }
@@ -319,7 +333,47 @@ macro_rules! h {
             )*
 
             //If there is only one element the gap is not important.
-            Container { widgets, area: Rect::new(0, 0, width, height), gap: if count > 1 { gap } else { 0 } }
+            Container { direction: $crate::FlexDirection::LeftRight, widgets, area: Rect::new(0, 0, width, height), gap: if count > 1 { gap } else { 0 } }
+        };
+
+        //Defer the creation of the container so that the builder pattern
+        //can be used to modifiy aspects of the container such as gap and padding.
+        $crate::DeferContainer {
+            f,
+            padding: Padding::default(),
+            gap: 0,
+        }
+    }};
+}
+
+//There might be some way to reduce code-reuse here, but it's kind of necessary to avoid massive unintended match statements.
+#[macro_export]
+macro_rules! v {
+    ($($widget:expr),* $(,)?) => {{
+        //TODO: Padding is unused here.
+        let f = |padding: Padding, gap: usize| {
+            let count = $crate::count_expr!($($widget),*);
+            let total_gap = (count - 1) * gap;
+
+            let mut width = 0;
+            let mut height = total_gap;
+
+            let mut widgets = Vec::new();
+
+            $(
+                let w = &mut $widget;
+
+                //TODO: Make sure this works with most types.
+                for w in w.as_uniform_layout_type() {
+                    let area = w.area();
+                    width = area.width.max(width);
+                    height += area.height;
+                    widgets.push((area, w.primative()));
+                }
+            )*
+
+            //If there is only one element the gap is not important.
+            Container { direction: $crate::FlexDirection::TopBottom, widgets, area: Rect::new(0, 0, width, height), gap: if count > 1 { gap } else { 0 } }
         };
 
         //Defer the creation of the container so that the builder pattern

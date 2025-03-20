@@ -130,35 +130,37 @@ fn main() {
         //     text("Power saver")
         // ).padding(padding);
 
-        ctx.draw_text(
-            "High performance",
-            default_font().unwrap(),
-            hp.x + padding,
-            hp.y,
-            font_size,
-            0,
-            Color::WHITE,
-        );
+        flex!(v!(text("High performance"), text("Balanced"), text("Power saver")));
 
-        ctx.draw_text(
-            "Balanced",
-            default_font().unwrap(),
-            b.x + padding,
-            b.y,
-            font_size,
-            0,
-            Color::WHITE,
-        );
+        // ctx.draw_text(
+        //     "High performance",
+        //     default_font().unwrap(),
+        //     hp.x + padding,
+        //     hp.y,
+        //     font_size,
+        //     0,
+        //     Color::WHITE,
+        // );
 
-        ctx.draw_text(
-            "Power saver",
-            default_font().unwrap(),
-            p.x + padding,
-            p.y,
-            font_size,
-            0,
-            Color::WHITE,
-        );
+        // ctx.draw_text(
+        //     "Balanced",
+        //     default_font().unwrap(),
+        //     b.x + padding,
+        //     b.y,
+        //     font_size,
+        //     0,
+        //     Color::WHITE,
+        // );
+
+        // ctx.draw_text(
+        //     "Power saver",
+        //     default_font().unwrap(),
+        //     p.x + padding,
+        //     p.y,
+        //     font_size,
+        //     0,
+        //     Color::WHITE,
+        // );
 
         ctx.draw_frame();
     }
