@@ -19,10 +19,11 @@ fn main() {
     assert_eq!(v.area.width, 159);
     assert_eq!(v.area.height, 60);
 
-    let flex = flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).gap(32))
-        .padding(32)
-        .bg(red())
-        .call_mut();
+    {
+        let flex = flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).gap(32))
+            .padding(32)
+            .bg(red());
+    }
 
     // TODO: This is rendering too small for some reason?
     // assert_eq!(flex.area.width, 159);
