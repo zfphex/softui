@@ -75,7 +75,8 @@ pub fn calculate_offset(direction: FlexDirection, padding: Padding) -> usize {
 pub fn draw_widgets(
     commands: &mut Vec<Command>,
     container: &mut Container,
-    offset: &mut usize,
+    x_offset: &mut usize,
+    y_offset: &mut usize,
     padding: Padding,
 ) {
     let last_index = container.widgets.len().saturating_sub(1);
@@ -84,14 +85,14 @@ pub fn draw_widgets(
 
         match container.direction {
             FlexDirection::LeftRight => {
-                area.x = *offset;
+                area.x = *x_offset;
                 area.y += padding.top
             }
             FlexDirection::RightLeft => todo!(),
             FlexDirection::TopBottom => {
                 area.x += padding.left;
-                area.y = *offset;
-            },
+                area.y = *y_offset;
+            }
             FlexDirection::BottomTop => todo!(),
         }
 
@@ -101,14 +102,19 @@ pub fn draw_widgets(
         });
 
         //Add gap for every element except for the last.
-        if i !=  last_index {
-            *offset += container.gap;
+        if i != last_index {
+            match container.direction {
+                FlexDirection::LeftRight => *x_offset += container.gap,
+                FlexDirection::RightLeft => todo!(),
+                FlexDirection::TopBottom => *y_offset += container.gap,
+                FlexDirection::BottomTop => todo!(),
+            }
         }
 
         match container.direction {
-            FlexDirection::LeftRight => *offset += area.width,
+            FlexDirection::LeftRight => *x_offset += area.width,
             FlexDirection::RightLeft => todo!(),
-            FlexDirection::TopBottom => *offset += area.height,
+            FlexDirection::TopBottom => *y_offset += area.height,
             FlexDirection::BottomTop => todo!(),
         }
     }
@@ -127,7 +133,7 @@ pub fn calculate_sizing(container: &mut Container, area: &mut Rect) {
         FlexDirection::TopBottom => {
             area.width = area.width.max(container.area.width);
             area.height += container.area.height;
-        },
+        }
         FlexDirection::BottomTop => todo!(),
     }
 }
@@ -138,7 +144,11 @@ macro_rules! flex {
     //Assume eveything being pass in is a container.
     ($($container:expr),* $(,)?) => {{ 
         let f = |direction: $crate::FlexDirection, padding: $crate::Padding, gap: usize| {
-            let mut offset = $crate::calculate_offset(direction, padding);
+            //Start at the left padding and move right for every widget.
+            let mut x_offset = padding.left;
+            //Start at the top padding and move down for every widget.
+            let mut y_offset = padding.top;
+
             let mut area = Rect::default();
             let mut commands = Vec::new();
 
@@ -147,28 +157,11 @@ macro_rules! flex {
                 //TODO: This function may not be needed.
                 //See using the `offset`` as `width` bellow.
                 $crate::calculate_sizing(&mut container, &mut area);
-                $crate::draw_widgets(&mut commands, &mut container,  &mut offset, padding);
-                offset += gap;
+                $crate::draw_widgets(&mut commands, &mut container,  &mut x_offset, &mut y_offset, padding);
             )*
 
-            //Since we don't check the last iteration.
-            //The gap is added an extra time at the end.
-            //This is the direction of the root flex container 
-            //flex!(v!(text()), v!(text))
-            //This would be layed out horzontially since v! only affects it's children.
-            match direction {
-                FlexDirection::LeftRight => {
-                    area.width = offset - gap;
-
-                    //We add these after because setting the max widget width or max height would have overwritten it.
-                    //We don't add padding.left because that was already added to the offset.
-                    area.width += padding.right;
-                    area.height += padding.top + padding.bottom;
-                }
-                FlexDirection::RightLeft => todo!(),
-                FlexDirection::TopBottom => todo!(),
-                FlexDirection::BottomTop => todo!(),
-            }
+            area.width += padding.left + padding.right ;
+            area.height += padding.top + padding.bottom ;
 
             $crate::Flex { commands, area }
         };
@@ -426,7 +419,7 @@ mod tests {
     fn basic_two_rect() {
         let mut container = h!(rect().wh(300), rect().w(300).h(200)).gap(32).call_mut();
         assert_eq!(container.area.width, 632);
-        assert_eq!(container.area.height,  300);
+        assert_eq!(container.area.height, 300);
         assert_eq!(container.widgets.len(), 2);
 
         let flex = flex!(h!(rect().wh(300), rect().w(300).h(200)).gap(32))

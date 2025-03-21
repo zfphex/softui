@@ -131,7 +131,7 @@ fn main() {
         // ).padding(padding);
 
         //TODO: Padding is not working.
-        flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).padding(padding));
+        flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).gap(padding));
 
         // ctx.draw_text(
         //     "High performance",
