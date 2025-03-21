@@ -1,3 +1,4 @@
+#![allow(unused)]
 use softui::*;
 
 fn main() {
@@ -14,10 +15,34 @@ fn main() {
     //Gap seems wrong between `texts`
     {
         // flex!(v!(r1, r2.clone().wh(200), r3, r4, text("hi"), texts).gap(12));
-        let flex = flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).gap(12))
-            .padding(16)
-            .bg(red())
-            .call_mut();
+        // let flex = flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).gap(12))
+        //     .padding(16)
+        //     .bg(red())
+        //     .call_mut();
+
+        // let flex = flex!(
+        //     v!(
+        //     text("High performance"),
+        //     text("Balanced"),
+        //     text("Power saver"),
+        //     v!(r1, r2.clone().wh(200), r3, r4, text("hi"), texts).gap(12),
+        //     ).gap(12)
+        // )
+        // .padding(16)
+        // .bg(red())
+        // .call_mut();
+
+        // v!(
+        //     text("High performance"),
+        //     text("Balanced"),
+        //     text("Power saver"),
+        //     v!(r1, r2.clone().wh(200), r3, r4, text("hi"), texts).gap(12),
+        // )
+        // .gap(12);
+        // flex!(v!(
+        //     text("this is the first level"),
+        //     v!(text("this is the second level"), v!(text("this is the third level")))
+        // ));
     }
 
     ctx.draw_frame();

@@ -42,9 +42,20 @@ where
     #[must_use]
     fn primative(&self) -> Primative;
 
+    #[inline]
+    fn primatives(&self) -> Vec<Primative> {
+        //TODO: Check if this is compiled out, otherwise maybe use smallvec.
+        vec![self.primative()]
+    }
+
     ///Turns all widget types into a slice so they can be concatenated for layouting.
     #[inline]
     fn as_uniform_layout_type(&self) -> &[Self::Layout] {
+        //Not sure why the type system cannot figure this one out?
+        unsafe { core::mem::transmute(core::slice::from_ref(self)) }
+    }
+    #[inline]
+    fn as_uniform_layout_type_mut(&mut self) -> &[Self::Layout] {
         //Not sure why the type system cannot figure this one out?
         unsafe { core::mem::transmute(core::slice::from_ref(self)) }
     }
@@ -90,11 +101,13 @@ where
     //If we used Any we could just call self.type_id() == Container.
     //Easy as that.
     #[inline]
-    fn is_container() -> bool
-    where
-        Self: Sized,
-    {
+    fn is_container(&self) -> bool {
         false
+    }
+
+    #[inline]
+    fn as_container(&self) -> Container {
+        unimplemented!()
     }
 
     //This is used to run the click closure after calling on_click

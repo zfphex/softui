@@ -80,7 +80,7 @@ pub fn draw_widgets(
     padding: Padding,
 ) {
     let last_index = container.widgets.len().saturating_sub(1);
-    for (i, (area, primative)) in container.widgets.iter().enumerate() {
+    for (i, (area, primatives)) in container.widgets.iter().enumerate() {
         let mut area = area.clone();
 
         match container.direction {
@@ -96,10 +96,10 @@ pub fn draw_widgets(
             FlexDirection::BottomTop => todo!(),
         }
 
-        commands.push(Command {
-            area,
-            primative: primative.clone(),
-        });
+        // commands.push(Command {
+        //     area,
+        //     primative,
+        // });
 
         //Add gap for every element except for the last.
         if i != last_index {
@@ -216,7 +216,22 @@ impl<F: FnMut(FlexDirection, Padding, usize) -> Flex> DeferFlex<F> {
         self.gap = gap;
         self
     }
-    //TODO: Padding left, right, etc.
+    pub fn left_pad(mut self, padding: usize) -> Self {
+        self.padding.left = padding;
+        self
+    }
+    pub fn right_pad(mut self, padding: usize) -> Self {
+        self.padding.right = padding;
+        self
+    }
+    pub fn top_pad(mut self, padding: usize) -> Self {
+        self.padding.top = padding;
+        self
+    }
+    pub fn bottom_pad(mut self, padding: usize) -> Self {
+        self.padding.bottom = padding;
+        self
+    }
     pub fn padding(mut self, padding: usize) -> Self {
         self.padding = Padding::new(padding, padding, padding, padding);
         self
@@ -238,7 +253,7 @@ impl<F: FnMut(FlexDirection, Padding, usize) -> Flex> Defer for DeferFlex<F> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Container {
     pub widgets: Vec<(Rect, Primative)>,
     pub direction: FlexDirection,
@@ -249,23 +264,28 @@ pub struct Container {
 impl Widget for Container {
     type Layout = Self;
 
-    fn primative(&self) -> crate::Primative {
+    fn primative(&self) -> Primative {
         todo!()
     }
 
-    fn area(&self) -> crate::Rect {
+    // fn primatives(&self) -> Vec<Primative> {
+    //     self.widgets.iter().flat_map(|(_, prims)| prims.clone()).collect()
+    // }
+
+    fn area(&self) -> Rect {
         self.area
     }
 
-    fn area_mut(&mut self) -> Option<&mut crate::Rect> {
+    fn area_mut(&mut self) -> Option<&mut Rect> {
         Some(&mut self.area)
     }
 
-    fn is_container() -> bool
-    where
-        Self: Sized,
-    {
+    fn is_container(&self) -> bool {
         true
+    }
+
+    fn as_container(&self) -> Container {
+        self.clone()
     }
 }
 
@@ -311,22 +331,35 @@ macro_rules! h {
             let mut width = total_gap;
             let mut height = 0;
 
-            let mut widgets = Vec::new();
+            let mut widgets: Vec<(Rect, Primative)> = Vec::new();
+            // let mut containers = vec![Container { direction: $crate::FlexDirection::LeftRight, widgets: Vec::new(), area: Rect::new(0, 0, width, height), gap: if count > 1 { gap } else { 0 } }];
+            let mut containers = Vec::new();
+            containers.push(Container { direction: $crate::FlexDirection::LeftRight, widgets: Vec::new(), area: Rect::new(0, 0, width, height), gap: if count > 1 { gap } else { 0 } });
 
             $(
                 let w = &mut $widget;
+                let mut container = if w.is_container() {
+                        Some(w.as_container())
+                } else {None};
 
                 //TODO: Make sure this works with most types.
-                for w in w.as_uniform_layout_type() {
+                for w in w.as_uniform_layout_type_mut() {
                     let area = w.area();
                     height = area.height.max(height);
                     width += area.width;
-                    widgets.push((area, w.primative()));
+                    if w.is_container() {
+                        containers.push(container.take().unwrap());
+                        // containers.push(Container { direction: $crate::FlexDirection::LeftRight, widgets: core::mem::take(&mut widgets), area: Rect::new(0, 0, width, height), gap: if count > 1 { gap } else { 0 } })
+                    } else {
+                        containers.last_mut().unwrap().widgets.push((area, w.primative()));
+                        // widgets.push((area, w.primative()));
+                    }
                 }
             )*
 
             //If there is only one element the gap is not important.
-            Container { direction: $crate::FlexDirection::LeftRight, widgets, area: Rect::new(0, 0, width, height), gap: if count > 1 { gap } else { 0 } }
+            // Container { direction: $crate::FlexDirection::LeftRight, widgets, area: Rect::new(0, 0, width, height), gap: if count > 1 { gap } else { 0 } }
+            containers
         };
 
         //Defer the creation of the container so that the builder pattern
@@ -335,6 +368,7 @@ macro_rules! h {
             f,
             padding: Padding::default(),
             gap: 0,
+            containers: Vec::new(),
         }
     }};
 }
@@ -361,12 +395,12 @@ macro_rules! v {
                     let area = w.area();
                     width = area.width.max(width);
                     height += area.height;
-                    widgets.push((area, w.primative()));
+                    widgets.push((area, w.primatives()));
                 }
             )*
 
             //If there is only one element the gap is not important.
-            Container { direction: $crate::FlexDirection::TopBottom, widgets, area: Rect::new(0, 0, width, height), gap: if count > 1 { gap } else { 0 } }
+            Container { direction: $crate::FlexDirection::TopBottom, widgets, primatives, area: Rect::new(0, 0, width, height), gap: if count > 1 { gap } else { 0 }}
         };
 
         //Defer the creation of the container so that the builder pattern
@@ -375,6 +409,7 @@ macro_rules! v {
             f,
             padding: Padding::default(),
             gap: 0,
+            containers
         }
     }};
 }
@@ -383,6 +418,7 @@ pub struct DeferContainer<F> {
     pub f: F,
     pub padding: Padding,
     pub gap: usize,
+    pub containers: Vec<Container>,
 }
 
 impl<F> DeferContainer<F> {
@@ -396,11 +432,39 @@ impl<F> DeferContainer<F> {
     }
 }
 
+impl<F> Widget for DeferContainer<F>
+where
+    F: FnMut(Padding, usize) -> Vec<Container>,
+{
+    type Layout = Container;
+
+    fn primative(&self) -> Primative {
+        unimplemented!()
+    }
+
+    fn area(&self) -> Rect {
+        unimplemented!()
+    }
+
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        unimplemented!()
+    }
+
+    fn is_container(&self) -> bool {
+        true
+    }
+
+    fn as_uniform_layout_type_mut(&mut self) -> &[Self::Layout] {
+        self.containers = (self.f)(self.padding, self.gap);
+        &self.containers
+    }
+}
+
 impl<F> Defer for DeferContainer<F>
 where
-    F: FnMut(Padding, usize) -> Container,
+    F: FnMut(Padding, usize) -> Vec<Container>,
 {
-    type T = Container;
+    type T = Vec<Container>;
     fn call_mut(&mut self) -> Self::T {
         (self.f)(self.padding, self.gap)
     }

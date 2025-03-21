@@ -53,12 +53,12 @@ fn accent_color() -> Color {
 }
 
 fn main() {
-    let padding = 10;
+    let gap = 10;
     let font_size = 20;
     let rect_height = 30;
 
     let width = 360;
-    let height = 3 * (font_size as i32 + padding as i32);
+    let height = 3 * (font_size as i32 + gap as i32);
 
     let window = create_window(
         "Power Plan Switcher",
@@ -90,8 +90,8 @@ fn main() {
 
         //Great layout code right here.
         let hp = Rect::new(0, 0, ctx.window.width(), rect_height);
-        let b = hp.y(font_size + padding);
-        let p = hp.y(2 * (font_size + padding));
+        let b = hp.y(font_size + gap);
+        let p = hp.y(2 * (font_size + gap));
 
         //Yeah this is pretty fast what can I say...?
         //TODO: The system takes a while to register the update.
@@ -130,38 +130,7 @@ fn main() {
         //     text("Power saver")
         // ).padding(padding);
 
-        //TODO: Padding is not working.
-        flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).gap(padding));
-
-        // ctx.draw_text(
-        //     "High performance",
-        //     default_font().unwrap(),
-        //     hp.x + padding,
-        //     hp.y,
-        //     font_size,
-        //     0,
-        //     Color::WHITE,
-        // );
-
-        // ctx.draw_text(
-        //     "Balanced",
-        //     default_font().unwrap(),
-        //     b.x + padding,
-        //     b.y,
-        //     font_size,
-        //     0,
-        //     Color::WHITE,
-        // );
-
-        // ctx.draw_text(
-        //     "Power saver",
-        //     default_font().unwrap(),
-        //     p.x + padding,
-        //     p.y,
-        //     font_size,
-        //     0,
-        //     Color::WHITE,
-        // );
+        flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).gap(gap)).left_pad(4);
 
         ctx.draw_frame();
     }
