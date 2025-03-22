@@ -70,7 +70,7 @@ fn main() {
         let f = flex!(h!(r, r).gap(5), v!(r2, r2).gap(5)).gap(5).bg(green()).build();
 
         assert_eq!(f.area.width, 20 + 5 + 20 + 5 + 20);
-        // assert_eq!(f.area.height, 20 + 5 + 20);
+        assert_eq!(f.area.height, 20 + 5 + 20);
     }
 
     ctx.draw_frame();

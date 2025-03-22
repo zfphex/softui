@@ -85,19 +85,14 @@ pub fn draw_widgets(
     //Add the gap between the two containers to next widget
     for (i, widget) in container.widgets.iter().enumerate() {
         let mut area = widget.area.clone();
+
         area.x = *x_offset;
         area.y = *y_offset;
 
         match container.direction {
-            FlexDirection::LeftRight => {
-                // area.x = *x_offset;
-                area.y += padding.top
-            }
+            FlexDirection::LeftRight => area.y += padding.top,
             FlexDirection::RightLeft => todo!(),
-            FlexDirection::TopBottom => {
-                area.x += padding.left;
-                // area.y = *y_offset;
-            }
+            FlexDirection::TopBottom => area.x += padding.left,
             FlexDirection::BottomTop => todo!(),
         }
 
@@ -497,7 +492,26 @@ mod tests {
             .gap(32)
             .build();
 
-        assert_eq!(flex.area.width, 632);
-        assert_eq!(flex.area.height, 300);
+        assert_eq!(flex.area.width, 300 + 32 + 300 + 32 + 32);
+        assert_eq!(flex.area.height, 300 + 32 + 32);
+    }
+
+    #[test]
+    fn nested_containers() {
+        let mut r = rect().wh(20).bg(blue());
+        let mut r2 = r.bg(red());
+
+        let blue = h!(r, r).gap(5).build();
+        assert_eq!(blue.area.width, 20 + 5 + 20);
+        assert_eq!(blue.area.height, 20);
+
+        let red = v!(r2, r2).gap(5).build();
+        assert_eq!(red.area.width, 20);
+        assert_eq!(red.area.height, 20 + 5 + 20);
+
+        let f = flex!(h!(r, r).gap(5), v!(r2, r2).gap(5)).gap(5).bg(green()).build();
+
+        assert_eq!(f.area.width, 20 + 5 + 20 + 5 + 20);
+        assert_eq!(f.area.height, 20 + 5 + 20);
     }
 }
