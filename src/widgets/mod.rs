@@ -42,39 +42,6 @@ where
     #[must_use]
     fn primative(&self) -> Primative;
 
-    #[inline]
-    fn primatives(&self) -> Vec<Primative> {
-        //TODO: Check if this is compiled out, otherwise maybe use smallvec.
-        vec![self.primative()]
-    }
-
-    ///Turns all widget types into a slice so they can be concatenated for layouting.
-    #[inline]
-    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
-        //Not sure why the type system cannot figure this one out?
-        unsafe { core::mem::transmute(core::slice::from_ref(self)) }
-    }
-    #[inline]
-    fn as_uniform_layout_type_mut(&mut self) -> &[Self::Layout] {
-        //Not sure why the type system cannot figure this one out?
-        unsafe { core::mem::transmute(core::slice::from_ref(self)) }
-    }
-
-    //TODO: Remove me
-    fn as_mut_slice(&mut self) -> &mut [Self]
-    where
-        Self: Sized,
-    {
-        core::slice::from_mut(self)
-    }
-
-    // fn into_vec(self) -> Vec<Self>
-    // where
-    //     Self: Sized,
-    // {
-    //     vec![self]
-    // }
-
     //This one copies
     fn area(&self) -> Rect;
     //This one does not
@@ -93,21 +60,8 @@ where
     }
 
     #[inline]
-    unsafe fn as_mut_ptr(&mut self) -> *mut Self {
-        self
-    }
-
-    //This should be called need_draw, need_compute_area, idk...
-    //If we used Any we could just call self.type_id() == Container.
-    //Easy as that.
-    #[inline]
-    fn is_container(&self) -> bool {
-        false
-    }
-
-    #[inline]
-    fn as_container(&self) -> Container {
-        unimplemented!()
+    unsafe fn as_slice(&mut self) -> &[Self::Layout] {
+        unsafe { core::mem::transmute(core::slice::from_ref(self)) }
     }
 
     //This is used to run the click closure after calling on_click
@@ -327,7 +281,7 @@ impl<T: Widget> Widget for &mut [T] {
     fn primative(&self) -> Primative {
         unreachable!()
     }
-    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
+    unsafe fn as_slice(&mut self) -> &[Self::Layout] {
         self
     }
 }
@@ -343,9 +297,10 @@ impl<const N: usize, T: Widget> Widget for [T; N] {
     fn primative(&self) -> Primative {
         unreachable!()
     }
+
     #[inline]
-    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
-        self.as_slice()
+    unsafe fn as_slice(&mut self) -> &[Self::Layout] {
+        (*self).as_slice()
     }
 }
 
@@ -360,8 +315,9 @@ impl<T: Widget> Widget for Vec<T> {
     fn primative(&self) -> Primative {
         unreachable!()
     }
+
     #[inline]
-    fn as_uniform_layout_type(&self) -> &[Self::Layout] {
-        self.as_slice()
+    unsafe fn as_slice(&mut self) -> &[Self::Layout] {
+        (*self).as_slice()
     }
 }

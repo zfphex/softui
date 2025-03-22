@@ -18,7 +18,7 @@ pub fn rect() -> Rectangle {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Rectangle {
     pub area: Rect,
     pub radius: usize,

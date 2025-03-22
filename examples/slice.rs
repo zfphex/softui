@@ -29,7 +29,7 @@ fn run<T: Widget + std::fmt::Debug>(t: &mut T)
 where
     T::Layout: Widget + std::fmt::Debug,
 {
-    let t = t.as_uniform_layout_type();
+    let t = unsafe { t.as_slice() };
     for w in t {
         dbg!(std::any::type_name_of_val(w));
         dbg!(w.area());
@@ -62,7 +62,7 @@ fn main() {
     let mut vec = vec![rect(), rect()];
 
     let m = &mut array;
-    let u = m.as_uniform_layout_type();
+    let u = unsafe { m.as_slice() };
     dbg!(std::any::type_name_of_val(u));
 
     run(&mut rect());

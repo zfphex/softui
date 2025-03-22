@@ -1,4 +1,6 @@
 #![allow(unused)]
+use std::fmt;
+
 use softui::*;
 
 fn main() {
@@ -18,7 +20,7 @@ fn main() {
         // let flex = flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).gap(12))
         //     .padding(16)
         //     .bg(red())
-        //     .call_mut();
+        //     .take();
 
         // let flex = flex!(
         //     v!(
@@ -30,7 +32,7 @@ fn main() {
         // )
         // .padding(16)
         // .bg(red())
-        // .call_mut();
+        // .take();
 
         // v!(
         //     text("High performance"),
@@ -39,10 +41,36 @@ fn main() {
         //     v!(r1, r2.clone().wh(200), r3, r4, text("hi"), texts).gap(12),
         // )
         // .gap(12);
+
         // flex!(v!(
         //     text("this is the first level"),
-        //     v!(text("this is the second level"), v!(text("this is the third level")))
+        //     v!(text("first nest"), h!(text("a"), text("b")),)
         // ));
+
+        //TOOD: Move this into the tests when I'm done
+        let mut r = rect().wh(20).bg(blue());
+        let mut r2 = r.bg(red());
+
+        //This is roughly what my code is produce.
+        //+---+ +---+ +---+
+        //| b | | b | | r |
+        //+---+ +---+ +---+
+        //            +---+
+        //            | r |
+        //            +---+
+
+        let blue = h!(r, r).gap(5).build();
+        assert_eq!(blue.area.width, 20 + 5 + 20);
+        assert_eq!(blue.area.height, 20);
+
+        let red = v!(r2, r2).gap(5).build();
+        assert_eq!(red.area.width, 20);
+        assert_eq!(red.area.height, 20 + 5 + 20);
+
+        let f = flex!(h!(r, r).gap(5), v!(r2, r2).gap(5)).gap(5).bg(green()).build();
+
+        assert_eq!(f.area.width, 20 + 5 + 20 + 5 + 20);
+        // assert_eq!(f.area.height, 20 + 5 + 20);
     }
 
     ctx.draw_frame();

@@ -1,4 +1,3 @@
-// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(unused, static_mut_refs)]
 use mini::defer_results;
 // use softui::{create_ctx, text, v, Color, MouseButton::*, Text, Widget};
