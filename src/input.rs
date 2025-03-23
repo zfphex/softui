@@ -1,20 +1,12 @@
 use crate::*;
 
-pub fn clicked(ctx: &Context, area: Rect, button: MouseButton) -> bool {
-    if !ctx.window.mouse_position.intersects(area) {
-        return false;
-    }
-
+pub fn clicked(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
     match button {
-        MouseButton::Left => ctx.window.left_mouse.released && ctx.window.left_mouse.inital_position.intersects(area),
-        MouseButton::Right => {
-            ctx.window.right_mouse.released && ctx.window.right_mouse.inital_position.intersects(area)
-        }
-        MouseButton::Middle => {
-            ctx.window.middle_mouse.released && ctx.window.middle_mouse.inital_position.intersects(area)
-        }
-        MouseButton::Mouse4 => ctx.window.mouse_4.released && ctx.window.mouse_4.inital_position.intersects(area),
-        MouseButton::Mouse5 => ctx.window.mouse_5.released && ctx.window.mouse_5.inital_position.intersects(area),
+        Left => ctx.window.left_mouse.clicked(area),
+        Right => ctx.window.right_mouse.clicked(area),
+        Middle => ctx.window.middle_mouse.clicked(area),
+        Mouse4 => ctx.window.mouse_4.clicked(area),
+        Mouse5 => ctx.window.mouse_5.clicked(area),
     }
 }
 

@@ -43,6 +43,17 @@ macro_rules! impl_click {
             }
 
             #[inline]
+            fn run_click(&mut self, area: $crate::Rect) {
+                //TODO: Thread safety
+                let ctx = ctx();
+                $(
+                    if clicked(ctx, area, self.click.$idx.0) {
+                        self.click.$idx.1(&mut self.widget);
+                    }
+                )*
+            }
+
+            #[inline]
             fn primative(&self) -> $crate::Primative {
                 self.widget.primative()
             }

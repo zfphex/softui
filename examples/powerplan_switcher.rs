@@ -109,17 +109,17 @@ fn main() {
             _ => unreachable!(),
         }
 
-        if ctx.window.left_mouse.clicked(hp) {
-            high_performance();
-        }
+        // if ctx.window.left_mouse.clicked(hp) {
+        //     high_performance();
+        // }
 
-        if ctx.window.left_mouse.clicked(b) {
-            balanced();
-        }
+        // if ctx.window.left_mouse.clicked(b) {
+        //     balanced();
+        // }
 
-        if ctx.window.left_mouse.clicked(p) {
-            power_saver();
-        }
+        // if ctx.window.left_mouse.clicked(p) {
+        //     power_saver();
+        // }
 
         //This is the code I want.
         //How would I add the selection highlight?
@@ -130,7 +130,15 @@ fn main() {
         //     text("Power saver")
         // ).padding(padding);
 
-        flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).gap(gap)).left_pad(4);
+        // flex!(v!(text("High performance").on_click(Left, |_| println!("test")), text("Balanced"), text("Power saver")).gap(gap)).left_pad(4);
+
+        //YESSSSSSS now that the types are stripped, click doesn't work YIPEEEE.
+        //TODO: FIXME
+        flex!(v!(
+            text("HIIIIIIIIIIIIIIIIIII").on_click(Left, |_| println!("HIIIIIIIIII"))
+        ));
+
+        // let text_pos = Rect::new(0, 0, 236, 20);
 
         ctx.draw_frame();
     }

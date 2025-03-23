@@ -83,13 +83,12 @@ pub fn draw_widgets(
 ) {
     let last_index = container.widgets.len().saturating_sub(1);
     //Add the gap between the two containers to next widget
-    for (i, widget) in container.widgets.iter().enumerate() {
+    for (i, widget) in container.widgets.iter_mut().enumerate() {
         let mut area = widget.area.clone();
-        dbg!(container.direction);
+        // dbg!(container.direction);
 
         area.x = *x_offset;
         area.y = *y_offset;
-
 
         match container.direction {
             FlexDirection::LeftRight => area.y += padding.top,
@@ -98,6 +97,10 @@ pub fn draw_widgets(
             FlexDirection::BottomTop => todo!(),
         }
 
+        // widget.area = area;
+        // widget.try_click();
+        // dbg!(widget.area);
+        widget.run_click(area);
         commands.push(Command {
             area,
             primative: widget.primative(),

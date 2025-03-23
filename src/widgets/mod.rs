@@ -74,6 +74,9 @@ where
     #[inline]
     fn try_click(&mut self) {}
 
+    #[inline]
+    fn run_click(&mut self, area: Rect) {}
+
     /// The user's cusor has been clicked and released on top of a widget.
     fn clicked(&mut self, button: MouseButton) -> bool
     where
