@@ -16,42 +16,29 @@ fn main() {
 
     //Gap seems wrong between `texts`
     {
-        // flex!(v!(r1, r2.clone().wh(200), r3, r4, text("hi"), texts).gap(12));
-        // let flex = flex!(v!(text("High performance"), text("Balanced"), text("Power saver")).gap(12))
-        //     .padding(16)
-        //     .bg(red())
-        //     .take();
+        //TODO: The padding of the background appears wrong. High performance should have more right padding.
 
-        // let flex = flex!(
-        //     v!(
+        // let flex = flex!(v!(
         //     text("High performance"),
         //     text("Balanced"),
         //     text("Power saver"),
-        //     v!(r1, r2.clone().wh(200), r3, r4, text("hi"), texts).gap(12),
-        //     ).gap(12)
+        //     v!(r1, r2.clone().wh(20), r3, r4, text("hi"), texts).gap(12),
         // )
+        // .gap(12))
         // .padding(16)
-        // .bg(red())
-        // .take();
+        // .bg(red());
 
-        // v!(
-        //     text("High performance"),
-        //     text("Balanced"),
-        //     text("Power saver"),
-        //     v!(r1, r2.clone().wh(200), r3, r4, text("hi"), texts).gap(12),
-        // )
-        // .gap(12);
+        // v!(v!()).build();
+        // flex!(v!(r1, r2.clone().wh(200), r3, r4, text("hi"), h!(texts)).gap(12));
 
+        //TODO: The horizontal rectangles are vertical here.
+        // flex!(v!(text("one"), text("two"), h!(rect().wh(30), rect().wh(30))));
+        // flex!(v!(text("one"), text("two")), h!(rect().wh(30), rect().wh(30)));
 
-        //This second horizontal isn't working.
-        flex!(v!(text("one"), text("two"), h!(rect().wh(30), rect().wh(30))));
-
-        // flex!(v!(v!()));
-
-        // flex!(v!(
-        //     text("this is the first level"),
-        //     v!(text("first nest"), h!(text("a"), text("b")),)
-        // ));
+        //This is setting the deepest child node to have top to bottom direction.
+        //I think my code for this just sucks :(
+        //TOOD: FIXME
+        flex!(v!(h!(rect(), rect())));
     }
 
     ctx.draw_frame();

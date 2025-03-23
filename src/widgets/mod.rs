@@ -47,6 +47,10 @@ where
     //This one does not
     fn area_mut(&mut self) -> Option<&mut Rect>;
 
+    unsafe fn is_container(&self) -> bool {
+        false
+    }
+
     #[inline]
     fn on_click<F: FnMut(&mut Self)>(self, button: MouseButton, click_fn: F) -> Click0<Self, F>
     where

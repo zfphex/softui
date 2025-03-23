@@ -74,7 +74,7 @@ pub fn calculate_offset(direction: FlexDirection, padding: Padding) -> usize {
 
 pub fn draw_widgets(
     commands: &mut Vec<Command>,
-    direction: FlexDirection,
+    root_direction: FlexDirection,
     container: &mut Container,
     x_offset: &mut usize,
     y_offset: &mut usize,
@@ -85,9 +85,11 @@ pub fn draw_widgets(
     //Add the gap between the two containers to next widget
     for (i, widget) in container.widgets.iter().enumerate() {
         let mut area = widget.area.clone();
+        dbg!(container.direction);
 
         area.x = *x_offset;
         area.y = *y_offset;
+
 
         match container.direction {
             FlexDirection::LeftRight => area.y += padding.top,
@@ -298,6 +300,12 @@ impl<F: FnMut(FlexDirection, Padding, usize) -> Flex> Defer for DeferFlex<F> {
 //This is because widgets need to be able to hold multiple other widgets.
 //We also have the Widget.is_container() function.
 
+pub fn calculate_h<T: Widget>(w: &T, width: &mut usize, height: &mut usize) {
+    let area = w.area();
+    *height = area.height.max(*height);
+    *width += area.width;
+}
+
 //Size the elements first and then set the positions later.
 #[macro_export]
 macro_rules! h {
@@ -316,12 +324,18 @@ macro_rules! h {
                 //This forces the container callback to be run.
                 //TODO: Improve this
                 let _ = unsafe { w.as_slice() };
+                let is_container = unsafe { w.is_container() };
+                if is_container {
+                    $crate::calculate_h(w, &mut width, &mut height);
+                }
 
-                let parent_area = w.area();
                 for child in unsafe { w.as_slice() } {
-                    height = parent_area.height.max(height);
-                    width += parent_area.width;
-                    widgets.push(TypelessWidget{ area: child.area(), primative: child.primative()})
+                    let area = child.area();
+                    if !is_container {
+                        height = area.height.max(height);
+                        width += area.width;
+                    }
+                    widgets.push(TypelessWidget{ area, primative: child.primative()})
                 }
             )*
 
@@ -338,6 +352,12 @@ macro_rules! h {
             container: Container::default(),
         }
     }};
+}
+
+pub fn calculate_v<T: Widget>(w: &T, width: &mut usize, height: &mut usize) {
+    let area = w.area();
+    *width = area.width.max(*width);
+    *height += area.height;
 }
 
 //There might be some way to reduce code-reuse here, but it's kind of necessary to avoid massive unintended match statements.
@@ -358,11 +378,15 @@ macro_rules! v {
                 //This forces the container callback to be run.
                 //TODO: Improve this
                 let _ = unsafe { w.as_slice() };
+                let is_container = unsafe { w.is_container() };
+                if is_container {
+                    $crate::calculate_v(w, &mut width, &mut height);
+                }
 
-                let parent_area = w.area();
                 for child in unsafe { w.as_slice() } {
-                    width = parent_area.width.max(width);
-                    height += parent_area.height;
+                    if !is_container {
+                        $crate::calculate_v(child, &mut width, &mut height);
+                    }
                     widgets.push(TypelessWidget{ area: child.area(), primative: child.primative()})
                 }
             )*
@@ -455,6 +479,10 @@ where
 
     fn primative(&self) -> Primative {
         unreachable!()
+    }
+
+    unsafe fn is_container(&self) -> bool {
+        true
     }
 
     #[track_caller]
