@@ -604,6 +604,10 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
+        if text.is_empty() {
+            return;
+        }
+
         let viewport_width = self.window.width();
         let viewport_height = self.window.area.height;
 

@@ -42,35 +42,16 @@ fn main() {
         // )
         // .gap(12);
 
+
+        //This second horizontal isn't working.
+        flex!(v!(text("one"), text("two"), h!(rect().wh(30), rect().wh(30))));
+
+        // flex!(v!(v!()));
+
         // flex!(v!(
         //     text("this is the first level"),
         //     v!(text("first nest"), h!(text("a"), text("b")),)
         // ));
-
-        //TOOD: Move this into the tests when I'm done
-        let mut r = rect().wh(20).bg(blue());
-        let mut r2 = r.bg(red());
-
-        //This is roughly what my code is produce.
-        //+---+ +---+ +---+
-        //| b | | b | | r |
-        //+---+ +---+ +---+
-        //            +---+
-        //            | r |
-        //            +---+
-
-        let blue = h!(r, r).gap(5).build();
-        assert_eq!(blue.area.width, 20 + 5 + 20);
-        assert_eq!(blue.area.height, 20);
-
-        let red = v!(r2, r2).gap(5).build();
-        assert_eq!(red.area.width, 20);
-        assert_eq!(red.area.height, 20 + 5 + 20);
-
-        let f = flex!(h!(r, r).gap(5), v!(r2, r2).gap(5)).gap(5).bg(green()).build();
-
-        assert_eq!(f.area.width, 20 + 5 + 20 + 5 + 20);
-        assert_eq!(f.area.height, 20 + 5 + 20);
     }
 
     ctx.draw_frame();

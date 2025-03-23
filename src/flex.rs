@@ -305,13 +305,18 @@ macro_rules! h {
         //TODO: Padding is unused here.
         let f = |padding: Padding, gap: usize| {
             let count = $crate::count_expr!($($widget),*);
-            let total_gap = (count - 1) * gap;
+            let total_gap = (count as i32 - 1) as usize * gap;
             let mut width = total_gap;
             let mut height = 0;
             let mut widgets = Vec::new();
 
             $(
                 let w = &mut $widget;
+
+                //This forces the container callback to be run.
+                //TODO: Improve this
+                let _ = unsafe { w.as_slice() };
+
                 let parent_area = w.area();
                 for child in unsafe { w.as_slice() } {
                     height = parent_area.height.max(height);
@@ -342,13 +347,18 @@ macro_rules! v {
         //TODO: Padding is unused here.
         let f = |padding: Padding, gap: usize| {
             let count = $crate::count_expr!($($widget),*);
-            let total_gap = (count - 1) * gap;
+            let total_gap = (count as i32 - 1) as usize * gap;
             let mut width = 0;
             let mut height = total_gap;
             let mut widgets = Vec::new();
 
             $(
                 let w = &mut $widget;
+
+                //This forces the container callback to be run.
+                //TODO: Improve this
+                let _ = unsafe { w.as_slice() };
+
                 let parent_area = w.area();
                 for child in unsafe { w.as_slice() } {
                     width = parent_area.width.max(width);
@@ -447,12 +457,16 @@ where
         unreachable!()
     }
 
+    #[track_caller]
     fn area(&self) -> Rect {
-        unreachable!()
+        //This is quite the scary bit of code
+        self.container.area
     }
 
     fn area_mut(&mut self) -> Option<&mut Rect> {
-        unreachable!()
+        unimplemented!()
+        // self.container = self.build();
+        // Some(&mut self.container.area)
     }
 
     unsafe fn as_slice(&mut self) -> &[Self::Layout] {
