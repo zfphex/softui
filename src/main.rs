@@ -13,5 +13,8 @@ fn main() {
             }
         }
 
+        flex!(v!(text("example").font_size(40)));
+
+        ctx.draw_frame();
     }
 }
