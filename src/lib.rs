@@ -11,6 +11,7 @@ pub mod input;
 pub mod layout;
 pub mod macros;
 pub mod platform;
+pub mod platform;
 pub mod scaling;
 pub mod style;
 pub mod widgets;
