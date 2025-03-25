@@ -62,7 +62,10 @@ pub enum Command {
     // Images should be allocated up front and have a static lifetime.
     // Const  images would be good
     ///(Data, x, y, width, height, format)
+    ///
+    #[cfg(feature = "image")]
     Image(Box<[u8]>, usize, usize, usize, usize, ImageFormat),
+    #[cfg(feature = "image")]
     ImageUnsafe(&'static [u8], usize, usize, usize, usize, ImageFormat),
     // ImageByID(ID, ),
     // We could use some id system and a function called allocate_image()
@@ -165,11 +168,11 @@ impl Context {
         Self {
             window,
             mouse_pos: Rect::default(),
-             left_mouse: MouseState::new(MouseButton::Left),
-               right_mouse: MouseState::new(MouseButton::Right),
-               middle_mouse: MouseState::new(MouseButton::Middle),
-               mouse_4: MouseState::new(MouseButton::Back),
-               mouse_5: MouseState::new(MouseButton::Forward),
+            left_mouse: MouseState::new(MouseButton::Left),
+            right_mouse: MouseState::new(MouseButton::Right),
+            middle_mouse: MouseState::new(MouseButton::Middle),
+            mouse_4: MouseState::new(MouseButton::Back),
+            mouse_5: MouseState::new(MouseButton::Forward),
         }
     }
 
@@ -252,9 +255,11 @@ impl Context {
                 Command::CustomBoxed(f) => f(self),
                 Command::Custom(f) => f(self),
                 Command::CustomFn(f) => f(self),
+                #[cfg(feature = "image")]
                 Command::Image(data, x, y, width, height, format) => {
                     self.draw_image(&data, x, y, width, height, format)
                 }
+                #[cfg(feature = "image")]
                 Command::ImageUnsafe(data, x, y, width, height, format) => {
                     self.draw_image(data, x, y, width, height, format)
                 }
@@ -726,6 +731,7 @@ impl Context {
         self.window.area().height as usize
     }
 
+    #[cfg(feature = "image")]
     pub fn draw_image(
         &mut self,
         data: &[u8],

@@ -24,6 +24,7 @@ impl<'a> IntoVec for Text<'a> {
     }
 }
 
+#[cfg(feature = "image")]
 impl IntoVec for Image {
     type T = Image;
 

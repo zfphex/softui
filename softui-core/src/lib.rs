@@ -1,7 +1,7 @@
 //! Event types for Windows and MacOS
 //! This prevents the need to convert between rust representations of window event types.
 
-use window::RECT;
+// use window::RECT;
 
 #[derive(Debug, PartialEq)]
 pub enum Event {
@@ -223,13 +223,13 @@ impl Rect {
     // }
 }
 
-impl From<RECT> for Rect {
-    fn from(rect: RECT) -> Self {
-        Rect {
-            x: 0,
-            y: 0,
-            width: rect.width(),
-            height: rect.height(),
-        }
-    }
-}
+// impl From<RECT> for Rect {
+//     fn from(rect: RECT) -> Self {
+//         Rect {
+//             x: 0,
+//             y: 0,
+//             width: rect.width(),
+//             height: rect.height(),
+//         }
+//     }
+// }
