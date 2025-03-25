@@ -20,9 +20,11 @@ pub use text::*;
 pub mod click;
 pub use click::*;
 
+#[cfg(target_os = "windows")]
 #[cfg(feature = "dwrite")]
 pub mod dwrite;
 
+#[cfg(target_os = "windows")]
 #[cfg(feature = "dwrite")]
 pub use dwrite::*;
 

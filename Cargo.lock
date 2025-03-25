@@ -782,6 +782,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "window"
 version = "0.1.0"
+source = "git+https://github.com/zx3no/window#f9ea75017edeb4525538a65c70709097929b2920"
 dependencies = [
  "mini",
 ]

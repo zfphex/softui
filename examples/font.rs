@@ -1,12 +1,12 @@
-use softui::*;
-
-#[cfg(not(feature = "dwrite"))]
+#[cfg(not(target_os = "windows"))]
 fn main() {
     println!("Use --features 'dwrite'")
 }
 
+#[cfg(target_os = "windows")]
 #[cfg(feature = "dwrite")]
 fn main() {
+    use softui::*;
     let ctx = create_ctx("Softui", 800, 600);
 
     let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ";

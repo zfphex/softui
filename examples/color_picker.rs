@@ -70,6 +70,7 @@ const ZOOM_400: i32 = 400;
 #[global_allocator]
 static ALLOC: dhat::Alloc = dhat::Alloc;
 
+#[cfg(target_os = "windows")]
 fn main() {
     #[cfg(feature = "dhat-heap")]
     let _profiler = dhat::Profiler::new_heap();
@@ -282,3 +283,6 @@ fn main() {
         }
     }
 }
+
+#[cfg(not(target_os = "windows"))]
+fn main() {}

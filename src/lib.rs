@@ -5,9 +5,7 @@ use std::{any::Any, borrow::Cow, pin::Pin, sync::Arc};
 
 pub use core::ffi::c_void;
 
-//Re-export the window functions.
-pub use window::*;
-
+pub mod platform;
 pub mod atomic_float;
 pub mod color;
 pub mod flex;
@@ -26,7 +24,9 @@ pub use macros::*;
 pub use scaling::*;
 pub use style::*;
 pub use widgets::*;
-pub use MouseButton::*;
+pub use platform::*;
+
+pub use platform::MouseButton::*;
 
 //Ideally the user could write there own commands
 //Then they would send custom commands to the context.
@@ -152,7 +152,12 @@ pub fn ctx() -> &'static mut Context {
 
 pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Context {
     unsafe {
+        #[cfg(target_os = "windows")]
         let window = create_window(title, 0, 0, width as i32, height as i32, WindowStyle::DEFAULT);
+
+        #[cfg(target_os = "macos")]
+        let window = create_window();
+
         CTX = Some(Context::new(title, window));
         CTX.as_mut().unwrap()
     }
@@ -246,7 +251,10 @@ impl Context {
         //TODO: Wait timers are likely better for all refresh rates.
         //Unsure why my limiters are inaccurate at higher refresh rates though.
         //Doesn't seem to work on the secondary monitor, seeing huge cpu usage.
-        unsafe { DwmFlush() };
+
+        //TODO: Add this vsync function into window.
+        // self.window.vsync();
+        // unsafe { DwmFlush() };
     }
 
     pub fn get_pixel(&mut self, x: usize, y: usize) -> Option<&mut u32> {
@@ -293,7 +301,9 @@ impl Context {
     {
         let viewport_width = self.window.width();
         let viewport_height = self.window.area.height;
-        let scale = self.window.display_scale;
+        todo!("Change scale to be self.window.display_scale()");
+        // let scale = self.window.display_scale;
+        let scale = 0.0;
 
         let x = scale_temp(x.into(), self.window.area, scale);
         let y = scale_temp(y.into(), self.window.area, scale);
@@ -714,6 +724,7 @@ impl Context {
         // );
     }
 
+    #[cfg(target_os = "windows")]
     #[cfg(feature = "dwrite")]
     pub fn draw_text_subpixel(
         &mut self,
@@ -822,6 +833,7 @@ impl Context {
         // );
     }
 
+    #[cfg(target_os = "windows")]
     #[cfg(feature = "dwrite")]
     pub fn draw_glyph_subpixel(&mut self, char: char, point_size: f32) {
         let start_x = 50;

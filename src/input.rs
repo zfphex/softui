@@ -2,11 +2,11 @@ use crate::*;
 
 pub fn clicked(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
     match button {
-        Left => ctx.window.left_mouse.clicked(area),
-        Right => ctx.window.right_mouse.clicked(area),
-        Middle => ctx.window.middle_mouse.clicked(area),
-        Mouse4 => ctx.window.mouse_4.clicked(area),
-        Mouse5 => ctx.window.mouse_5.clicked(area),
+        MouseButton::Left => ctx.window.left_mouse.clicked(area),
+        MouseButton::Right => ctx.window.right_mouse.clicked(area),
+        MouseButton::Middle => ctx.window.middle_mouse.clicked(area),
+        MouseButton::Mouse4 => ctx.window.mouse_4.clicked(area),
+        MouseButton::Mouse5 => ctx.window.mouse_5.clicked(area),
     }
 }
 
