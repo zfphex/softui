@@ -338,137 +338,137 @@ pub mod macos {
             //         .unwrap();
         }
     }
-}
 
-// Not sure why this is in window.
-// pub use MouseButton::*;
+    // Not sure why this is in window.
+    // pub use MouseButton::*;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum MouseButton {
-    Left,
-    Right,
-    Middle,
-    Mouse4,
-    Mouse5,
-}
-
-#[derive(Default, Debug, Copy, Clone, PartialEq)]
-pub struct MouseState {
-    pub pressed: bool,
-    pub released: bool,
-    pub inital_position: Rect,
-    pub release_position: Option<Rect>,
-}
-
-impl MouseState {
-    pub const fn new() -> Self {
-        Self {
-            pressed: false,
-            released: false,
-            inital_position: Rect::new(0, 0, 0, 0),
-            release_position: None,
-        }
+    #[derive(Debug, Copy, Clone, PartialEq)]
+    pub enum MouseButton {
+        Left,
+        Right,
+        Middle,
+        Mouse4,
+        Mouse5,
     }
-    pub const fn is_pressed(&mut self) -> bool {
-        if self.pressed {
-            self.pressed = false;
-            true
-        } else {
-            false
-        }
+
+    #[derive(Default, Debug, Copy, Clone, PartialEq)]
+    pub struct MouseState {
+        pub pressed: bool,
+        pub released: bool,
+        pub inital_position: Rect,
+        pub release_position: Option<Rect>,
     }
-    pub const fn is_released(&mut self) -> bool {
-        if self.released {
+
+    impl MouseState {
+        pub const fn new() -> Self {
+            Self {
+                pressed: false,
+                released: false,
+                inital_position: Rect::new(0, 0, 0, 0),
+                release_position: None,
+            }
+        }
+        pub const fn is_pressed(&mut self) -> bool {
+            if self.pressed {
+                self.pressed = false;
+                true
+            } else {
+                false
+            }
+        }
+        pub const fn is_released(&mut self) -> bool {
+            if self.released {
+                self.released = false;
+                true
+            } else {
+                false
+            }
+        }
+        //TODO: I was resetting the input each frame before, not sure on the behaviour now.
+        pub const fn clicked(&mut self, area: Rect) -> bool {
+            if self.released && self.inital_position.intersects(area) {
+                self.pressed = false;
+                self.released = false;
+                true
+            } else {
+                false
+            }
+        }
+        // pub(crate) const fn reset(&mut self) {
+        //     self.pressed = false;
+        //     self.released = false;
+        // }
+        pub(crate) const fn pressed(&mut self, pos: Rect) {
+            self.pressed = true;
             self.released = false;
-            true
-        } else {
-            false
+            self.inital_position = pos;
+            self.release_position = None;
         }
-    }
-    //TODO: I was resetting the input each frame before, not sure on the behaviour now.
-    pub const fn clicked(&mut self, area: Rect) -> bool {
-        if self.released && self.inital_position.intersects(area) {
+        pub(crate) const fn released(&mut self, pos: Rect) {
             self.pressed = false;
-            self.released = false;
-            true
-        } else {
-            false
-        }
-    }
-    // pub(crate) const fn reset(&mut self) {
-    //     self.pressed = false;
-    //     self.released = false;
-    // }
-    pub(crate) const fn pressed(&mut self, pos: Rect) {
-        self.pressed = true;
-        self.released = false;
-        self.inital_position = pos;
-        self.release_position = None;
-    }
-    pub(crate) const fn released(&mut self, pos: Rect) {
-        self.pressed = false;
-        self.released = true;
-        self.release_position = Some(pos);
-    }
-}
-
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Rect {
-    pub x: usize,
-    pub y: usize,
-    pub width: usize,
-    pub height: usize,
-}
-
-impl Rect {
-    pub const fn new(x: usize, y: usize, width: usize, height: usize) -> Self {
-        Self { x, y, width, height }
-    }
-    pub const fn x(mut self, x: usize) -> Self {
-        self.x = x;
-        self
-    }
-    pub const fn y(mut self, y: usize) -> Self {
-        self.y = y;
-        self
-    }
-    pub const fn width(mut self, width: usize) -> Self {
-        self.width = width;
-        self
-    }
-    pub const fn height(mut self, height: usize) -> Self {
-        self.height = height;
-        self
-    }
-    pub const fn right(&self) -> usize {
-        self.x + self.width
-    }
-    pub const fn bottom(&self) -> usize {
-        self.y + self.height
-    }
-    pub const fn intersects(&self, other: Rect) -> bool {
-        self.x < other.x + other.width
-            && self.x + self.width > other.x
-            && self.y < other.y + other.height
-            && self.y + self.height > other.y
-    }
-    //TODO: Bounds checking
-    pub const fn inner(&self, w: usize, h: usize) -> Rect {
-        Rect {
-            x: self.x + w,
-            y: self.y + h,
-            width: self.width - 2 * w,
-            height: self.height - 2 * h,
+            self.released = true;
+            self.release_position = Some(pos);
         }
     }
 
-    #[cfg(target_os = "windows")]
-    pub const fn from_windows(rect: RECT) -> Rect {
-        Rect {
-            x: 0,
-            y: 0,
-            width: (rect.right - rect.left) as usize,
-            height: (rect.bottom - rect.top) as usize,
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
+    pub struct Rect {
+        pub x: usize,
+        pub y: usize,
+        pub width: usize,
+        pub height: usize,
+    }
+
+    impl Rect {
+        pub const fn new(x: usize, y: usize, width: usize, height: usize) -> Self {
+            Self { x, y, width, height }
+        }
+        pub const fn x(mut self, x: usize) -> Self {
+            self.x = x;
+            self
+        }
+        pub const fn y(mut self, y: usize) -> Self {
+            self.y = y;
+            self
+        }
+        pub const fn width(mut self, width: usize) -> Self {
+            self.width = width;
+            self
+        }
+        pub const fn height(mut self, height: usize) -> Self {
+            self.height = height;
+            self
+        }
+        pub const fn right(&self) -> usize {
+            self.x + self.width
+        }
+        pub const fn bottom(&self) -> usize {
+            self.y + self.height
+        }
+        pub const fn intersects(&self, other: Rect) -> bool {
+            self.x < other.x + other.width
+                && self.x + self.width > other.x
+                && self.y < other.y + other.height
+                && self.y + self.height > other.y
+        }
+        //TODO: Bounds checking
+        pub const fn inner(&self, w: usize, h: usize) -> Rect {
+            Rect {
+                x: self.x + w,
+                y: self.y + h,
+                width: self.width - 2 * w,
+                height: self.height - 2 * h,
+            }
+        }
+
+        #[cfg(target_os = "windows")]
+        pub const fn from_windows(rect: RECT) -> Rect {
+            Rect {
+                x: 0,
+                y: 0,
+                width: (rect.right - rect.left) as usize,
+                height: (rect.bottom - rect.top) as usize,
+            }
         }
     }
 }

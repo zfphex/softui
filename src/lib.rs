@@ -5,26 +5,24 @@ use std::{any::Any, borrow::Cow, pin::Pin, sync::Arc};
 
 pub use core::ffi::c_void;
 
-pub mod platform;
 pub mod atomic_float;
-pub mod color;
 pub mod flex;
 pub mod input;
 pub mod layout;
 pub mod macros;
+pub mod platform;
 pub mod scaling;
 pub mod style;
 pub mod widgets;
 
-pub use color::*;
 pub use flex::*;
 pub use input::*;
 pub use layout::*;
 pub use macros::*;
+pub use platform::*;
 pub use scaling::*;
 pub use style::*;
 pub use widgets::*;
-pub use platform::*;
 
 pub use platform::MouseButton::*;
 
@@ -157,7 +155,6 @@ pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Cont
 
         #[cfg(target_os = "macos")]
         let window = Box::pin(Window::new(title, width, height));
-        // let window = create_window();
 
         CTX = Some(Context::new(title, window));
         CTX.as_mut().unwrap()
@@ -175,6 +172,7 @@ pub fn create_ctx_ex(title: &str, window: Pin<Box<Window>>) -> &'static mut Cont
 #[derive(Debug)]
 pub struct Context {
     pub window: Pin<Box<Window>>,
+    pub fill_color: Color,
 }
 
 impl Context {
@@ -182,7 +180,10 @@ impl Context {
         //TODO: Remove me.
         load_default_font();
 
-        Self { window }
+        Self {
+            window,
+            fill_color: black(),
+        }
     }
 
     #[inline]
@@ -208,6 +209,8 @@ impl Context {
     //TODO: There is no support for depth.
     pub fn draw_frame(&mut self) {
         profile!();
+
+        self.window.buffer.fill(self.fill_color.as_u32());
 
         while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
             let x = cmd.area.x as usize;
@@ -254,8 +257,7 @@ impl Context {
         //Doesn't seem to work on the secondary monitor, seeing huge cpu usage.
 
         //TODO: Add this vsync function into window.
-        // self.window.vsync();
-        // unsafe { DwmFlush() };
+        self.window.vsync();
     }
 
     pub fn get_pixel(&mut self, x: usize, y: usize) -> Option<&mut u32> {
@@ -263,10 +265,15 @@ impl Context {
         self.window.buffer.get_mut(pos)
     }
 
+    pub fn set_fill_color(&mut self, color: Color) {
+        self.fill_color = color;
+    }
+
+    //TODO: Remove
     //This is essentially just a memset.
     pub fn fill(&mut self, color: Color) {
-        profile!();
-        self.window.buffer.fill(color.as_u32());
+        // profile!();
+        // self.window.buffer.fill(color.as_u32());
     }
 
     #[inline]

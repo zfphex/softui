@@ -86,10 +86,6 @@ impl<'a> Text<'a> {
         self.line_height = Some(line_height);
         self.calculate_area()
     }
-    pub fn color(mut self, color: Color) -> Self {
-        self.color = color;
-        self
-    }
     fn calculate_area(mut self) -> Self {
         let canvas_width = ctx().window.width();
         let font = default_font().unwrap();
@@ -158,9 +154,16 @@ impl<'a> Text<'a> {
     }
 }
 
+impl<'a> Style for Text<'a> {
+    fn bg(mut self, color: Color) -> Self {
+        self.color = color;
+        self
+    }
+}
+
 impl<'a> Widget for Text<'a> {
     fn primative(&self) -> Primative {
-        Primative::Text(self.text.to_string(), self.font_size, Color::WHITE)
+        Primative::Text(self.text.to_string(), self.font_size, self.color)
     }
 
     #[inline]
