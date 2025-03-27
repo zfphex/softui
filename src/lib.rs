@@ -186,15 +186,15 @@ impl Context {
         }
     }
 
-    #[inline]
-    pub const fn width(&self) -> ScaledUnit {
-        ScaledUnit::ViewportWidth(0)
-    }
+    // #[inline]
+    // pub const fn width(&self) -> ScaledUnit {
+    //     ScaledUnit::ViewportWidth(0)
+    // }
 
-    #[inline]
-    pub const fn height(&self) -> ScaledUnit {
-        ScaledUnit::ViewportHeight(0)
-    }
+    // #[inline]
+    // pub const fn height(&self) -> ScaledUnit {
+    //     ScaledUnit::ViewportHeight(0)
+    // }
 
     #[inline]
     pub fn event(&mut self) -> Option<Event> {
@@ -622,7 +622,7 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
-        if text.is_empty() {
+        if text.is_empty() || font_size == 0 {
             return;
         }
 
@@ -634,7 +634,6 @@ impl Context {
         let font_size = scale(font_size, self.window.display_scale);
         let line_height = scale(line_height, self.window.display_scale);
 
-        assert!(font_size > 0);
         let mut area = Rect::new(x, y, 0, 0);
         let mut y: usize = area.y.try_into().unwrap();
         let x = area.x as usize;
@@ -723,7 +722,7 @@ impl Context {
         area.height = max_y + 1 - area.y;
         area.width = max_x + 1 - area.x;
 
-        // let _ = self.draw_rectangle_outline(
+        // self.draw_rectangle_outline(
         //     area.x as usize,
         //     area.y as usize,
         //     area.width as usize,

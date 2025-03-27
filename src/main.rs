@@ -12,7 +12,15 @@ fn main() {
             }
         }
 
-        flex!(v!(text("example")));
+        //TODO: Autocomplete does not work in these macros 😡😡😡?
+        flex!(v!(
+            text("example"),
+            rect().w(100).bg(red()),
+            rect().w(200).bg(blue()),
+            //
+        )
+        .gap(32))
+        .padding(32);
 
         ctx.draw_frame();
     }
