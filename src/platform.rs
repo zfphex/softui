@@ -32,11 +32,6 @@ pub mod macos {
                 return Some(Event::Quit);
             }
 
-            //Update the area.
-            let (width, height) = self.window.get_size();
-            let (x, y) = self.window.get_position();
-            self.area = Rect::new(x as usize, y as usize, width, height);
-
             let (x, y) = self.window.get_mouse_pos(MouseMode::Pass).unwrap();
             self.mouse_position = Rect::new(x as usize, y as usize, 1, 1);
 
@@ -174,33 +169,31 @@ pub mod macos {
             None
         }
 
-        fn area(&self) -> Rect {
+        pub fn area(&self) -> Rect {
             self.area
         }
 
         pub fn event_blocking(&mut self) -> Option<Event> {
             None
         }
+
         pub fn draw(&mut self) {
             let (width, height) = self.window.get_size();
-            self.window
-                .update_with_buffer(
-                    &self.buffer,
-                    width,
-                    height,
-                    // self.size.width as usize / 2,
-                    // self.size.height as usize / 2,
-                )
-                .unwrap();
+            let (x, y) = self.window.get_position();
+            self.area = Rect::new(x as usize, y as usize, width, height);
+            self.window.update_with_buffer(&self.buffer, width, height).unwrap();
         }
+
         #[inline(always)]
         pub fn width(&self) -> usize {
             self.area.width
         }
+
         #[inline(always)]
         pub fn height(&self) -> usize {
             self.area.height
         }
+
         pub fn display_scale() -> f32 {
             1.0
         }
