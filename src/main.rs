@@ -5,15 +5,20 @@ fn main() {
     let ctx = create_ctx("softui", 800, 600);
 
     loop {
-        if let Some(event) = ctx.event() {
-            match event {
-                Event::Quit => break,
-                _ => {} // Event::MouseMove(_, _) => todo!(),
-                // Event::Input(key, modifiers) => todo!(),
-                Event::Quit | Event::Input(Key::Escape, _) => break,
-                _ => {}
+        match ctx.event() {
+            Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
+            Some(Event::Input(key, _)) => {
+                dbg!(key);
             }
+            _ => {}
         }
+
+        let area = ctx.window.area;
+        if ctx.window.left_mouse.clicked(area) {
+            eprintln!("clicked")
+        }
+
+        // dbg!(ctx.window.minifb.get_keys());
 
         //TODO: Autocomplete does not work in these macros 😡😡😡?
         flex!(v!(

@@ -15,7 +15,7 @@ pub mod macos {
     #[derive(Debug)]
     pub struct Window {
         pub buffer: Vec<u32>,
-        window: minifb::Window,
+        pub minifb: minifb::Window,
         pub area: Rect,
         pub display_scale: f32,
         pub left_mouse: MouseState,
@@ -24,149 +24,41 @@ pub mod macos {
         pub mouse_4: MouseState,
         pub mouse_5: MouseState,
         pub mouse_position: Rect,
+        pub event_cache: Vec<Event>,
     }
 
     impl Window {
         pub fn event(&mut self) -> Option<Event> {
-            if !self.window.is_open() || self.window.is_key_down(minifb::Key::Escape) {
+            if !self.minifb.is_open() || self.minifb.is_key_down(minifb::Key::Escape) {
                 return Some(Event::Quit);
             }
 
-            let (x, y) = self.window.get_mouse_pos(MouseMode::Pass).unwrap();
+            let (x, y) = self.minifb.get_mouse_pos(MouseMode::Pass).unwrap();
             self.mouse_position = Rect::new(x as usize, y as usize, 1, 1);
 
-            //This just doesn't work ...
-
-            // if self.window.get_mouse_down(minifb::MouseButton::Left) {
-            //     return Some(Event::Input(
-            //         Key::LeftMouseDown,
-            //         :Modifiers::new(),
-            //     ));
-            // }
-
-            // if self.window.get_mouse_down(minifb::MouseButton::Right) {
-            //     return Some(Event::Input(
-            //         softui_core::Key::RightMouseDown,
-            //         softui_core::Modifiers::new(),
-            //     ));
-            // }
-
-            return None;
-
-            for key in self.window.get_keys() {
-                match key {
-                    minifb::Key::Key0 => todo!(),
-                    minifb::Key::Key1 => todo!(),
-                    minifb::Key::Key2 => todo!(),
-                    minifb::Key::Key3 => todo!(),
-                    minifb::Key::Key4 => todo!(),
-                    minifb::Key::Key5 => todo!(),
-                    minifb::Key::Key6 => todo!(),
-                    minifb::Key::Key7 => todo!(),
-                    minifb::Key::Key8 => todo!(),
-                    minifb::Key::Key9 => todo!(),
-                    minifb::Key::A => todo!(),
-                    minifb::Key::B => todo!(),
-                    minifb::Key::C => todo!(),
-                    minifb::Key::D => todo!(),
-                    minifb::Key::E => todo!(),
-                    minifb::Key::F => todo!(),
-                    minifb::Key::G => todo!(),
-                    minifb::Key::H => todo!(),
-                    minifb::Key::I => todo!(),
-                    minifb::Key::J => todo!(),
-                    minifb::Key::K => todo!(),
-                    minifb::Key::L => todo!(),
-                    minifb::Key::M => todo!(),
-                    minifb::Key::N => todo!(),
-                    minifb::Key::O => todo!(),
-                    minifb::Key::P => todo!(),
-                    minifb::Key::Q => todo!(),
-                    minifb::Key::R => todo!(),
-                    minifb::Key::S => todo!(),
-                    minifb::Key::T => todo!(),
-                    minifb::Key::U => todo!(),
-                    minifb::Key::V => todo!(),
-                    minifb::Key::W => todo!(),
-                    minifb::Key::X => todo!(),
-                    minifb::Key::Y => todo!(),
-                    minifb::Key::Z => todo!(),
-                    minifb::Key::F1 => todo!(),
-                    minifb::Key::F2 => todo!(),
-                    minifb::Key::F3 => todo!(),
-                    minifb::Key::F4 => todo!(),
-                    minifb::Key::F5 => todo!(),
-                    minifb::Key::F6 => todo!(),
-                    minifb::Key::F7 => todo!(),
-                    minifb::Key::F8 => todo!(),
-                    minifb::Key::F9 => todo!(),
-                    minifb::Key::F10 => todo!(),
-                    minifb::Key::F11 => todo!(),
-                    minifb::Key::F12 => todo!(),
-                    minifb::Key::F13 => todo!(),
-                    minifb::Key::F14 => todo!(),
-                    minifb::Key::F15 => todo!(),
-                    minifb::Key::Down => todo!(),
-                    minifb::Key::Left => todo!(),
-                    minifb::Key::Right => todo!(),
-                    minifb::Key::Up => todo!(),
-                    minifb::Key::Apostrophe => todo!(),
-                    minifb::Key::Backquote => todo!(),
-                    minifb::Key::Backslash => todo!(),
-                    minifb::Key::Comma => todo!(),
-                    minifb::Key::Equal => todo!(),
-                    minifb::Key::LeftBracket => todo!(),
-                    minifb::Key::Minus => todo!(),
-                    minifb::Key::Period => todo!(),
-                    minifb::Key::RightBracket => todo!(),
-                    minifb::Key::Semicolon => todo!(),
-                    minifb::Key::Slash => todo!(),
-                    minifb::Key::Backspace => todo!(),
-                    minifb::Key::Delete => todo!(),
-                    minifb::Key::End => todo!(),
-                    minifb::Key::Enter => todo!(),
-                    minifb::Key::Escape => todo!(),
-                    minifb::Key::Home => todo!(),
-                    minifb::Key::Insert => todo!(),
-                    minifb::Key::Menu => todo!(),
-                    minifb::Key::PageDown => todo!(),
-                    minifb::Key::PageUp => todo!(),
-                    minifb::Key::Pause => todo!(),
-                    minifb::Key::Space => todo!(),
-                    minifb::Key::Tab => todo!(),
-                    minifb::Key::NumLock => todo!(),
-                    minifb::Key::CapsLock => todo!(),
-                    minifb::Key::ScrollLock => todo!(),
-                    minifb::Key::LeftShift => todo!(),
-                    minifb::Key::RightShift => todo!(),
-                    minifb::Key::LeftCtrl => todo!(),
-                    minifb::Key::RightCtrl => todo!(),
-                    minifb::Key::NumPad0 => todo!(),
-                    minifb::Key::NumPad1 => todo!(),
-                    minifb::Key::NumPad2 => todo!(),
-                    minifb::Key::NumPad3 => todo!(),
-                    minifb::Key::NumPad4 => todo!(),
-                    minifb::Key::NumPad5 => todo!(),
-                    minifb::Key::NumPad6 => todo!(),
-                    minifb::Key::NumPad7 => todo!(),
-                    minifb::Key::NumPad8 => todo!(),
-                    minifb::Key::NumPad9 => todo!(),
-                    minifb::Key::NumPadDot => todo!(),
-                    minifb::Key::NumPadSlash => todo!(),
-                    minifb::Key::NumPadAsterisk => todo!(),
-                    minifb::Key::NumPadMinus => todo!(),
-                    minifb::Key::NumPadPlus => todo!(),
-                    minifb::Key::NumPadEnter => todo!(),
-                    minifb::Key::LeftAlt => todo!(),
-                    minifb::Key::RightAlt => todo!(),
-                    minifb::Key::LeftSuper => todo!(),
-                    minifb::Key::RightSuper => todo!(),
-                    minifb::Key::Unknown => todo!(),
-                    minifb::Key::Count => todo!(),
-                }
+            if self.minifb.get_mouse_down(minifb::MouseButton::Left) {
+                self.left_mouse.pressed(self.mouse_position);
+            } else if self.left_mouse.pressed {
+                self.left_mouse.released(self.mouse_position);
             }
 
-            None
+            if self.minifb.get_mouse_down(minifb::MouseButton::Middle) {
+                self.middle_mouse.pressed(self.mouse_position);
+            } else if self.middle_mouse.pressed {
+                self.middle_mouse.released(self.mouse_position);
+            }
+
+            if self.minifb.get_mouse_down(minifb::MouseButton::Right) {
+                self.right_mouse.pressed(self.mouse_position);
+            } else if self.right_mouse.pressed {
+                self.right_mouse.released(self.mouse_position);
+            }
+
+            self.event_cache.extend(convert_minifb_key_to_softui(
+                &self.minifb.get_keys_pressed(KeyRepeat::No),
+            ));
+
+            return self.event_cache.pop();
         }
 
         pub fn area(&self) -> Rect {
@@ -178,10 +70,10 @@ pub mod macos {
         }
 
         pub fn draw(&mut self) {
-            let (width, height) = self.window.get_size();
-            let (x, y) = self.window.get_position();
-            self.area = Rect::new(x as usize, y as usize, width, height);
-            self.window.update_with_buffer(&self.buffer, width, height).unwrap();
+            let (width, height) = self.minifb.get_size();
+            // let (x, y) = self.minifb.get_position();
+            self.area = Rect::new(0, 0, width, height);
+            self.minifb.update_with_buffer(&self.buffer, width, height).unwrap();
         }
 
         pub fn vsync(&mut self) {}
@@ -201,8 +93,95 @@ pub mod macos {
         }
     }
 
-    #[derive(Debug, PartialEq)]
+    pub fn convert_minifb_key_to_softui(keys: &[minifb::Key]) -> Vec<Event> {
+        let mut events = Vec::new();
+        for key in keys {
+            let key = match key {
+                minifb::Key::Key0 => Key::Char('0'),
+                minifb::Key::Key1 => Key::Char('1'),
+                minifb::Key::Key2 => Key::Char('2'),
+                minifb::Key::Key3 => Key::Char('3'),
+                minifb::Key::Key4 => Key::Char('4'),
+                minifb::Key::Key5 => Key::Char('5'),
+                minifb::Key::Key6 => Key::Char('6'),
+                minifb::Key::Key7 => Key::Char('7'),
+                minifb::Key::Key8 => Key::Char('8'),
+                minifb::Key::Key9 => Key::Char('9'),
+                minifb::Key::A => Key::Char('a'),
+                minifb::Key::B => Key::Char('b'),
+                minifb::Key::C => Key::Char('c'),
+                minifb::Key::D => Key::Char('d'),
+                minifb::Key::E => Key::Char('e'),
+                minifb::Key::F => Key::Char('f'),
+                minifb::Key::G => Key::Char('g'),
+                minifb::Key::H => Key::Char('h'),
+                minifb::Key::I => Key::Char('i'),
+                minifb::Key::J => Key::Char('j'),
+                minifb::Key::K => Key::Char('k'),
+                minifb::Key::L => Key::Char('l'),
+                minifb::Key::M => Key::Char('m'),
+                minifb::Key::N => Key::Char('n'),
+                minifb::Key::O => Key::Char('o'),
+                minifb::Key::P => Key::Char('p'),
+                minifb::Key::Q => Key::Char('q'),
+                minifb::Key::R => Key::Char('r'),
+                minifb::Key::S => Key::Char('s'),
+                minifb::Key::T => Key::Char('t'),
+                minifb::Key::U => Key::Char('u'),
+                minifb::Key::V => Key::Char('v'),
+                minifb::Key::W => Key::Char('w'),
+                minifb::Key::X => Key::Char('x'),
+                minifb::Key::Y => Key::Char('y'),
+                minifb::Key::Z => Key::Char('z'),
+                minifb::Key::F1 => Key::Function(1),
+                minifb::Key::F2 => Key::Function(2),
+                minifb::Key::F3 => Key::Function(3),
+                minifb::Key::F4 => Key::Function(4),
+                minifb::Key::F5 => Key::Function(5),
+                minifb::Key::F6 => Key::Function(6),
+                minifb::Key::F7 => Key::Function(7),
+                minifb::Key::F8 => Key::Function(8),
+                minifb::Key::F9 => Key::Function(9),
+                minifb::Key::F10 => Key::Function(10),
+                minifb::Key::F11 => Key::Function(11),
+                minifb::Key::F12 => Key::Function(12),
+                minifb::Key::Enter => Key::Enter,
+                minifb::Key::Space => Key::Space,
+                minifb::Key::Backspace => Key::Backspace,
+                minifb::Key::Escape => Key::Escape,
+                minifb::Key::Tab => Key::Tab,
+                minifb::Key::Up => Key::Up,
+                minifb::Key::Down => Key::Down,
+                minifb::Key::Left => Key::Left,
+                minifb::Key::Right => Key::Right,
+                minifb::Key::Delete => Key::Delete,
+                minifb::Key::Insert => Key::Insert,
+                minifb::Key::Home => Key::Home,
+                minifb::Key::End => Key::End,
+                minifb::Key::PageUp => Key::PageUp,
+                minifb::Key::PageDown => Key::PageDown,
+                minifb::Key::Pause => Key::PauseBreak,
+                minifb::Key::ScrollLock => Key::ScrollLock,
+                minifb::Key::LeftShift => Key::Shift,
+                minifb::Key::RightShift => Key::Shift,
+                minifb::Key::LeftCtrl => Key::Control,
+                minifb::Key::RightCtrl => Key::Control,
+                minifb::Key::LeftAlt => Key::Alt,
+                minifb::Key::RightAlt => Key::Alt,
+                minifb::Key::LeftSuper => Key::LeftWindows,
+                minifb::Key::RightSuper => Key::RightWindows,
+                minifb::Key::Menu => Key::Menu,
+                _ => Key::Unknown(0),
+            };
+
+            events.push(Event::Input(key, Modifiers::default()));
+        }
+        events
+    }
+
+    #[derive(Default, Debug, PartialEq)]
     pub enum Modifier {
+        #[default]
         None,
         LeftControl,
         LeftShift,
@@ -220,13 +199,14 @@ pub mod macos {
         Input(Key, Modifiers),
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Default, Debug, PartialEq)]
     pub struct Modifiers {
         pub control: bool,
         pub shift: bool,
         pub alt: bool,
         pub win: bool,
     }
+
     #[derive(Debug, PartialEq)]
     pub enum Key {
         Char(char),
@@ -280,7 +260,7 @@ pub mod macos {
 
             Self {
                 buffer,
-                window,
+                minifb: window,
                 area: Rect::new(0, 0, width, height),
                 display_scale: 1.0,
                 mouse_position: Rect::default(),
@@ -289,6 +269,7 @@ pub mod macos {
                 middle_mouse: MouseState::new(),
                 mouse_4: MouseState::new(),
                 mouse_5: MouseState::new(),
+                event_cache: Vec::new(),
             }
 
             // let (mut width, mut height) = (WIDTH, HEIGHT);
