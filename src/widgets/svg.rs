@@ -15,34 +15,21 @@ pub fn svg<P: AsRef<std::path::Path>>(path: P) -> Pixmap {
 pub fn draw_svg(ctx: &mut Context, pixmap: &Pixmap) {
     let mut x = 0;
     let mut y = 0;
+
     for pixel in pixmap.pixels() {
         if y >= pixmap.height() {
             break;
         }
 
-        let color = (pixel.red() as u32) << 16 | (pixel.green() as u32) << 8 | (pixel.blue() as u32);
-        ctx.draw_pixel(x as usize, y as usize, color.into());
+        let color = Color::new(pixel.red(), pixel.green(), pixel.blue());
+        ctx.draw_pixel(x as usize, y as usize, color);
 
         x += 1;
+
         if x >= pixmap.width() {
             y += 1;
             x = 0;
             continue;
         }
     }
-    // for x in 0..pixmap.width() {
-    //     if x >= ctx.width as u32 {
-    //         continue;
-    //     }
-    //     for y in 0..pixmap.height() {
-    //         if y >= ctx.height as u32 {
-    //             continue;
-    //         }
-    //         let pixel = pixmap.pixel(x, y).unwrap();
-    //         let color = (pixel.red() as u32) << 16
-    //             | (pixel.green() as u32) << 8
-    //             | (pixel.blue() as u32);
-    //         ctx.draw_pixel(x as usize, y as usize, color);
-    //     }
-    // }
 }

@@ -74,7 +74,11 @@ where
     //This should be hidden from the user and only implemented on `Click`.
     //https://stackoverflow.com/questions/77562161/is-there-a-way-to-prevent-a-struct-from-implementing-a-trait-method
     #[inline]
-    fn try_click(&mut self) {}
+    #[track_caller]
+    fn try_click(&mut self) {
+        //TODO: Remove this is for debugging purposes
+        unreachable!()
+    }
 
     #[inline]
     fn run_click(&mut self, area: Rect) {}

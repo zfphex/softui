@@ -71,7 +71,6 @@ pub mod macos {
 
         pub fn draw(&mut self) {
             let (width, height) = self.minifb.get_size();
-            // let (x, y) = self.minifb.get_position();
             self.area = Rect::new(0, 0, width, height);
             self.minifb.update_with_buffer(&self.buffer, width, height).unwrap();
         }
@@ -256,6 +255,7 @@ pub mod macos {
             )
             .expect("Unable to create the window");
 
+            //This should be refresh rate.
             window.set_target_fps(60);
 
             Self {
@@ -271,47 +271,6 @@ pub mod macos {
                 mouse_5: MouseState::new(),
                 event_cache: Vec::new(),
             }
-
-            // let (mut width, mut height) = (WIDTH, HEIGHT);
-
-            // while window.is_open() && !window.is_key_down(Key::Escape) {
-            //     let (new_width, new_height) = window.get_size();
-            //     if new_width != width || new_height != height {
-            //         // Divide by / 2 here as we use 2x scaling for the buffer
-            //         let mut new_buffer = vec![0; (new_width / 2) * (new_height / 2)];
-
-            //         // copy valid bits of old buffer to new buffer
-            //         for y in 0..(height / 2).min(new_height / 2) {
-            //             for x in 0..(width / 2).min(new_width / 2) {
-            //                 new_buffer[y * (new_width / 2) + x] = buffer[y * (width / 2) + x];
-            //             }
-            //         }
-
-            //         buffer = new_buffer;
-            //         width = new_width;
-            //         height = new_height;
-            //     }
-
-            //     if let Some((x, y)) = window.get_mouse_pos(MouseMode::Discard) {
-            //         let screen_pos = ((y as usize) * (width / 2)) + x as usize;
-
-            //         if window.get_mouse_down(MouseButton::Left) {
-            //             buffer[screen_pos] = 0x00ffffff; // white
-            //         }
-
-            //         if window.get_mouse_down(MouseButton::Right) {
-            //             buffer[screen_pos] = 0x00000000; // black
-            //         }
-            //     }
-
-            //     if let Some((scroll_x, scroll_y)) = window.get_scroll_wheel() {
-            //         println!("Scrolling {} - {}", scroll_x, scroll_y);
-            //     }
-
-            //     // We unwrap here as we want this code to exit if it fails
-            //     window
-            //         .update_with_buffer(&buffer, width / 2, height / 2)
-            //         .unwrap();
         }
     }
 

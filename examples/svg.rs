@@ -8,9 +8,8 @@ fn main() {
 #[cfg(feature = "svg")]
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
-
-    #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg");
+    ctx.set_fill_color(white());
 
     loop {
         match ctx.event() {
@@ -18,9 +17,6 @@ fn main() {
             _ => {}
         }
 
-        ctx.fill(Color::BLACK);
-
-        #[cfg(feature = "svg")]
         draw_svg(ctx, &ferris);
 
         ctx.draw_frame();

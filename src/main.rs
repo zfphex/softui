@@ -14,8 +14,13 @@ fn main() {
         }
 
         let area = ctx.window.area;
+
         if ctx.window.left_mouse.clicked(area) {
-            eprintln!("clicked")
+            eprintln!("left mouse clicked")
+        }
+
+        if ctx.window.right_mouse.clicked(area) {
+            eprintln!("right mouse clicked")
         }
 
         // dbg!(ctx.window.minifb.get_keys());

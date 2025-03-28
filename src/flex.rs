@@ -97,10 +97,11 @@ pub fn draw_widgets(
             FlexDirection::BottomTop => todo!(),
         }
 
+        // This will always fail since TypelessWidget doesn't implement try_click :(
         // widget.area = area;
         // widget.try_click();
-        // dbg!(widget.area);
-        widget.run_click(area);
+        // widget.run_click(area);
+
         commands.push(Command {
             area,
             primative: widget.primative(),
@@ -338,6 +339,9 @@ macro_rules! h {
                         height = area.height.max(height);
                         width += area.width;
                     }
+
+                    //Type is stripped from OnClick<F, T> here so calls
+                    //to widget.try_click() will always fail.
                     widgets.push(TypelessWidget{ area, primative: child.primative()})
                 }
             )*

@@ -13,6 +13,7 @@ fn main() {
 
         //Chain together up to 5 on click functions.
         //I'll need to find a better way to do this in the future.
+
         {
             let mut text = text("Example Text")
                 .on_click(Left, |_| println!("Left"))
@@ -21,8 +22,7 @@ fn main() {
                 .on_click(Mouse4, |_| println!("Mouse4"))
                 .on_click(Mouse5, |_| println!("Mouse5"));
 
-            todo!()
-            // v!(text);
+            flex!(v!(text));
         }
 
         ctx.draw_frame();

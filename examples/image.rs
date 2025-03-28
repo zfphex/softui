@@ -21,8 +21,7 @@ fn main() {
         ctx.fill(Color::BLACK);
 
         {
-            todo!()
-            // v!(png, text, jpg);
+            flex!(v!(png, text, jpg));
         }
 
         ctx.draw_frame();
