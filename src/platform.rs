@@ -184,6 +184,8 @@ pub mod macos {
             self.window.update_with_buffer(&self.buffer, width, height).unwrap();
         }
 
+        pub fn vsync(&mut self) {}
+
         #[inline(always)]
         pub fn width(&self) -> usize {
             self.area.width
