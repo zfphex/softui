@@ -4,11 +4,11 @@ use resvg::{
     usvg::{Options, Transform, Tree},
 };
 
-pub fn svg<P: AsRef<std::path::Path>>(path: P) -> Pixmap {
+pub fn svg<P: AsRef<std::path::Path>>(path: P, scale: f32) -> Pixmap {
     let ctx = ctx();
     let tree = Tree::from_data(&std::fs::read(path).unwrap(), &Options::default()).unwrap();
     let mut pixmap = Pixmap::new(ctx.window.width() as u32, ctx.window.height() as u32).unwrap();
-    resvg::render(&tree, Transform::from_scale(0.5, 0.5), &mut pixmap.as_mut());
+    resvg::render(&tree, Transform::from_scale(scale, scale), &mut pixmap.as_mut());
     pixmap
 }
 
