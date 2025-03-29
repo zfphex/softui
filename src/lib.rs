@@ -76,6 +76,9 @@ pub enum Primative {
     ///(bitmap, x, y, width, height, format)
     ImageUnsafe(&'static [u8], ImageFormat),
 
+    #[cfg(feature = "svg")]
+    SVGUnsafe(&'static resvg::tiny_skia::Pixmap),
+
     Custom(fn(&mut Context, Rect) -> ()),
     CustomAny {
         data: Arc<dyn Any + Send + Sync>,
@@ -104,6 +107,10 @@ impl std::fmt::Debug for Primative {
 }
 
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
+
+pub unsafe fn extend_lifetime<'a, T>(t: &'a T) -> &'static T {
+    std::mem::transmute::<&'a T, &'static T>(t)
+}
 
 #[inline]
 pub fn queue_command(area: Rect, primative: Primative) {
@@ -238,7 +245,11 @@ impl Context {
                 // Primative::Custom(f, data) => f(self, data),
                 #[cfg(feature = "image")]
                 Primative::ImageUnsafe(bitmap, image_format) => {
-                    self.draw_image(bitmap, x, y, width, height, image_format);
+                    self.draw_image(x, y, width, height, bitmap, image_format);
+                }
+                #[cfg(feature = "svg")]
+                Primative::SVGUnsafe(pixmap) => {
+                    self.draw_svg(x, y, pixmap, false);
                 }
                 Primative::CustomAny { data, f } => f(self, cmd.area, &*data),
                 Primative::Custom(f) => f(self, cmd.area),
@@ -878,7 +889,7 @@ impl Context {
     }
 
     #[cfg(feature = "image")]
-    pub fn draw_image(&mut self, bitmap: &[u8], x: usize, y: usize, width: usize, height: usize, format: ImageFormat) {
+    pub fn draw_image(&mut self, x: usize, y: usize, width: usize, height: usize, bitmap: &[u8], format: ImageFormat) {
         let start_x = x;
         let start_y = y;
         let viewport_width = self.window.width();
@@ -911,6 +922,28 @@ impl Context {
                 y += 1;
                 x = 0;
                 continue;
+            }
+        }
+    }
+
+    //TODO: Scale down image to fit inside width and height parameters.
+    #[cfg(feature = "svg")]
+    pub fn draw_svg(&mut self, x: usize, y: usize, pixmap: &resvg::tiny_skia::Pixmap, debug: bool) {
+        let (width, height) = (pixmap.width() as usize, pixmap.height() as usize);
+        let pixels = pixmap.pixels();
+
+        for sy in 0..height {
+            for sx in 0..width {
+                let pos = sx + width * sy;
+                let pixel = pixels[pos];
+                let color = Color::new(pixel.red(), pixel.green(), pixel.blue());
+
+                if color.as_u32() == 0 && debug {
+                    self.try_draw_pixel(sx + x, sy + y, red());
+                } else {
+                    self.try_draw_pixel(sx + x, sy + y, color);
+                    // self.draw_pixel(sx + x, sy + y, color);
+                }
             }
         }
     }

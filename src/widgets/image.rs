@@ -140,7 +140,3 @@ impl Widget for Image {
         // ))
     }
 }
-
-unsafe fn extend_lifetime<'a>(i: &'a [u8]) -> &'static [u8] {
-    std::mem::transmute::<&'a [u8], &'static [u8]>(i)
-}

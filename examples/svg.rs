@@ -8,7 +8,9 @@ fn main() {
 #[cfg(feature = "svg")]
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
-    let ferris = svg("img/ferris.svg", 0.5);
+
+    //TODO: The parameters are a total pain to use, the image should automatically be scaled based on width and height.
+    let ferris = Svg::new("img/ferris.svg", 240, 170, 0.2);
 
     loop {
         match ctx.event() {
@@ -16,8 +18,7 @@ fn main() {
             _ => {}
         }
 
-        draw_svg(ctx, &ferris);
-
+        ctx.draw_svg(100, 100, &ferris.pixmap, true);
         ctx.draw_frame();
     }
 }

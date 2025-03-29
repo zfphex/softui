@@ -4,46 +4,37 @@ use resvg::{
     usvg::{Options, Transform, Tree},
 };
 
-pub fn svg<P: AsRef<std::path::Path>>(path: P, scale: f32) -> Pixmap {
-    let ctx = ctx();
-    let tree = Tree::from_data(&std::fs::read(path).unwrap(), &Options::default()).unwrap();
-    let mut pixmap = Pixmap::new(ctx.window.width() as u32, ctx.window.height() as u32).unwrap();
-    resvg::render(&tree, Transform::from_scale(scale, scale), &mut pixmap.as_mut());
-    pixmap
+pub struct Svg {
+    pub pixmap: Pixmap,
+    pub area: Rect,
 }
 
-pub fn draw_svg(ctx: &mut Context, pixmap: &Pixmap) {
-    let (width, height) = (pixmap.width() as usize, pixmap.height() as usize);
-    let pixels = pixmap.pixels();
+impl Svg {
+    pub fn new<P: AsRef<std::path::Path>>(path: P, width: usize, height: usize, scale: f32) -> Self {
+        let tree = Tree::from_data(&std::fs::read(path).unwrap(), &Options::default()).unwrap();
+        let mut pixmap = Pixmap::new(width as u32, height as u32).unwrap();
+        resvg::render(&tree, Transform::from_scale(scale, scale), &mut pixmap.as_mut());
 
-    for y in 0..height {
-        for x in 0..width {
-            let pos = x + width * y;
-            let pixel = pixels[pos];
-            let color = Color::new(pixel.red(), pixel.green(), pixel.blue());
-            ctx.draw_pixel(x, y, color);
+        Self {
+            area: Rect::new(0, 0, pixmap.width() as usize, pixmap.height() as usize),
+            pixmap,
         }
     }
 }
 
-pub fn draw_svg_old(ctx: &mut Context, pixmap: &Pixmap) {
-    let mut x = 0;
-    let mut y = 0;
+impl Widget for Svg {
+    type Layout = Self;
 
-    for pixel in pixmap.pixels() {
-        if y >= pixmap.height() {
-            break;
-        }
+    fn primative(&self) -> Primative {
+        let pixmap = unsafe { extend_lifetime(&self.pixmap) };
+        Primative::SVGUnsafe(pixmap)
+    }
 
-        let color = Color::new(pixel.red(), pixel.green(), pixel.blue());
-        ctx.draw_pixel(x as usize, y as usize, color);
+    fn area(&self) -> Rect {
+        self.area
+    }
 
-        x += 1;
-
-        if x >= pixmap.width() {
-            y += 1;
-            x = 0;
-            continue;
-        }
+    fn area_mut(&mut self) -> Option<&mut Rect> {
+        Some(&mut self.area)
     }
 }
