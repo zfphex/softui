@@ -916,6 +916,27 @@ impl Context {
             }
         }
     }
+
+    #[inline]
+    pub fn clicked_left_mouse(&mut self, area: Rect) -> bool {
+        self.window.left_mouse.clicked(area)
+    }
+    #[inline]
+    pub fn clicked_right_mouse(&mut self, area: Rect) -> bool {
+        self.window.right_mouse.clicked(area)
+    }
+    #[inline]
+    pub fn clicked_middle_mouse(&mut self, area: Rect) -> bool {
+        self.window.middle_mouse.clicked(area)
+    }
+    #[inline]
+    pub fn clicked_mouse4(&mut self, area: Rect) -> bool {
+        self.window.mouse_4.clicked(area)
+    }
+    #[inline]
+    pub fn clicked_mouse5(&mut self, area: Rect) -> bool {
+        self.window.mouse_5.clicked(area)
+    }
 }
 
 #[cfg(test)]

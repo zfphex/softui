@@ -15,11 +15,11 @@ fn main() {
 
         let area = ctx.window.area;
 
-        if ctx.window.left_mouse.clicked(area) {
+        if ctx.clicked_left_mouse(area) {
             eprintln!("left mouse clicked")
         }
 
-        if ctx.window.right_mouse.clicked(area) {
+        if ctx.clicked_right_mouse(area) {
             eprintln!("right mouse clicked")
         }
 
@@ -34,11 +34,6 @@ fn main() {
         )
         .gap(32))
         .padding(32);
-
-        //Perhaps the scale is wrong???
-        ctx.draw_text("e", default_font().unwrap(), 0, 0, 24, 0, white());
-
-        // flex!(v!(rect().wh(32), rect().wh(32).bg(blue()), rect().wh(48)));
 
         ctx.draw_frame();
     }
