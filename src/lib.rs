@@ -176,14 +176,12 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(title: &str, window: Pin<Box<Window>>) -> Self {
+    pub fn new(title: &str, mut window: Pin<Box<Window>>) -> Self {
         //TODO: Remove me.
         load_default_font();
-
-        Self {
-            window,
-            fill_color: black(),
-        }
+        let fill_color = black();
+        window.buffer.fill(fill_color.as_u32());
+        Self { window, fill_color }
     }
 
     // #[inline]
@@ -209,8 +207,6 @@ impl Context {
     //TODO: There is no support for depth.
     pub fn draw_frame(&mut self) {
         profile!();
-
-        self.window.buffer.fill(self.fill_color.as_u32());
 
         while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
             let x = cmd.area.x as usize;
@@ -250,6 +246,8 @@ impl Context {
         }
 
         self.window.draw();
+        //Draw the UI on top of the background not the other way round!
+        self.window.buffer.fill(self.fill_color.as_u32());
 
         //Limit the framerate to the primary monitors refresh rate.
         //TODO: Wait timers are likely better for all refresh rates.
