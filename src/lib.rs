@@ -276,11 +276,13 @@ impl Context {
 
     pub fn set_fill_color(&mut self, color: Color) {
         self.fill_color = color;
+        self.window.buffer.fill(self.fill_color.as_u32());
     }
 
     //TODO: Remove
     //This is essentially just a memset.
     pub fn fill(&mut self, color: Color) {
+        unreachable!("This function should be depricated.")
         // profile!();
         // self.window.buffer.fill(color.as_u32());
     }
@@ -747,19 +749,15 @@ impl Context {
         text: &str,
         dwrite: &DWrite,
         x: usize,
-        y: usize,
+        mut y: usize,
         font_size: usize,
-        //Zero is fine
         line_height: usize,
         color: Color,
     ) {
-        assert!(font_size > 0);
-        let mut area = Rect::new(x, y, 0, 0);
-        let mut y: usize = area.y.try_into().unwrap();
-        let x = area.x as usize;
-
         let mut max_x = 0;
         let mut max_y = 0;
+        let start_x = x;
+        let start_y = y;
 
         let r = color.r();
         let g = color.g();
@@ -772,18 +770,14 @@ impl Context {
 
             'char: for char in line.chars() {
                 let (metrics, texture) = dwrite.glyph(char, font_size as f32);
+                // eprintln!("{char}, {:#?}", metrics);
                 let height = texture.height;
                 let width = texture.width;
                 let texture = &texture.data;
 
-                let advance_width = metrics.advance_width;
-                let advance_height = metrics.advance_height;
-                let ymin = metrics.bottom_side_bearing;
-                let ascent = metrics.ascent;
-                let decent = metrics.decent;
-
-                // let glyph_y = (y as f32 - (height as f32 - advance_height) - ymin);
-                let glyph_y = (y as f32 - (height as f32 - advance_height) - ymin).round() as usize;
+                let glyph_y = (start_y as f32 + (metrics.vertical_origin_y - height as f32)
+                    - metrics.bottom_side_bearing)
+                    .floor() as usize;
 
                 'y: for y in 0..height {
                     'x: for x in 0..width {
@@ -792,7 +786,7 @@ impl Context {
                             continue;
                         }
 
-                        let offset = glyph_y + y as usize;
+                        let offset = glyph_y as usize + y as usize;
 
                         if max_x < x as usize + glyph_x {
                             max_x = x as usize + glyph_x;
@@ -809,20 +803,23 @@ impl Context {
                             break 'x;
                         }
 
-                        // self.draw_rectangle_outline(glyph_x as usize, glyph_y as usize, width as usize, height as usize + 1, Color::RED).unwrap();
+                        // self.draw_rectangle_outline(
+                        //     glyph_x as usize,
+                        //     start_y as usize,
+                        //     width as usize,
+                        //     height as usize,
+                        //     Color::RED,
+                        // );
 
-                        let c = rgb(255 - texture[j], 255 - texture[j + 1], 255 - texture[j + 2]).as_u32();
+                        let c = Color::new(texture[j], texture[j + 1], texture[j + 2]);
 
                         if let Some(px) = self.window.buffer.get_mut(i) {
-                            *px = c;
+                            *px = c.as_u32();
                         }
-
-                        // self.window.buffer[i] = c;
-                        // self.window.buffer[i] = rgb(r, g, b);
                     }
                 }
 
-                glyph_x += advance_width.round() as usize;
+                glyph_x += metrics.advance_width.round() as usize;
 
                 //Check if the glyph position is off the screen.
                 if glyph_x >= self.window.width() {
@@ -833,12 +830,13 @@ impl Context {
             //CSS is probably line height * font size.
             //1.2 is the default line height
             //I'm guessing 1.0 is probably just adding the font size.
-            y += font_size as usize + line_height;
+            y += font_size + line_height;
         }
 
         //Not sure why these are one off.
-        area.height = max_y + 1 - area.y;
-        area.width = max_x + 1 - area.x;
+        let area = Rect::new(x, y, max_x + 1 - start_x, max_y + 1 - start_y);
+        // area.height = max_y + 1 - area.y;
+        // area.width = max_x + 1 - area.x;
 
         // let _ = self.draw_rectangle_outline(
         //     area.x as usize,
@@ -952,18 +950,22 @@ impl Context {
     pub fn clicked_left_mouse(&mut self, area: Rect) -> bool {
         self.window.left_mouse.clicked(area)
     }
+
     #[inline]
     pub fn clicked_right_mouse(&mut self, area: Rect) -> bool {
         self.window.right_mouse.clicked(area)
     }
+
     #[inline]
     pub fn clicked_middle_mouse(&mut self, area: Rect) -> bool {
         self.window.middle_mouse.clicked(area)
     }
+
     #[inline]
     pub fn clicked_mouse4(&mut self, area: Rect) -> bool {
         self.window.mouse_4.clicked(area)
     }
+
     #[inline]
     pub fn clicked_mouse5(&mut self, area: Rect) -> bool {
         self.window.mouse_5.clicked(area)
