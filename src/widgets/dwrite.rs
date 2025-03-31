@@ -58,8 +58,9 @@ pub struct DWrite {
     //How would we support multiple font sizes.
     //This is basically useless as it is.
     pub table: [Glyph; 127],
-    // pub ascent: f32,
-    // pub decent: f32,
+    pub ascent: f32,
+    pub decent: f32,
+    pub design_units: f32,
 }
 
 impl DWrite {
@@ -68,9 +69,10 @@ impl DWrite {
 
         let metrics = dwrite.font_face.metrics().metrics0();
         let em = metrics.designUnitsPerEm as f32;
+        dwrite.design_units = em;
         let ratio = point_size / em;
-        // dwrite.ascent = metrics.ascent as f32 * ratio;
-        // dwrite.decent = metrics.descent as f32 * ratio;
+        dwrite.ascent = metrics.ascent as f32 * ratio;
+        dwrite.decent = metrics.descent as f32 * ratio;
 
         for char in 32..127 {
             let (metrics, texture) = dwrite.glyph(char as u8 as char, point_size);
@@ -96,19 +98,19 @@ impl DWrite {
         Self {
             font_face,
             table: [const { Glyph::new() }; 127],
-            // ascent: todo!(),
-            // decent: todo!(),
+            ascent: todo!(),
+            decent: todo!(),
+            design_units: todo!(),
         }
     }
     //TODO: I got bored half way through writing this.
-    pub fn new_cached_2(point_size: f32) -> Self {
+    pub fn new_cached_2(font_size: f32) -> Self {
         let mut dwrite = Self::new();
         let glyphs: Vec<u32> = (32..127).collect();
         let glyph_ids: Vec<u16> = dwrite.font_face.get_glyph_indices(&glyphs);
 
         let metrics = dwrite.font_face.metrics().metrics0();
-        let em = metrics.designUnitsPerEm as f32;
-        let ratio = point_size / em;
+        let design_units = metrics.designUnitsPerEm as f32;
 
         for (index, gm) in dwrite
             .font_face
@@ -204,8 +206,8 @@ impl DWrite {
             .unwrap();
 
         let metrics = self.font_face.metrics().metrics0();
-        let em = metrics.designUnitsPerEm as f32;
-        let ratio = point_size / em;
+        let design_units = metrics.designUnitsPerEm as f32;
+        let ratio = point_size / design_units;
 
         let gm = self.font_face.get_design_glyph_metrics(&[glyph_id], false)[0];
         // dbg!(gm.advanceHeight, gm.bottomSideBearing,         gm.topSideBearing, gm.verticalOriginY);
