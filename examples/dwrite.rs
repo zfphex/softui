@@ -1,4 +1,4 @@
-#[cfg(feature = "dwrite")]
+#[cfg(target_os = "windows")]
 fn main() {
     use softui::*;
 
@@ -6,7 +6,15 @@ fn main() {
     let dwrite = DWrite::new_cached(32.0);
 
     // ctx.draw_text_subpixel("this", &dwrite, 0, 36 * 3, 30, 0, Color::WHITE);
-    ctx.draw_text_subpixel("this is some really long text let\'s see if it works", &dwrite, 0, 36 * 3, 30, 0, Color::WHITE);
+    ctx.draw_text_subpixel(
+        "this is some really long text let\'s see if it works",
+        &dwrite,
+        0,
+        36 * 3,
+        30,
+        0,
+        Color::WHITE,
+    );
     // ctx.draw_text_subpixel("abcdefghijklmnopqrstuvwxyz!@#$%^&*()", &dwrite, 0, 36 * 6, 30, 0, Color::WHITE);
     ctx.draw_frame();
 
@@ -33,5 +41,5 @@ fn main() {
     }
 }
 
-#[cfg(not(feature = "dwrite"))]
+#[cfg(not(target_os = "windows"))]
 fn main() {}
