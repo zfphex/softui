@@ -192,12 +192,12 @@ fn main() {
                         zwin.set_pos(x as usize, y as usize, zoom as usize, zoom as usize, 0);
                     }
                 }
-                //TODO: Global mouse input was broken in the refactor.
-                // Some(Event::Input(Key::LeftMouseDown, _)) if last_printed != color.as_u32() => {
-                //     last_printed = color.as_u32();
-                //     copy_to_clipboard(&color.to_string());
-                // }
                 _ => {}
+            }
+
+            if global_state().left_mouse.clicked() && last_printed != color.as_u32() {
+                last_printed = color.as_u32();
+                copy_to_clipboard(&color.to_string());
             }
 
             //TODO: Get all the monitors at program start.
