@@ -320,9 +320,7 @@ impl Context {
     {
         let viewport_width = self.window.width();
         let viewport_height = self.window.area.height;
-        todo!("Change scale to be self.window.display_scale()");
-        // let scale = self.window.display_scale;
-        let scale = 0.0;
+        let scale = self.window.display_scale();
 
         let x = scale_temp(x.into(), self.window.area, scale);
         let y = scale_temp(y.into(), self.window.area, scale);
