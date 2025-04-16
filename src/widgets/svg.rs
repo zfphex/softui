@@ -4,6 +4,10 @@ use resvg::{
     usvg::{Options, Transform, Tree},
 };
 
+pub fn svg<P: AsRef<std::path::Path>>(path: P, width: usize, height: usize, scale: f32) -> Svg {
+    Svg::new(path, width, height, scale)
+}
+
 pub struct Svg {
     pub pixmap: Pixmap,
     pub area: Rect,

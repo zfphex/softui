@@ -1,16 +1,6 @@
 use crate::*;
 
-//Old version.
-// pub fn rct(ctx: &Context) -> Rectangle {
-//     Rectangle {
-//         area: Rect::new(0, 0, 10, 10),
-//         bg: Color::WHITE,
-//         radius: 0,
-//         ctx,
-//     }
-// }
-
-pub fn rect() -> Rectangle {
+pub const fn rect() -> Rectangle {
     Rectangle {
         area: Rect::new(0, 0, 10, 10),
         bg: white(),
@@ -26,7 +16,7 @@ pub struct Rectangle {
 }
 
 impl Rectangle {
-    pub fn radius(mut self, radius: usize) -> Self {
+    pub const fn radius(mut self, radius: usize) -> Self {
         self.radius = radius;
         self
     }

@@ -31,9 +31,7 @@ pub enum GenericUnit {
 }
 
 /// This exists because ui primatives are scaled by default.
-/// ```ignore
-/// ctx.draw_rectangle(0, 0, 100, 100, ..)
-/// ```
+///
 /// If the display scale is `150%` the width and height of this will be `150`
 /// However if the user entered the viewport width, `ctx.area.width - 1`.
 /// This would be scaled an the length would be incorrect.
