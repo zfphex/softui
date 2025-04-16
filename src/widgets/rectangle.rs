@@ -13,7 +13,7 @@ use crate::*;
 pub fn rect() -> Rectangle {
     Rectangle {
         area: Rect::new(0, 0, 10, 10),
-        bg: Color::WHITE,
+        bg: white(),
         radius: 0,
     }
 }

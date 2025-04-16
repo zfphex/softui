@@ -9,8 +9,6 @@ fn main() {
             _ => {}
         }
 
-        ctx.fill(Color::BLACK);
-
         //Dragging example.
         if ctx.window.left_mouse.inital_position != Rect::default() {
             let inital = ctx.window.left_mouse.inital_position;
@@ -42,7 +40,7 @@ fn main() {
                 drag.y as usize,
                 drag.width as usize,
                 drag.height as usize,
-                Color::RED,
+                red(),
             );
         }
 

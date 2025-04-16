@@ -18,8 +18,6 @@ fn main() {
             _ => {}
         }
 
-        ctx.fill(Color::BLACK);
-
         {
             flex!(v!(png, text, jpg));
         }

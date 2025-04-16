@@ -9,8 +9,6 @@ fn main() {
             _ => {}
         }
 
-        ctx.fill(Color::BLACK);
-
         //Chain together up to 5 on click functions.
         //I'll need to find a better way to do this in the future.
 

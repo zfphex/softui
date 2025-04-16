@@ -22,6 +22,7 @@ fn main() {
 
     let ctx = create_ctx_ex("Softui", window);
     let accent = accent_color();
+    ctx.set_fill_color(0x202020.into());
 
     set_default_font_size(font_size);
 
@@ -36,8 +37,6 @@ fn main() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
-
-        ctx.fill(0x202020.into());
 
         //Great layout code right here.
         let hp = Rect::new(0, 0, ctx.window.width(), rect_height);

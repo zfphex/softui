@@ -13,7 +13,7 @@ fn main() {
         36 * 3,
         30,
         0,
-        Color::WHITE,
+        white(),
     );
     // ctx.draw_text_subpixel("abcdefghijklmnopqrstuvwxyz!@#$%^&*()", &dwrite, 0, 36 * 6, 30, 0, Color::WHITE);
     ctx.draw_frame();

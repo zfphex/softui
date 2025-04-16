@@ -13,16 +13,11 @@ pub const fn rgb(r: u8, g: u8, b: u8) -> Color {
 pub struct Color(pub u32);
 
 impl Color {
-    pub const RED: Color = Color(0xFF0000);
-    pub const BLUE: Color = Color(0x0000FF);
-    pub const GREEN: Color = Color(0x00FF00);
-    pub const WHITE: Color = Color(0xFFFFFF);
-    pub const BLACK: Color = Color(0);
-
-    // #[inline]
-    // pub const fn new(color: u32) -> Self {
-    //     Self(color)
-    // }
+    // pub const RED: Color = Color(0xFF0000);
+    // pub const BLUE: Color = Color(0x0000FF);
+    // pub const GREEN: Color = Color(0x00FF00);
+    // pub const WHITE: Color = Color(0xFFFFFF);
+    // pub const BLACK: Color = Color(0);
 
     #[inline]
     pub const fn new(r: u8, g: u8, b: u8) -> Self {

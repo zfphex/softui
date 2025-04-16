@@ -57,7 +57,7 @@ pub fn set_default_font_size(font_size: usize) {
 pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
     Text {
         text: text.into(),
-        color: Color::WHITE,
+        color: white(),
         font_size: default_font_size(),
         line_height: None,
         area: Rect::default(),

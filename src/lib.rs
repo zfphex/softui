@@ -279,14 +279,6 @@ impl Context {
         self.window.buffer.fill(self.fill_color.as_u32());
     }
 
-    //TODO: Remove
-    //This is essentially just a memset.
-    pub fn fill(&mut self, color: Color) {
-        unreachable!("This function should be depricated.")
-        // profile!();
-        // self.window.buffer.fill(color.as_u32());
-    }
-
     #[inline]
     #[track_caller]
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: Color) {
@@ -850,7 +842,7 @@ impl Context {
     pub fn draw_glyph_subpixel(&mut self, char: char, point_size: f32) {
         let start_x = 50;
         let start_y = 50;
-        let color = Color::BLACK;
+        let color = black();
         let dwrite = DWrite::new();
 
         let (metrics, texture) = dwrite.glyph(char, point_size);
@@ -978,46 +970,44 @@ mod tests {
     fn rectangle() {
         let ctx = create_ctx("Softui", 800, 600);
 
-        ctx.fill(Color::BLACK);
-
         //Rectangle
         {
             //The x position is out of bounds
-            ctx.draw_rectangle(ctx.window.width() + 100, 0, 100, 100, Color::RED);
+            ctx.draw_rectangle(ctx.window.width() + 100, 0, 100, 100, red());
 
             //The y position is out of bounds
-            ctx.draw_rectangle(0, ctx.window.height() + 100, 100, 100, Color::RED);
+            ctx.draw_rectangle(0, ctx.window.height() + 100, 100, 100, red());
 
             //The width is larger than the viewport
-            ctx.draw_rectangle(0, 0, ctx.window.width() + 100, 100, Color::RED);
+            ctx.draw_rectangle(0, 0, ctx.window.width() + 100, 100, red());
 
             //The height is larger than the viewport
-            ctx.draw_rectangle(0, 0, 100, ctx.window.height() + 100, Color::RED);
+            ctx.draw_rectangle(0, 0, 100, ctx.window.height() + 100, red());
         }
 
         //Rectangle Outlines
         {
             //The x position is out of bounds
-            ctx.draw_rectangle_outline(ctx.window.width() + 100, 0, 100, 100, Color::RED);
+            ctx.draw_rectangle_outline(ctx.window.width() + 100, 0, 100, 100, red());
 
             //The y position is out of bounds
-            ctx.draw_rectangle_outline(0, ctx.window.height() + 100, 100, 100, Color::RED);
+            ctx.draw_rectangle_outline(0, ctx.window.height() + 100, 100, 100, red());
 
             //The width is larger than the viewport
-            ctx.draw_rectangle_outline(0, 0, ctx.window.width() + 100, 100, Color::RED);
+            ctx.draw_rectangle_outline(0, 0, ctx.window.width() + 100, 100, red());
 
             //The height is larger than the viewport
-            ctx.draw_rectangle_outline(0, 0, 100, ctx.window.height() + 100, Color::RED);
+            ctx.draw_rectangle_outline(0, 0, 100, ctx.window.height() + 100, red());
         }
 
         //Circle
         {
-            ctx.draw_arc(700, 300, 800, Color::RED, Quadrant::BottomRight);
+            ctx.draw_arc(700, 300, 800, red(), Quadrant::BottomRight);
         }
 
         //Text
         {
-            ctx.draw_text("hi", default_font().unwrap(), 0, 0, 1000, 0, Color::WHITE);
+            ctx.draw_text("hi", default_font().unwrap(), 0, 0, 1000, 0, white());
         }
 
         ctx.draw_frame();

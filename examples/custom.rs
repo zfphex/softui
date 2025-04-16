@@ -14,7 +14,7 @@ fn triangle_any(ctx: &mut Context, area: Rect, data: &dyn Any) {
                 y as usize,
                 ctx.window.width() - 1,
                 ctx.window.height() - 1,
-                Color::RED,
+                red(),
             );
         }
     }
@@ -28,7 +28,7 @@ fn triangle(ctx: &mut Context, area: Rect) {
                 y as usize,
                 ctx.window.width() - 1,
                 ctx.window.height() - 1,
-                Color::RED,
+                red(),
             );
         }
     }
@@ -42,8 +42,6 @@ fn main() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
-
-        ctx.fill(Color::BLACK);
 
         //Pass in anything you like :)
         queue_custom_any(triangle_any, Rect::default(), Arc::new(String::from(":)")));
