@@ -756,50 +756,41 @@ impl Context {
         let viewport_width = self.window.width();
 
         'line: for line in text.lines() {
-            let mut glyph_x = x;
+            let mut glyph_x = x as f32;
 
             'char: for char in line.chars() {
                 let (metrics, texture) = dwrite.glyph(char, font_size as f32);
-                // eprintln!("{char}, {:#?}", metrics);
                 let height = texture.height;
                 let width = texture.width;
                 let texture = &texture.data;
+                let x_draw = glyph_x.floor() as usize;
 
-                let glyph_y = (start_y as f32 + (metrics.vertical_origin_y - height as f32)
-                    - metrics.bottom_side_bearing)
-                    .floor() as usize;
+                let glyph_y =
+                    start_y as f32 + (metrics.vertical_origin_y - height as f32) - metrics.bottom_side_bearing;
 
                 'y: for y in 0..height {
                     'x: for x in 0..width {
                         //Text doesn't fit on the screen.
-                        if (x + glyph_x as i32) >= viewport_width as i32 {
+                        if (x + x_draw as i32) >= viewport_width as i32 {
                             continue;
                         }
 
                         let offset = glyph_y as usize + y as usize;
 
-                        if max_x < x as usize + glyph_x {
-                            max_x = x as usize + glyph_x;
+                        if max_x < x as usize + x_draw {
+                            max_x = x as usize + x_draw;
                         }
 
                         if max_y < offset {
                             max_y = offset;
                         }
 
-                        let i = x as usize + glyph_x + self.window.width() * offset;
+                        let i = x as usize + x_draw + self.window.width() * offset;
                         let j = (y as usize * width as usize + x as usize) * 3;
 
                         if i >= self.window.buffer.len() {
                             break 'x;
                         }
-
-                        // self.draw_rectangle_outline(
-                        //     glyph_x as usize,
-                        //     start_y as usize,
-                        //     width as usize,
-                        //     height as usize,
-                        //     Color::RED,
-                        // );
 
                         let c = Color::new(texture[j], texture[j + 1], texture[j + 2]);
 
@@ -809,10 +800,10 @@ impl Context {
                     }
                 }
 
-                glyph_x += metrics.advance_width.round() as usize;
+                glyph_x += metrics.advance_width;
 
                 //Check if the glyph position is off the screen.
-                if glyph_x >= self.window.width() {
+                if glyph_x.floor() as usize >= self.window.width() {
                     break 'line;
                 }
             }
@@ -825,8 +816,6 @@ impl Context {
 
         //Not sure why these are one off.
         let area = Rect::new(x, y, max_x + 1 - start_x, max_y + 1 - start_y);
-        // area.height = max_y + 1 - area.y;
-        // area.width = max_x + 1 - area.x;
 
         // let _ = self.draw_rectangle_outline(
         //     area.x as usize,
