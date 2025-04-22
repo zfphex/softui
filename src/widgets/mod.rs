@@ -3,6 +3,9 @@ use std::{ops::Deref, slice::Iter};
 
 pub use rectangle::*;
 
+pub mod example;
+pub use example::*;
+
 #[cfg(feature = "svg")]
 pub mod svg;
 
@@ -16,9 +19,6 @@ pub use image::*;
 
 pub mod text;
 pub use text::*;
-
-pub mod click;
-pub use click::*;
 
 #[cfg(target_os = "windows")]
 #[cfg(feature = "dwrite")]
@@ -49,20 +49,12 @@ where
     //This one does not
     fn area_mut(&mut self) -> Option<&mut Rect>;
 
-    unsafe fn is_container(&self) -> bool {
-        false
+    fn behaviour(&mut self) -> Option<&mut Vec<Click<Self>>> {
+        None
     }
 
-    #[inline]
-    fn on_click<F: FnMut(&mut Self)>(self, button: MouseButton, click_fn: F) -> Click0<Self, F>
-    where
-        Self: Sized,
-    {
-        Click0 {
-            widget: self,
-            //Yes the comma is necassary.
-            click: ((button, click_fn),),
-        }
+    unsafe fn is_container(&self) -> bool {
+        false
     }
 
     #[inline]
@@ -70,86 +62,53 @@ where
         unsafe { core::mem::transmute(core::slice::from_ref(self)) }
     }
 
-    //This is used to run the click closure after calling on_click
-    //This should be hidden from the user and only implemented on `Click`.
-    //https://stackoverflow.com/questions/77562161/is-there-a-way-to-prevent-a-struct-from-implementing-a-trait-method
-    #[inline]
-    #[track_caller]
-    fn try_click(&mut self) {
-        //TODO: Remove this is for debugging purposes
-        unreachable!()
+    fn on_click(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
+        if let Some(behaviour) = self.behaviour() {
+            behaviour.push(Click {
+                button,
+                action: MouseAction::Clicked,
+                function,
+            });
+        }
+        self
     }
 
-    #[inline]
-    fn run_click(&mut self, area: Rect) {}
+    fn on_pressed(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
+        if let Some(behaviour) = self.behaviour() {
+            behaviour.push(Click {
+                button,
+                action: MouseAction::Pressed,
+                function,
+            });
+        }
+        self
+    }
+
+    fn on_released(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
+        if let Some(behaviour) = self.behaviour() {
+            behaviour.push(Click {
+                button,
+                action: MouseAction::Released,
+                function,
+            });
+        }
+        self
+    }
 
     /// The user's cusor has been clicked and released on top of a widget.
-    fn clicked(&mut self, button: MouseButton) -> bool
-    where
-        Self: Sized,
-    {
-        let ctx = ctx();
-        let area = self.area();
-
-        if !ctx.window.mouse_position.intersects(area) {
-            return false;
-        }
-
-        match button {
-            MouseButton::Left => {
-                ctx.window.left_mouse.released && ctx.window.left_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Right => {
-                ctx.window.right_mouse.released && ctx.window.right_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Middle => {
-                ctx.window.middle_mouse.released && ctx.window.middle_mouse.inital_position.intersects(area)
-            }
-            MouseButton::Mouse4 => ctx.window.mouse_4.released && ctx.window.mouse_4.inital_position.intersects(area),
-            MouseButton::Mouse5 => ctx.window.mouse_5.released && ctx.window.mouse_5.inital_position.intersects(area),
-        }
-    }
-    fn up(&mut self, button: MouseButton) -> bool
-    where
-        Self: Sized,
-    {
-        let ctx = ctx();
-        let area = self.area_mut().unwrap().clone();
-        if !ctx.window.mouse_position.intersects(area) {
-            return false;
-        }
-
-        match button {
-            MouseButton::Left => ctx.window.left_mouse.released,
-            MouseButton::Right => ctx.window.right_mouse.released,
-            MouseButton::Middle => ctx.window.middle_mouse.released,
-            MouseButton::Mouse4 => ctx.window.mouse_4.released,
-            MouseButton::Mouse5 => ctx.window.mouse_5.released,
-        }
-    }
-    fn down(&mut self, button: MouseButton) -> bool
-    where
-        Self: Sized,
-    {
-        let ctx = ctx();
-        let area = self.area_mut().unwrap().clone();
-        if !ctx.window.mouse_position.intersects(area) {
-            return false;
-        }
-
-        match button {
-            MouseButton::Left => ctx.window.left_mouse.pressed,
-            MouseButton::Right => ctx.window.right_mouse.pressed,
-            MouseButton::Middle => ctx.window.middle_mouse.pressed,
-            MouseButton::Mouse4 => ctx.window.mouse_4.pressed,
-            MouseButton::Mouse5 => ctx.window.mouse_5.pressed,
-        }
+    fn clicked(&mut self, button: MouseButton) -> bool {
+        clicked(ctx(), self.area(), button)
     }
 
-    fn centered(mut self, parent: Rect) -> Self
-    where
-        Self: Sized,
-    {
+    fn pressed(&mut self, button: MouseButton) -> bool {
+        pressed(ctx(), self.area(), button)
+    }
+
+    fn released(&mut self, button: MouseButton) -> bool {
+        released(ctx(), self.area(), button)
+    }
+
+    fn centered(mut self, parent: Rect) -> Self {
         let parent_area = parent.clone();
         let area = self.area_mut().unwrap();
         let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
@@ -159,10 +118,7 @@ where
 
         self
     }
-    fn x<U: Into<Unit>>(mut self, x: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn x<U: Into<Unit>>(mut self, x: U) -> Self {
         let area = self.area_mut().unwrap();
         match x.into() {
             Unit::Px(px) => {
@@ -179,10 +135,7 @@ where
         }
         self
     }
-    fn y<U: Into<Unit>>(mut self, y: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn y<U: Into<Unit>>(mut self, y: U) -> Self {
         let area = self.area_mut().unwrap();
         match y.into() {
             Unit::Px(px) => {
@@ -194,10 +147,7 @@ where
         }
         self
     }
-    fn width<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn width<U: Into<Unit>>(mut self, length: U) -> Self {
         let area = self.area_mut().unwrap();
         match length.into() {
             Unit::Px(px) => {
@@ -208,10 +158,7 @@ where
         }
         self
     }
-    fn height<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn height<U: Into<Unit>>(mut self, length: U) -> Self {
         let area = self.area_mut().unwrap();
         match length.into() {
             Unit::Px(px) => {
@@ -222,41 +169,23 @@ where
         }
         self
     }
-    fn w<U: Into<Unit>>(self, width: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn w<U: Into<Unit>>(self, width: U) -> Self {
         self.width(width)
     }
-    fn h<U: Into<Unit>>(self, width: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn h<U: Into<Unit>>(self, width: U) -> Self {
         self.height(width)
     }
     //Swizzle 😏
-    fn wh<U: Into<Unit> + Copy>(self, value: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn wh<U: Into<Unit> + Copy>(self, value: U) -> Self {
         self.width(value).height(value)
     }
-    fn top<U: Into<Unit>>(self, top: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn top<U: Into<Unit>>(self, top: U) -> Self {
         self.y(top)
     }
-    fn left<U: Into<Unit>>(self, left: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn left<U: Into<Unit>>(self, left: U) -> Self {
         self.x(left)
     }
-    fn right<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn right<U: Into<Unit>>(mut self, length: U) -> Self {
         match length.into() {
             Unit::Px(px) => todo!(),
             Unit::Em(_) => todo!(),
@@ -264,10 +193,7 @@ where
         }
         self
     }
-    fn bottom<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn bottom<U: Into<Unit>>(mut self, length: U) -> Self {
         match length.into() {
             Unit::Px(px) => todo!(),
             Unit::Em(_) => todo!(),
@@ -275,10 +201,7 @@ where
         }
         self
     }
-    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self
-    where
-        Self: Sized,
-    {
+    fn pos<U: Into<Unit>>(self, x: U, y: U, width: U, height: U) -> Self {
         self.x(x).y(y).width(width).height(height)
     }
 }

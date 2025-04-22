@@ -1,5 +1,11 @@
 use crate::*;
 
+pub struct Click<T> {
+    pub button: MouseButton,
+    pub action: MouseAction,
+    pub function: fn(&mut T),
+}
+
 pub fn clicked(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
     match button {
         MouseButton::Left => ctx.window.left_mouse.clicked(area),
@@ -10,8 +16,7 @@ pub fn clicked(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
     }
 }
 
-pub fn up<T: Widget>(ctx: &Context, widget: &mut T, button: MouseButton) -> bool {
-    let area = widget.area_mut().unwrap().clone();
+pub fn pressed(ctx: &Context, area: Rect, button: MouseButton) -> bool {
     if !ctx.window.mouse_position.intersects(area) {
         return false;
     }
@@ -25,8 +30,7 @@ pub fn up<T: Widget>(ctx: &Context, widget: &mut T, button: MouseButton) -> bool
     }
 }
 
-pub fn down<T: Widget>(ctx: &Context, widget: &mut T, button: MouseButton) -> bool {
-    let area = widget.area_mut().unwrap().clone();
+pub fn released(ctx: &Context, area: Rect, button: MouseButton) -> bool {
     if !ctx.window.mouse_position.intersects(area) {
         return false;
     }
