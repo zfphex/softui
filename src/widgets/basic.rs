@@ -1,12 +1,15 @@
+//! Simple example widget implementation.
+//! Can run callbacks on input.
+//!
 use crate::*;
 
 #[derive(Default)]
-pub struct ExampleWidget {
-    pub position: Rect,
+pub struct Basic {
+    pub area: Rect,
     pub behaviour: Vec<Click<Self>>,
 }
 
-impl Widget for ExampleWidget {
+impl Widget for Basic {
     type Layout = Self;
 
     fn behaviour(&mut self) -> Option<&mut Vec<Click<Self>>> {
@@ -18,10 +21,10 @@ impl Widget for ExampleWidget {
     }
 
     fn area(&self) -> Rect {
-        self.position
+        self.area
     }
 
     fn area_mut(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.position)
+        Some(&mut self.area)
     }
 }

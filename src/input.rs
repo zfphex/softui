@@ -1,5 +1,6 @@
 use crate::*;
 
+//TODO: Expand to support keyboard input as well.
 pub struct Click<T> {
     pub button: MouseButton,
     pub action: MouseAction,

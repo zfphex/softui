@@ -3,8 +3,8 @@ use std::{ops::Deref, slice::Iter};
 
 pub use rectangle::*;
 
-pub mod example;
-pub use example::*;
+pub mod basic;
+pub use basic::*;
 
 #[cfg(feature = "svg")]
 pub mod svg;
