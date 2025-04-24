@@ -340,7 +340,7 @@ macro_rules! h {
                         width += area.width;
                     }
 
-                    //Type is stripped from OnClick<F, T> here so calls
+                    //Type is stripped from Click<T> here so calls
                     //to widget.try_click() will always fail.
                     widgets.push(TypelessWidget{ area, primative: child.primative()})
                 }

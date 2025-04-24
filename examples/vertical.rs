@@ -24,7 +24,7 @@ fn main() {
         // )
         // .gap(12))
         // .padding(16)
-        // .bg(red());
+        // .bg(gray());
 
         // v!(v!()).build();
         // flex!(v!(r1, r2.clone().wh(200), r3, r4, text("hi"), h!(texts)).gap(12));
