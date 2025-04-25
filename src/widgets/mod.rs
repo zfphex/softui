@@ -58,6 +58,24 @@ where
         unsafe { core::mem::transmute(core::slice::from_ref(self)) }
     }
 
+    fn try_click(&mut self) {
+        let ctx = ctx(); //Could pass this in instead.
+        let area = self.area();
+        let behaviour = std::mem::take(self.behaviour().unwrap());
+
+        for b in &behaviour {
+            if match b.action {
+                MouseAction::Pressed => pressed(ctx, area, b.button),
+                MouseAction::Released => released(ctx, area, b.button),
+                MouseAction::Clicked => clicked(ctx, area, b.button),
+            } {
+                (b.function)(self);
+            }
+        }
+
+        *self.behaviour().unwrap() = behaviour;
+    }
+
     fn on_click(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
         if let Some(behaviour) = self.behaviour() {
             behaviour.push(Click {
