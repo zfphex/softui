@@ -33,6 +33,14 @@ pub mod macos {
                 return Some(Event::Quit);
             }
 
+            //HACK: In order for events to be processed correctly minifb requires the buffer to be updated.
+            //This is because the update_with_buffer processes inputs, there is a seperate function update
+            //However only one of these can be used, I'll just make draw a no-op and render in here.
+            //There would be a way to fix this if the API was not private.
+            let (width, height) = self.minifb.get_size();
+            self.area = Rect::new(0, 0, width, height);
+            self.minifb.update_with_buffer(&self.buffer, width, height).unwrap();
+
             let (x, y) = self.minifb.get_mouse_pos(MouseMode::Pass).unwrap();
             self.mouse_position = Rect::new(x as usize, y as usize, 1, 1);
 
@@ -61,19 +69,16 @@ pub mod macos {
             return self.event_cache.pop();
         }
 
+        #[inline]
+        pub fn event_blocking(&mut self) -> Option<Event> {
+            self.event()
+        }
+
         pub fn area(&self) -> Rect {
             self.area
         }
 
-        pub fn event_blocking(&mut self) -> Option<Event> {
-            None
-        }
-
-        pub fn draw(&mut self) {
-            let (width, height) = self.minifb.get_size();
-            self.area = Rect::new(0, 0, width, height);
-            self.minifb.update_with_buffer(&self.buffer, width, height).unwrap();
-        }
+        pub fn draw(&mut self) {}
 
         pub fn vsync(&mut self) {}
 
@@ -257,6 +262,11 @@ pub mod macos {
 
             //This should be refresh rate.
             window.set_target_fps(60);
+
+            //HACK: Update the buffer at least one time, in order for events to be processed.
+            let (width, height) = window.get_size();
+            let area = Rect::new(0, 0, width, height);
+            window.update_with_buffer(&buffer, width, height).unwrap();
 
             Self {
                 buffer,

@@ -4,6 +4,7 @@ fn main() {
 }
 
 #[cfg(feature = "dwrite")]
+#[allow(unused)]
 fn main() {
     use softui::*;
     let ctx = create_ctx("Softui", 800, 600);

@@ -163,7 +163,17 @@ pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Cont
         #[cfg(target_os = "macos")]
         let window = Box::pin(Window::new(title, width, height));
 
-        CTX = Some(Context::new(title, window));
+        let mut context = Context::new(title, window);
+
+        #[cfg(target_os = "macos")]
+        //HACK: Draw the frame twice to (prime it or something?)
+        //This operating system is an abomination.
+        {
+            context.draw_frame();
+            context.draw_frame();
+        }
+
+        CTX = Some(context);
         CTX.as_mut().unwrap()
     }
 }

@@ -10,7 +10,6 @@ fn main() {
     let mut texts = [text("test"), text("test2")];
 
     flex!(h!(r1, r2, r3, r4, text("hi"), texts).gap(32));
-
     ctx.draw_frame();
 
     loop {
