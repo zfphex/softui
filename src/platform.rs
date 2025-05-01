@@ -25,6 +25,7 @@ pub mod macos {
         pub mouse_5: MouseState,
         pub mouse_position: Rect,
         pub event_cache: Vec<Event>,
+        pub drawn: bool,
     }
 
     impl Window {
@@ -33,13 +34,11 @@ pub mod macos {
                 return Some(Event::Quit);
             }
 
-            //HACK: In order for events to be processed correctly minifb requires the buffer to be updated.
-            //This is because the update_with_buffer processes inputs, there is a seperate function update
-            //However only one of these can be used, I'll just make draw a no-op and render in here.
-            //There would be a way to fix this if the API was not private.
-            let (width, height) = self.minifb.get_size();
-            self.area = Rect::new(0, 0, width, height);
-            self.minifb.update_with_buffer(&self.buffer, width, height).unwrap();
+            if !self.drawn {
+                self.minifb.update();
+            }
+
+            self.drawn = false;
 
             let (x, y) = self.minifb.get_mouse_pos(MouseMode::Pass).unwrap();
             self.mouse_position = Rect::new(x as usize, y as usize, 1, 1);
@@ -78,7 +77,12 @@ pub mod macos {
             self.area
         }
 
-        pub fn draw(&mut self) {}
+        pub fn draw(&mut self) {
+            let (width, height) = self.minifb.get_size();
+            self.area = Rect::new(0, 0, width, height);
+            self.minifb.update_with_buffer(&self.buffer, width, height).unwrap();
+            self.drawn = true;
+        }
 
         pub fn vsync(&mut self) {}
 
@@ -280,6 +284,7 @@ pub mod macos {
                 mouse_4: MouseState::new(),
                 mouse_5: MouseState::new(),
                 event_cache: Vec::new(),
+                drawn: true,
             }
         }
     }
