@@ -1,5 +1,12 @@
 use crate::*;
 
+//TODO: Did this not get checked out?
+pub enum MouseAction {
+    Pressed,
+    Released,
+    Clicked,
+}
+
 //TODO: Expand to support keyboard input as well.
 pub struct Click<T> {
     pub button: MouseButton,

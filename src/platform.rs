@@ -87,7 +87,7 @@ pub mod macos {
             self.area.height
         }
 
-        pub fn display_scale() -> f32 {
+        pub fn display_scale(&self) -> f32 {
             1.0
         }
     }
