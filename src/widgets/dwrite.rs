@@ -19,7 +19,7 @@ pub struct GlyphMetrics {
     pub advance_height: f32,
     pub bottom_side_bearing: f32,
     pub vertical_origin_y: f32,
-    pub top_side_beaing: f32,
+    pub top_side_bearing: f32,
     pub right_side_bearing: f32,
     pub left_side_bearing: f32,
 }
@@ -44,7 +44,7 @@ impl Glyph {
                     advance_height: 0.0,
                     bottom_side_bearing: 0.0,
                     vertical_origin_y: 0.0,
-                    top_side_beaing: 0.0,
+                    top_side_bearing: 0.0,
                     right_side_bearing: 0.0,
                     left_side_bearing: 0.0,
                 }
@@ -120,7 +120,7 @@ impl DWrite {
             left_side_bearing: gm.leftSideBearing as f32 * ratio,
             advance_width: gm.advanceWidth as f32 * ratio,
             right_side_bearing: gm.rightSideBearing as f32 * ratio,
-            top_side_beaing: gm.topSideBearing as f32 * ratio,
+            top_side_bearing: gm.topSideBearing as f32 * ratio,
             advance_height: gm.advanceHeight as f32 * ratio,
             bottom_side_bearing: gm.bottomSideBearing as f32 * ratio,
             vertical_origin_y: gm.verticalOriginY as f32 * ratio,
