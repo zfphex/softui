@@ -167,6 +167,8 @@ macro_rules! flex {
             let count = $crate::count_expr!($($container),*);
 
             $(
+                //TODO: There is an error here if a widget is passed in instead of a container.
+                //This error message should be clearer.
                 let mut container = $container.build();
                 $crate::calculate_flex_sizing(direction, gap, &mut container, &mut area);
                 $crate::draw_widgets(&mut commands, direction, &mut container,  &mut x_offset, &mut y_offset, padding, gap);

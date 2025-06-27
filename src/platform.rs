@@ -25,6 +25,7 @@ pub mod macos {
         pub mouse_5: MouseState,
         pub mouse_position: Rect,
         pub event_cache: Vec<Event>,
+        pub drawn: bool,
     }
 
     impl Window {
@@ -32,6 +33,12 @@ pub mod macos {
             if !self.minifb.is_open() || self.minifb.is_key_down(minifb::Key::Escape) {
                 return Some(Event::Quit);
             }
+
+            if !self.drawn {
+                self.minifb.update();
+            }
+
+            self.drawn = false;
 
             let (x, y) = self.minifb.get_mouse_pos(MouseMode::Pass).unwrap();
             self.mouse_position = Rect::new(x as usize, y as usize, 1, 1);
@@ -61,18 +68,20 @@ pub mod macos {
             return self.event_cache.pop();
         }
 
-        pub fn area(&self) -> Rect {
-            self.area
+        #[inline]
+        pub fn event_blocking(&mut self) -> Option<Event> {
+            self.event()
         }
 
-        pub fn event_blocking(&mut self) -> Option<Event> {
-            None
+        pub fn area(&self) -> Rect {
+            self.area
         }
 
         pub fn draw(&mut self) {
             let (width, height) = self.minifb.get_size();
             self.area = Rect::new(0, 0, width, height);
             self.minifb.update_with_buffer(&self.buffer, width, height).unwrap();
+            self.drawn = true;
         }
 
         pub fn vsync(&mut self) {}
@@ -87,7 +96,7 @@ pub mod macos {
             self.area.height
         }
 
-        pub fn display_scale() -> f32 {
+        pub fn display_scale(&self) -> f32 {
             1.0
         }
     }
@@ -258,6 +267,11 @@ pub mod macos {
             //This should be refresh rate.
             window.set_target_fps(60);
 
+            //HACK: Update the buffer at least one time, in order for events to be processed.
+            let (width, height) = window.get_size();
+            let area = Rect::new(0, 0, width, height);
+            window.update_with_buffer(&buffer, width, height).unwrap();
+
             Self {
                 buffer,
                 minifb: window,
@@ -270,6 +284,7 @@ pub mod macos {
                 mouse_4: MouseState::new(),
                 mouse_5: MouseState::new(),
                 event_cache: Vec::new(),
+                drawn: true,
             }
         }
     }

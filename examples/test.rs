@@ -8,5 +8,18 @@ fn main() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
+
+        {
+            flex!(v!(
+                rect().wh(30),
+                rect().wh(40),
+                rect().wh(50),
+                rect().wh(60),
+                rect().wh(70)
+            )
+            .gap(20));
+        }
+
+        ctx.draw_frame();
     }
 }
