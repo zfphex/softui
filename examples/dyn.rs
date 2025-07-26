@@ -4,15 +4,42 @@
 use std::fmt::{self, Debug};
 
 // ==========================================================================
-// 1. Core Types
+// Core Types & Context
 // ==========================================================================
 
 #[repr(transparent)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Color(pub u32);
+
 impl Color {
+    /// Creates a new Color from RGB components.
     pub const fn new(r: u8, g: u8, b: u8) -> Self {
-        Self((r as u32) << 16 | (g as u32) << 8 | (b as u32))
+        Self(((r as u32) << 16) | ((g as u32) << 8) | (b as u32))
+    }
+
+    /// Returns the red component.
+    pub const fn r(&self) -> u8 {
+        (self.0 >> 16) as u8
+    }
+
+    /// Returns the green component.
+    pub const fn g(&self) -> u8 {
+        (self.0 >> 8) as u8
+    }
+
+    /// Returns the blue component.
+    pub const fn b(&self) -> u8 {
+        self.0 as u8
+    }
+}
+
+impl Debug for Color {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Color")
+            // Hex value, formatted as #RRGGBB
+            .field("hex", &format_args!("#{:06X}", self.0))
+            .field("rgb", &(self.r(), self.g(), self.b()))
+            .finish()
     }
 }
 pub const fn white() -> Color {
@@ -23,6 +50,12 @@ pub const fn red() -> Color {
 }
 pub const fn blue() -> Color {
     Color::new(0, 0, 255)
+}
+pub const fn green() -> Color {
+    Color::new(0, 128, 0)
+}
+pub const fn dark_gray() -> Color {
+    Color::new(40, 40, 40)
 }
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
@@ -49,21 +82,15 @@ pub enum MouseButton {
     Left,
     Right,
 }
-
 #[derive(Debug)]
 pub enum Primative {
     Ellipse(usize, Color),
 }
-
 #[derive(Debug)]
 pub struct Command {
     pub area: Rect,
     pub primative: Primative,
 }
-
-// ==========================================================================
-// 2. Global Context and Command Queue
-// ==========================================================================
 
 pub static mut CTX: Option<Context> = None;
 pub static mut COMMAND_QUEUE: Vec<Command> = Vec::new();
@@ -72,11 +99,6 @@ pub static mut COMMAND_QUEUE: Vec<Command> = Vec::new();
 pub fn ctx() -> &'static mut Context {
     unsafe { CTX.as_mut().unwrap() }
 }
-#[inline]
-pub fn queue_command(area: Rect, primative: Primative) {
-    unsafe { COMMAND_QUEUE.push(Command { area, primative }) }
-}
-
 #[derive(Debug)]
 pub struct Context {
     pub mouse_pos: Rect,
@@ -85,7 +107,7 @@ pub struct Context {
 impl Context {
     pub fn new() -> Self {
         Self {
-            mouse_pos: Rect::new(40, 100, 1, 1),
+            mouse_pos: Rect::new(170, 10, 1, 1),
             left_mouse_clicked: true,
         }
     }
@@ -112,14 +134,14 @@ pub fn create_ctx() -> &'static mut Context {
 }
 
 // ==========================================================================
-// 3. The `Widget` Trait with a Lifetime `'a`
+// The Evolved `Widget` Trait
 // ==========================================================================
 
 pub trait Widget<'a>: Debug {
-    fn primative(&self) -> Primative;
-    fn area(&self) -> Rect;
-    fn area_mut(&mut self) -> &mut Rect;
+    fn size(&self) -> (usize, usize);
+    fn layout(&mut self, area: Rect);
     fn handle_event(&mut self, ctx: &Context);
+    fn draw(&self, commands: &mut Vec<Command>);
 
     fn on_click<F>(self, _button: MouseButton, handler: F) -> OnClick<'a, Self, F>
     where
@@ -133,7 +155,6 @@ pub trait Widget<'a>: Debug {
             _phantom: std::marker::PhantomData,
         }
     }
-
     fn w(mut self, width: usize) -> Self
     where
         Self: Sized,
@@ -155,6 +176,7 @@ pub trait Widget<'a>: Debug {
     {
         self.set_bg(color)
     }
+    fn area_mut(&mut self) -> &mut Rect;
 }
 
 pub trait Style {
@@ -180,26 +202,28 @@ where
     W: Widget<'a>,
     F: 'a + FnMut(&mut W),
 {
-    fn primative(&self) -> Primative {
-        self.widget.primative()
+    fn size(&self) -> (usize, usize) {
+        self.widget.size()
     }
-    fn area(&self) -> Rect {
-        self.widget.area()
+    fn layout(&mut self, area: Rect) {
+        self.widget.layout(area);
     }
     fn area_mut(&mut self) -> &mut Rect {
         self.widget.area_mut()
     }
+    fn draw(&self, commands: &mut Vec<Command>) {
+        self.widget.draw(commands);
+    }
     fn handle_event(&mut self, ctx: &Context) {
         self.widget.handle_event(ctx);
-        if ctx.clicked(self.area(), self.button) {
-            println!("  - Click detected on widget with area {:?}!", self.area());
+        if ctx.clicked(*self.widget.area_mut(), self.button) {
             (self.handler)(&mut self.widget);
         }
     }
 }
 
 // ==========================================================================
-// 4. Concrete Widget and Layout
+// Concrete Widget and Layout
 // ==========================================================================
 
 #[derive(Debug)]
@@ -214,16 +238,22 @@ pub fn rect() -> Rectangle {
     }
 }
 impl<'a> Widget<'a> for Rectangle {
-    fn primative(&self) -> Primative {
-        Primative::Ellipse(0, self.bg)
+    fn size(&self) -> (usize, usize) {
+        (self.area.width, self.area.height)
     }
-    fn area(&self) -> Rect {
-        self.area
+    fn layout(&mut self, area: Rect) {
+        self.area = area;
     }
     fn area_mut(&mut self) -> &mut Rect {
         &mut self.area
     }
     fn handle_event(&mut self, _ctx: &Context) {}
+    fn draw(&self, commands: &mut Vec<Command>) {
+        commands.push(Command {
+            area: self.area,
+            primative: Primative::Ellipse(0, self.bg),
+        });
+    }
 }
 impl Style for Rectangle {
     fn set_bg(mut self, color: Color) -> Self {
@@ -238,32 +268,32 @@ pub enum FlexDirection {
     LeftRight,
     TopBottom,
 }
+
 #[macro_export]
-macro_rules! flex {
+macro_rules! h { ($($widget:expr),* $(,)?) => { group!($($widget),*).direction(FlexDirection::LeftRight) }; }
+#[macro_export]
+macro_rules! v { ($($widget:expr),* $(,)?) => { group!($($widget),*).direction(FlexDirection::TopBottom) }; }
+
+#[macro_export]
+macro_rules! group {
     ($($widget:expr),* $(,)?) => {{
         let mut children: Vec<Box<dyn Widget>> = Vec::new();
-        $(
-            children.push(Box::new($widget));
-        )*
-        DeferFlex {
-            children,
-            padding: 0,
-            gap: 0,
-            margin: 0,
-            direction: FlexDirection::default(),
-        }
+        $( children.push(Box::new($widget)); )*
+        Group { children, padding: 0, gap: 0, direction: FlexDirection::default(), area: Rect::default(), bg: None }
     }};
 }
 
-pub struct DeferFlex<'a> {
+#[derive(Debug, Default)]
+pub struct Group<'a> {
     children: Vec<Box<dyn Widget<'a> + 'a>>,
     padding: usize,
     gap: usize,
-    margin: usize,
     direction: FlexDirection,
+    area: Rect,
+    bg: Option<Color>,
 }
 
-impl<'a> DeferFlex<'a> {
+impl<'a> Group<'a> {
     pub fn padding(mut self, value: usize) -> Self {
         self.padding = value;
         self
@@ -272,66 +302,134 @@ impl<'a> DeferFlex<'a> {
         self.gap = value;
         self
     }
-    pub fn margin(mut self, value: usize) -> Self {
-        self.margin = value;
-        self
-    }
     pub fn direction(mut self, value: FlexDirection) -> Self {
         self.direction = value;
         self
     }
 }
 
-impl<'a> Drop for DeferFlex<'a> {
-    fn drop(&mut self) {
-        println!("\n--- UI FRAME PROCESSING (DeferFlex dropped) ---");
-        let ctx = ctx();
+impl<'a> Style for Group<'a> {
+    fn set_bg(mut self, color: Color) -> Self {
+        self.bg = Some(color);
+        self
+    }
+}
 
-        // 1. Layout Pass
-        let mut current_x = self.margin + self.padding;
-        let mut current_y = self.margin + self.padding;
-
-        let last_index = self.children.len().saturating_sub(1);
-
-        for (i, widget) in self.children.iter_mut().enumerate() {
-            let area = widget.area_mut();
-            area.x = current_x;
-            area.y = current_y;
-
-            // After placing the widget, update the offset for the next widget.
+impl<'a> Widget<'a> for Group<'a> {
+    fn size(&self) -> (usize, usize) {
+        let mut total_width = 0;
+        let mut total_height = 0;
+        if !self.children.is_empty() {
+            let total_gap = self.gap * (self.children.len() - 1);
             match self.direction {
                 FlexDirection::LeftRight => {
-                    current_x += area.width;
-                    if i != last_index {
-                        current_x += self.gap;
+                    total_width += total_gap;
+                    for child in &self.children {
+                        let (w, h) = child.size();
+                        total_width += w;
+                        total_height = total_height.max(h);
                     }
                 }
                 FlexDirection::TopBottom => {
-                    current_y += area.height;
-                    if i != last_index {
-                        current_y += self.gap;
+                    total_height += total_gap;
+                    for child in &self.children {
+                        let (w, h) = child.size();
+                        total_width = total_width.max(w);
+                        total_height += h;
                     }
                 }
             }
         }
-
-        println!(
-            "1. Layout Pass complete (direction: {:?}, padding: {}, gap: {}, margin: {}).",
-            self.direction, self.padding, self.gap, self.margin
-        );
-
-        // 2. Event Pass
-        println!("2. Event Pass starting...");
-        for widget in &mut self.children {
-            widget.handle_event(ctx);
+        (total_width + self.padding * 2, total_height + self.padding * 2)
+    }
+    fn layout(&mut self, area: Rect) {
+        self.area = area;
+        let mut current_x = area.x + self.padding;
+        let mut current_y = area.y + self.padding;
+        let last_index = self.children.len().saturating_sub(1);
+        for (i, child) in self.children.iter_mut().enumerate() {
+            let (child_w, child_h) = child.size();
+            let child_area = Rect::new(current_x, current_y, child_w, child_h);
+            child.layout(child_area);
+            match self.direction {
+                FlexDirection::LeftRight => current_x += child_w + if i != last_index { self.gap } else { 0 },
+                FlexDirection::TopBottom => current_y += child_h + if i != last_index { self.gap } else { 0 },
+            }
         }
-        println!("   Event Pass complete.");
-
-        // 3. Draw Queueing Pass
-        for widget in &self.children {
-            queue_command(widget.area(), widget.primative());
+    }
+    fn area_mut(&mut self) -> &mut Rect {
+        &mut self.area
+    }
+    fn handle_event(&mut self, ctx: &Context) {
+        for child in &mut self.children {
+            child.handle_event(ctx);
         }
-        println!("3. Draw queueing complete.");
+    }
+    fn draw(&self, commands: &mut Vec<Command>) {
+        if let Some(bg_color) = self.bg {
+            commands.push(Command {
+                area: self.area,
+                primative: Primative::Ellipse(0, bg_color),
+            });
+        }
+        for child in &self.children {
+            child.draw(commands);
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! flex {
+    ($($widget:expr),* $(,)?) => {{
+        let content = group!($($widget),*);
+        FlexRoot { content, margin: 0 }
+    }};
+}
+
+pub struct FlexRoot<'a> {
+    content: Group<'a>,
+    margin: usize,
+}
+
+impl<'a> FlexRoot<'a> {
+    pub fn padding(mut self, value: usize) -> Self {
+        let content = std::mem::take(&mut self.content);
+        self.content = content.padding(value);
+        self
+    }
+    pub fn gap(mut self, value: usize) -> Self {
+        let content = std::mem::take(&mut self.content);
+        self.content = content.gap(value);
+        self
+    }
+    pub fn margin(mut self, value: usize) -> Self {
+        self.margin = value;
+        self
+    }
+    pub fn direction(mut self, value: FlexDirection) -> Self {
+        let content = std::mem::take(&mut self.content);
+        self.content = content.direction(value);
+        self
+    }
+    pub fn bg(mut self, color: Color) -> Self {
+        let content = std::mem::take(&mut self.content);
+        self.content = content.bg(color);
+        self
+    }
+}
+
+impl<'a> Drop for FlexRoot<'a> {
+    fn drop(&mut self) {
+        let ctx = ctx();
+        let (w, h) = self.content.size();
+        let total_area = Rect::new(self.margin, self.margin, w, h);
+
+        self.content.layout(total_area);
+        self.content.handle_event(ctx);
+
+        let mut commands = Vec::new();
+        self.content.draw(&mut commands);
+        unsafe { COMMAND_QUEUE.extend(commands) };
     }
 }
 
@@ -341,39 +439,27 @@ impl<'a> Drop for DeferFlex<'a> {
 
 fn main() {
     let ctx = create_ctx();
-
     let mut click_count = 0;
-    let mut blue_button_color = blue();
-
-    println!(
-        "Initial state: click_count = {}, color = {:?}",
-        click_count, blue_button_color
-    );
 
     {
         flex!(
-            rect().w(100).h(50).bg(red()),
-            rect()
-                .w(100)
-                .h(50)
-                .bg(blue_button_color)
-                .on_click(MouseButton::Left, |r| {
-                    println!("    -> Blue rectangle's click handler executed!");
+            // This `v!` container will be transparent by default.
+            v!(rect().w(150).h(30).bg(red()), rect().w(150).h(30).bg(blue())).gap(5),
+            // This `h!` container will also be transparent.
+            h!(
+                rect().w(40).h(65).bg(white()),
+                rect().w(40).h(65).bg(blue()).on_click(MouseButton::Left, |_| {
                     click_count += 1;
-                    blue_button_color = white();
-                    r.bg = white();
-                }),
-            rect().w(100).h(50).bg(Color::new(0, 255, 0))
+                    println!("Inner blue rect clicked! Count: {}", click_count);
+                })
+            )
+            .gap(5)
         )
-        .direction(FlexDirection::TopBottom) // Demonstrate vertical layout
-        .padding(32)
+        .padding(10)
         .gap(10)
-        .margin(5);
+        .margin(5)
+        .bg(dark_gray()); // Set a background color only on the root container.
     }
 
     ctx.draw_frame();
-    println!(
-        "\nFinal state: click_count = {}, color = {:?}",
-        click_count, blue_button_color
-    );
 }
