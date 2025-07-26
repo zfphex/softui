@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use softui::*;
 
 pub trait WidgetNew: Sized + AnyWidget {
@@ -7,29 +9,29 @@ pub trait WidgetNew: Sized + AnyWidget {
         self
     }
 
-    fn on_click(mut self, button: MouseButton, function: fn(&mut dyn AnyWidget)) -> Self {
-        if let Some(behaviour) = self.behaviour_mut() {
-            behaviour.push(AnyClick {
-                button,
-                action: MouseAction::Clicked,
-                function,
-            });
-        }
-        self
-    }
+    // fn on_click(mut self, button: MouseButton, function: fn(&mut dyn AnyWidget)) -> Self {
+    //     if let Some(behaviour) = self.behaviour_mut() {
+    //         behaviour.push(AnyClick {
+    //             button,
+    //             action: MouseAction::Clicked,
+    //             function,
+    //         });
+    //     }
+    //     self
+    // }
 }
 
 pub struct AnyClick {
     pub button: MouseButton,
     pub action: MouseAction,
-    pub function: fn(&mut dyn AnyWidget),
+    // pub function: fn(&mut dyn AnyWidget),
 }
 
 pub trait AnyWidget {
     fn area(&self) -> Rect;
     fn area_mut(&mut self) -> &mut Rect;
     fn primative(&self) {}
-    fn behaviour(&mut self) -> Option<&[AnyClick]> {
+    fn behaviour(&self) -> Option<&[AnyClick]> {
         None
     }
     fn behaviour_mut(&mut self) -> Option<&mut Vec<AnyClick>> {
@@ -51,7 +53,7 @@ impl AnyWidget for V {
     fn area_mut(&mut self) -> &mut Rect {
         &mut self.area
     }
-    fn behaviour(&mut self) -> Option<&[AnyClick]> {
+    fn behaviour(&self) -> Option<&[AnyClick]> {
         Some(&self.behaviour)
     }
     fn behaviour_mut(&mut self) -> Option<&mut Vec<AnyClick>> {
@@ -59,13 +61,9 @@ impl AnyWidget for V {
     }
 }
 
-fn widgets(widgets: &mut [&mut dyn AnyWidget]) {
-    for widget in widgets {
-        if let Some(behaviours) = widget.behaviour() {
-            for b in behaviours {
-                // (b.function)(*widget);
-            }
-        }
+fn widgets(widgets: &[&mut dyn AnyWidget]) {
+    for _widget in widgets {
+        // let v = widget.downcast_ref::<V>().unwrap();
     }
 }
 
@@ -74,9 +72,8 @@ fn main() {
         area: Rect::default(),
         behaviour: Vec::new(),
     }
-    .x(10)
-    .on_click(Left, |s| println!("Clicked left mouse."));
+    .x(10);
+    // .on_click(Left, |_| println!("Clicked left mouse."));
 
-    let dyn_widget = &mut widget as &mut dyn AnyWidget;
-    widgets(&mut [dyn_widget]);
+    widgets(&[&mut widget as &mut dyn AnyWidget]);
 }
