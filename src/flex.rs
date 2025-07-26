@@ -359,6 +359,7 @@ macro_rules! h {
             padding: Padding::default(),
             gap: 0,
             container: Container::default(),
+            behaviour: Vec::new(),
         }
     }};
 }
@@ -411,6 +412,7 @@ macro_rules! v {
             padding: Padding::default(),
             gap: 0,
             container: Container::default(),
+            behaviour: Vec::new(),
         }
     }};
 }
@@ -467,6 +469,18 @@ pub struct DeferContainer<F> {
     pub padding: Padding,
     pub gap: usize,
     pub container: Container,
+    pub behaviour: Vec<Click<Self>>,
+}
+impl<F> std::fmt::Debug for DeferContainer<F> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DeferContainer")
+            // .field("f", &self.f)
+            .field("padding", &self.padding)
+            .field("gap", &self.gap)
+            .field("container", &self.container)
+            // .field("behaviour", &self.behaviour)
+            .finish()
+    }
 }
 
 impl<F> DeferContainer<F> {
@@ -509,6 +523,10 @@ where
     unsafe fn as_slice(&mut self) -> &[Self::Layout] {
         self.container = self.build();
         &self.container.widgets
+    }
+
+    fn behaviour(&mut self) -> Option<&mut Vec<Click<Self>>> {
+        Some(&mut self.behaviour)
     }
 }
 

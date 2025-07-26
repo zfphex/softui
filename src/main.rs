@@ -13,7 +13,9 @@ fn main() {
             _ => {}
         }
 
-        let v = v!(rect().wh(20)).on_click(Left, |_| {});
+        // let mut v = v!(rect().wh(20)).on_click(Left, |t| println!("{:?}", t));
+        // let b = std::mem::take(&mut v.behaviour);
+        // (b[0].function)(&mut v);
 
         //TODO: Autocomplete does not work in these macros 😡😡😡?
         flex!(v!(

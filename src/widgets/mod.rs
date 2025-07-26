@@ -76,6 +76,7 @@ where
         *self.behaviour().unwrap() = behaviour;
     }
 
+    #[track_caller]
     fn on_click(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
         if let Some(behaviour) = self.behaviour() {
             behaviour.push(Click {
@@ -84,7 +85,7 @@ where
                 function,
             });
         } else {
-            unreachable!("Called on_click on a widget that does not support this.")
+            unreachable!("Called on_click on a widget that does implement behaviour/is unsupported.")
         }
         self
     }
