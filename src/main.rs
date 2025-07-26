@@ -13,6 +13,8 @@ fn main() {
             _ => {}
         }
 
+        let v = v!(rect().wh(20)).on_click(Left, |_| {});
+
         //TODO: Autocomplete does not work in these macros 😡😡😡?
         flex!(v!(
             text("example"),

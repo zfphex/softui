@@ -83,6 +83,8 @@ where
                 action: MouseAction::Clicked,
                 function,
             });
+        } else {
+            unreachable!("Called on_click on a widget that does not support this.")
         }
         self
     }
