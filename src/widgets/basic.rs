@@ -6,13 +6,13 @@ use crate::*;
 #[derive(Default)]
 pub struct Basic {
     pub area: Rect,
-    pub behaviour: Vec<Click<Self>>,
+    pub behaviour: Vec<Click>,
 }
 
 impl Widget for Basic {
     type Layout = Self;
 
-    fn behaviour(&mut self) -> Option<&mut Vec<Click<Self>>> {
+    fn behaviour(&mut self) -> Option<&mut Vec<Click>> {
         Some(&mut self.behaviour)
     }
 

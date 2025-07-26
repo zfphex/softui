@@ -8,10 +8,11 @@ pub enum MouseAction {
 }
 
 //TODO: Expand to support keyboard input as well.
-pub struct Click<T> {
+pub struct Click {
     pub button: MouseButton,
     pub action: MouseAction,
-    pub function: fn(&mut T),
+    // pub function: Box<dyn FnMut(&mut AnyWidget)>,
+    pub function: Box<dyn FnMut(&mut dyn Any)>,
 }
 
 pub fn clicked(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {

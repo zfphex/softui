@@ -97,10 +97,12 @@ pub fn draw_widgets(
             FlexDirection::BottomTop => todo!(),
         }
 
-        // This will always fail since TypelessWidget doesn't implement try_click :(
+        // This will always fail since AnyWidget doesn't implement try_click :(
         // widget.area = area;
         // widget.try_click();
         // widget.run_click(area);
+
+        // widget.try_click();
 
         commands.push(Command {
             area,
@@ -344,7 +346,7 @@ macro_rules! h {
 
                     //Type is stripped from Click<T> here so calls
                     //to widget.try_click() will always fail.
-                    widgets.push(TypelessWidget{ area, primative: child.primative()})
+                    widgets.push(AnyWidget{ widget: Box::new(()), area, primative: child.primative()})
                 }
             )*
 
@@ -397,7 +399,11 @@ macro_rules! v {
                     if !is_container {
                         $crate::calculate_v(child, &mut width, &mut height);
                     }
-                    widgets.push(TypelessWidget{ area: child.area(), primative: child.primative()})
+
+                    //IDK. This function is defered so everything should still exist when it's run.
+                    //Box::new(child)
+
+                    widgets.push(AnyWidget{ widget: Box::new(()), area: child.area(), primative: child.primative()})
                 }
             )*
 
@@ -419,7 +425,7 @@ macro_rules! v {
 
 #[derive(Default, Debug)]
 pub struct Container {
-    pub widgets: Vec<TypelessWidget>,
+    pub widgets: Vec<AnyWidget>,
     pub direction: FlexDirection,
     pub area: Rect,
     pub gap: usize,
@@ -442,12 +448,14 @@ impl Widget for Container {
 }
 
 #[derive(Debug)]
-pub struct TypelessWidget {
+pub struct AnyWidget {
+    pub widget: Box<dyn Any>,
     pub area: Rect,
     pub primative: Primative,
+    // pub behaviour: Vec<Click>,
 }
 
-impl Widget for TypelessWidget {
+impl Widget for AnyWidget {
     type Layout = Self;
 
     //TODO: Should this be &Primative?
@@ -469,7 +477,7 @@ pub struct DeferContainer<F> {
     pub padding: Padding,
     pub gap: usize,
     pub container: Container,
-    pub behaviour: Vec<Click<Self>>,
+    pub behaviour: Vec<Click>,
 }
 impl<F> std::fmt::Debug for DeferContainer<F> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -498,7 +506,7 @@ impl<F> Widget for DeferContainer<F>
 where
     F: FnMut(Padding, usize) -> Container,
 {
-    type Layout = TypelessWidget;
+    type Layout = AnyWidget;
 
     fn primative(&self) -> Primative {
         unreachable!()
@@ -525,7 +533,7 @@ where
         &self.container.widgets
     }
 
-    fn behaviour(&mut self) -> Option<&mut Vec<Click<Self>>> {
+    fn behaviour(&mut self) -> Option<&mut Vec<Click>> {
         Some(&mut self.behaviour)
     }
 }

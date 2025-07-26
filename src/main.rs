@@ -25,7 +25,7 @@ fn main() {
             //
         )
         .gap(32)
-        //Does not get called since TypelessWidget has on click handlers stripped out.
+        //Does not get called since AnyWidget has on click handlers stripped out.
         .on_click(Left, |_| { println!("hi") }))
         .padding(32);
 

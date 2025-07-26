@@ -45,7 +45,7 @@ where
     //This one does not
     fn area_mut(&mut self) -> Option<&mut Rect>;
 
-    fn behaviour(&mut self) -> Option<&mut Vec<Click<Self>>> {
+    fn behaviour(&mut self) -> Option<&mut Vec<Click>> {
         None
     }
 
@@ -58,59 +58,110 @@ where
         unsafe { core::mem::transmute(core::slice::from_ref(self)) }
     }
 
-    fn try_click(&mut self) {
+    #[track_caller]
+    fn try_click(&mut self)
+    where
+        Self: 'static,
+    {
         let ctx = ctx(); //Could pass this in instead.
         let area = self.area();
-        let behaviour = std::mem::take(self.behaviour().unwrap());
 
-        for b in &behaviour {
+        let Some(behaviour) = self.behaviour() else {
+            println!("{:?} failed to try click", self.primative());
+            // unreachable!()
+            return;
+        };
+
+        let mut behaviour = core::mem::take(behaviour);
+
+        for b in &mut behaviour {
             if match b.action {
                 MouseAction::Pressed => pressed(ctx, area, b.button),
                 MouseAction::Released => released(ctx, area, b.button),
                 MouseAction::Clicked => clicked(ctx, area, b.button),
             } {
-                (b.function)(self);
+                //Temp hack.
+                // let mut any = AnyWidget {
+                //     widget: Box::new(self),
+                //     area,
+                //     primative: todo!(),
+                // };
+
+                (b.function)(self as &mut dyn Any);
             }
         }
 
         *self.behaviour().unwrap() = behaviour;
     }
 
-    #[track_caller]
-    fn on_click(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
+    // #[track_caller]
+    // fn on_click(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
+    //     if let Some(behaviour) = self.behaviour() {
+    //         behaviour.push(Click {
+    //             button,
+    //             action: MouseAction::Clicked,
+    //             function,
+    //         });
+    //     } else {
+    //         unreachable!("Called on_click on a widget that does implement behaviour/is unsupported.")
+    //     }
+    //     self
+    // }
+
+    fn on_click(mut self, button: MouseButton, mut f: fn(&mut Self)) -> Self
+    where
+        Self: 'static,
+    {
         if let Some(behaviour) = self.behaviour() {
+            let function = Box::new(move |any: &mut dyn Any| {
+                if let Some(btn) = any.downcast_mut::<Self>() {
+                    f(btn);
+                }
+            });
             behaviour.push(Click {
                 button,
                 action: MouseAction::Clicked,
                 function,
             });
+
+            // let function = Box::new(move |tw: &mut AnyWidget| {
+            //     if let Some(btn) = tw.widget.downcast_mut::<Self>() {
+            //         f(btn);
+            //     }
+            // });
+            // behaviour.push(Click {
+            //     button,
+            //     action: MouseAction::Clicked,
+            //     function,
+            // });
         } else {
             unreachable!("Called on_click on a widget that does implement behaviour/is unsupported.")
         }
+
         self
     }
 
-    fn on_pressed(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
-        if let Some(behaviour) = self.behaviour() {
-            behaviour.push(Click {
-                button,
-                action: MouseAction::Pressed,
-                function,
-            });
-        }
-        self
-    }
+    // fn on_pressed(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
+    //     if let Some(behaviour) = self.behaviour() {
+    //         behaviour.push(Click {
+    //             button,
+    //             action: MouseAction::Pressed,
+    //             function,
+    //         });
+    //     }
+    //     self
+    // }
 
-    fn on_released(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
-        if let Some(behaviour) = self.behaviour() {
-            behaviour.push(Click {
-                button,
-                action: MouseAction::Released,
-                function,
-            });
-        }
-        self
-    }
+    // fn on_released(mut self, button: MouseButton, function: fn(&mut Self)) -> Self {
+    //     if let Some(behaviour) = self.behaviour() {
+    //         behaviour.push(Click {
+    //             button,
+    //             action: MouseAction::Released,
+    //             function,
+    //         });
+    //     }
+    //     self
+    // }
 
     /// The user's cusor has been clicked and released on top of a widget.
     fn clicked(&mut self, button: MouseButton) -> bool {
