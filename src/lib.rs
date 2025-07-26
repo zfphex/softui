@@ -226,10 +226,10 @@ impl Context {
         profile!();
 
         while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
-            let x = cmd.area.x as usize;
-            let y = cmd.area.y as usize;
-            let width = cmd.area.width as usize;
-            let height = cmd.area.height as usize;
+            let x = cmd.area.x;
+            let y = cmd.area.y;
+            let width = cmd.area.width;
+            let height = cmd.area.height;
 
             match cmd.primative {
                 //This should idealy have a z index/depth parameter.
@@ -249,7 +249,7 @@ impl Context {
                 Primative::Text(text, font_size, color) => {
                     //TODO: Specify the font with a font database and font ID.
                     let font = default_font().unwrap();
-                    self.draw_text(&text, &font, cmd.area.x, cmd.area.y, font_size, 0, color);
+                    self.draw_text(&text, font, cmd.area.x, cmd.area.y, font_size, 0, color);
                 }
                 // Primative::CustomBoxed(f) => f(self),
                 // Primative::Custom(f, data) => f(self, data),
@@ -646,8 +646,8 @@ impl Context {
         let line_height = scale(line_height, self.window.display_scale);
 
         let mut area = Rect::new(x, y, 0, 0);
-        let mut y: usize = area.y.try_into().unwrap();
-        let x = area.x as usize;
+        let mut y = area.y;
+        let x = area.x;
 
         let mut max_x = 0;
         let mut max_y = 0;

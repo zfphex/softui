@@ -68,8 +68,8 @@ impl<'a> Text<'a> {
         //TODO: Two text widgets with same y value have different heights.
         //Text needs to be aligned specifically over this y coordinate,
         //and not based on the largest character.
-        let mut y: usize = area.y as usize;
-        let x = area.x as usize;
+        let mut y= area.y;
+        let x = area.x;
 
         let mut max_x = 0;
         let mut max_y = 0;

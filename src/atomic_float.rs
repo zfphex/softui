@@ -10,7 +10,7 @@ pub struct AtomicF32 {
 impl AtomicF32 {
     // #![feature(const_float_bits_conv)]
 
-    /// New atomic float with initial value `value`.
+    // New atomic float with initial value `value`.
     // #[inline]
     // pub const fn new(value: f32) -> AtomicF32 {
     //     AtomicF32 {

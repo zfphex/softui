@@ -123,7 +123,7 @@ where
     }
 
     fn centered(mut self, parent: Rect) -> Self {
-        let parent_area = parent.clone();
+        let parent_area = parent;
         let area = self.area_mut().unwrap();
         let x = (parent_area.width as f32 / 2.0) - (area.width as f32 / 2.0);
         let y = (parent_area.height as f32 / 2.0) - (area.height as f32 / 2.0);

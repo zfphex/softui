@@ -13,18 +13,6 @@ fn main() {
             _ => {}
         }
 
-        let area = ctx.window.area;
-
-        if ctx.clicked_left_mouse(area) {
-            eprintln!("left mouse clicked")
-        }
-
-        if ctx.clicked_right_mouse(area) {
-            eprintln!("right mouse clicked")
-        }
-
-        // dbg!(ctx.window.minifb.get_keys());
-
         //TODO: Autocomplete does not work in these macros 😡😡😡?
         flex!(v!(
             text("example"),
@@ -32,7 +20,9 @@ fn main() {
             rect().w(200).bg(blue()),
             //
         )
-        .gap(32))
+        .gap(32)
+        //Does not get called since TypelessWidget has on click handlers stripped out.
+        .on_click(Left, |_| { println!("hi") }))
         .padding(32);
 
         ctx.draw_frame();
