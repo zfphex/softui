@@ -1,5 +1,4 @@
 #![allow(static_mut_refs)]
-// main.rs
 
 use std::fmt::{self, Debug};
 
@@ -119,7 +118,7 @@ impl Context {
             }
         }
     }
-    pub fn clicked(&self, area: Rect, button: MouseButton) -> bool {
+    pub fn clicked(&self, _area: Rect, _button: MouseButton) -> bool {
         // match button {
         //     MouseButton::Left => self.left_mouse_clicked && self.mouse_pos.intersects(area),
         //     _ => false,
@@ -197,7 +196,6 @@ impl<'a, W> OnClick<'a, W> {
     }
 }
 
-// 2) Implement Debug (you can choose how much detail you want to print)
 impl<'a, W> Debug for OnClick<'a, W>
 where
     W: Debug,
@@ -238,6 +236,7 @@ where
         }
     }
 }
+
 // ==========================================================================
 // Concrete Widget and Layout
 // ==========================================================================

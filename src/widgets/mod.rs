@@ -38,17 +38,12 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn handle_event(&mut self, ctx: &mut Context);
     fn draw(&self, commands: &mut Vec<Command>);
 
-    fn on_click<F>(self, _button: MouseButton, handler: F) -> OnClick<'a, Self, F>
+    fn on_click<F>(self, button: MouseButton, handler: F) -> OnClick<'a, Self>
     where
         Self: Sized,
-        F: 'a + FnMut(&mut Self),
+        F: FnMut(&mut Self) + 'a,
     {
-        OnClick {
-            widget: self,
-            handler,
-            button: _button,
-            _phantom: std::marker::PhantomData,
-        }
+        OnClick::new(self, button, handler)
     }
 
     fn wh(mut self, size: usize) -> Self

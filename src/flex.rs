@@ -46,56 +46,73 @@ pub fn released(ctx: &Context, area: Rect, button: MouseButton) -> bool {
     }
 }
 
-pub struct OnClick<'a, W, F> {
-    pub widget: W,
-    pub handler: F,
-    pub button: MouseButton,
-    pub _phantom: std::marker::PhantomData<&'a ()>,
+pub struct OnClick<'a, W> {
+    widget: W,
+    handlers: Vec<(MouseButton, Box<dyn FnMut(&mut W) + 'a>)>,
 }
 
-impl<'a, W, F> StyleNew for OnClick<'a, W, F>
-where
-    W: Widget<'a> + StyleNew,
-    F: 'a + FnMut(&mut W),
-{
-    // Delegate the call to the inner widget.
-    fn set_bg(mut self, color: Color) -> Self {
-        self.widget = self.widget.set_bg(color);
+impl<'a, W> OnClick<'a, W> {
+    pub fn new(widget: W, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        let mut handlers: Vec<(MouseButton, Box<dyn FnMut(&mut W) + 'a>)> = Vec::new();
+        handlers.push((button, Box::new(handler)));
+        OnClick { widget, handlers }
+    }
+
+    pub fn on_click(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, Box::new(handler)));
         self
     }
 }
 
-impl<'a, W: Debug, F> Debug for OnClick<'a, W, F> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl<'a, W> Debug for OnClick<'a, W>
+where
+    W: Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let buttons: Vec<_> = self.handlers.iter().map(|(b, _)| b).collect();
         f.debug_struct("OnClick")
             .field("widget", &self.widget)
-            .field("button", &self.button)
+            .field("buttons", &buttons)
             .finish_non_exhaustive()
     }
 }
 
-impl<'a, W, F> Widget<'a> for OnClick<'a, W, F>
+impl<'a, W> Widget<'a> for OnClick<'a, W>
 where
-    W: Widget<'a>,
-    F: 'a + FnMut(&mut W),
+    W: Widget<'a> + Debug,
 {
     fn size(&self) -> (usize, usize) {
         self.widget.size()
     }
     fn layout(&mut self, area: Rect) {
-        self.widget.layout(area);
+        self.widget.layout(area)
     }
     fn area_mut(&mut self) -> &mut Rect {
         self.widget.area_mut()
     }
-    fn draw(&self, commands: &mut Vec<Command>) {
-        self.widget.draw(commands);
+    fn draw(&self, cmds: &mut Vec<Command>) {
+        self.widget.draw(cmds)
     }
     fn handle_event(&mut self, ctx: &mut Context) {
+        // First let the wrapped widget handle the event
         self.widget.handle_event(ctx);
-        if clicked(ctx, *self.widget.area_mut(), self.button) {
-            (self.handler)(&mut self.widget);
+        // Then run all matching handlers
+        for (button, h) in &mut self.handlers {
+            if clicked(ctx, *self.widget.area_mut(), *button) {
+                h(&mut self.widget);
+            }
         }
+    }
+}
+
+impl<'a, W> StyleNew for OnClick<'a, W>
+where
+    W: Widget<'a> + StyleNew,
+{
+    // Delegate the call to the inner widget.
+    fn set_bg(mut self, color: Color) -> Self {
+        self.widget = self.widget.set_bg(color);
+        self
     }
 }
 
