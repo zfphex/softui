@@ -16,6 +16,8 @@ fn main() {
         }
 
         flex!(
+            //TODO: Ben is not supposed to flicker !!!
+            //TODO: Ben is also not supposed to cause STATUS_ACCESS_VIOLATION 😅
             // v!(svg("img/ferris.svg", 240, 170, 0.2), image("img/ben.png")),
             v!(rect().w(150).h(30).bg(red()), rect().w(150).h(30).bg(blue())).gap(5),
             h!(
@@ -25,7 +27,6 @@ fn main() {
                     .on_click(Left, |_| println!("Right clicked on text container"))
                     .on_release(Middle, |_| println!("released the middle mouse"))
                     .bg(black()),
-                //TODO: Ben is not supposed to flicker !!!
                 rect().w(40).h(65).bg(white()),
                 rect().w(40).h(65).bg(blue()).on_click(MouseButton::Left, |_| {
                     click_count += 1;
