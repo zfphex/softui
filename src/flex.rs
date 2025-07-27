@@ -18,58 +18,68 @@ pub fn clicked(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
     }
 }
 
-pub fn pressed(ctx: &Context, area: Rect, button: MouseButton) -> bool {
+pub fn pressed(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
     if !ctx.window.mouse_position.intersects(area) {
         return false;
     }
 
     match button {
-        MouseButton::Left => ctx.window.left_mouse.released,
-        MouseButton::Right => ctx.window.right_mouse.released,
-        MouseButton::Middle => ctx.window.middle_mouse.released,
-        MouseButton::Mouse4 => ctx.window.mouse_4.released,
-        MouseButton::Mouse5 => ctx.window.mouse_5.released,
+        MouseButton::Left => ctx.window.left_mouse.is_pressed(),
+        MouseButton::Right => ctx.window.right_mouse.is_pressed(),
+        MouseButton::Middle => ctx.window.middle_mouse.is_pressed(),
+        MouseButton::Mouse4 => ctx.window.mouse_4.is_pressed(),
+        MouseButton::Mouse5 => ctx.window.mouse_5.is_pressed(),
     }
 }
 
-pub fn released(ctx: &Context, area: Rect, button: MouseButton) -> bool {
+pub fn released(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
     if !ctx.window.mouse_position.intersects(area) {
         return false;
     }
 
     match button {
-        MouseButton::Left => ctx.window.left_mouse.pressed,
-        MouseButton::Right => ctx.window.right_mouse.pressed,
-        MouseButton::Middle => ctx.window.middle_mouse.pressed,
-        MouseButton::Mouse4 => ctx.window.mouse_4.pressed,
-        MouseButton::Mouse5 => ctx.window.mouse_5.pressed,
+        MouseButton::Left => ctx.window.left_mouse.is_released(),
+        MouseButton::Right => ctx.window.right_mouse.is_released(),
+        MouseButton::Middle => ctx.window.middle_mouse.is_released(),
+        MouseButton::Mouse4 => ctx.window.mouse_4.is_released(),
+        MouseButton::Mouse5 => ctx.window.mouse_5.is_released(),
     }
 }
 
-pub struct OnClick<'a, W> {
+pub struct Click<'a, W> {
     widget: W,
-    handlers: Vec<(MouseButton, Box<dyn FnMut(&mut W) + 'a>)>,
+    handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
 }
 
-impl<'a, W> OnClick<'a, W> {
-    pub fn new(widget: W, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
-        let mut handlers: Vec<(MouseButton, Box<dyn FnMut(&mut W) + 'a>)> = Vec::new();
-        handlers.push((button, Box::new(handler)));
-        OnClick { widget, handlers }
+impl<'a, W> Click<'a, W> {
+    pub fn new(widget: W, button: MouseButton, action: MouseAction, handler: impl FnMut(&mut W) + 'a) -> Self {
+        let mut handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)> = Vec::new();
+        handlers.push((button, action, Box::new(handler)));
+        Click { widget, handlers }
     }
 
     pub fn on_click(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers.push((button, Box::new(handler)));
+        self.handlers.push((button, MouseAction::Clicked, Box::new(handler)));
+        self
+    }
+
+    pub fn on_press(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, MouseAction::Pressed, Box::new(handler)));
+        self
+    }
+
+    pub fn on_release(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, MouseAction::Released, Box::new(handler)));
         self
     }
 }
 
-impl<'a, W> Debug for OnClick<'a, W>
+impl<'a, W> Debug for Click<'a, W>
 where
     W: Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let buttons: Vec<_> = self.handlers.iter().map(|(b, _)| b).collect();
+        let buttons: Vec<_> = self.handlers.iter().map(|(b, _, _)| b).collect();
         f.debug_struct("OnClick")
             .field("widget", &self.widget)
             .field("buttons", &buttons)
@@ -77,7 +87,7 @@ where
     }
 }
 
-impl<'a, W> Widget<'a> for OnClick<'a, W>
+impl<'a, W> Widget<'a> for Click<'a, W>
 where
     W: Widget<'a> + Debug,
 {
@@ -96,16 +106,21 @@ where
     fn handle_event(&mut self, ctx: &mut Context) {
         // First let the wrapped widget handle the event
         self.widget.handle_event(ctx);
+
         // Then run all matching handlers
-        for (button, h) in &mut self.handlers {
-            if clicked(ctx, *self.widget.area_mut(), *button) {
+        for (button, action, h) in &mut self.handlers {
+            if match action {
+                MouseAction::Pressed => pressed(ctx, *self.widget.area_mut(), *button),
+                MouseAction::Released => released(ctx, *self.widget.area_mut(), *button),
+                MouseAction::Clicked => clicked(ctx, *self.widget.area_mut(), *button),
+            } {
                 h(&mut self.widget);
             }
         }
     }
 }
 
-impl<'a, W> StyleNew for OnClick<'a, W>
+impl<'a, W> StyleNew for Click<'a, W>
 where
     W: Widget<'a> + StyleNew,
 {

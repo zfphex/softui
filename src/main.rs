@@ -23,6 +23,7 @@ fn main() {
                     .on_click(Left, |_| println!("Clicked on text container"))
                     .on_click(Right, |_| println!("Right clicked on text container"))
                     .on_click(Left, |_| println!("Right clicked on text container"))
+                    .on_release(Middle, |_| println!("released the middle mouse"))
                     .bg(black()),
                 //TODO: Ben is not supposed to flicker !!!
                 rect().w(40).h(65).bg(white()),
