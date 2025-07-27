@@ -101,42 +101,23 @@ pub struct Image {
 
 impl Image {}
 
-impl Widget for Image {
-    fn width<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized,
-    {
-        unimplemented!("The width of an image is fixed");
+impl<'a> Widget<'a> for Image {
+    fn size(&self) -> (usize, usize) {
+        (self.area.width, self.area.height)
     }
-
-    fn height<U: Into<Unit>>(mut self, length: U) -> Self
-    where
-        Self: Sized,
-    {
-        unimplemented!("The height of an image is fixed");
+    fn layout(&mut self, area: Rect) {
+        self.area = area;
     }
-
-    #[inline]
-    fn area(&self) -> Rect {
-        self.area
+    fn area_mut(&mut self) -> &mut Rect {
+        &mut self.area
     }
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.area)
-    }
-
-    fn primative(&self) -> Primative {
+    fn handle_event(&mut self, _ctx: &mut Context) {}
+    fn draw(&self, commands: &mut Vec<Command>) {
         //TODO: Just assume the image exists for now.
         let bitmap = unsafe { extend_lifetime(&self.bitmap) };
-        Primative::ImageUnsafe(bitmap, self.format)
-        // Some(Command::Image(
-        //     self.bitmap.clone().into_boxed_slice(),
-        //     self.area.x as usize,
-        //     self.area.y as usize,
-        //     self.width,
-        //     self.height,
-        //     self.format,
-        // ))
+        commands.push(Command {
+            area: self.area,
+            primative: Primative::ImageUnsafe(bitmap, self.format),
+        });
     }
 }

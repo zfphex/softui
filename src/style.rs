@@ -1,33 +1,33 @@
-#[rustfmt::skip] 
-pub trait Style: Sized {
-    fn bg(self, color: Color) -> Self;
-    fn rgb(self, r: u8, g: u8, b: u8) -> Self { self.bg(rgb(r, g, b)) }
-    fn pink(self) -> Self { self.bg(pink()) }
-    fn red(self) -> Self { self.bg(red()) }
-    fn orange(self) -> Self { self.bg(orange()) }
-    fn yellow(self) -> Self { self.bg(yellow()) }
-    fn green(self) -> Self { self.bg(green()) }
-    fn lime(self) -> Self { self.bg(lime()) }
-    fn blue(self) -> Self { self.bg(blue()) }
-    fn cyan(self) -> Self { self.bg(cyan()) }
-    fn turquoise(self) -> Self { self.bg(turquoise()) }
-    fn navy(self) -> Self { self.bg(navy()) }
-    fn purple(self) -> Self { self.bg(purple()) }
-    fn magenta(self) -> Self { self.bg(magenta()) }
-    fn violet(self) -> Self { self.bg(violet()) }
-    fn brown(self) -> Self { self.bg(brown()) }
-    fn tan(self) -> Self { self.bg(tan()) }
-    fn black(self) -> Self { self.bg(black()) }
-    fn white(self) -> Self { self.bg(white()) }
-    fn gray(self) -> Self { self.bg(gray()) }
-    fn silver(self) -> Self { self.bg(silver()) }
-    fn gold(self) -> Self { self.bg(gold()) }
-    fn indigo(self) -> Self { self.bg(indigo()) }
-    fn lavender(self) -> Self { self.bg(lavender()) }
-    fn coral(self) -> Self { self.bg(coral()) }
-    fn olive(self) -> Self { self.bg(olive()) }
-    fn teal(self) -> Self { self.bg(teal()) }
-}
+// #[rustfmt::skip] 
+// pub trait Style: Sized {
+//     fn bg(self, color: Color) -> Self;
+//     fn rgb(self, r: u8, g: u8, b: u8) -> Self { self.bg(rgb(r, g, b)) }
+//     fn pink(self) -> Self { self.bg(pink()) }
+//     fn red(self) -> Self { self.bg(red()) }
+//     fn orange(self) -> Self { self.bg(orange()) }
+//     fn yellow(self) -> Self { self.bg(yellow()) }
+//     fn green(self) -> Self { self.bg(green()) }
+//     fn lime(self) -> Self { self.bg(lime()) }
+//     fn blue(self) -> Self { self.bg(blue()) }
+//     fn cyan(self) -> Self { self.bg(cyan()) }
+//     fn turquoise(self) -> Self { self.bg(turquoise()) }
+//     fn navy(self) -> Self { self.bg(navy()) }
+//     fn purple(self) -> Self { self.bg(purple()) }
+//     fn magenta(self) -> Self { self.bg(magenta()) }
+//     fn violet(self) -> Self { self.bg(violet()) }
+//     fn brown(self) -> Self { self.bg(brown()) }
+//     fn tan(self) -> Self { self.bg(tan()) }
+//     fn black(self) -> Self { self.bg(black()) }
+//     fn white(self) -> Self { self.bg(white()) }
+//     fn gray(self) -> Self { self.bg(gray()) }
+//     fn silver(self) -> Self { self.bg(silver()) }
+//     fn gold(self) -> Self { self.bg(gold()) }
+//     fn indigo(self) -> Self { self.bg(indigo()) }
+//     fn lavender(self) -> Self { self.bg(lavender()) }
+//     fn coral(self) -> Self { self.bg(coral()) }
+//     fn olive(self) -> Self { self.bg(olive()) }
+//     fn teal(self) -> Self { self.bg(teal()) }
+// }
 
 #[inline]
 pub const fn rgb(r: u8, g: u8, b: u8) -> Color {

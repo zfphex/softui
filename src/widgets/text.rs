@@ -68,7 +68,7 @@ impl<'a> Text<'a> {
         //TODO: Two text widgets with same y value have different heights.
         //Text needs to be aligned specifically over this y coordinate,
         //and not based on the largest character.
-        let mut y= area.y;
+        let mut y = area.y;
         let x = area.x;
 
         let mut max_x = 0;
@@ -128,25 +128,29 @@ impl<'a> Text<'a> {
     }
 }
 
-impl<'a> Style for Text<'a> {
-    fn bg(mut self, color: Color) -> Self {
+impl<'a> StyleNew for Text<'a> {
+    fn set_bg(mut self, color: Color) -> Self {
         self.color = color;
         self
     }
 }
 
-impl<'a> Widget for Text<'a> {
-    fn primative(&self) -> Primative {
-        Primative::Text(self.text.to_string(), self.font_size, self.color)
+impl<'a> Widget<'a> for Text<'a> {
+    fn size(&self) -> (usize, usize) {
+        (self.area.width, self.area.height)
     }
-
-    #[inline]
-    fn area(&self) -> Rect {
-        self.area
+    fn layout(&mut self, area: Rect) {
+        self.area = area;
     }
-
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.area)
+    fn area_mut(&mut self) -> &mut Rect {
+        &mut self.area
+    }
+    fn handle_event(&mut self, _ctx: &mut Context) {}
+    fn draw(&self, commands: &mut Vec<Command>) {
+        commands.push(Command {
+            area: self.area,
+            primative: Primative::Text(self.text.to_string(), self.font_size, self.color),
+        });
     }
 }
 

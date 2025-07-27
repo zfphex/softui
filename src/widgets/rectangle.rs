@@ -22,24 +22,27 @@ impl Rectangle {
     }
 }
 
-impl Widget for Rectangle {
-    fn primative(&self) -> Primative {
-        Primative::Ellipse(self.radius, self.bg)
+impl<'a> Widget<'a> for Rectangle {
+    fn size(&self) -> (usize, usize) {
+        (self.area.width, self.area.height)
     }
-
-    #[inline]
-    fn area(&self) -> Rect {
-        self.area
+    fn layout(&mut self, area: Rect) {
+        self.area = area;
     }
-
-    #[inline]
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.area)
+    fn area_mut(&mut self) -> &mut Rect {
+        &mut self.area
+    }
+    fn handle_event(&mut self, _ctx: &mut Context) {}
+    fn draw(&self, commands: &mut Vec<Command>) {
+        commands.push(Command {
+            area: self.area,
+            primative: Primative::Ellipse(self.radius, self.bg),
+        });
     }
 }
 
-impl Style for Rectangle {
-    fn bg(mut self, color: Color) -> Self {
+impl StyleNew for Rectangle {
+    fn set_bg(mut self, color: Color) -> Self {
         self.bg = color;
         self
     }

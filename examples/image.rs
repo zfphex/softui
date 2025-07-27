@@ -19,7 +19,7 @@ fn main() {
         }
 
         {
-            flex!(v!(png, text, jpg));
+            flex!(&mut png as *mut _, &mut text as *mut _, &mut jpg as *mut _);
         }
 
         ctx.draw_frame();
