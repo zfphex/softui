@@ -10,11 +10,6 @@ pub mod atomic_float;
 pub mod flex;
 pub use flex::*;
 
-pub mod input;
-pub use input::*;
-
-pub mod layout;
-pub use layout::*;
 
 pub mod macros;
 pub use macros::*;
@@ -60,6 +55,15 @@ impl Command {
             })
         }
     }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub enum Quadrant {
+    #[default]
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
 }
 
 #[derive(Clone)]
