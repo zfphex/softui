@@ -107,7 +107,7 @@ pub struct Context {
 impl Context {
     pub fn new() -> Self {
         Self {
-            mouse_pos: Rect::new(170, 10, 1, 1),
+            mouse_pos: Rect::new(221, 16, 1, 1),
             left_mouse_clicked: true,
         }
     }
@@ -120,10 +120,11 @@ impl Context {
         }
     }
     pub fn clicked(&self, area: Rect, button: MouseButton) -> bool {
-        match button {
-            MouseButton::Left => self.left_mouse_clicked && self.mouse_pos.intersects(area),
-            _ => false,
-        }
+        // match button {
+        //     MouseButton::Left => self.left_mouse_clicked && self.mouse_pos.intersects(area),
+        //     _ => false,
+        // }
+        return true;
     }
 }
 pub fn create_ctx() -> &'static mut Context {
@@ -143,17 +144,12 @@ pub trait Widget<'a>: Debug {
     fn handle_event(&mut self, ctx: &Context);
     fn draw(&self, commands: &mut Vec<Command>);
 
-    fn on_click<F>(self, _button: MouseButton, handler: F) -> OnClick<'a, Self, F>
+    fn on_click<F>(self, button: MouseButton, handler: F) -> OnClick<'a, Self>
     where
         Self: Sized,
-        F: 'a + FnMut(&mut Self),
+        F: FnMut(&mut Self) + 'a,
     {
-        OnClick {
-            widget: self,
-            handler,
-            button: _button,
-            _phantom: std::marker::PhantomData,
-        }
+        OnClick::new(self, button, handler)
     }
     fn w(mut self, width: usize) -> Self
     where
@@ -183,45 +179,65 @@ pub trait Style {
     fn set_bg(self, color: Color) -> Self;
 }
 
-pub struct OnClick<'a, W, F> {
+pub struct OnClick<'a, W> {
     widget: W,
-    handler: F,
-    button: MouseButton,
-    _phantom: std::marker::PhantomData<&'a ()>,
+    handlers: Vec<(MouseButton, Box<dyn FnMut(&mut W) + 'a>)>,
 }
-impl<'a, W: Debug, F> Debug for OnClick<'a, W, F> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+
+impl<'a, W> OnClick<'a, W> {
+    pub fn new(widget: W, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        let mut handlers: Vec<(MouseButton, Box<dyn FnMut(&mut W) + 'a>)> = Vec::new();
+        handlers.push((button, Box::new(handler)));
+        OnClick { widget, handlers }
+    }
+
+    pub fn on_click(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, Box::new(handler)));
+        self
+    }
+}
+
+// 2) Implement Debug (you can choose how much detail you want to print)
+impl<'a, W> Debug for OnClick<'a, W>
+where
+    W: Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let buttons: Vec<_> = self.handlers.iter().map(|(b, _)| b).collect();
         f.debug_struct("OnClick")
             .field("widget", &self.widget)
-            .field("button", &self.button)
+            .field("buttons", &buttons)
             .finish_non_exhaustive()
     }
 }
-impl<'a, W, F> Widget<'a> for OnClick<'a, W, F>
+
+impl<'a, W> Widget<'a> for OnClick<'a, W>
 where
-    W: Widget<'a>,
-    F: 'a + FnMut(&mut W),
+    W: Widget<'a> + Debug,
 {
     fn size(&self) -> (usize, usize) {
         self.widget.size()
     }
     fn layout(&mut self, area: Rect) {
-        self.widget.layout(area);
+        self.widget.layout(area)
     }
     fn area_mut(&mut self) -> &mut Rect {
         self.widget.area_mut()
     }
-    fn draw(&self, commands: &mut Vec<Command>) {
-        self.widget.draw(commands);
+    fn draw(&self, cmds: &mut Vec<Command>) {
+        self.widget.draw(cmds)
     }
     fn handle_event(&mut self, ctx: &Context) {
+        // First let the wrapped widget handle the event
         self.widget.handle_event(ctx);
-        if ctx.clicked(*self.widget.area_mut(), self.button) {
-            (self.handler)(&mut self.widget);
+        // Then run all matching handlers
+        for (button, h) in &mut self.handlers {
+            if ctx.clicked(*self.widget.area_mut(), *button) {
+                h(&mut self.widget);
+            }
         }
     }
 }
-
 // ==========================================================================
 // Concrete Widget and Layout
 // ==========================================================================
@@ -448,10 +464,15 @@ fn main() {
             // This `h!` container will also be transparent.
             h!(
                 rect().w(40).h(65).bg(white()),
-                rect().w(40).h(65).bg(blue()).on_click(MouseButton::Left, |_| {
-                    click_count += 1;
-                    println!("Inner blue rect clicked! Count: {}", click_count);
-                })
+                rect()
+                    .w(40)
+                    .h(65)
+                    .bg(blue())
+                    .on_click(MouseButton::Left, |_| {
+                        click_count += 1;
+                        println!("Inner blue rect clicked! Count: {}", click_count);
+                    })
+                    .on_click(MouseButton::Right, |_| println!("right")),
             )
             .gap(5)
         )
