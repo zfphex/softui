@@ -16,13 +16,13 @@ fn main() {
         }
 
         flex!(
+            // v!(svg("img/ferris.svg", 240, 170, 0.2), image("img/ben.png")),
             v!(rect().w(150).h(30).bg(red()), rect().w(150).h(30).bg(blue())).gap(5),
             h!(
                 v!(text("hi there :)"), text("hi there :)"))
                     .on_click(Left, |_| println!("Clicked on text container"))
                     .bg(black()),
                 //TODO: Ben is not supposed to flicker !!!
-                // image("img/ben.png"),
                 rect().w(40).h(65).bg(white()),
                 rect().w(40).h(65).bg(blue()).on_click(MouseButton::Left, |_| {
                     click_count += 1;
@@ -37,7 +37,7 @@ fn main() {
                         v!(rect().wh(30).bg(pink()), h!(rect().wh(30), rect().wh(30)).bg(purple()))
                     )
                 )
-                .bg(black())
+                .bg(black()),
             )
             .gap(5)
         )

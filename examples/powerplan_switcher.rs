@@ -80,13 +80,14 @@ fn main() {
         //     text("Power saver")
         // ).padding(padding);
 
-        // flex!(v!(text("High performance").on_click(Left, |_| println!("test")), text("Balanced"), text("Power saver")).gap(gap)).left_pad(4);
-
-        //YESSSSSSS now that the types are stripped, click doesn't work YIPEEEE.
-        //TODO: FIXME
         flex!(v!(
-            text("HIIIIIIIIIIIIIIIIIII").on_click(Left, |_| println!("HIIIIIIIIII"))
-        ));
+            text("High performance").on_click(Left, |_| println!("test")),
+            text("Balanced"),
+            text("Power saver")
+        )
+        .gap(gap));
+        //TODO: Left pad
+        // .left_pad(4);
 
         // let text_pos = Rect::new(0, 0, 236, 20);
 

@@ -716,138 +716,138 @@ impl Context {
         // );
     }
 
-    // #[cfg(target_os = "windows")]
-    // #[cfg(feature = "dwrite")]
-    // pub fn draw_text_subpixel(
-    //     &mut self,
-    //     text: &str,
-    //     dwrite: &DWrite,
-    //     x: usize,
-    //     mut y: usize,
-    //     font_size: usize,
-    //     line_height: usize,
-    //     color: Color,
-    // ) {
-    //     let mut max_x = 0;
-    //     let mut max_y = 0;
-    //     let start_x = x;
-    //     let start_y = y;
+    #[cfg(target_os = "windows")]
+    #[cfg(feature = "dwrite")]
+    pub fn draw_text_subpixel(
+        &mut self,
+        text: &str,
+        dwrite: &DWrite,
+        x: usize,
+        mut y: usize,
+        font_size: usize,
+        line_height: usize,
+        color: Color,
+    ) {
+        let mut max_x = 0;
+        let mut max_y = 0;
+        let start_x = x;
+        let start_y = y;
 
-    //     let r = color.r();
-    //     let g = color.g();
-    //     let b = color.b();
+        let r = color.r();
+        let g = color.g();
+        let b = color.b();
 
-    //     let viewport_width = self.window.width();
+        let viewport_width = self.window.width();
 
-    //     'line: for line in text.lines() {
-    //         let mut glyph_x = x as f32;
+        'line: for line in text.lines() {
+            let mut glyph_x = x as f32;
 
-    //         'char: for char in line.chars() {
-    //             let (metrics, texture) = dwrite.glyph(char, font_size as f32);
-    //             let height = texture.height;
-    //             let width = texture.width;
-    //             let texture = &texture.data;
-    //             let x_draw = glyph_x.floor() as usize;
+            'char: for char in line.chars() {
+                let (metrics, texture) = dwrite.glyph(char, font_size as f32);
+                let height = texture.height;
+                let width = texture.width;
+                let texture = &texture.data;
+                let x_draw = glyph_x.floor() as usize;
 
-    //             let glyph_y =
-    //                 start_y as f32 + (metrics.vertical_origin_y - height as f32) - metrics.bottom_side_bearing;
+                let glyph_y =
+                    start_y as f32 + (metrics.vertical_origin_y - height as f32) - metrics.bottom_side_bearing;
 
-    //             'y: for y in 0..height {
-    //                 'x: for x in 0..width {
-    //                     //Text doesn't fit on the screen.
-    //                     if (x + x_draw as i32) >= viewport_width as i32 {
-    //                         continue;
-    //                     }
+                'y: for y in 0..height {
+                    'x: for x in 0..width {
+                        //Text doesn't fit on the screen.
+                        if (x + x_draw as i32) >= viewport_width as i32 {
+                            continue;
+                        }
 
-    //                     let offset = glyph_y as usize + y as usize;
+                        let offset = glyph_y as usize + y as usize;
 
-    //                     if max_x < x as usize + x_draw {
-    //                         max_x = x as usize + x_draw;
-    //                     }
+                        if max_x < x as usize + x_draw {
+                            max_x = x as usize + x_draw;
+                        }
 
-    //                     if max_y < offset {
-    //                         max_y = offset;
-    //                     }
+                        if max_y < offset {
+                            max_y = offset;
+                        }
 
-    //                     let i = x as usize + x_draw + self.window.width() * offset;
-    //                     let j = (y as usize * width as usize + x as usize) * 3;
+                        let i = x as usize + x_draw + self.window.width() * offset;
+                        let j = (y as usize * width as usize + x as usize) * 3;
 
-    //                     if i >= self.window.buffer.len() {
-    //                         break 'x;
-    //                     }
+                        if i >= self.window.buffer.len() {
+                            break 'x;
+                        }
 
-    //                     let c = Color::new(texture[j], texture[j + 1], texture[j + 2]);
+                        let c = Color::new(texture[j], texture[j + 1], texture[j + 2]);
 
-    //                     if let Some(px) = self.window.buffer.get_mut(i) {
-    //                         *px = c.as_u32();
-    //                     }
-    //                 }
-    //             }
+                        if let Some(px) = self.window.buffer.get_mut(i) {
+                            *px = c.as_u32();
+                        }
+                    }
+                }
 
-    //             glyph_x += metrics.advance_width;
+                glyph_x += metrics.advance_width;
 
-    //             //Check if the glyph position is off the screen.
-    //             if glyph_x.floor() as usize >= self.window.width() {
-    //                 break 'line;
-    //             }
-    //         }
+                //Check if the glyph position is off the screen.
+                if glyph_x.floor() as usize >= self.window.width() {
+                    break 'line;
+                }
+            }
 
-    //         //CSS is probably line height * font size.
-    //         //1.2 is the default line height
-    //         //I'm guessing 1.0 is probably just adding the font size.
-    //         y += font_size + line_height;
-    //     }
+            //CSS is probably line height * font size.
+            //1.2 is the default line height
+            //I'm guessing 1.0 is probably just adding the font size.
+            y += font_size + line_height;
+        }
 
-    //     //Not sure why these are one off.
-    //     let area = Rect::new(x, y, max_x + 1 - start_x, max_y + 1 - start_y);
+        //Not sure why these are one off.
+        let area = Rect::new(x, y, max_x + 1 - start_x, max_y + 1 - start_y);
 
-    //     // let _ = self.draw_rectangle_outline(
-    //     //     area.x as usize,
-    //     //     area.y as usize,
-    //     //     area.width as usize,
-    //     //     area.height as usize,
-    //     //     Color::RED,
-    //     // );
-    // }
+        // let _ = self.draw_rectangle_outline(
+        //     area.x as usize,
+        //     area.y as usize,
+        //     area.width as usize,
+        //     area.height as usize,
+        //     Color::RED,
+        // );
+    }
 
-    // #[cfg(target_os = "windows")]
-    // #[cfg(feature = "dwrite")]
-    // pub fn draw_glyph_subpixel(&mut self, char: char, point_size: f32) {
-    //     let start_x = 50;
-    //     let start_y = 50;
-    //     let color = black();
-    //     let dwrite = DWrite::new();
+    #[cfg(target_os = "windows")]
+    #[cfg(feature = "dwrite")]
+    pub fn draw_glyph_subpixel(&mut self, char: char, point_size: f32) {
+        let start_x = 50;
+        let start_y = 50;
+        let color = black();
+        let dwrite = DWrite::new();
 
-    //     let (metrics, texture) = dwrite.glyph(char, point_size);
+        let (metrics, texture) = dwrite.glyph(char, point_size);
 
-    //     for y in 0..texture.height as usize {
-    //         for x in 0..texture.width as usize {
-    //             let i = ((start_y + y) * self.window.width() + start_x + x);
-    //             let j = (y * texture.width as usize + x) * 3;
+        for y in 0..texture.height as usize {
+            for x in 0..texture.width as usize {
+                let i = ((start_y + y) * self.window.width() + start_x + x);
+                let j = (y * texture.width as usize + x) * 3;
 
-    //             let r = texture.data[j];
-    //             let g = texture.data[j + 1];
-    //             let b = texture.data[j + 2];
+                let r = texture.data[j];
+                let g = texture.data[j + 1];
+                let b = texture.data[j + 2];
 
-    //             //TODO: Blend background, font color and rgb values together.
-    //             // let alpha = ((r as u32 + b as u32 + g as u32) / 3) as u8;
-    //             // let r = blend(r, 0, color.r(), 255);
-    //             // let g = blend(g, 0, color.g(), 255);
-    //             // let b = blend(b, 0, color.b(), 255);
+                //TODO: Blend background, font color and rgb values together.
+                // let alpha = ((r as u32 + b as u32 + g as u32) / 3) as u8;
+                // let r = blend(r, 0, color.r(), 255);
+                // let g = blend(g, 0, color.g(), 255);
+                // let b = blend(b, 0, color.b(), 255);
 
-    //             // let bg = Color::new(self.window.buffer[i]);
-    //             // let r = blend(r, alpha, bg.r(), alpha);
-    //             // let g = blend(g, alpha, bg.g(), alpha);
-    //             // let b = blend(b, alpha, bg.b(), alpha);
+                // let bg = Color::new(self.window.buffer[i]);
+                // let r = blend(r, alpha, bg.r(), alpha);
+                // let g = blend(g, alpha, bg.g(), alpha);
+                // let b = blend(b, alpha, bg.b(), alpha);
 
-    //             //Black
-    //             self.window.buffer[i] = rgb(255 - r, 255 - g, 255 - b).as_u32();
+                //Black
+                self.window.buffer[i] = rgb(255 - r, 255 - g, 255 - b).as_u32();
 
-    //             //White
-    //             // self.window.buffer[i] = rgb(r, g, b);
-    //         }
-    //     }
-    // }
+                //White
+                // self.window.buffer[i] = rgb(r, g, b);
+            }
+        }
+    }
 
     #[cfg(feature = "image")]
     pub fn draw_image(&mut self, x: usize, y: usize, width: usize, height: usize, bitmap: &[u8], format: ImageFormat) {

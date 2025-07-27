@@ -63,17 +63,17 @@ pub enum FlexDirection {
 }
 
 #[macro_export]
-macro_rules! h { ($($widget:expr),* $(,)?) => { group!($($widget),*).direction(FlexDirection::LeftRight) }; }
+macro_rules! h { ($($widget:expr),* $(,)?) => { $crate::group!($($widget),*).direction($crate::FlexDirection::LeftRight) }; }
 
 #[macro_export]
-macro_rules! v { ($($widget:expr),* $(,)?) => { group!($($widget),*).direction(FlexDirection::TopBottom) }; }
+macro_rules! v { ($($widget:expr),* $(,)?) => { $crate::group!($($widget),*).direction($crate::FlexDirection::TopBottom) }; }
 
 #[macro_export]
 macro_rules! group {
     ($($widget:expr),* $(,)?) => {{
-        let mut children: Vec<Box<dyn Widget>> = Vec::new();
+        let mut children: Vec<Box<dyn $crate::Widget>> = Vec::new();
         $( children.push(Box::new($widget)); )*
-        Group { children, padding: 0, gap: 0, direction: FlexDirection::default(), area: Rect::default(), bg: None }
+        $crate::Group { children, padding: 0, gap: 0, direction: $crate::FlexDirection::default(), area: $crate::Rect::default(), bg: None }
     }};
 }
 

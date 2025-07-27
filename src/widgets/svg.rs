@@ -8,6 +8,7 @@ pub fn svg<P: AsRef<std::path::Path>>(path: P, width: usize, height: usize, scal
     Svg::new(path, width, height, scale)
 }
 
+#[derive(Debug)]
 pub struct Svg {
     pub pixmap: Pixmap,
     pub area: Rect,
@@ -26,19 +27,23 @@ impl Svg {
     }
 }
 
-impl Widget for Svg {
-    type Layout = Self;
-
-    fn primative(&self) -> Primative {
+impl<'a> Widget<'a> for Svg {
+    fn size(&self) -> (usize, usize) {
+        (self.area.width, self.area.height)
+    }
+    fn layout(&mut self, area: Rect) {
+        self.area = area;
+    }
+    fn area_mut(&mut self) -> &mut Rect {
+        &mut self.area
+    }
+    fn handle_event(&mut self, _ctx: &mut Context) {}
+    fn draw(&self, commands: &mut Vec<Command>) {
+        //TODO: Just assume the svg exists for now.
         let pixmap = unsafe { extend_lifetime(&self.pixmap) };
-        Primative::SVGUnsafe(pixmap)
-    }
-
-    fn area(&self) -> Rect {
-        self.area
-    }
-
-    fn area_mut(&mut self) -> Option<&mut Rect> {
-        Some(&mut self.area)
+        commands.push(Command {
+            area: self.area,
+            primative: Primative::SVGUnsafe(pixmap),
+        });
     }
 }
