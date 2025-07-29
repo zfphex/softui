@@ -111,7 +111,7 @@ impl<'a> Widget<'a> for Image {
     fn area_mut(&mut self) -> &mut Rect {
         &mut self.area
     }
-    fn draw(&self, commands: &mut Vec<Command>) {
+    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         //TODO: Just assume the image exists for now.
         let bitmap = unsafe { extend_lifetime(&self.bitmap) };
         commands.push(Command {

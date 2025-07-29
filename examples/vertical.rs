@@ -14,29 +14,36 @@ fn main() {
 
     //Gap seems wrong between `texts`
     {
-        //TODO: The padding of the background appears wrong. High performance should have more right padding.
-
-        // let flex = flex!(v!(
-        //     text("High performance"),
-        //     text("Balanced"),
-        //     text("Power saver"),
-        //     v!(r1, r2.clone().wh(20), r3, r4, text("hi"), texts).gap(12),
-        // )
-        // .gap(12))
-        // .padding(16)
-        // .bg(gray());
-
-        // v!(v!()).build();
-        // flex!(v!(r1, r2.clone().wh(200), r3, r4, text("hi"), h!(texts)).gap(12));
-
-        //TODO: The horizontal rectangles are vertical here.
-        // flex!(v!(text("one"), text("two"), h!(rect().wh(30), rect().wh(30))));
-        // flex!(v!(text("one"), text("two")), h!(rect().wh(30), rect().wh(30)));
-
-        //This is setting the deepest child node to have top to bottom direction.
-        //I think my code for this just sucks :(
-        //TOOD: FIXME
-        flex!(v!(h!(rect(), rect())));
+        flex!(
+            //TODO: Ben is not supposed to flicker !!!
+            //TODO: Ben is also not supposed to cause STATUS_ACCESS_VIOLATION 😅
+            // v!(svg("img/ferris.svg", 240, 170, 0.2), image("img/ben.png")),
+            v!(rect().w(150).h(30).bg(red()), rect().w(150).h(30).bg(blue())).gap(5),
+            h!(
+                v!(text("hi there :)"), text("hi there :)"))
+                    .on_click(Left, |_| println!("Clicked on text container"))
+                    .on_click(Right, |_| println!("Right clicked on text container"))
+                    .on_click(Left, |_| println!("Right clicked on text container"))
+                    .on_release(Middle, |_| println!("released the middle mouse"))
+                    .bg(black()),
+                rect().w(40).h(65).bg(white()),
+                rect().w(40).h(65).bg(blue()),
+                h!(
+                    rect().wh(30).bg(red()),
+                    rect().wh(40).bg(red()),
+                    v!(
+                        rect().wh(12),
+                        rect().wh(20),
+                        v!(rect().wh(30).bg(pink()), h!(rect().wh(30), rect().wh(30)).bg(purple()))
+                    )
+                )
+                .bg(black()),
+            )
+            .gap(5)
+        )
+        .padding(10)
+        .gap(10)
+        .bg(green());
     }
 
     ctx.draw_frame();

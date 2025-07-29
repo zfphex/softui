@@ -37,7 +37,7 @@ impl<'a> Widget<'a> for Svg {
     fn area_mut(&mut self) -> &mut Rect {
         &mut self.area
     }
-    fn draw(&self, commands: &mut Vec<Command>) {
+    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         //TODO: Just assume the svg exists for now.
         let pixmap = unsafe { extend_lifetime(&self.pixmap) };
         commands.push(Command {

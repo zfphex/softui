@@ -28,15 +28,14 @@ pub use dwrite::*;
 
 use crate::*;
 
-pub trait StyleNew {
-    fn set_bg(self, color: Color) -> Self;
-}
-
 pub trait Widget<'a>: std::fmt::Debug {
     fn size(&self) -> (usize, usize);
     fn layout(&mut self, area: Rect);
     fn handle_event(&mut self, ctx: &mut Context) {}
-    fn draw(&self, commands: &mut Vec<Command>);
+    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>);
+    fn style(&self) -> Option<Style> {
+        None
+    }
 
     fn on_click<F>(self, button: MouseButton, handler: F) -> Click<'a, Self>
     where
@@ -84,12 +83,11 @@ pub trait Widget<'a>: std::fmt::Debug {
         self.area_mut().height = height;
         self
     }
-    fn bg(self, color: Color) -> Self
+    fn bg(self, color: Color) -> StyledWidget<Self>
     where
         Self: Sized,
-        Self: StyleNew,
     {
-        self.set_bg(color)
+        StyledWidget::new(self, color)
     }
     fn area_mut(&mut self) -> &mut Rect;
 }
@@ -112,8 +110,8 @@ where
         (*self).handle_event(ctx)
     }
 
-    fn draw(&self, commands: &mut Vec<Command>) {
-        (**self).draw(commands)
+    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+        (**self).draw(commands, style)
     }
 
     fn area_mut(&mut self) -> &mut Rect {
@@ -143,8 +141,8 @@ where
         unsafe { (*self).as_mut().unwrap().handle_event(ctx) }
     }
 
-    fn draw(&self, commands: &mut Vec<Command>) {
-        unsafe { (*self).as_ref().unwrap().draw(commands) }
+    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+        unsafe { (*self).as_ref().unwrap().draw(commands, style) }
     }
 
     fn area_mut(&mut self) -> &mut Rect {

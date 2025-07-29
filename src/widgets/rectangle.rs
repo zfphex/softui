@@ -32,17 +32,11 @@ impl<'a> Widget<'a> for Rectangle {
     fn area_mut(&mut self) -> &mut Rect {
         &mut self.area
     }
-    fn draw(&self, commands: &mut Vec<Command>) {
+    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+        let bg = style.unwrap_or(Style::new()).background_color;
         commands.push(Command {
             area: self.area,
-            primative: Primative::Ellipse(self.radius, self.bg),
+            primative: Primative::Ellipse(self.radius, bg),
         });
-    }
-}
-
-impl StyleNew for Rectangle {
-    fn set_bg(mut self, color: Color) -> Self {
-        self.bg = color;
-        self
     }
 }

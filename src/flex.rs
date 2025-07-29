@@ -100,8 +100,8 @@ where
     fn area_mut(&mut self) -> &mut Rect {
         self.widget.area_mut()
     }
-    fn draw(&self, cmds: &mut Vec<Command>) {
-        self.widget.draw(cmds)
+    fn draw(&self, cmds: &mut Vec<Command>, style: Option<Style>) {
+        self.widget.draw(cmds, style)
     }
     fn handle_event(&mut self, ctx: &mut Context) {
         // First let the wrapped widget handle the event
@@ -120,22 +120,18 @@ where
     }
 }
 
-impl<'a, W> StyleNew for Click<'a, W>
-where
-    W: Widget<'a> + StyleNew,
-{
-    // Delegate the call to the inner widget.
-    fn set_bg(mut self, color: Color) -> Self {
-        self.widget = self.widget.set_bg(color);
-        self
-    }
-}
-
 #[derive(Default, Debug, Clone, Copy)]
 pub enum FlexDirection {
     #[default]
     LeftRight,
     TopBottom,
+}
+
+#[macro_export]
+macro_rules! flex {
+    ($($widget:expr),* $(,)?) => {{
+        FlexRoot { content: group!($($widget),*), margin: 0 }
+    }};
 }
 
 #[macro_export]
@@ -147,9 +143,20 @@ macro_rules! v { ($($widget:expr),* $(,)?) => { $crate::group!($($widget),*).dir
 #[macro_export]
 macro_rules! group {
     ($($widget:expr),* $(,)?) => {{
-        let mut children: Vec<Box<dyn $crate::Widget>> = Vec::new();
-        $( children.push(Box::new($widget)); )*
-        $crate::Group { children, padding: 0, gap: 0, direction: $crate::FlexDirection::default(), area: $crate::Rect::default(), bg: None }
+        let mut group = $crate::Group {
+            children: Vec::new(),
+            padding: 0,
+            gap: 0,
+            direction: $crate::FlexDirection::default(),
+            area: $crate::Rect::default(),
+            bg: None,
+        };
+
+        $(
+            group.children.push(Box::new($widget));
+        )*
+
+        group
     }};
 }
 
@@ -175,13 +182,6 @@ impl<'a> Group<'a> {
     }
     pub fn direction(mut self, value: FlexDirection) -> Self {
         self.direction = value;
-        self
-    }
-}
-
-impl<'a> StyleNew for Group<'a> {
-    fn set_bg(mut self, color: Color) -> Self {
-        self.bg = Some(color);
         self
     }
 }
@@ -236,24 +236,18 @@ impl<'a> Widget<'a> for Group<'a> {
             child.handle_event(ctx);
         }
     }
-    fn draw(&self, commands: &mut Vec<Command>) {
+    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         if let Some(bg_color) = self.bg {
             commands.push(Command {
                 area: self.area,
                 primative: Primative::Ellipse(0, bg_color),
             });
         }
+
         for child in &self.children {
-            child.draw(commands);
+            child.draw(commands, child.style());
         }
     }
-}
-
-#[macro_export]
-macro_rules! flex {
-    ($($widget:expr),* $(,)?) => {{
-        FlexRoot { content: group!($($widget),*), margin: 0 }
-    }};
 }
 
 pub struct FlexRoot<'a> {
@@ -282,8 +276,7 @@ impl<'a> FlexRoot<'a> {
         self
     }
     pub fn bg(mut self, color: Color) -> Self {
-        let content = std::mem::take(&mut self.content);
-        self.content = content.bg(color);
+        self.content.bg = Some(color);
         self
     }
 }
@@ -298,7 +291,7 @@ impl<'a> Drop for FlexRoot<'a> {
         self.content.handle_event(ctx);
 
         let mut commands = Vec::new();
-        self.content.draw(&mut commands);
+        self.content.draw(&mut commands, None);
         for command in commands {
             unsafe { COMMAND_QUEUE.push(command) };
         }

@@ -128,13 +128,6 @@ impl<'a> Text<'a> {
     }
 }
 
-impl<'a> StyleNew for Text<'a> {
-    fn set_bg(mut self, color: Color) -> Self {
-        self.color = color;
-        self
-    }
-}
-
 impl<'a> Widget<'a> for Text<'a> {
     fn size(&self) -> (usize, usize) {
         (self.area.width, self.area.height)
@@ -145,7 +138,7 @@ impl<'a> Widget<'a> for Text<'a> {
     fn area_mut(&mut self) -> &mut Rect {
         &mut self.area
     }
-    fn draw(&self, commands: &mut Vec<Command>) {
+    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         commands.push(Command {
             area: self.area,
             primative: Primative::Text(self.text.to_string(), self.font_size, self.color),
