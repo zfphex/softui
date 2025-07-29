@@ -13,6 +13,14 @@ pub enum ImageFormat {
     JPEG,
 }
 
+pub fn image_ref<'a>(image: &'a Image) -> ImageRef<'a> {
+    ImageRef {
+        format: image.format,
+        area: image.area,
+        bitmap: &image.bitmap,
+    }
+}
+
 pub fn image(path: impl AsRef<Path>) -> Image {
     let path = path.as_ref();
     let file = std::fs::read(path).unwrap();
@@ -99,9 +107,16 @@ pub struct Image {
     pub bitmap: Vec<u8>,
 }
 
-impl Image {}
+#[derive(Debug, Clone)]
+pub struct ImageRef<'a> {
+    pub format: ImageFormat,
+    pub area: Rect,
+    pub bitmap: &'a [u8],
+}
 
-impl<'a> Widget<'a> for Image {
+// impl Image {}
+
+impl<'a> Widget<'a> for ImageRef<'a> {
     fn size(&self) -> (usize, usize) {
         (self.area.width, self.area.height)
     }
@@ -113,7 +128,8 @@ impl<'a> Widget<'a> for Image {
     }
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         //TODO: Just assume the image exists for now.
-        let bitmap = unsafe { extend_lifetime(&self.bitmap) };
+        let bitmap = unsafe { std::mem::transmute::<&'a [u8], &'static [u8]>(self.bitmap) };
+
         commands.push(Command {
             area: self.area,
             primative: Primative::ImageUnsafe(bitmap, self.format),

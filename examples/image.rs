@@ -8,9 +8,8 @@ fn main() {
     use softui::*;
 
     let ctx = create_ctx("Softui", 800, 600);
-    let mut png = image("img/smol.png").on_click(Left, |_| println!(":<"));
-    let mut jpg = image("img/smol.jpg").on_click(Left, |_| println!(">:"));
-    let mut text = text("test");
+    let png = image("img/smol.png");
+    let jpg = image("img/smol.jpg");
 
     loop {
         match ctx.event() {
@@ -19,7 +18,10 @@ fn main() {
         }
 
         {
-            flex!(&mut png as *mut _, &mut text as *mut _, &mut jpg as *mut _);
+            flex!(
+                image_ref(&png).on_click(Left, |_| println!(":<")),
+                image_ref(&jpg).on_click(Left, |_| println!(">:"))
+            );
         }
 
         ctx.draw_frame();

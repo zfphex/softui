@@ -5,6 +5,8 @@ fn main() {
     let ctx = create_ctx("softui", 800, 600);
 
     let mut click_count = 0;
+    let ben = image("img/ben.png");
+    let ferris = svg("img/ferris.svg", 240, 170, 0.2);
 
     loop {
         match ctx.event() {
@@ -16,9 +18,8 @@ fn main() {
         }
 
         flex!(
-            //TODO: Ben is not supposed to flicker !!!
-            //TODO: Ben is also not supposed to cause STATUS_ACCESS_VIOLATION 😅
-            // v!(svg("img/ferris.svg", 240, 170, 0.2), image("img/ben.png")),
+            //Create a reference to the image/svg, currently this code assumes a static lifetime...
+            // v!(svg_ref(&ferris), image_ref(&ben)),
             v!(rect().w(150).h(30).bg(red()), rect().w(150).h(30).bg(blue())).gap(5),
             h!(
                 v!(text("hi there :)"), text("hi there :)"))

@@ -27,7 +27,20 @@ impl Svg {
     }
 }
 
-impl<'a> Widget<'a> for Svg {
+pub fn svg_ref<'a>(svg: &'a Svg) -> SvgRef<'a> {
+    SvgRef {
+        pixmap: &svg.pixmap,
+        area: svg.area,
+    }
+}
+
+#[derive(Debug)]
+pub struct SvgRef<'a> {
+    pub pixmap: &'a Pixmap,
+    pub area: Rect,
+}
+
+impl<'a> Widget<'a> for SvgRef<'a> {
     fn size(&self) -> (usize, usize) {
         (self.area.width, self.area.height)
     }
@@ -39,7 +52,7 @@ impl<'a> Widget<'a> for Svg {
     }
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         //TODO: Just assume the svg exists for now.
-        let pixmap = unsafe { extend_lifetime(&self.pixmap) };
+        let pixmap = unsafe { std::mem::transmute::<&'a Pixmap, &'static Pixmap>(self.pixmap) };
         commands.push(Command {
             area: self.area,
             primative: Primative::SVGUnsafe(pixmap),
