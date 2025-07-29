@@ -35,7 +35,7 @@ pub trait StyleNew {
 pub trait Widget<'a>: std::fmt::Debug {
     fn size(&self) -> (usize, usize);
     fn layout(&mut self, area: Rect);
-    fn handle_event(&mut self, ctx: &mut Context);
+    fn handle_event(&mut self, ctx: &mut Context) {}
     fn draw(&self, commands: &mut Vec<Command>);
 
     fn on_click<F>(self, button: MouseButton, handler: F) -> Click<'a, Self>

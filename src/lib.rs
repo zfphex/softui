@@ -89,7 +89,6 @@ pub enum Primative {
 
     #[cfg(feature = "svg")]
     SVGUnsafe(&'static resvg::tiny_skia::Pixmap),
-
     Custom(fn(&mut Context, Rect) -> ()),
     CustomAny {
         data: Arc<dyn Any + Send + Sync>,

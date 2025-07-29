@@ -155,6 +155,7 @@ macro_rules! group {
 
 #[derive(Debug, Default)]
 pub struct Group<'a> {
+    //TODO: Does this need to be Boxed?
     pub children: Vec<Box<dyn Widget<'a> + 'a>>,
     pub padding: usize,
     pub gap: usize,
@@ -251,8 +252,7 @@ impl<'a> Widget<'a> for Group<'a> {
 #[macro_export]
 macro_rules! flex {
     ($($widget:expr),* $(,)?) => {{
-        let content = group!($($widget),*);
-        FlexRoot { content, margin: 0 }
+        FlexRoot { content: group!($($widget),*), margin: 0 }
     }};
 }
 
