@@ -86,10 +86,15 @@ fn main() {
         // .gap(gap));
 
         flex!(v!(
-            text("High performance").on_click(Left, |_| {
-                high_performance();
-                current_plan.set("High performance");
-            }),
+            text("High performance")
+                //TODO: How to set rectangle border for this bad boy.
+                // .bg((current_plan.get() == "High performance")
+                //     .then_some(accent)
+                //     .unwrap_or_default())
+                .on_click(Left, |_| {
+                    high_performance();
+                    current_plan.set("High performance");
+                }),
             text("Balanced").on_click(Left, |_| {
                 balanced();
                 current_plan.set("Balanced");

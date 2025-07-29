@@ -31,7 +31,6 @@ pub fn set_default_font_size(font_size: usize) {
 pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
     Text {
         text: text.into(),
-        color: white(),
         font_size: default_font_size(),
         line_height: None,
         area: Rect::default(),
@@ -43,7 +42,6 @@ pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
 #[derive(Debug, Clone)]
 pub struct Text<'a> {
     pub text: Cow<'a, str>,
-    pub color: Color,
     pub font_size: usize,
     pub line_height: Option<usize>,
     //Used with the builder pattern, x(), y(), width(), etc...
@@ -139,9 +137,10 @@ impl<'a> Widget<'a> for Text<'a> {
         &mut self.area
     }
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+        let color = style.unwrap_or(Style::new().fg(white())).foreground_color;
         commands.push(Command {
             area: self.area,
-            primative: Primative::Text(self.text.to_string(), self.font_size, self.color),
+            primative: Primative::Text(self.text.to_string(), self.font_size, color),
         });
     }
 }

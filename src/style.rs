@@ -9,11 +9,19 @@ pub struct StyledWidget<W> {
 }
 
 impl<W> StyledWidget<W> {
-    pub fn new(widget: W, background_color: Color) -> Self {
+    pub fn new(widget: W) -> Self {
         Self {
             widget,
-            style: Style::new().bg(background_color),
+            style: Style::new(),
         }
+    }
+    pub fn bg(mut self, color: Color) -> Self {
+        self.style.background_color = color;
+        self
+    }
+    pub fn fg(mut self, color: Color) -> Self {
+        self.style.foreground_color = color;
+        self
     }
 }
 
@@ -50,19 +58,25 @@ pub fn style() -> Style {
     Style::new()
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Style {
     pub background_color: Color,
+    pub foreground_color: Color,
 }
 
 impl Style {
     pub fn new() -> Self {
         Style {
-            background_color: white(),
+            background_color: Color(0),
+            foreground_color: Color(0),
         }
     }
     pub fn bg(mut self, color: Color) -> Self {
         self.background_color = color;
+        self
+    }
+    pub fn fg(mut self, color: Color) -> Self {
+        self.foreground_color = color;
         self
     }
 }
@@ -104,8 +118,21 @@ pub const fn rgb(r: u8, g: u8, b: u8) -> Color {
 
 //TODO: Is this RGB or BGR I forget?
 #[repr(transparent)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Default)]
 pub struct Color(pub u32);
+
+impl std::fmt::Debug for Color {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Color {{ hex: #{:06X}, rgb: ({}, {}, {}) }}",
+            self.0 & 0xFFFFFF,
+            self.r(),
+            self.g(),
+            self.b(),
+        )
+    }
+}
 
 impl Color {
     #[inline]

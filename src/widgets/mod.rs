@@ -42,7 +42,7 @@ pub trait Widget<'a>: std::fmt::Debug {
         Self: Sized,
         F: FnMut(&mut Self) + 'a,
     {
-        Click::new(self, button, MouseAction::Clicked, handler)
+        Click::new(self.style(), self, button, MouseAction::Clicked, handler)
     }
 
     fn on_press<F>(self, button: MouseButton, handler: F) -> Click<'a, Self>
@@ -50,7 +50,7 @@ pub trait Widget<'a>: std::fmt::Debug {
         Self: Sized,
         F: FnMut(&mut Self) + 'a,
     {
-        Click::new(self, button, MouseAction::Pressed, handler)
+        Click::new(self.style(), self, button, MouseAction::Pressed, handler)
     }
 
     fn on_release<F>(self, button: MouseButton, handler: F) -> Click<'a, Self>
@@ -58,7 +58,7 @@ pub trait Widget<'a>: std::fmt::Debug {
         Self: Sized,
         F: FnMut(&mut Self) + 'a,
     {
-        Click::new(self, button, MouseAction::Released, handler)
+        Click::new(self.style(), self, button, MouseAction::Released, handler)
     }
 
     fn wh(mut self, size: usize) -> Self
@@ -87,7 +87,13 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        StyledWidget::new(self, color)
+        StyledWidget::new(self).bg(color)
+    }
+    fn fg(self, color: Color) -> StyledWidget<Self>
+    where
+        Self: Sized,
+    {
+        StyledWidget::new(self).fg(color)
     }
     fn area_mut(&mut self) -> &mut Rect;
 }

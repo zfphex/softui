@@ -49,13 +49,15 @@ pub fn released(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
 pub struct Click<'a, W> {
     widget: W,
     handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
+    style: Option<Style>,
 }
 
+#[rustfmt::skip] 
 impl<'a, W> Click<'a, W> {
-    pub fn new(widget: W, button: MouseButton, action: MouseAction, handler: impl FnMut(&mut W) + 'a) -> Self {
+    pub fn new(style: Option<Style>, widget: W, button: MouseButton, action: MouseAction, handler: impl FnMut(&mut W) + 'a) -> Self {
         let mut handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)> = Vec::new();
         handlers.push((button, action, Box::new(handler)));
-        Click { widget, handlers }
+        Click { widget, handlers, style}
     }
 
     pub fn on_click(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
@@ -68,7 +70,7 @@ impl<'a, W> Click<'a, W> {
         self
     }
 
-    pub fn on_release(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+    pub fn on_release(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a,) -> Self {
         self.handlers.push((button, MouseAction::Released, Box::new(handler)));
         self
     }
@@ -101,7 +103,10 @@ where
         self.widget.area_mut()
     }
     fn draw(&self, cmds: &mut Vec<Command>, style: Option<Style>) {
-        self.widget.draw(cmds, style)
+        self.widget.draw(cmds, self.style)
+    }
+    fn style(&self) -> Option<Style> {
+        self.widget.style()
     }
     fn handle_event(&mut self, ctx: &mut Context) {
         // First let the wrapped widget handle the event
@@ -236,7 +241,7 @@ impl<'a> Widget<'a> for Group<'a> {
             child.handle_event(ctx);
         }
     }
-    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+    fn draw(&self, commands: &mut Vec<Command>, _: Option<Style>) {
         if let Some(bg_color) = self.bg {
             commands.push(Command {
                 area: self.area,
@@ -291,7 +296,9 @@ impl<'a> Drop for FlexRoot<'a> {
         self.content.handle_event(ctx);
 
         let mut commands = Vec::new();
+        //TODO: FlexRoot has no styling options...
         self.content.draw(&mut commands, None);
+
         for command in commands {
             unsafe { COMMAND_QUEUE.push(command) };
         }
