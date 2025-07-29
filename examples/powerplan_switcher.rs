@@ -26,6 +26,15 @@ fn main() {
 
     set_default_font_size(font_size);
 
+    let current_plan = std::cell::Cell::new(current_plan());
+
+    #[derive(Debug, Clone, Copy)]
+    enum Message {
+        HighPerformance,
+        Balanced,
+        PowerSaver,
+    }
+
     loop {
         //TODO: If the user didn't click in the window, close the program.
         // match wait_for_global_events() {
@@ -46,7 +55,7 @@ fn main() {
         //Yeah this is pretty fast what can I say...?
         //TODO: The system takes a while to register the update.
         //Maybe just draw based on what the user clicks and not what windows does.
-        match current_plan() {
+        match current_plan.get() {
             "High performance" => {
                 ctx.draw_rectangle(hp.x, hp.y, hp.width, hp.height, accent);
             }
@@ -59,37 +68,43 @@ fn main() {
             _ => unreachable!(),
         }
 
-        // if ctx.window.left_mouse.clicked(hp) {
-        //     high_performance();
-        // }
-
-        // if ctx.window.left_mouse.clicked(b) {
-        //     balanced();
-        // }
-
-        // if ctx.window.left_mouse.clicked(p) {
-        //     power_saver();
-        // }
-
-        //This is the code I want.
-        //How would I add the selection highlight?
-        //I need `text().selected(|| {})` and  `text.hover(|| {})` functions
-        // v!(
-        //     text("High performance"),
-        //     text("Balanced"),
-        //     text("Power saver")
-        // ).padding(padding);
+        //TODO: How can I make this example work?
+        // flex!(v!(
+        //     text("High performance").on_click(Left, |_| {
+        //         high_performance();
+        //         current_plan = "High performance";
+        //     }),
+        //     text("Balanced").on_click(Left, |_| {
+        //         balanced();
+        //         current_plan = "Balanced";
+        //     }),
+        //     text("Power saver").on_click(Left, |_| {
+        //         power_saver();
+        //         current_plan = "Power saver"
+        //     }),
+        // )
+        // .gap(gap));
 
         flex!(v!(
-            text("High performance").on_click(Left, |_| println!("test")),
-            text("Balanced"),
-            text("Power saver")
+            text("High performance").on_click(Left, |_| {
+                high_performance();
+                current_plan.set("High performance");
+            }),
+            text("Balanced").on_click(Left, |_| {
+                balanced();
+                current_plan.set("Balanced");
+            }),
+            text("Power saver").on_click(Left, |_| {
+                power_saver();
+                current_plan.set("Power saver");
+            }),
         )
         .gap(gap));
+
         //TODO: Left pad
         // .left_pad(4);
-
-        // let text_pos = Rect::new(0, 0, 236, 20);
+        //TODO: How would I add the selection highlight?
+        //I need `text().selected(|| {})` and  `text.hover(|| {})` functions
 
         ctx.draw_frame();
     }
