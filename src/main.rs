@@ -5,7 +5,11 @@ fn main() {
     let ctx = create_ctx("softui", 800, 600);
 
     let mut click_count = 0;
+
+    #[cfg(feature = "image")]
     let ben = image("img/ben.png");
+
+    #[cfg(feature = "svg")]
     let ferris = svg("img/ferris.svg", 240, 170, 0.2);
 
     loop {
