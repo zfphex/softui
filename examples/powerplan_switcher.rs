@@ -28,13 +28,6 @@ fn main() {
 
     let current_plan = std::cell::Cell::new(current_plan());
 
-    #[derive(Debug, Clone, Copy)]
-    enum Message {
-        HighPerformance,
-        Balanced,
-        PowerSaver,
-    }
-
     loop {
         //TODO: If the user didn't click in the window, close the program.
         // match wait_for_global_events() {
@@ -92,15 +85,15 @@ fn main() {
                 //     .then_some(accent)
                 //     .unwrap_or_default())
                 .on_click(Left, |_| {
-                    high_performance();
+                    std::thread::spawn(|| high_performance());
                     current_plan.set("High performance");
                 }),
             text("Balanced").on_click(Left, |_| {
-                balanced();
+                std::thread::spawn(|| balanced());
                 current_plan.set("Balanced");
             }),
             text("Power saver").on_click(Left, |_| {
-                power_saver();
+                std::thread::spawn(|| power_saver());
                 current_plan.set("Power saver");
             }),
         )
