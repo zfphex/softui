@@ -45,10 +45,6 @@ fn main() {
         let b = hp.y(font_size + gap);
         let p = hp.y(2 * (font_size + gap));
 
-        //Yeah this is pretty fast what can I say...?
-        //TODO: The system takes a while to register the update.
-        //Maybe just draw based on what the user clicks and not what windows does.
-
         match current_plan.get() {
             "High performance" => {
                 ctx.draw_rectangle(hp.x, hp.y, hp.width, hp.height, accent);
