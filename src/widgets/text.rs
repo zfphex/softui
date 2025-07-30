@@ -137,10 +137,24 @@ impl<'a> Widget<'a> for Text<'a> {
         &mut self.area
     }
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-        let color = style.unwrap_or(Style::new().fg(white())).foreground_color;
+        let mut font_color = white();
+
+        if let Some(style) = style {
+            if let Some(style_bg) = style.background_color {
+                commands.push(Command {
+                    area: self.area,
+                    primative: Primative::Ellipse(0, style_bg),
+                });
+            }
+
+            if let Some(style_fg) = style.foreground_color {
+                font_color = style_fg;
+            }
+        }
+
         commands.push(Command {
             area: self.area,
-            primative: Primative::Text(self.text.to_string(), self.font_size, color),
+            primative: Primative::Text(self.text.to_string(), self.font_size, font_color),
         });
     }
 }

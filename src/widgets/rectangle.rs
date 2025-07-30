@@ -33,7 +33,7 @@ impl<'a> Widget<'a> for Rectangle {
         &mut self.area
     }
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-        let bg = style.unwrap_or(Style::new()).background_color;
+        let bg = style.unwrap_or(Style::new()).background_color.unwrap_or(white());
         commands.push(Command {
             area: self.area,
             primative: Primative::Ellipse(self.radius, bg),

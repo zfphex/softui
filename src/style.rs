@@ -16,11 +16,11 @@ impl<W> StyledWidget<W> {
         }
     }
     pub fn bg(mut self, color: Color) -> Self {
-        self.style.background_color = color;
+        self.style.background_color = Some(color);
         self
     }
     pub fn fg(mut self, color: Color) -> Self {
-        self.style.foreground_color = color;
+        self.style.foreground_color = Some(color);
         self
     }
 }
@@ -29,6 +29,34 @@ impl<'a, W> Widget<'a> for StyledWidget<W>
 where
     W: Widget<'a> + Debug,
 {
+    fn gap(mut self, gap: usize) -> Self
+    where
+        Self: Sized,
+    {
+        self.widget = self.widget.gap(gap);
+        self
+    }
+    fn margin(mut self, margin: usize) -> Self
+    where
+        Self: Sized,
+    {
+        self.widget = self.widget.margin(margin);
+        self
+    }
+    fn padding(mut self, padding: usize) -> Self
+    where
+        Self: Sized,
+    {
+        self.widget = self.widget.padding(padding);
+        self
+    }
+    fn direction(mut self, direction: FlexDirection) -> Self
+    where
+        Self: Sized,
+    {
+        self.widget = self.widget.direction(direction);
+        self
+    }
     fn style(&self) -> Option<Style> {
         Some(self.style)
     }
@@ -60,23 +88,23 @@ pub fn style() -> Style {
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Style {
-    pub background_color: Color,
-    pub foreground_color: Color,
+    pub background_color: Option<Color>,
+    pub foreground_color: Option<Color>,
 }
 
 impl Style {
     pub fn new() -> Self {
         Style {
-            background_color: Color(0),
-            foreground_color: Color(0),
+            background_color: None,
+            foreground_color: None,
         }
     }
     pub fn bg(mut self, color: Color) -> Self {
-        self.background_color = color;
+        self.background_color = Some(color);
         self
     }
     pub fn fg(mut self, color: Color) -> Self {
-        self.foreground_color = color;
+        self.foreground_color = Some(color);
         self
     }
 }

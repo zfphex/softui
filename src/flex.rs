@@ -85,6 +85,34 @@ impl<'a, W> Widget<'a> for Click<'a, W>
 where
     W: Widget<'a> + Debug,
 {
+    fn gap(mut self, gap: usize) -> Self
+    where
+        Self: Sized,
+    {
+        self.widget = self.widget.gap(gap);
+        self
+    }
+    fn margin(mut self, margin: usize) -> Self
+    where
+        Self: Sized,
+    {
+        self.widget = self.widget.margin(margin);
+        self
+    }
+    fn padding(mut self, padding: usize) -> Self
+    where
+        Self: Sized,
+    {
+        self.widget = self.widget.padding(padding);
+        self
+    }
+    fn direction(mut self, direction: FlexDirection) -> Self
+    where
+        Self: Sized,
+    {
+        self.widget = self.widget.direction(direction);
+        self
+    }
     fn size(&self) -> (usize, usize) {
         self.widget.size()
     }
@@ -168,22 +196,30 @@ pub struct Group<'a> {
     pub bg: Option<Color>,
 }
 
-impl<'a> Group<'a> {
-    pub fn padding(mut self, value: usize) -> Self {
-        self.padding = value;
-        self
-    }
-    pub fn gap(mut self, value: usize) -> Self {
-        self.gap = value;
-        self
-    }
-    pub fn direction(mut self, value: FlexDirection) -> Self {
-        self.direction = value;
-        self
-    }
-}
+impl<'a> Group<'a> {}
 
 impl<'a> Widget<'a> for Group<'a> {
+    fn gap(mut self, gap: usize) -> Self
+    where
+        Self: Sized,
+    {
+        self.gap = gap;
+        self
+    }
+    fn padding(mut self, padding: usize) -> Self
+    where
+        Self: Sized,
+    {
+        self.padding = padding;
+        self
+    }
+    fn direction(mut self, direction: FlexDirection) -> Self
+    where
+        Self: Sized,
+    {
+        self.direction = direction;
+        self
+    }
     fn size(&self) -> (usize, usize) {
         let mut total_width = 0;
         let mut total_height = 0;
@@ -233,11 +269,11 @@ impl<'a> Widget<'a> for Group<'a> {
             child.handle_event(ctx);
         }
     }
-    fn draw(&self, commands: &mut Vec<Command>, _: Option<Style>) {
-        if let Some(bg_color) = self.bg {
+    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+        if let Some(bg) = self.bg {
             commands.push(Command {
                 area: self.area,
-                primative: Primative::Ellipse(0, bg_color),
+                primative: Primative::Ellipse(0, bg),
             });
         }
 
@@ -252,6 +288,7 @@ pub struct FlexRoot<'a> {
     pub margin: usize,
 }
 
+//TODO: Re-work builder on flex root.
 impl<'a> FlexRoot<'a> {
     pub fn padding(mut self, value: usize) -> Self {
         let content = std::mem::take(&mut self.content);
@@ -288,7 +325,7 @@ impl<'a> Drop for FlexRoot<'a> {
         self.content.handle_event(ctx);
 
         let mut commands = Vec::new();
-        //TODO: FlexRoot has no styling options...
+
         self.content.draw(&mut commands, None);
 
         for command in commands {

@@ -96,62 +96,89 @@ pub trait Widget<'a>: std::fmt::Debug {
         StyledWidget::new(self).fg(color)
     }
     fn area_mut(&mut self) -> &mut Rect;
+
+    //TODO: Not sure if this is good since not all types will implement this.
+    //It helps when chaing clicks or styles so I guess it is what it is.
+    fn gap(self, gap: usize) -> Self
+    where
+        Self: Sized,
+    {
+        unimplemented!()
+    }
+    fn margin(self, margin: usize) -> Self
+    where
+        Self: Sized,
+    {
+        unimplemented!()
+    }
+    fn direction(self, direction: FlexDirection) -> Self
+    where
+        Self: Sized,
+    {
+        unimplemented!()
+    }
+    fn padding(self, padding: usize) -> Self
+    where
+        Self: Sized,
+    {
+        unimplemented!()
+    }
 }
 
-impl<'a, T> Widget<'a> for &'a mut T
-where
-    T: Widget<'a>,
-{
-    fn size(&self) -> (usize, usize) {
-        // `self` here is `&&'a mut T`, so we dereference twice to get to T.
-        (**self).size()
-    }
+// impl<'a, T> Widget<'a> for &'a mut T
+// where
+//     T: Widget<'a>,
+// {
+//     fn size(&self) -> (usize, usize) {
+//         // `self` here is `&&'a mut T`, so we dereference twice to get to T.
+//         (**self).size()
+//     }
 
-    fn layout(&mut self, area: Rect) {
-        // `self` here is `&mut &'a mut T`, so we dereference once to get to &mut T.
-        (*self).layout(area)
-    }
+//     fn layout(&mut self, area: Rect) {
+//         // `self` here is `&mut &'a mut T`, so we dereference once to get to &mut T.
+//         (*self).layout(area)
+//     }
 
-    fn handle_event(&mut self, ctx: &mut Context) {
-        (*self).handle_event(ctx)
-    }
+//     fn handle_event(&mut self, ctx: &mut Context) {
+//         (*self).handle_event(ctx)
+//     }
 
-    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-        (**self).draw(commands, style)
-    }
+//     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+//         (**self).draw(commands, style)
+//     }
 
-    fn area_mut(&mut self) -> &mut Rect {
-        (*self).area_mut()
-    }
-}
+//     fn area_mut(&mut self) -> &mut Rect {
+//         (*self).area_mut()
+//     }
+// }
 
 // Unsafe: This implementation allows passing raw pointers to bypass the borrow checker's
 // static analysis inside a loop. This is only safe if the user guarantees that the
 // pointer remains valid for the entire duration of the frame's processing.
-impl<'a, T> Widget<'a> for *mut T
-where
-    T: Widget<'a>,
-{
-    fn size(&self) -> (usize, usize) {
-        // It is safe to create a shared reference from the raw pointer for reading.
-        unsafe { (*self).as_ref().unwrap().size() }
-    }
+// impl<'a, T> Widget<'a> for *mut T
+// where
+//     T: Widget<'a>,
+// {
+//     fn size(&self) -> (usize, usize) {
+//         // It is safe to create a shared reference from the raw pointer for reading.
+//         unsafe { (*self).as_ref().unwrap().size() }
+//     }
 
-    fn layout(&mut self, area: Rect) {
-        // It is safe to create a mutable reference here because this `&mut self`
-        // guarantees we have exclusive access for this scope.
-        unsafe { (*self).as_mut().unwrap().layout(area) }
-    }
+//     fn layout(&mut self, area: Rect) {
+//         // It is safe to create a mutable reference here because this `&mut self`
+//         // guarantees we have exclusive access for this scope.
+//         unsafe { (*self).as_mut().unwrap().layout(area) }
+//     }
 
-    fn handle_event(&mut self, ctx: &mut Context) {
-        unsafe { (*self).as_mut().unwrap().handle_event(ctx) }
-    }
+//     fn handle_event(&mut self, ctx: &mut Context) {
+//         unsafe { (*self).as_mut().unwrap().handle_event(ctx) }
+//     }
 
-    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-        unsafe { (*self).as_ref().unwrap().draw(commands, style) }
-    }
+//     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+//         unsafe { (*self).as_ref().unwrap().draw(commands, style) }
+//     }
 
-    fn area_mut(&mut self) -> &mut Rect {
-        unsafe { (*self).as_mut().unwrap().area_mut() }
-    }
-}
+//     fn area_mut(&mut self) -> &mut Rect {
+//         unsafe { (*self).as_mut().unwrap().area_mut() }
+//     }
+// }

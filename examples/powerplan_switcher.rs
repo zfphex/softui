@@ -48,6 +48,7 @@ fn main() {
         //Yeah this is pretty fast what can I say...?
         //TODO: The system takes a while to register the update.
         //Maybe just draw based on what the user clicks and not what windows does.
+
         match current_plan.get() {
             "High performance" => {
                 ctx.draw_rectangle(hp.x, hp.y, hp.width, hp.height, accent);
@@ -61,25 +62,14 @@ fn main() {
             _ => unreachable!(),
         }
 
-        //TODO: How can I make this example work?
-        // flex!(v!(
-        //     text("High performance").on_click(Left, |_| {
-        //         high_performance();
-        //         current_plan = "High performance";
-        //     }),
-        //     text("Balanced").on_click(Left, |_| {
-        //         balanced();
-        //         current_plan = "Balanced";
-        //     }),
-        //     text("Power saver").on_click(Left, |_| {
-        //         power_saver();
-        //         current_plan = "Power saver"
-        //     }),
-        // )
-        // .gap(gap));
-
-        flex!(v!(
+        //TODO: I want the flex to fill the viewport 100%
+        //Then I want to fill the text 100% and change the background color.
+        //Currently basic things like this will not work.
+        flex!(
             text("High performance")
+                //TODO: Text padding and margin.
+                .w(p.width)
+                // .bg(accent)
                 //TODO: How to set rectangle border for this bad boy.
                 // .bg((current_plan.get() == "High performance")
                 //     .then_some(accent)
@@ -88,16 +78,21 @@ fn main() {
                     std::thread::spawn(|| high_performance());
                     current_plan.set("High performance");
                 }),
-            text("Balanced").on_click(Left, |_| {
-                std::thread::spawn(|| balanced());
-                current_plan.set("Balanced");
-            }),
-            text("Power saver").on_click(Left, |_| {
-                std::thread::spawn(|| power_saver());
-                current_plan.set("Power saver");
-            }),
+            text("Balanced")
+                .on_click(Left, |_| {
+                    std::thread::spawn(|| balanced());
+                    current_plan.set("Balanced");
+                })
+                .w(p.width),
+            text("Power saver")
+                .on_click(Left, |_| {
+                    std::thread::spawn(|| power_saver());
+                    current_plan.set("Power saver");
+                })
+                .w(p.width)
         )
-        .gap(gap));
+        .direction(FlexDirection::TopBottom)
+        .gap(gap);
 
         //TODO: Left pad
         // .left_pad(4);
