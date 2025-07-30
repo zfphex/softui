@@ -8,14 +8,18 @@ pub enum MouseAction {
     Clicked,
 }
 
-pub fn clicked(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
+pub fn convert_button_to_state(ctx: &mut Context, button: MouseButton) -> MouseButtonState {
     match button {
-        MouseButton::Left => ctx.window.left_mouse.clicked(area),
-        MouseButton::Right => ctx.window.right_mouse.clicked(area),
-        MouseButton::Middle => ctx.window.middle_mouse.clicked(area),
-        MouseButton::Mouse4 => ctx.window.mouse_4.clicked(area),
-        MouseButton::Mouse5 => ctx.window.mouse_5.clicked(area),
+        MouseButton::Left => ctx.window.left_mouse,
+        MouseButton::Right => ctx.window.right_mouse,
+        MouseButton::Middle => ctx.window.middle_mouse,
+        MouseButton::Mouse4 => ctx.window.mouse_4,
+        MouseButton::Mouse5 => ctx.window.mouse_5,
     }
+}
+
+pub fn clicked(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
+    convert_button_to_state(ctx, button).clicked(area)
 }
 
 pub fn pressed(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
@@ -23,13 +27,7 @@ pub fn pressed(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
         return false;
     }
 
-    match button {
-        MouseButton::Left => ctx.window.left_mouse.is_pressed(),
-        MouseButton::Right => ctx.window.right_mouse.is_pressed(),
-        MouseButton::Middle => ctx.window.middle_mouse.is_pressed(),
-        MouseButton::Mouse4 => ctx.window.mouse_4.is_pressed(),
-        MouseButton::Mouse5 => ctx.window.mouse_5.is_pressed(),
-    }
+    convert_button_to_state(ctx, button).is_pressed()
 }
 
 pub fn released(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
@@ -37,13 +35,7 @@ pub fn released(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
         return false;
     }
 
-    match button {
-        MouseButton::Left => ctx.window.left_mouse.is_released(),
-        MouseButton::Right => ctx.window.right_mouse.is_released(),
-        MouseButton::Middle => ctx.window.middle_mouse.is_released(),
-        MouseButton::Mouse4 => ctx.window.mouse_4.is_released(),
-        MouseButton::Mouse5 => ctx.window.mouse_5.is_released(),
-    }
+    convert_button_to_state(ctx, button).is_released()
 }
 
 pub struct Click<'a, W> {
