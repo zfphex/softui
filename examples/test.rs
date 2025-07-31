@@ -10,14 +10,7 @@ fn main() {
         }
 
         {
-            flex!(v!(
-                rect().wh(30),
-                rect().wh(40),
-                rect().wh(50),
-                rect().wh(60),
-                rect().wh(70)
-            )
-            .gap(20));
+            flex!(rect().h(60).w(200).radius(30));
         }
 
         ctx.draw_frame();

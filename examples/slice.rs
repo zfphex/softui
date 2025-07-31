@@ -12,7 +12,14 @@ fn main() {
         }
 
         {
+            //TODO: I could probably implement the widget trait for Cell<T> but 
+            //I don't want users to be forced into wrapping the type when
+            //the compiler is incorrectly assesing the lifetime here.
+
+            // flex!(&mut group );
+
             flex!(&mut group as *mut _);
+
         }
 
         ctx.draw_frame();

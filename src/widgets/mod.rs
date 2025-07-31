@@ -37,7 +37,7 @@ pub trait Widget<'a>: std::fmt::Debug {
         None
     }
 
-    // I don't want to add an associated type to every single widget definition 
+    // I don't want to add an associated type to every single widget definition
     // if it can be avoided.
 
     // #[inline]
@@ -69,6 +69,8 @@ pub trait Widget<'a>: std::fmt::Debug {
         Click::new(self.style(), self, button, MouseAction::Released, handler)
     }
 
+    //TODO: Change sizing methods and area to use UnitRect.
+    //size:  impl Into<Unit>
     fn wh(mut self, size: usize) -> Self
     where
         Self: Sized,
@@ -91,6 +93,7 @@ pub trait Widget<'a>: std::fmt::Debug {
         self.area_mut().height = height;
         self
     }
+
     fn bg(self, color: Color) -> StyledWidget<Self>
     where
         Self: Sized,
@@ -161,7 +164,6 @@ where
         todo!()
     }
 }
-
 
 impl<'a, T> Widget<'a> for &'a mut T
 where

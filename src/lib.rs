@@ -10,7 +10,6 @@ pub mod atomic_float;
 pub mod flex;
 pub use flex::*;
 
-
 pub mod macros;
 pub use macros::*;
 
@@ -410,8 +409,13 @@ impl Context {
         let viewport_width = self.window.width();
         let viewport_height = self.window.area.height;
 
-        if (2 * radius) > (width) {
+        if 2 * radius > width {
             panic!("Diameter {} is larger than the width {}.", radius * 2, width);
+        }
+
+        if 2 * radius > height {
+            panic!("Diameter {} is larger than the height {}.", radius * 2, height);
+
         }
 
         for i in y..y + height {
@@ -430,27 +434,21 @@ impl Context {
             }
         }
 
-        // let color = Color::RED.into();
-
         //Top left
         let (tlx, tly) = (x + radius, y + radius);
         self.draw_arc(tlx, tly, radius, color, Quadrant::TopLeft);
-        // self.draw_circle(tlx, tly, radius, color);
 
         //Top right
         let (trx, tr_y) = ((x + width) - radius, y + radius);
         self.draw_arc(trx, tr_y, radius, color, Quadrant::TopRight);
-        // self.draw_circle(trx, tr_y, radius, color);
 
         //Bottom left
         let (blx, bly) = (x + radius, (y + height) - radius);
         self.draw_arc(blx, bly, radius, color, Quadrant::BottomLeft);
-        // self.draw_circle(blx, bly, radius, color);
 
         //Bottom right
         let (brx, bry) = ((x + width) - radius, (y + height) - radius);
         self.draw_arc(brx, bry, radius, color, Quadrant::BottomRight);
-        // self.draw_circle(brx, bly, radius, color);
     }
 
     pub fn draw_linear_gradient(
