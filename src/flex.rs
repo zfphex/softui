@@ -155,7 +155,7 @@ pub enum FlexDirection {
 #[macro_export]
 macro_rules! flex {
     ($($widget:expr),* $(,)?) => {{
-        FlexRoot { content: group!($($widget),*), margin: 0 }
+        FlexRoot { group: group!($($widget),*), margin: 0 }
     }};
 }
 
@@ -184,6 +184,34 @@ macro_rules! group {
         group
     }};
 }
+
+//TODO: This could probably be generic over all widget types.
+// #[derive(Debug)]
+// pub struct GroupRef<'a> {
+//     group: &'a Group<'a>,
+// }
+
+// impl<'a> Widget<'a> for GroupRef<'a> {
+//     fn size(&self) -> (usize, usize) {
+//         todo!()
+//     }
+
+//     fn layout(&mut self, area: Rect) {
+//         todo!()
+//     }
+
+//     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+//         todo!()
+//     }
+
+//     fn area_mut(&mut self) -> &mut Rect {
+//         todo!()
+//     }
+// }
+
+// pub fn group_ref<'a>(group: &'a Group<'a>) -> GroupRef<'a> {
+//     GroupRef { group }
+// }
 
 #[derive(Debug, Default)]
 pub struct Group<'a> {
@@ -269,6 +297,7 @@ impl<'a> Widget<'a> for Group<'a> {
             child.handle_event(ctx);
         }
     }
+    //TODO: Style is not getting through here.
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         if let Some(bg) = self.bg {
             commands.push(Command {
@@ -284,20 +313,25 @@ impl<'a> Widget<'a> for Group<'a> {
 }
 
 pub struct FlexRoot<'a> {
-    pub content: Group<'a>,
+    //TODO: When someone calls .bg() on Group the type is changed into StyledWidget.
+    //Since FlexRoot is not a widget, the widget is forced back into a group
+    //Flex<Group<StyledWidget<Group>>>
+    //The style is lost somewhere through the propagation chain.
+    //content could probably be swapped for a generic widget.
+    pub group: Group<'a>,
     pub margin: usize,
 }
 
 //TODO: Re-work builder on flex root.
 impl<'a> FlexRoot<'a> {
     pub fn padding(mut self, value: usize) -> Self {
-        let content = std::mem::take(&mut self.content);
-        self.content = content.padding(value);
+        let content = std::mem::take(&mut self.group);
+        self.group = content.padding(value);
         self
     }
     pub fn gap(mut self, value: usize) -> Self {
-        let content = std::mem::take(&mut self.content);
-        self.content = content.gap(value);
+        let content = std::mem::take(&mut self.group);
+        self.group = content.gap(value);
         self
     }
     pub fn margin(mut self, value: usize) -> Self {
@@ -305,12 +339,12 @@ impl<'a> FlexRoot<'a> {
         self
     }
     pub fn direction(mut self, value: FlexDirection) -> Self {
-        let content = std::mem::take(&mut self.content);
-        self.content = content.direction(value);
+        let content = std::mem::take(&mut self.group);
+        self.group = content.direction(value);
         self
     }
     pub fn bg(mut self, color: Color) -> Self {
-        self.content.bg = Some(color);
+        self.group.bg = Some(color);
         self
     }
 }
@@ -321,12 +355,12 @@ impl<'a> Drop for FlexRoot<'a> {
         let (w, h) = (ctx.window.width(), ctx.window.height());
         let total_area = Rect::new(self.margin, self.margin, w, h);
 
-        self.content.layout(total_area);
-        self.content.handle_event(ctx);
+        self.group.layout(total_area);
+        self.group.handle_event(ctx);
 
         let mut commands = Vec::new();
 
-        self.content.draw(&mut commands, None);
+        self.group.draw(&mut commands, None);
 
         for command in commands {
             unsafe { COMMAND_QUEUE.push(command) };
