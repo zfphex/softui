@@ -144,6 +144,30 @@ pub trait Widget<'a>: std::fmt::Debug {
     }
 }
 
+//TODO: Bring back uniform type layout in the macro layout macro. 
+//A collection of widgets does not have a size since it's just a random group of items.
+//
+impl<'a, T> Widget<'a> for Vec<T>
+where
+    T: Widget<'a>,
+{
+    fn size(&self) -> (usize, usize) {
+        todo!()
+    }
+
+    fn layout(&mut self, area: Rect) {
+        todo!()
+    }
+
+    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+        todo!()
+    }
+
+    fn area_mut(&mut self) -> &mut Rect {
+        todo!()
+    }
+}
+
 impl<'a, T> Widget<'a> for &'a mut [T]
 where
     T: Widget<'a>,

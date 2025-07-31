@@ -324,23 +324,23 @@ pub struct FlexRoot<'a> {
 
 //TODO: Re-work builder on flex root.
 impl<'a> FlexRoot<'a> {
-    pub fn padding(mut self, value: usize) -> Self {
+    pub fn padding(mut self, padding: usize) -> Self {
         let content = std::mem::take(&mut self.group);
-        self.group = content.padding(value);
+        self.group = content.padding(padding);
         self
     }
-    pub fn gap(mut self, value: usize) -> Self {
+    pub fn gap(mut self, gap: usize) -> Self {
         let content = std::mem::take(&mut self.group);
-        self.group = content.gap(value);
+        self.group = content.gap(gap);
         self
     }
-    pub fn margin(mut self, value: usize) -> Self {
-        self.margin = value;
+    pub fn margin(mut self, margin: usize) -> Self {
+        self.margin = margin;
         self
     }
-    pub fn direction(mut self, value: FlexDirection) -> Self {
+    pub fn direction(mut self, direction: FlexDirection) -> Self {
         let content = std::mem::take(&mut self.group);
-        self.group = content.direction(value);
+        self.group = content.direction(direction);
         self
     }
     pub fn bg(mut self, color: Color) -> Self {

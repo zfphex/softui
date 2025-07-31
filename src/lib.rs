@@ -10,6 +10,8 @@ pub mod atomic_float;
 pub mod flex;
 pub use flex::*;
 
+pub use flex::FlexDirection::*;
+
 pub mod macros;
 pub use macros::*;
 
@@ -415,7 +417,6 @@ impl Context {
 
         if 2 * radius > height {
             panic!("Diameter {} is larger than the height {}.", radius * 2, height);
-
         }
 
         for i in y..y + height {

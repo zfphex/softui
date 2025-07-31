@@ -9,9 +9,7 @@ fn main() {
             _ => {}
         }
 
-        {
-            flex!(rect().h(60).w(200).radius(30));
-        }
+        {}
 
         ctx.draw_frame();
     }
