@@ -95,6 +95,14 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         StyledWidget::new(self).fg(color)
     }
+
+    fn unit_w(self, unit: Unit) -> Self
+    where
+        Self: Sized,
+    {
+        self
+    }
+
     fn area_mut(&mut self) -> &mut Rect;
 
     //TODO: Not sure if this is good since not all types will implement this.

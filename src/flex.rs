@@ -8,7 +8,7 @@ pub enum MouseAction {
     Clicked,
 }
 
-pub fn convert_button_to_state(ctx: &mut Context, button: MouseButton) -> MouseButtonState {
+pub fn convert_button_to_state(ctx: &mut Context, button: MouseButton) -> MouseState {
     match button {
         MouseButton::Left => ctx.window.left_mouse,
         MouseButton::Right => ctx.window.right_mouse,
@@ -318,7 +318,7 @@ impl<'a> FlexRoot<'a> {
 impl<'a> Drop for FlexRoot<'a> {
     fn drop(&mut self) {
         let ctx = ctx();
-        let (w, h) = self.content.size();
+        let (w, h) = (ctx.window.width(), ctx.window.height());
         let total_area = Rect::new(self.margin, self.margin, w, h);
 
         self.content.layout(total_area);
