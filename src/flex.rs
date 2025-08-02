@@ -8,7 +8,7 @@ pub enum MouseAction {
     Clicked,
 }
 
-pub fn convert_button_to_state(ctx: &mut Context, button: MouseButton) -> MouseState {
+pub fn convert_button_to_state(ctx: &mut Context, button: MouseButton) -> MouseButtonState {
     match button {
         MouseButton::Left => ctx.window.left_mouse,
         MouseButton::Right => ctx.window.right_mouse,

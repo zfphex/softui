@@ -18,11 +18,11 @@ pub mod macos {
         pub minifb: minifb::Window,
         pub area: Rect,
         pub display_scale: f32,
-        pub left_mouse: MouseState,
-        pub right_mouse: MouseState,
-        pub middle_mouse: MouseState,
-        pub mouse_4: MouseState,
-        pub mouse_5: MouseState,
+        pub left_mouse: MouseButtonState,
+        pub right_mouse: MouseButtonState,
+        pub middle_mouse: MouseButtonState,
+        pub mouse_4: MouseButtonState,
+        pub mouse_5: MouseButtonState,
         pub mouse_position: Rect,
         pub event_cache: Vec<Event>,
         pub drawn: bool,
@@ -278,11 +278,11 @@ pub mod macos {
                 area: Rect::new(0, 0, width, height),
                 display_scale: 1.0,
                 mouse_position: Rect::default(),
-                left_mouse: MouseState::new(),
-                right_mouse: MouseState::new(),
-                middle_mouse: MouseState::new(),
-                mouse_4: MouseState::new(),
-                mouse_5: MouseState::new(),
+                left_mouse: MouseButtonState::new(),
+                right_mouse: MouseButtonState::new(),
+                middle_mouse: MouseButtonState::new(),
+                mouse_4: MouseButtonState::new(),
+                mouse_5: MouseButtonState::new(),
                 event_cache: Vec::new(),
                 drawn: true,
             }
@@ -302,14 +302,14 @@ pub mod macos {
     }
 
     #[derive(Default, Debug, Copy, Clone, PartialEq)]
-    pub struct MouseState {
+    pub struct MouseButtonState {
         pub pressed: bool,
         pub released: bool,
         pub inital_position: Rect,
         pub release_position: Option<Rect>,
     }
 
-    impl MouseState {
+    impl MouseButtonState {
         pub const fn new() -> Self {
             Self {
                 pressed: false,
