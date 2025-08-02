@@ -1,3 +1,5 @@
+use crate::*;
+
 pub trait RelativeWidth {
     fn percent(self) -> Unit;
     fn unit(self) -> Unit;
@@ -9,6 +11,16 @@ pub enum Unit {
     Pixel(usize),
     Percentage(usize),
     Em(usize),
+}
+
+impl Unit {
+    pub fn to_pixels(self, parent: usize) -> usize {
+        match self {
+            Unit::Pixel(px) => px,
+            Unit::Percentage(percent) => (parent as f32 * percent as f32 / 100.0).round() as usize,
+            Unit::Em(em) => unimplemented!(),
+        }
+    }
 }
 
 impl RelativeWidth for usize {
@@ -32,6 +44,7 @@ impl From<usize> for Unit {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct UnitRect {
     pub x: Unit,
     pub y: Unit,
@@ -39,6 +52,28 @@ pub struct UnitRect {
     pub height: Unit,
 }
 
-pub fn urect(x: Unit, y: Unit, width: Unit, height: Unit) -> UnitRect {
-    UnitRect { x, y, width, height }
+impl Default for UnitRect {
+    fn default() -> Self {
+        Self {
+            x: Unit::Pixel(0),
+            y: Unit::Pixel(0),
+            width: Unit::Pixel(0),
+            height: Unit::Pixel(0),
+        }
+    }
+}
+
+pub fn urect(x: impl Into<Unit>, y: impl Into<Unit>, width: impl Into<Unit>, height: impl Into<Unit>) -> UnitRect {
+    UnitRect {
+        x: x.into(),
+        y: y.into(),
+        width: width.into(),
+        height: height.into(),
+    }
+}
+
+impl From<Rect> for UnitRect {
+    fn from(val: Rect) -> Self {
+        urect(val.x, val.y, val.width, val.height)
+    }
 }

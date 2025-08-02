@@ -30,6 +30,9 @@ use crate::*;
 
 pub trait Widget<'a>: std::fmt::Debug {
     fn size(&self) -> (usize, usize);
+    fn desired_size(&self) -> (Unit, Unit) {
+        unimplemented!()
+    }
     fn layout(&mut self, area: Rect);
     fn handle_event(&mut self, ctx: &mut Context) {}
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>);
@@ -107,14 +110,20 @@ pub trait Widget<'a>: std::fmt::Debug {
         StyledWidget::new(self).fg(color)
     }
 
-    fn unit_w(self, unit: Unit) -> Self
+    fn wh_new(mut self, unit: impl Into<Unit> + Copy) -> Self
     where
         Self: Sized,
     {
+        self.area_mut_new().height = unit.into();
+        self.area_mut_new().width = unit.into();
         self
     }
 
     fn area_mut(&mut self) -> &mut Rect;
+
+    fn area_mut_new(&mut self) -> &mut UnitRect {
+        todo!()
+    }
 
     //TODO: Not sure if this is good since not all types will implement this.
     //It helps when chaing clicks or styles so I guess it is what it is.

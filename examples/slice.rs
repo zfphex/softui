@@ -6,14 +6,7 @@ fn main() {
 
     let mut group = group!(rect().wh(40), rect().wh(40), rect().wh(40)).gap(32).bg(blue());
 
-    let mut g = Group {
-        children: Vec::new(),
-        padding: 0,
-        gap: 0,
-        direction: FlexDirection::default(),
-        area: Rect::default(),
-        bg: None,
-    };
+    let mut g = Group::default();
 
     for _ in 0..100 {
         g.children.push(Box::new(rect().h(60).w(200).radius(30)));

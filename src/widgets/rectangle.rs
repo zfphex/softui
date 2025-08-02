@@ -3,6 +3,12 @@ use crate::*;
 pub const fn rect() -> Rectangle {
     Rectangle {
         area: Rect::new(0, 0, 10, 10),
+        area_new: UnitRect {
+            x: Unit::Pixel(0),
+            y: Unit::Pixel(0),
+            width: Unit::Pixel(10),
+            height: Unit::Pixel(10),
+        },
         bg: white(),
         radius: 0,
     }
@@ -11,6 +17,7 @@ pub const fn rect() -> Rectangle {
 #[derive(Copy, Clone, Debug)]
 pub struct Rectangle {
     pub area: Rect,
+    pub area_new: UnitRect,
     pub radius: usize,
     bg: Color,
 }
@@ -23,6 +30,12 @@ impl Rectangle {
 }
 
 impl<'a> Widget<'a> for Rectangle {
+    fn area_mut_new(&mut self) -> &mut UnitRect {
+        &mut self.area_new
+    }
+    fn desired_size(&self) -> (Unit, Unit) {
+        (self.area_new.width, self.area_new.height)
+    }
     fn size(&self) -> (usize, usize) {
         (self.area.width, self.area.height)
     }

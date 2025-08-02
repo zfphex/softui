@@ -174,6 +174,7 @@ macro_rules! group {
             gap: 0,
             direction: $crate::FlexDirection::default(),
             area: $crate::Rect::default(),
+            area_new: $crate::UnitRect::default(),
             bg: None,
         };
 
@@ -193,6 +194,7 @@ pub struct Group<'a> {
     pub gap: usize,
     pub direction: FlexDirection,
     pub area: Rect,
+    pub area_new: UnitRect,
     pub bg: Option<Color>,
 }
 
@@ -220,6 +222,15 @@ impl<'a> Widget<'a> for Group<'a> {
         self.direction = direction;
         self
     }
+
+    fn area_mut_new(&mut self) -> &mut UnitRect {
+        &mut self.area_new
+    }
+
+    fn desired_size(&self) -> (Unit, Unit) {
+        (self.area_new.width, self.area_new.height)
+    }
+
     fn size(&self) -> (usize, usize) {
         let mut total_width = 0;
         let mut total_height = 0;
@@ -229,7 +240,8 @@ impl<'a> Widget<'a> for Group<'a> {
                 FlexDirection::LeftRight => {
                     total_width += total_gap;
                     for child in &self.children {
-                        let (w, h) = child.size();
+                        let (w, h) = child.desired_size();
+                        let (w, h) = (w.to_pixels(self.area.width), h.to_pixels(self.area.height));
                         total_width += w;
                         total_height = total_height.max(h);
                     }
@@ -248,11 +260,17 @@ impl<'a> Widget<'a> for Group<'a> {
     }
     fn layout(&mut self, area: Rect) {
         self.area = area;
+        self.area_new = area.into();
+
         let mut current_x = area.x + self.padding;
         let mut current_y = area.y + self.padding;
         let last_index = self.children.len().saturating_sub(1);
         for (i, child) in self.children.iter_mut().enumerate() {
             let (child_w, child_h) = child.size();
+            // let (child_w, child_h) = child.desired_size();
+            // let (child_w, child_h) = (child_w.to_pixels(self.area.width), child_h.to_pixels(self.area.height));
+            // dbg!(child_w, child_h);
+
             let child_area = Rect::new(current_x, current_y, child_w, child_h);
             child.layout(child_area);
             match self.direction {

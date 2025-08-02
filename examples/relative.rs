@@ -1,6 +1,26 @@
+#![allow(unused)]
 use softui::*;
+
 fn main() {
     let ctx = create_ctx("Softui", 800, 600);
+
+    // let mut g = v!(rect().wh_new(25.percent()), rect().wh_new(50.percent()));
+    // g.layout(Rect::new(0, 0, 400, 400));
+    // dbg!(g.children);
+    // for child in &g.children {
+    //     dbg!(child.size());
+    // }
+
+    eprintln!();
+
+    let mut f = flex!(v!(rect().wh_new(50.percent()), rect().wh_new(50.percent())));
+    f.group.layout(Rect::new(0, 0, 400, 400));
+    // dbg!(&f.group.children);
+    for child in &f.group.children {
+        dbg!(child.size());
+    }
+
+    return;
 
     loop {
         match ctx.event() {
@@ -9,7 +29,7 @@ fn main() {
         }
 
         {
-            // flex!(rect().unit_w(40.percent()).bg(white())).bg(red());
+            // flex!(v!(rect().wh_new(40.percent()).bg(white())).wh_new(100));
 
             // let ur = urect(0.unit(), 0.unit(), 40.unit(), 120.unit());
 
