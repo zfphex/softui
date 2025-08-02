@@ -13,6 +13,7 @@ pub enum Unit {
 
 impl RelativeWidth for usize {
     fn percent(self) -> Unit {
+        assert!(self <= 100);
         Unit::Percentage(self)
     }
 

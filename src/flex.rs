@@ -185,34 +185,6 @@ macro_rules! group {
     }};
 }
 
-//TODO: This could probably be generic over all widget types.
-// #[derive(Debug)]
-// pub struct GroupRef<'a> {
-//     group: &'a Group<'a>,
-// }
-
-// impl<'a> Widget<'a> for GroupRef<'a> {
-//     fn size(&self) -> (usize, usize) {
-//         todo!()
-//     }
-
-//     fn layout(&mut self, area: Rect) {
-//         todo!()
-//     }
-
-//     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-//         todo!()
-//     }
-
-//     fn area_mut(&mut self) -> &mut Rect {
-//         todo!()
-//     }
-// }
-
-// pub fn group_ref<'a>(group: &'a Group<'a>) -> GroupRef<'a> {
-//     GroupRef { group }
-// }
-
 #[derive(Debug, Default)]
 pub struct Group<'a> {
     //TODO: Does this need to be Boxed?
