@@ -57,6 +57,15 @@ where
         self.widget = self.widget.direction(direction);
         self
     }
+
+    fn desired_size(&self) -> (Unit, Unit) {
+        self.widget.desired_size()
+    }
+
+    fn area_mut_new(&mut self) -> &mut UnitRect {
+        self.widget.area_mut_new()
+    }
+
     fn style(&self) -> Option<Style> {
         Some(self.style)
     }

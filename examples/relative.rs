@@ -11,16 +11,13 @@ fn main() {
     //     dbg!(child.size());
     // }
 
-    eprintln!();
+    // let mut f = flex!(v!(rect().wh_new(50.percent()), rect().wh_new(50.percent())));
+    // f.group.layout(Rect::new(0, 0, 400, 400));
+    // for child in &f.group.children {
+    //     dbg!(child.size());
+    // }
 
-    let mut f = flex!(v!(rect().wh_new(50.percent()), rect().wh_new(50.percent())));
-    f.group.layout(Rect::new(0, 0, 400, 400));
-    // dbg!(&f.group.children);
-    for child in &f.group.children {
-        dbg!(child.size());
-    }
-
-    return;
+    // return;
 
     loop {
         match ctx.event() {
@@ -29,6 +26,7 @@ fn main() {
         }
 
         {
+            flex!(h!(rect().wh_new(20.percent()).bg(red()), rect().wh_new(80.percent())));
             // flex!(v!(rect().wh_new(40.percent()).bg(white())).wh_new(100));
 
             // let ur = urect(0.unit(), 0.unit(), 40.unit(), 120.unit());

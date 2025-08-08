@@ -30,6 +30,7 @@ use crate::*;
 
 pub trait Widget<'a>: std::fmt::Debug {
     fn size(&self) -> (usize, usize);
+    #[track_caller]
     fn desired_size(&self) -> (Unit, Unit) {
         unimplemented!()
     }

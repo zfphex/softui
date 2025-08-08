@@ -6,11 +6,17 @@ pub trait RelativeWidth {
     fn em(self) -> Unit;
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Unit {
     Pixel(usize),
     Percentage(usize),
     Em(usize),
+}
+
+impl Default for Unit {
+    fn default() -> Self {
+        Self::Percentage(100)
+    }
 }
 
 impl Unit {
@@ -55,10 +61,10 @@ pub struct UnitRect {
 impl Default for UnitRect {
     fn default() -> Self {
         Self {
-            x: Unit::Pixel(0),
-            y: Unit::Pixel(0),
-            width: Unit::Pixel(0),
-            height: Unit::Pixel(0),
+            x: Unit::default(),
+            y: Unit::default(),
+            width: Unit::default(),
+            height: Unit::default(),
         }
     }
 }
