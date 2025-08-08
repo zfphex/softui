@@ -83,6 +83,7 @@ pub trait Widget<'a>: std::fmt::Debug {
         self.area_mut().height = size;
         self
     }
+
     fn w(mut self, width: usize) -> Self
     where
         Self: Sized,
@@ -90,6 +91,7 @@ pub trait Widget<'a>: std::fmt::Debug {
         self.area_mut().width = width;
         self
     }
+
     fn h(mut self, height: usize) -> Self
     where
         Self: Sized,
@@ -104,6 +106,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         StyledWidget::new(self).bg(color)
     }
+
     fn fg(self, color: Color) -> StyledWidget<Self>
     where
         Self: Sized,
@@ -117,6 +120,22 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         self.area_mut_new().height = unit.into();
         self.area_mut_new().width = unit.into();
+        self
+    }
+
+    fn w_new(mut self, unit: impl Into<Unit> + Copy) -> Self
+    where
+        Self: Sized,
+    {
+        self.area_mut_new().width = unit.into();
+        self
+    }
+
+    fn h_new(mut self, unit: impl Into<Unit> + Copy) -> Self
+    where
+        Self: Sized,
+    {
+        self.area_mut_new().height = unit.into();
         self
     }
 
@@ -154,7 +173,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     }
 }
 
-//TODO: Bring back uniform type layout in the macro layout macro. 
+//TODO: Bring back uniform type layout in the macro layout macro.
 //A collection of widgets does not have a size since it's just a random group of items.
 //
 impl<'a, T> Widget<'a> for Vec<T>
