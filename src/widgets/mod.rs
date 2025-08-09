@@ -100,6 +100,22 @@ pub trait Widget<'a>: std::fmt::Debug {
         self
     }
 
+    fn h_fill(mut self) -> Self
+    where
+        Self: Sized,
+    {
+        self.area_mut_new().height = Unit::Percentage(100);
+        self
+    }
+
+    fn w_fill(mut self) -> Self
+    where
+        Self: Sized,
+    {
+        self.area_mut_new().width = Unit::Percentage(100);
+        self
+    }
+
     fn bg(self, color: Color) -> StyledWidget<Self>
     where
         Self: Sized,

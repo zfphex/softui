@@ -180,7 +180,7 @@ macro_rules! group {
             gap: 0,
             direction: $crate::FlexDirection::default(),
             area: $crate::Rect::default(),
-            area_new: $crate::UnitRect::default(),
+            area_new: $crate::urect(0, 0, 100.percent(), 100.percent()),
             bg: None,
         };
 
@@ -192,7 +192,7 @@ macro_rules! group {
     }};
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Group<'a> {
     //TODO: Does this need to be Boxed?
     pub children: Vec<Box<dyn Widget<'a> + 'a>>,
@@ -234,7 +234,19 @@ impl<'a> Widget<'a> for Group<'a> {
     }
 
     fn desired_size(&self) -> (Unit, Unit) {
-        (self.area_new.width, self.area_new.height)
+        let (wu, hu) = (self.area_new.width, self.area_new.height);
+        let width_is_auto = matches!(wu, Unit::Percentage(100));
+        let height_is_auto = matches!(hu, Unit::Percentage(100));
+
+        if width_is_auto || height_is_auto {
+            let (w_px, h_px) = self.size();
+            let w_unit = if width_is_auto { w_px.into() } else { wu };
+            let h_unit = if height_is_auto { h_px.into() } else { hu };
+            (w_unit, h_unit)
+            // (wu, hu)
+        } else {
+            (wu, hu)
+        }
     }
 
     fn size(&self) -> (usize, usize) {
@@ -273,6 +285,7 @@ impl<'a> Widget<'a> for Group<'a> {
         (total_width + self.padding * 2, total_height + self.padding * 2)
     }
 
+    //TODO: I don't think this takes into account the remaing size.
     fn layout(&mut self, area: Rect) {
         self.area = area;
         self.area_new = area.into();
@@ -334,13 +347,11 @@ pub struct FlexRoot<'a> {
 //TODO: Re-work builder on flex root.
 impl<'a> FlexRoot<'a> {
     pub fn padding(mut self, padding: usize) -> Self {
-        let content = std::mem::take(&mut self.group);
-        self.group = content.padding(padding);
+        self.group.padding = padding;
         self
     }
     pub fn gap(mut self, gap: usize) -> Self {
-        let content = std::mem::take(&mut self.group);
-        self.group = content.gap(gap);
+        self.group.gap = gap;
         self
     }
     pub fn margin(mut self, margin: usize) -> Self {
@@ -348,8 +359,7 @@ impl<'a> FlexRoot<'a> {
         self
     }
     pub fn direction(mut self, direction: FlexDirection) -> Self {
-        let content = std::mem::take(&mut self.group);
-        self.group = content.direction(direction);
+        self.group.direction = direction;
         self
     }
     pub fn bg(mut self, color: Color) -> Self {
@@ -372,6 +382,7 @@ impl<'a> Drop for FlexRoot<'a> {
         self.group.draw(&mut commands, None);
 
         for command in commands {
+            mini::info!("{:#?}", command);
             unsafe { COMMAND_QUEUE.push(command) };
         }
     }

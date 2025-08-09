@@ -11,12 +11,7 @@ pub enum Unit {
     Pixel(usize),
     Percentage(usize),
     Em(usize),
-}
-
-impl Default for Unit {
-    fn default() -> Self {
-        Self::Percentage(100)
-    }
+    Auto,
 }
 
 impl Unit {
@@ -25,6 +20,7 @@ impl Unit {
             Unit::Pixel(px) => px,
             Unit::Percentage(percent) => (parent as f32 * percent as f32 / 100.0).round() as usize,
             Unit::Em(em) => unimplemented!(),
+            Unit::Auto => unimplemented!(),
         }
     }
 }
@@ -56,17 +52,6 @@ pub struct UnitRect {
     pub y: Unit,
     pub width: Unit,
     pub height: Unit,
-}
-
-impl Default for UnitRect {
-    fn default() -> Self {
-        Self {
-            x: Unit::default(),
-            y: Unit::default(),
-            width: Unit::default(),
-            height: Unit::default(),
-        }
-    }
 }
 
 pub fn urect(x: impl Into<Unit>, y: impl Into<Unit>, width: impl Into<Unit>, height: impl Into<Unit>) -> UnitRect {

@@ -11,17 +11,25 @@ fn main() {
         }
 
         {
-            flex!(h!(
-                rect().w_new(40.percent()).h_new(200).bg(green()),
-                rect().w_new(20.percent()).h_new(200),
-                rect().w_new(40.percent()).h_new(200).bg(red())
-            ));
+            let f = flex!(
+                h!(
+                    rect().w_new(40.percent()).h_new(200),
+                    rect().w_new(20.percent()).h_new(200),
+                    rect().w_new(40.percent()).h_new(200)
+                ),
+                rect().wh_new(200)
+                // v!(rect().w_new(200).h_new(200).bg(blue()), rect().wh_new(200).bg(red())),
+            );
 
-            // let ur = urect(0.unit(), 0.unit(), 40.unit(), 120.unit());
+            #[cfg(feature = "info")]
+            dbg!(&f.group);
 
-            // ctx.draw_rectangle(0, y, width, height, color);
+            // flex!(h!(rect().wh_new(200).bg(red())), rect().wh_new(200).bg(blue()),).direction(TopBottom);
         }
 
         ctx.draw_frame();
+
+        #[cfg(feature = "info")]
+        return;
     }
 }
