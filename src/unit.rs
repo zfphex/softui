@@ -54,6 +54,12 @@ pub struct UnitRect {
     pub height: Unit,
 }
 
+impl Default for UnitRect {
+    fn default() -> Self {
+        urect(0, 0, 100.percent(), 100.percent())
+    }
+}
+
 pub fn urect(x: impl Into<Unit>, y: impl Into<Unit>, width: impl Into<Unit>, height: impl Into<Unit>) -> UnitRect {
     UnitRect {
         x: x.into(),

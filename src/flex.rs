@@ -180,7 +180,7 @@ macro_rules! group {
             gap: 0,
             direction: $crate::FlexDirection::default(),
             area: $crate::Rect::default(),
-            area_new: $crate::urect(0, 0, 100.percent(), 100.percent()),
+            area_new: $crate::UnitRect::default(),
             bg: None,
         };
 
@@ -192,7 +192,7 @@ macro_rules! group {
     }};
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Group<'a> {
     //TODO: Does this need to be Boxed?
     pub children: Vec<Box<dyn Widget<'a> + 'a>>,
