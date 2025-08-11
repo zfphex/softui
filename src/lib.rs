@@ -596,6 +596,35 @@ impl Context {
         }
     }
 
+    pub fn draw_triangle(&mut self, ax: usize, ay: usize, bx: usize, by: usize, cx: usize, cy: usize, color: Color) {
+        #[inline]
+        fn signed_triangle_area(ax: f32, ay: f32, bx: f32, by: f32, cx: f32, cy: f32) -> f32 {
+            0.5 * ((by - ay) * (bx + ax) + (cy - by) * (cx + bx) + (ay - cy) * (ax + cx))
+        }
+
+        let bbminx = ax.min(bx).min(cx);
+        let bbminy = ay.min(by).min(cy);
+        let bbmaxx = ax.max(bx).max(cx);
+        let bbmaxy = ay.max(by).max(cy);
+
+        let (ax, ay, bx, by, cx, cy) = (ax as f32, ay as f32, bx as f32, by as f32, cx as f32, cy as f32);
+
+        let total_area = signed_triangle_area(ax, ay, bx, by, cx, cy);
+
+        for x in bbminx..=bbmaxx {
+            for y in bbminy..=bbmaxy {
+                let (xf, yf) = (x as f32, y as f32);
+                let alpha = signed_triangle_area(xf, yf, bx, by, cx, cy) / total_area;
+                let beta = signed_triangle_area(xf, yf, cx, cy, ax, ay) / total_area;
+                let gamma = signed_triangle_area(xf, yf, ax, ay, bx, by) / total_area;
+                if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
+                    continue;
+                }
+                self.try_draw_pixel(x, y, color);
+            }
+        }
+    }
+
     //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
     //or maybe the buffer should just include all the text related code and the metrics should be static.
 
