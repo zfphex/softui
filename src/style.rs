@@ -62,10 +62,6 @@ where
         self.widget.desired_size()
     }
 
-    fn area_mut_new(&mut self) -> &mut UnitRect {
-        self.widget.area_mut_new()
-    }
-
     fn style(&self) -> Option<Style> {
         Some(self.style)
     }
@@ -78,7 +74,7 @@ where
         self.widget.layout(area);
     }
 
-    fn area_mut(&mut self) -> &mut Rect {
+    fn area_mut(&mut self) -> &mut UnitRect {
         self.widget.area_mut()
     }
 

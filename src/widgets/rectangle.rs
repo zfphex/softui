@@ -2,8 +2,7 @@ use crate::*;
 
 pub const fn rect() -> Rectangle {
     Rectangle {
-        area: Rect::new(0, 0, 10, 10),
-        area_new: UnitRect {
+        area: UnitRect {
             x: Unit::Pixel(0),
             y: Unit::Pixel(0),
             width: Unit::Pixel(10),
@@ -16,8 +15,7 @@ pub const fn rect() -> Rectangle {
 
 #[derive(Copy, Clone, Debug)]
 pub struct Rectangle {
-    pub area: Rect,
-    pub area_new: UnitRect,
+    pub area: UnitRect,
     pub radius: usize,
     bg: Color,
 }
@@ -30,35 +28,35 @@ impl Rectangle {
 }
 
 impl<'a> Widget<'a> for Rectangle {
-    fn area_mut_new(&mut self) -> &mut UnitRect {
-        &mut self.area_new
+    fn area_mut(&mut self) -> &mut UnitRect {
+        &mut self.area
     }
     fn desired_size(&self) -> (Unit, Unit) {
-        (self.area_new.width, self.area_new.height)
+        (self.area.width, self.area.height)
     }
     fn size_new(&self, parent: Rect) -> Size {
         Size {
-            width: self.area_new.width,
-            height: self.area_new.height,
+            width: self.area.width,
+            height: self.area.height,
             remaining_widgets: None,
         }
     }
     fn size(&self) -> (usize, usize) {
-        (self.area.width, self.area.height)
+        todo!()
+        // (self.area.width, self.area.height)
     }
     fn layout_new(&mut self, current_size: Size, parent: Rect) {
-        self.area = parent;
+        // self.area = parent;
+        self.area = parent.into();
     }
     fn layout(&mut self, area: Rect) {
-        self.area = area;
-    }
-    fn area_mut(&mut self) -> &mut Rect {
-        &mut self.area
+        todo!()
+        // self.area = area;
     }
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         let bg = style.unwrap_or(Style::new()).background_color.unwrap_or(white());
         commands.push(Command {
-            area: self.area,
+            area: self.area.into_rect(),
             primative: Primative::Ellipse(self.radius, bg),
         });
     }

@@ -59,12 +59,6 @@ fn main() {
     // group.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
 
     // Works just fine.
-    //Rect(0, 0, 300, 200)
-    //Rect(0, 0, 200, 200)
-    //Rect(0, 0, 300, 200)
-    // group.children.push(Box::new(rect().h_fill().w_fill()));
-    // group.children.push(Box::new(rect().wh_new(200)));
-    // group.children.push(Box::new(rect().h_fill().w_fill()));
 
 
     dbg!(&group.children);

@@ -47,9 +47,6 @@ impl<'a> Widget<'a> for SvgRef<'a> {
     fn layout(&mut self, area: Rect) {
         self.area = area;
     }
-    fn area_mut(&mut self) -> &mut Rect {
-        &mut self.area
-    }
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         //TODO: Just assume the svg exists for now.
         let pixmap = unsafe { std::mem::transmute::<&'a Pixmap, &'static Pixmap>(self.pixmap) };

@@ -88,38 +88,12 @@ pub trait Widget<'a>: std::fmt::Debug {
         Click::new(self.style(), self, button, MouseAction::Released, handler)
     }
 
-    //TODO: Change sizing methods and area to use UnitRect.
-    //size:  impl Into<Unit>
-    fn wh(mut self, size: usize) -> Self
-    where
-        Self: Sized,
-    {
-        self.area_mut().width = size;
-        self.area_mut().height = size;
-        self
-    }
-
-    fn w(mut self, width: usize) -> Self
-    where
-        Self: Sized,
-    {
-        self.area_mut().width = width;
-        self
-    }
-
-    fn h(mut self, height: usize) -> Self
-    where
-        Self: Sized,
-    {
-        self.area_mut().height = height;
-        self
-    }
 
     fn h_fill(mut self) -> Self
     where
         Self: Sized,
     {
-        self.area_mut_new().height = Unit::Auto;
+        self.area_mut().height = Unit::Auto;
         self
     }
 
@@ -127,7 +101,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut_new().width = Unit::Auto;
+        self.area_mut().width = Unit::Auto;
         self
     }
 
@@ -145,34 +119,49 @@ pub trait Widget<'a>: std::fmt::Debug {
         StyledWidget::new(self).fg(color)
     }
 
-    fn wh_new(mut self, unit: impl Into<Unit> + Copy) -> Self
+    fn wh(mut self, unit: impl Into<Unit> + Copy) -> Self
     where
         Self: Sized,
     {
-        self.area_mut_new().height = unit.into();
-        self.area_mut_new().width = unit.into();
+        self.area_mut().height = unit.into();
+        self.area_mut().width = unit.into();
         self
     }
 
-    fn w_new(mut self, unit: impl Into<Unit> + Copy) -> Self
+    fn x(mut self, unit: impl Into<Unit> + Copy) -> Self
     where
         Self: Sized,
     {
-        self.area_mut_new().width = unit.into();
+        self.area_mut().x = unit.into();
         self
     }
 
-    fn h_new(mut self, unit: impl Into<Unit> + Copy) -> Self
+    fn y(mut self, unit: impl Into<Unit> + Copy) -> Self
     where
         Self: Sized,
     {
-        self.area_mut_new().height = unit.into();
+        self.area_mut().y = unit.into();
         self
     }
 
-    fn area_mut(&mut self) -> &mut Rect;
+    fn w(mut self, unit: impl Into<Unit> + Copy) -> Self
+    where
+        Self: Sized,
+    {
+        self.area_mut().width = unit.into();
+        self
+    }
 
-    fn area_mut_new(&mut self) -> &mut UnitRect {
+    fn h(mut self, unit: impl Into<Unit> + Copy) -> Self
+    where
+        Self: Sized,
+    {
+        self.area_mut().height = unit.into();
+        self
+    }
+
+
+    fn area_mut(&mut self) -> &mut UnitRect {
         todo!()
     }
 
@@ -201,124 +190,5 @@ pub trait Widget<'a>: std::fmt::Debug {
         Self: Sized,
     {
         unimplemented!()
-    }
-}
-
-//TODO: Bring back uniform type layout in the macro layout macro.
-//A collection of widgets does not have a size since it's just a random group of items.
-//
-impl<'a, T> Widget<'a> for Vec<T>
-where
-    T: Widget<'a>,
-{
-    fn size(&self) -> (usize, usize) {
-        todo!()
-    }
-
-    fn layout(&mut self, area: Rect) {
-        todo!()
-    }
-
-    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-        todo!()
-    }
-
-    fn area_mut(&mut self) -> &mut Rect {
-        todo!()
-    }
-
-    fn desired_size(&self) -> (Unit, Unit) {
-        todo!()
-    }
-}
-
-impl<'a, T> Widget<'a> for &'a mut [T]
-where
-    T: Widget<'a>,
-{
-    fn size(&self) -> (usize, usize) {
-        todo!()
-    }
-
-    fn layout(&mut self, area: Rect) {
-        todo!()
-    }
-
-    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-        todo!()
-    }
-
-    fn area_mut(&mut self) -> &mut Rect {
-        todo!()
-    }
-
-    fn desired_size(&self) -> (Unit, Unit) {
-        todo!()
-    }
-}
-
-impl<'a, T> Widget<'a> for &'a mut T
-where
-    T: Widget<'a>,
-{
-    fn size(&self) -> (usize, usize) {
-        // `self` here is `&&'a mut T`, so we dereference twice to get to T.
-        (**self).size()
-    }
-
-    fn layout(&mut self, area: Rect) {
-        // `self` here is `&mut &'a mut T`, so we dereference once to get to &mut T.
-        (*self).layout(area)
-    }
-
-    fn handle_event(&mut self, ctx: &mut Context) {
-        (*self).handle_event(ctx)
-    }
-
-    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-        (**self).draw(commands, style)
-    }
-
-    fn area_mut(&mut self) -> &mut Rect {
-        (*self).area_mut()
-    }
-
-    fn desired_size(&self) -> (Unit, Unit) {
-        todo!()
-    }
-}
-
-// Unsafe: This implementation allows passing raw pointers to bypass the borrow checker's
-// static analysis inside a loop. This is only safe if the user guarantees that the
-// pointer remains valid for the entire duration of the frame's processing.
-impl<'a, T> Widget<'a> for *mut T
-where
-    T: Widget<'a>,
-{
-    fn size(&self) -> (usize, usize) {
-        // It is safe to create a shared reference from the raw pointer for reading.
-        unsafe { (*self).as_ref().unwrap().size() }
-    }
-
-    fn layout(&mut self, area: Rect) {
-        // It is safe to create a mutable reference here because this `&mut self`
-        // guarantees we have exclusive access for this scope.
-        unsafe { (*self).as_mut().unwrap().layout(area) }
-    }
-
-    fn handle_event(&mut self, ctx: &mut Context) {
-        unsafe { (*self).as_mut().unwrap().handle_event(ctx) }
-    }
-
-    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-        unsafe { (*self).as_ref().unwrap().draw(commands, style) }
-    }
-
-    fn area_mut(&mut self) -> &mut Rect {
-        unsafe { (*self).as_mut().unwrap().area_mut() }
-    }
-
-    fn desired_size(&self) -> (Unit, Unit) {
-        todo!()
     }
 }

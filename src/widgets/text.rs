@@ -133,9 +133,7 @@ impl<'a> Widget<'a> for Text<'a> {
     fn layout(&mut self, area: Rect) {
         self.area = area;
     }
-    fn area_mut(&mut self) -> &mut Rect {
-        &mut self.area
-    }
+  
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         let mut font_color = white();
 

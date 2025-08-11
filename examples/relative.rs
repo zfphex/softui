@@ -13,11 +13,11 @@ fn main() {
         {
             let f = flex!(
                 h!(
-                    rect().w_new(40.percent()).h_new(200),
-                    rect().w_new(20.percent()).h_new(200),
-                    rect().w_new(40.percent()).h_new(200)
+                    rect().w(40.percent()).h(200),
+                    rect().w(20.percent()).h(200),
+                    rect().w(40.percent()).h(200)
                 ),
-                rect().wh_new(200)
+                rect().wh(200)
                 // v!(rect().w_new(200).h_new(200).bg(blue()), rect().wh_new(200).bg(red())),
             );
 

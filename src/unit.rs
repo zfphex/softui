@@ -1,5 +1,6 @@
 use crate::*;
 
+#[derive(Debug, PartialEq)]
 pub struct Size {
     pub width: Unit,
     pub height: Unit,
@@ -18,6 +19,12 @@ pub enum Unit {
     Percentage(usize),
     Em(usize),
     Auto,
+}
+
+impl From<Rect> for UnitRect {
+    fn from(area: Rect) -> Self {
+        urect(area.x, area.y, area.width, area.height)
+    }
 }
 
 impl Unit {
@@ -53,12 +60,38 @@ impl From<usize> for Unit {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct UnitRect {
     pub x: Unit,
     pub y: Unit,
     pub width: Unit,
     pub height: Unit,
+}
+
+impl UnitRect {
+    pub fn into_rect(self) -> Rect {
+        let x = match self.x {
+            Unit::Pixel(px) => px,
+            _ => unreachable!(),
+        };
+
+        let y = match self.y {
+            Unit::Pixel(px) => px,
+            _ => unreachable!(),
+        };
+
+        let width = match self.width {
+            Unit::Pixel(px) => px,
+            _ => unreachable!(),
+        };
+
+        let height = match self.height {
+            Unit::Pixel(px) => px,
+            _ => unreachable!(),
+        };
+
+        Rect::new(x, y, width, height)
+    }
 }
 
 impl Default for UnitRect {
@@ -73,11 +106,5 @@ pub fn urect(x: impl Into<Unit>, y: impl Into<Unit>, width: impl Into<Unit>, hei
         y: y.into(),
         width: width.into(),
         height: height.into(),
-    }
-}
-
-impl From<Rect> for UnitRect {
-    fn from(val: Rect) -> Self {
-        urect(val.x, val.y, val.width, val.height)
     }
 }
