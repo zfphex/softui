@@ -135,4 +135,8 @@ impl<'a> Widget<'a> for ImageRef<'a> {
             primative: Primative::ImageUnsafe(bitmap, self.format),
         });
     }
+    
+    fn desired_size(&self) -> (Unit, Unit) {
+        todo!()
+    }
 }

@@ -58,4 +58,8 @@ impl<'a> Widget<'a> for SvgRef<'a> {
             primative: Primative::SVGUnsafe(pixmap),
         });
     }
+    
+    fn desired_size(&self) -> (Unit, Unit) {
+        todo!()
+    }
 }

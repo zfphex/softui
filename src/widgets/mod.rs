@@ -30,15 +30,21 @@ use crate::*;
 
 pub trait Widget<'a>: std::fmt::Debug {
     fn size(&self) -> (usize, usize);
-    #[track_caller]
-    fn desired_size(&self) -> (Unit, Unit) {
-        unimplemented!()
-    }
+
+    // #[track_caller]
+    // fn desired_size(&self) -> (Unit, Unit) {
+    //     unimplemented!()
+    // }
+    fn desired_size(&self) -> (Unit, Unit);
+
     fn layout(&mut self, area: Rect);
     fn handle_event(&mut self, ctx: &mut Context) {}
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>);
     fn style(&self) -> Option<Style> {
         None
+    }
+    fn name(&self) -> &str {
+        std::any::type_name::<Self>()
     }
 
     // I don't want to add an associated type to every single widget definition
@@ -104,7 +110,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut_new().height = Unit::Percentage(100);
+        self.area_mut_new().height = Unit::Auto;
         self
     }
 
@@ -112,7 +118,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut_new().width = Unit::Percentage(100);
+        self.area_mut_new().width = Unit::Auto;
         self
     }
 
@@ -211,6 +217,10 @@ where
     fn area_mut(&mut self) -> &mut Rect {
         todo!()
     }
+    
+    fn desired_size(&self) -> (Unit, Unit) {
+        todo!()
+    }
 }
 
 impl<'a, T> Widget<'a> for &'a mut [T]
@@ -230,6 +240,10 @@ where
     }
 
     fn area_mut(&mut self) -> &mut Rect {
+        todo!()
+    }
+    
+    fn desired_size(&self) -> (Unit, Unit) {
         todo!()
     }
 }
@@ -258,6 +272,10 @@ where
 
     fn area_mut(&mut self) -> &mut Rect {
         (*self).area_mut()
+    }
+    
+    fn desired_size(&self) -> (Unit, Unit) {
+        todo!()
     }
 }
 
@@ -289,5 +307,9 @@ where
 
     fn area_mut(&mut self) -> &mut Rect {
         unsafe { (*self).as_mut().unwrap().area_mut() }
+    }
+    
+    fn desired_size(&self) -> (Unit, Unit) {
+        todo!()
     }
 }

@@ -204,7 +204,19 @@ pub struct Group<'a> {
     pub bg: Option<Color>,
 }
 
-impl<'a> Group<'a> {}
+impl<'a> Group<'a> {
+    pub fn new() -> Self {
+        Group {
+            children: Vec::new(),
+            padding: 0,
+            gap: 0,
+            direction: FlexDirection::default(),
+            area: Rect::default(),
+            area_new: UnitRect::default(),
+            bg: None,
+        }
+    }
+}
 
 impl<'a> Widget<'a> for Group<'a> {
     fn gap(mut self, gap: usize) -> Self
@@ -234,19 +246,61 @@ impl<'a> Widget<'a> for Group<'a> {
     }
 
     fn desired_size(&self) -> (Unit, Unit) {
-        let (wu, hu) = (self.area_new.width, self.area_new.height);
-        let width_is_auto = matches!(wu, Unit::Percentage(100));
-        let height_is_auto = matches!(hu, Unit::Percentage(100));
+        // (self.area_new.width, self.area_new.height)
+        let mut total_width = 0;
+        let mut total_height = 0;
 
-        if width_is_auto || height_is_auto {
-            let (w_px, h_px) = self.size();
-            let w_unit = if width_is_auto { w_px.into() } else { wu };
-            let h_unit = if height_is_auto { h_px.into() } else { hu };
-            (w_unit, h_unit)
-            // (wu, hu)
-        } else {
-            (wu, hu)
+        if !self.children.is_empty() {
+            let total_gap = self.gap * (self.children.len() - 1);
+
+            let content_w = match self.area_new.width {
+                Unit::Pixel(px) => px.saturating_sub(self.padding * 2),
+                _ => todo!("Assume fixed size for now"),
+            };
+            let content_h = match self.area_new.height {
+                Unit::Pixel(px) => px.saturating_sub(self.padding * 2),
+                _ => todo!("Assume fixed size for now"),
+            };
+
+            match self.direction {
+                FlexDirection::LeftRight => {
+                    total_width += total_gap;
+                    for child in &self.children {
+                        // let (wu, hu) = child.desired_size();
+                        // let w = wu.to_pixels(content_w);
+                        // let h = hu.to_pixels(content_h);
+                        // total_width += w;
+                        // total_height = total_height.max(h);
+                        todo!();
+                    }
+                }
+                FlexDirection::TopBottom => {
+                    total_height += total_gap;
+                    for child in &self.children {
+                        let (wu, hu) = child.desired_size();
+                        // let w = wu.to_pixels(content_w);
+                        // let h = hu.to_pixels(content_h);
+
+                        let w = match wu {
+                            Unit::Auto => 0,
+                            _ => wu.to_pixels(content_w),
+                        };
+                        let h = match hu {
+                            Unit::Auto => 0,
+                            _ => hu.to_pixels(content_h),
+                        };
+                        total_width = total_width.max(w);
+                        total_height += h;
+                    }
+                }
+            }
         }
+
+        // (todo!(), todo!())
+        (
+            Unit::Pixel(total_width + self.padding * 2),
+            Unit::Pixel(total_height + self.padding * 2),
+        )
     }
 
     fn size(&self) -> (usize, usize) {
@@ -300,8 +354,18 @@ impl<'a> Widget<'a> for Group<'a> {
         for (i, child) in self.children.iter_mut().enumerate() {
             // Resolve the child's desired Unit size against the parent's content box.
             let (wu, hu) = child.desired_size();
-            let child_w = wu.to_pixels(content_w);
-            let child_h = hu.to_pixels(content_h);
+            dbg!(child.name());
+            dbg!(child.desired_size());
+
+            //If a child needs to fill the remaing space, the space is not calculated yet
+            let child_w = match wu {
+                Unit::Auto => 0,
+                _ => wu.to_pixels(content_w),
+            };
+            let child_h = match hu {
+                Unit::Auto => 0,
+                _ => hu.to_pixels(content_h),
+            };
 
             child.layout(Rect::new(current_x, current_y, child_w, child_h));
 

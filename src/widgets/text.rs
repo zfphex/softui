@@ -157,6 +157,10 @@ impl<'a> Widget<'a> for Text<'a> {
             primative: Primative::Text(self.text.to_string(), self.font_size, font_color),
         });
     }
+    
+    fn desired_size(&self) -> (Unit, Unit) {
+        todo!()
+    }
 }
 
 pub struct Atlas {

@@ -15,6 +15,7 @@ pub enum Unit {
 }
 
 impl Unit {
+    #[track_caller]
     pub fn to_pixels(self, parent: usize) -> usize {
         match self {
             Unit::Pixel(px) => px,
