@@ -245,10 +245,49 @@ impl<'a> Widget<'a> for Group<'a> {
         &mut self.area_new
     }
 
-    fn desired_size(&self) -> (Unit, Unit) {
+    fn layout_new(&mut self, current_size: Size, parent: Rect) {
+        self.area_new = parent.into();
+
+        let content_w = parent.width.saturating_sub(self.padding * 2);
+        let content_h = parent.height.saturating_sub(self.padding * 2);
+
+        let mut current_x = parent.x + self.padding;
+        let mut current_y = parent.y + self.padding;
+
+        let remaining_width = parent.width - current_size.width.to_pixels(content_w);
+        let remaining_height = parent.height - current_size.height.to_pixels(content_h);
+        let remaining_widgets = current_size.remaining_widgets.unwrap_or(1);
+
+        let last_index = self.children.len().saturating_sub(1);
+
+        for (i, child) in self.children.iter_mut().enumerate() {
+            // Resolve the child's desired Unit size against the parent's content box.
+            let size = child.size_new();
+
+            let child_w = match size.width {
+                Unit::Auto => remaining_width / remaining_widgets,
+                _ => size.width.to_pixels(content_w),
+            };
+
+            let child_h = match size.height {
+                Unit::Auto => remaining_height / remaining_widgets,
+                _ => size.height.to_pixels(content_h),
+            };
+
+            child.layout(Rect::new(current_x, current_y, child_w, child_h));
+
+            match self.direction {
+                FlexDirection::LeftRight => current_x += child_w + if i != last_index { self.gap } else { 0 },
+                FlexDirection::TopBottom => current_y += child_h + if i != last_index { self.gap } else { 0 },
+            }
+        }
+    }
+
+    fn size_new(&self) -> Size {
         // (self.area_new.width, self.area_new.height)
         let mut total_width = 0;
         let mut total_height = 0;
+        let mut remaining_widgets = 0;
 
         if !self.children.is_empty() {
             let total_gap = self.gap * (self.children.len() - 1);
@@ -281,6 +320,10 @@ impl<'a> Widget<'a> for Group<'a> {
                         // let w = wu.to_pixels(content_w);
                         // let h = hu.to_pixels(content_h);
 
+                        if wu == Unit::Auto || hu == Unit::Auto {
+                            remaining_widgets += 1;
+                        }
+
                         let w = match wu {
                             Unit::Auto => 0,
                             _ => wu.to_pixels(content_w),
@@ -296,11 +339,11 @@ impl<'a> Widget<'a> for Group<'a> {
             }
         }
 
-        // (todo!(), todo!())
-        (
-            Unit::Pixel(total_width + self.padding * 2),
-            Unit::Pixel(total_height + self.padding * 2),
-        )
+        Size {
+            width: Unit::Pixel(total_width + self.padding * 2),
+            height: Unit::Pixel(total_height + self.padding * 2),
+            remaining_widgets: Some(remaining_widgets),
+        }
     }
 
     fn size(&self) -> (usize, usize) {
@@ -346,6 +389,7 @@ impl<'a> Widget<'a> for Group<'a> {
 
         let content_w = area.width.saturating_sub(self.padding * 2);
         let content_h = area.height.saturating_sub(self.padding * 2);
+        dbg!(content_w, content_h);
 
         let mut current_x = area.x + self.padding;
         let mut current_y = area.y + self.padding;
@@ -353,7 +397,9 @@ impl<'a> Widget<'a> for Group<'a> {
 
         for (i, child) in self.children.iter_mut().enumerate() {
             // Resolve the child's desired Unit size against the parent's content box.
-            let (wu, hu) = child.desired_size();
+            // let (wu, hu) = child.size_new();
+            let (wu, hu) = todo!();
+
             dbg!(child.name());
             dbg!(child.desired_size());
 
@@ -395,6 +441,10 @@ impl<'a> Widget<'a> for Group<'a> {
         for child in &self.children {
             child.draw(commands, child.style());
         }
+    }
+
+    fn desired_size(&self) -> (Unit, Unit) {
+        unimplemented!()
     }
 }
 

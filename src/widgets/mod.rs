@@ -37,6 +37,15 @@ pub trait Widget<'a>: std::fmt::Debug {
     // }
     fn desired_size(&self) -> (Unit, Unit);
 
+    //TODO: Move into struct Size
+    fn size_new(&self) -> Size{
+        unimplemented!()
+    }
+
+    fn layout_new(&mut self, current_size: Size, parent: Rect) {
+        unimplemented!()
+    }
+
     fn layout(&mut self, area: Rect);
     fn handle_event(&mut self, ctx: &mut Context) {}
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>);
@@ -217,7 +226,7 @@ where
     fn area_mut(&mut self) -> &mut Rect {
         todo!()
     }
-    
+
     fn desired_size(&self) -> (Unit, Unit) {
         todo!()
     }
@@ -242,7 +251,7 @@ where
     fn area_mut(&mut self) -> &mut Rect {
         todo!()
     }
-    
+
     fn desired_size(&self) -> (Unit, Unit) {
         todo!()
     }
@@ -273,7 +282,7 @@ where
     fn area_mut(&mut self) -> &mut Rect {
         (*self).area_mut()
     }
-    
+
     fn desired_size(&self) -> (Unit, Unit) {
         todo!()
     }
@@ -308,7 +317,7 @@ where
     fn area_mut(&mut self) -> &mut Rect {
         unsafe { (*self).as_mut().unwrap().area_mut() }
     }
-    
+
     fn desired_size(&self) -> (Unit, Unit) {
         todo!()
     }

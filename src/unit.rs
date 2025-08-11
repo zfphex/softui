@@ -1,5 +1,11 @@
 use crate::*;
 
+pub struct Size {
+    pub width: Unit,
+    pub height: Unit,
+    pub remaining_widgets: Option<usize>,
+}
+
 pub trait RelativeWidth {
     fn percent(self) -> Unit;
     fn unit(self) -> Unit;

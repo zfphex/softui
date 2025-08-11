@@ -13,7 +13,7 @@ use softui::*;
 //In the first pass the size is calculated as (200, 200).
 //In the second pass the items tagged as fill are calculated based on the remaining area.
 //Remaining Width = (Width - Used Width) = 600
-//Fill Width = Remaining Width / Remaining Widgets = 600 / 2 = 300 
+//Fill Width = Remaining Width / Remaining Widgets = 600 / 2 = 300
 
 //Rect(0, 0, 300, 200)
 //Rect(0, 0, 200, 200)
@@ -24,10 +24,9 @@ use softui::*;
 
 //The root container always has a fixed size but a child container could ask to fill the avaliable space.
 
-
 pub enum Size {
     Fixed(usize, usize),
-    FillEvenly(usize, usize)
+    FillEvenly(usize, usize),
 }
 
 fn main() {
@@ -39,36 +38,35 @@ fn main() {
     group.direction = TopBottom;
     group.area_new = urect(0, 0, 800, 600);
 
-
     //(320, 200)
     //(160, 200)
     //(320, 200)
     //(800, 0, 200, 200)
-    // let mut subgroup = Group::new();
-    // subgroup.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
-    // subgroup.children.push(Box::new(rect().w_new(20.percent()).h_new(200)));
-    // subgroup.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
-    // group.children.push(Box::new(subgroup));
-    // group.children.push(Box::new(rect().wh_new(200)));
+    let mut subgroup = Group::new();
+    subgroup.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
+    subgroup.children.push(Box::new(rect().w_new(20.percent()).h_new(200)));
+    subgroup.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
+    group.children.push(Box::new(subgroup));
+    group.children.push(Box::new(rect().wh_new(200)));
 
     // Works just fine
     // group.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
     // group.children.push(Box::new(rect().w_new(20.percent()).h_new(200)));
     // group.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
 
-    //()
-    group.children.push(Box::new(rect().h_fill().w_fill()));
-    group.children.push(Box::new(rect().wh_new(200)));
-    group.children.push(Box::new(rect().h_fill().w_fill()));
+    // Works just fine.
+    //Rect(0, 0, 300, 200)
+    //Rect(0, 0, 200, 200)
+    //Rect(0, 0, 300, 200)
+    // group.children.push(Box::new(rect().h_fill().w_fill()));
+    // group.children.push(Box::new(rect().wh_new(200)));
+    // group.children.push(Box::new(rect().h_fill().w_fill()));
 
-    let size = group.desired_size();
-    dbg!(size);
-    group.layout(total_area);
+    let size = group.size_new();
+    group.layout_new(size, total_area);
 
     let mut commands = Vec::new();
     group.draw(&mut commands, None);
 
     dbg!(commands);
-
-
 }
