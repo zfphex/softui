@@ -63,7 +63,7 @@ pub struct UnitRect {
 
 impl Default for UnitRect {
     fn default() -> Self {
-        urect(0, 0, 100.percent(), 100.percent())
+        urect(0, 0, Unit::Auto, Unit::Auto)
     }
 }
 

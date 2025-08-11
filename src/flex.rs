@@ -262,7 +262,7 @@ impl<'a> Widget<'a> for Group<'a> {
 
         for (i, child) in self.children.iter_mut().enumerate() {
             // Resolve the child's desired Unit size against the parent's content box.
-            let size = child.size_new();
+            let size = child.size_new(parent);
 
             let child_w = match size.width {
                 Unit::Auto => remaining_width / remaining_widgets,
@@ -274,7 +274,7 @@ impl<'a> Widget<'a> for Group<'a> {
                 _ => size.height.to_pixels(content_h),
             };
 
-            child.layout(Rect::new(current_x, current_y, child_w, child_h));
+            child.layout_new(size, Rect::new(current_x, current_y, child_w, child_h));
 
             match self.direction {
                 FlexDirection::LeftRight => current_x += child_w + if i != last_index { self.gap } else { 0 },
@@ -283,7 +283,7 @@ impl<'a> Widget<'a> for Group<'a> {
         }
     }
 
-    fn size_new(&self) -> Size {
+    fn size_new(&self, parent: Rect) -> Size {
         // (self.area_new.width, self.area_new.height)
         let mut total_width = 0;
         let mut total_height = 0;
@@ -294,10 +294,13 @@ impl<'a> Widget<'a> for Group<'a> {
 
             let content_w = match self.area_new.width {
                 Unit::Pixel(px) => px.saturating_sub(self.padding * 2),
+                Unit::Percentage(percentage) => todo!("Group has size: {}", percentage),
+                Unit::Auto => parent.width,
                 _ => todo!("Assume fixed size for now"),
             };
             let content_h = match self.area_new.height {
                 Unit::Pixel(px) => px.saturating_sub(self.padding * 2),
+                Unit::Auto => parent.height,
                 _ => todo!("Assume fixed size for now"),
             };
 
@@ -305,20 +308,28 @@ impl<'a> Widget<'a> for Group<'a> {
                 FlexDirection::LeftRight => {
                     total_width += total_gap;
                     for child in &self.children {
-                        // let (wu, hu) = child.desired_size();
-                        // let w = wu.to_pixels(content_w);
-                        // let h = hu.to_pixels(content_h);
-                        // total_width += w;
-                        // total_height = total_height.max(h);
-                        todo!();
+                        let size = child.size_new(parent);
+                        let (wu, hu) = (size.width, size.height);
+
+                        let w = match wu {
+                            Unit::Auto => 0,
+                            _ => wu.to_pixels(content_w),
+                        };
+
+                        let h = match hu {
+                            Unit::Auto => 0,
+                            _ => hu.to_pixels(content_h),
+                        };
+
+                        total_width += w;
+                        total_height = total_height.max(h);
                     }
                 }
                 FlexDirection::TopBottom => {
                     total_height += total_gap;
                     for child in &self.children {
-                        let (wu, hu) = child.desired_size();
-                        // let w = wu.to_pixels(content_w);
-                        // let h = hu.to_pixels(content_h);
+                        let size = child.size_new(parent);
+                        let (wu, hu) = (size.width, size.height);
 
                         if wu == Unit::Auto || hu == Unit::Auto {
                             remaining_widgets += 1;
@@ -328,10 +339,12 @@ impl<'a> Widget<'a> for Group<'a> {
                             Unit::Auto => 0,
                             _ => wu.to_pixels(content_w),
                         };
+
                         let h = match hu {
                             Unit::Auto => 0,
                             _ => hu.to_pixels(content_h),
                         };
+
                         total_width = total_width.max(w);
                         total_height += h;
                     }
@@ -383,6 +396,7 @@ impl<'a> Widget<'a> for Group<'a> {
     }
 
     //TODO: I don't think this takes into account the remaing size.
+    #[track_caller]
     fn layout(&mut self, area: Rect) {
         self.area = area;
         self.area_new = area.into();
@@ -488,7 +502,9 @@ impl<'a> Drop for FlexRoot<'a> {
         let (w, h) = (ctx.window.width(), ctx.window.height());
         let total_area = Rect::new(self.margin, self.margin, w, h);
 
-        self.group.layout(total_area);
+        // self.group.layout(total_area);
+        let current_size = self.group.size_new(total_area);
+        self.group.layout_new(current_size, total_area);
         self.group.handle_event(ctx);
 
         let mut commands = Vec::new();

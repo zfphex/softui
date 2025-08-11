@@ -30,7 +30,7 @@ pub enum Size {
 }
 
 fn main() {
-    let window = Rect::new(0, 0, 800, 600);
+    // let window = Rect::new(0, 0, 800, 600);
     let margin = 0;
     let total_area = Rect::new(margin, margin, 800, 600);
 
@@ -43,11 +43,15 @@ fn main() {
     //(320, 200)
     //(800, 0, 200, 200)
     let mut subgroup = Group::new();
-    subgroup.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
-    subgroup.children.push(Box::new(rect().w_new(20.percent()).h_new(200)));
-    subgroup.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
+    subgroup.direction = TopBottom;
+
+    // subgroup.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
+    // subgroup.children.push(Box::new(rect().w_new(20.percent()).h_new(200)));
+    // subgroup.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
+
     group.children.push(Box::new(subgroup));
-    group.children.push(Box::new(rect().wh_new(200)));
+
+    // group.children.push(Box::new(rect().wh_new(200)));
 
     // Works just fine
     // group.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
@@ -62,7 +66,9 @@ fn main() {
     // group.children.push(Box::new(rect().wh_new(200)));
     // group.children.push(Box::new(rect().h_fill().w_fill()));
 
-    let size = group.size_new();
+
+    dbg!(&group.children);
+    let size = group.size_new(total_area);
     group.layout_new(size, total_area);
 
     let mut commands = Vec::new();

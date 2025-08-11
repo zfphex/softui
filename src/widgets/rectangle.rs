@@ -36,8 +36,18 @@ impl<'a> Widget<'a> for Rectangle {
     fn desired_size(&self) -> (Unit, Unit) {
         (self.area_new.width, self.area_new.height)
     }
+    fn size_new(&self, parent: Rect) -> Size {
+        Size {
+            width: self.area_new.width,
+            height: self.area_new.height,
+            remaining_widgets: None,
+        }
+    }
     fn size(&self) -> (usize, usize) {
         (self.area.width, self.area.height)
+    }
+    fn layout_new(&mut self, current_size: Size, parent: Rect) {
+        self.area = parent;
     }
     fn layout(&mut self, area: Rect) {
         self.area = area;

@@ -38,7 +38,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn desired_size(&self) -> (Unit, Unit);
 
     //TODO: Move into struct Size
-    fn size_new(&self) -> Size{
+    fn size_new(&self, parent: Rect) -> Size{
         unimplemented!()
     }
 
