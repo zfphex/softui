@@ -16,7 +16,7 @@ pub enum ImageFormat {
 pub fn image_ref<'a>(image: &'a Image) -> ImageRef<'a> {
     ImageRef {
         format: image.format,
-        area: image.area,
+        area: image.area.into(),
         bitmap: &image.bitmap,
     }
 }
@@ -61,45 +61,6 @@ pub fn image(path: impl AsRef<Path>) -> Image {
     }
 }
 
-// pub fn draw_image(image: &Image, mut x: usize, mut y: usize) {
-//     let ctx = ctx();
-
-//     let width = ctx.window.area().width;
-//     let buffer = &mut ctx.window.buffer();
-//     let len = buffer.len();
-
-//     let chunk_size = if image.format == ImageFormat::PNG {
-//         //4 bytes per channel rgba
-//         4
-//     } else {
-//         //3 bytes per channel rgb
-//         3
-//     };
-
-//     for pixel in image.bitmap.chunks(chunk_size) {
-//         let pos = y * width as usize + x;
-
-//         if pos >= len {
-//             break;
-//         }
-
-//         let r = pixel[0];
-//         let g = pixel[1];
-//         let b = pixel[2];
-//         // let a = pixel[3];
-//         let color = rgb(r, g, b);
-
-//         buffer[pos] = color;
-
-//         x += 1;
-//         if x >= image.width as usize {
-//             y += 1;
-//             x = 0;
-//             continue;
-//         }
-//     }
-// }
-
 #[derive(Debug, Clone)]
 pub struct Image {
     pub format: ImageFormat,
@@ -110,30 +71,34 @@ pub struct Image {
 #[derive(Debug, Clone)]
 pub struct ImageRef<'a> {
     pub format: ImageFormat,
-    pub area: Rect,
+    pub area: UnitRect,
     pub bitmap: &'a [u8],
 }
 
-// impl Image {}
-
 impl<'a> Widget<'a> for ImageRef<'a> {
-    fn size(&self) -> (usize, usize) {
-        (self.area.width, self.area.height)
+    fn size(&self, parent: Rect) -> Size {
+        Size {
+            width: self.area.width,
+            height: self.area.height,
+            remaining_widgets: None,
+        }
     }
-    fn layout(&mut self, area: Rect) {
-        self.area = area;
+
+    fn layout(&mut self, size: Size, parent: Rect) {
+        self.area = parent.into();
     }
+
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         //TODO: Just assume the image exists for now.
         let bitmap = unsafe { std::mem::transmute::<&'a [u8], &'static [u8]>(self.bitmap) };
 
         commands.push(Command {
-            area: self.area,
+            area: self.area.into_rect(),
             primative: Primative::ImageUnsafe(bitmap, self.format),
         });
     }
-    
-    fn desired_size(&self) -> (Unit, Unit) {
-        todo!()
+
+    fn area_mut(&mut self) -> &mut UnitRect {
+        &mut self.area
     }
 }

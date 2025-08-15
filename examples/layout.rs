@@ -24,46 +24,33 @@ use softui::*;
 
 //The root container always has a fixed size but a child container could ask to fill the avaliable space.
 
-pub enum Size {
-    Fixed(usize, usize),
-    FillEvenly(usize, usize),
-}
-
 fn main() {
     // let window = Rect::new(0, 0, 800, 600);
     let margin = 0;
     let total_area = Rect::new(margin, margin, 800, 600);
 
-    let mut group = Group::new();
-    group.direction = TopBottom;
+    let mut group = Group::new().direction(TopBottom);
     group.area_new = urect(0, 0, 800, 600);
 
     //(320, 200)
     //(160, 200)
     //(320, 200)
     //(800, 0, 200, 200)
-    let mut subgroup = Group::new();
-    subgroup.direction = TopBottom;
+    let mut subgroup = Group::new().direction(TopBottom);
 
-    // subgroup.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
-    // subgroup.children.push(Box::new(rect().w_new(20.percent()).h_new(200)));
-    // subgroup.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
+    // subgroup.children.push(Box::new(rect().wh(100)));
+
+    subgroup.children.push(Box::new(rect().w(40.percent()).h(200)));
+    subgroup.children.push(Box::new(rect().w(20.percent()).h(200)));
+    subgroup.children.push(Box::new(rect().w(40.percent()).h(200)));
 
     group.children.push(Box::new(subgroup));
 
-    // group.children.push(Box::new(rect().wh_new(200)));
-
-    // Works just fine
-    // group.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
-    // group.children.push(Box::new(rect().w_new(20.percent()).h_new(200)));
-    // group.children.push(Box::new(rect().w_new(40.percent()).h_new(200)));
-
-    // Works just fine.
-
+    group.children.push(Box::new(rect().wh(200)));
 
     dbg!(&group.children);
-    let size = group.size_new(total_area);
-    group.layout_new(size, total_area);
+    let size = group.size(total_area);
+    group.layout(size, total_area);
 
     let mut commands = Vec::new();
     group.draw(&mut commands, None);

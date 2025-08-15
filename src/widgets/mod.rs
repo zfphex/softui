@@ -29,29 +29,20 @@ pub use dwrite::*;
 use crate::*;
 
 pub trait Widget<'a>: std::fmt::Debug {
-    fn size(&self) -> (usize, usize);
+    fn size(&self, parent: Rect) -> Size;
 
-    // #[track_caller]
-    // fn desired_size(&self) -> (Unit, Unit) {
-    //     unimplemented!()
-    // }
-    fn desired_size(&self) -> (Unit, Unit);
+    fn layout(&mut self, size: Size, parent: Rect);
 
-    //TODO: Move into struct Size
-    fn size_new(&self, parent: Rect) -> Size{
-        unimplemented!()
-    }
+    fn area_mut(&mut self) -> &mut UnitRect;
 
-    fn layout_new(&mut self, current_size: Size, parent: Rect) {
-        unimplemented!()
-    }
-
-    fn layout(&mut self, area: Rect);
-    fn handle_event(&mut self, ctx: &mut Context) {}
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>);
+
+    fn handle_event(&mut self, ctx: &mut Context) {}
+
     fn style(&self) -> Option<Style> {
         None
     }
+
     fn name(&self) -> &str {
         std::any::type_name::<Self>()
     }
@@ -88,6 +79,14 @@ pub trait Widget<'a>: std::fmt::Debug {
         Click::new(self.style(), self, button, MouseAction::Released, handler)
     }
 
+    fn fill(mut self) -> Self
+    where
+        Self: Sized,
+    {
+        self.area_mut().height = Unit::Auto;
+        self.area_mut().width = Unit::Auto;
+        self
+    }
 
     fn h_fill(mut self) -> Self
     where
@@ -160,11 +159,6 @@ pub trait Widget<'a>: std::fmt::Debug {
         self
     }
 
-
-    fn area_mut(&mut self) -> &mut UnitRect {
-        todo!()
-    }
-
     //TODO: Not sure if this is good since not all types will implement this.
     //It helps when chaing clicks or styles so I guess it is what it is.
     fn gap(self, gap: usize) -> Self
@@ -173,18 +167,21 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         unimplemented!()
     }
+
     fn margin(self, margin: usize) -> Self
     where
         Self: Sized,
     {
         unimplemented!()
     }
+
     fn direction(self, direction: FlexDirection) -> Self
     where
         Self: Sized,
     {
         unimplemented!()
     }
+
     fn padding(self, padding: usize) -> Self
     where
         Self: Sized,

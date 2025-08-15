@@ -41,12 +41,6 @@ pub struct SvgRef<'a> {
 }
 
 impl<'a> Widget<'a> for SvgRef<'a> {
-    fn size(&self) -> (usize, usize) {
-        (self.area.width, self.area.height)
-    }
-    fn layout(&mut self, area: Rect) {
-        self.area = area;
-    }
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         //TODO: Just assume the svg exists for now.
         let pixmap = unsafe { std::mem::transmute::<&'a Pixmap, &'static Pixmap>(self.pixmap) };
@@ -56,7 +50,15 @@ impl<'a> Widget<'a> for SvgRef<'a> {
         });
     }
     
-    fn desired_size(&self) -> (Unit, Unit) {
+    fn size(&self, parent: Rect) -> Size {
+        todo!()
+    }
+    
+    fn layout(&mut self, size: Size, parent: Rect) {
+        todo!()
+    }
+    
+    fn area_mut(&mut self) -> &mut UnitRect {
         todo!()
     }
 }

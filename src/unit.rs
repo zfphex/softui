@@ -1,6 +1,6 @@
 use crate::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Size {
     pub width: Unit,
     pub height: Unit,
@@ -11,6 +11,7 @@ pub trait RelativeWidth {
     fn percent(self) -> Unit;
     fn unit(self) -> Unit;
     fn em(self) -> Unit;
+    fn pixel(self) -> Unit;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -51,6 +52,10 @@ impl RelativeWidth for usize {
 
     fn em(self) -> Unit {
         Unit::Em(self)
+    }
+    
+    fn pixel(self) -> Unit {
+        Unit::Pixel(self)
     }
 }
 

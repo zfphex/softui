@@ -58,20 +58,8 @@ where
         self
     }
 
-    fn desired_size(&self) -> (Unit, Unit) {
-        self.widget.desired_size()
-    }
-
     fn style(&self) -> Option<Style> {
         Some(self.style)
-    }
-
-    fn size(&self) -> (usize, usize) {
-        self.widget.size()
-    }
-
-    fn layout(&mut self, area: Rect) {
-        self.widget.layout(area);
     }
 
     fn area_mut(&mut self) -> &mut UnitRect {
@@ -84,6 +72,14 @@ where
 
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         self.widget.draw(commands, style);
+    }
+
+    fn size(&self, parent: Rect) -> Size {
+        self.widget.size(parent)
+    }
+    
+    fn layout(&mut self, size: Size, parent: Rect) {
+        self.widget.layout(size, parent);
     }
 }
 

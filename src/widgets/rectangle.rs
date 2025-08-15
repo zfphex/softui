@@ -31,28 +31,20 @@ impl<'a> Widget<'a> for Rectangle {
     fn area_mut(&mut self) -> &mut UnitRect {
         &mut self.area
     }
-    fn desired_size(&self) -> (Unit, Unit) {
-        (self.area.width, self.area.height)
-    }
-    fn size_new(&self, parent: Rect) -> Size {
+
+    fn size(&self, parent: Rect) -> Size {
         Size {
             width: self.area.width,
             height: self.area.height,
             remaining_widgets: None,
         }
     }
-    fn size(&self) -> (usize, usize) {
-        todo!()
-        // (self.area.width, self.area.height)
-    }
-    fn layout_new(&mut self, current_size: Size, parent: Rect) {
+
+    fn layout(&mut self, current_size: Size, parent: Rect) {
         // self.area = parent;
         self.area = parent.into();
     }
-    fn layout(&mut self, area: Rect) {
-        todo!()
-        // self.area = area;
-    }
+
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
         let bg = style.unwrap_or(Style::new()).background_color.unwrap_or(white());
         commands.push(Command {
