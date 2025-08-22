@@ -96,13 +96,14 @@ impl<'a> Widget<'a> for Group<'a> {
     }
 
     fn position(&mut self, size: Size, parent: Rect) {
+        mini::info_raw!("{}\nsize: {:?}\n", self.name(), parent);
+        self.size = parent.into();
+
         let content_w = parent.width.saturating_sub(self.padding * 2);
         let content_h = parent.height.saturating_sub(self.padding * 2);
 
         let mut current_x = parent.x + self.padding;
         let mut current_y = parent.y + self.padding;
-
-        // dbg!(self.name());
 
         let width = match size.width {
             Unit::Pixel(px) => px,
@@ -114,8 +115,8 @@ impl<'a> Widget<'a> for Group<'a> {
         let height = match size.height {
             Unit::Pixel(px) => px,
             Unit::Percentage(percent) => (content_h as f32 * percent as f32 / 100.0).round() as usize,
-            Unit::Em(em) => unimplemented!(),
             Unit::Auto => 0,
+            Unit::Em(_) => unimplemented!(),
         };
 
         let remaining_width = content_w - width;
@@ -126,27 +127,30 @@ impl<'a> Widget<'a> for Group<'a> {
         let usable_height = remaining_height / remaining_widgets;
         let last_index = self.children.len().saturating_sub(1);
 
+        // dbg!(self.name());
         // dbg!(content_w, width, usable_width, remaining_widgets);
 
         for (i, child) in self.children.iter_mut().enumerate() {
             // Resolve the child's desired Unit size against the parent's content box.
             // let size = child.size(prev_area);
             let size = child.size_mut().clone();
+            mini::info_raw!("\t{}\n\twidth: {}\n\theight: {}", child.name(), size.width, size.height);
 
             let child_w = match size.width {
                 Unit::Auto => usable_width,
                 Unit::Percentage(p) => ((p as f32 / 100.0) * usable_width as f32).round() as usize,
                 Unit::Pixel(px) => px,
-                _ => unreachable!(),
+                Unit::Em(_) => todo!(),
             };
 
             let child_h = match size.height {
                 Unit::Auto => usable_height,
                 Unit::Percentage(p) => ((p as f32 / 100.0) * usable_height as f32).round() as usize,
                 Unit::Pixel(px) => px,
-                _ => unreachable!(),
+                Unit::Em(_) => todo!(),
             };
 
+            mini::info_raw!("\twidth: {} height: {}\n", child_w, child_h);
             child.position(size, Rect::new(current_x, current_y, child_w, child_h));
 
             match self.direction {
@@ -163,19 +167,6 @@ impl<'a> Widget<'a> for Group<'a> {
 
         if !self.children.is_empty() {
             let total_gap = self.gap * (self.children.len() - 1);
-
-            // let content_w = match self.area_new.width {
-            //     Unit::Pixel(px) => px.saturating_sub(self.padding * 2),
-            //     Unit::Percentage(percentage) => todo!("Group has size: {}", percentage),
-            //     Unit::Auto => parent.width,
-            //     _ => todo!("Assume fixed size for now"),
-            // };
-            // let content_h = match self.area_new.height {
-            //     Unit::Pixel(px) => px.saturating_sub(self.padding * 2),
-            //     Unit::Auto => parent.height,
-            //     _ => todo!("Assume fixed size for now"),
-            // };
-
             let content_w = parent.width.saturating_sub(self.padding * 2);
             let content_h = parent.height.saturating_sub(self.padding * 2);
 
@@ -212,39 +203,41 @@ impl<'a> Widget<'a> for Group<'a> {
                     }
                 }
                 FlexDirection::TopBottom => {
-                    todo!()
-                    // total_height += total_gap;
-                    // for child in &self.children {
-                    //     let size = child.size(parent);
-                    //     let (wu, hu) = (size.width, size.height);
+                    total_height += total_gap;
+                    for child in &self.children {
+                        let size = child.calculate_size(parent);
+                        let (wu, hu) = (size.width, size.height);
 
-                    //     if wu == Unit::Auto || hu == Unit::Auto {
-                    //         remaining_widgets += 1;
-                    //     }
+                        //A child has something that needs a second pass.
+                        if size.remaining_widgets.is_some() {
+                            remaining_widgets += 1;
+                        }
 
-                    //     let w = match wu {
-                    //         Unit::Auto => {
-                    //             requires_second_pass = true;
-                    //             0
-                    //         }
-                    //         _ => wu.to_pixels(content_w),
-                    //     };
+                        if matches!(wu, Unit::Auto | Unit::Percentage(_))
+                            || matches!(hu, Unit::Auto | Unit::Percentage(_))
+                        {
+                            remaining_widgets += 1;
+                        }
 
-                    //     let h = match hu {
-                    //         Unit::Auto => {
-                    //             requires_second_pass = true;
-                    //             0
-                    //         }
-                    //         _ => hu.to_pixels(content_h),
-                    //     };
+                        let w = match wu {
+                            Unit::Auto | Unit::Percentage(_) => 0,
+                            _ => wu.to_pixels(content_w),
+                        };
 
-                    //     total_width = total_width.max(w);
-                    //     total_height += h;
-                    // }
+                        let h = match hu {
+                            Unit::Auto | Unit::Percentage(_) => 0,
+                            _ => hu.to_pixels(content_h),
+                        };
+
+                        total_width = total_width.max(w);
+                        total_height += h;
+                    }
                 }
             }
         }
 
+        // dbg!(self.name());
+        // dbg!(remaining_widgets);
         Size {
             x: Unit::Pixel(0),
             y: Unit::Pixel(0),

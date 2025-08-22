@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::*;
 
 pub fn size(x: impl Into<Unit>, y: impl Into<Unit>, width: impl Into<Unit>, height: impl Into<Unit>) -> Size {
@@ -65,6 +67,16 @@ pub enum Unit {
     Percentage(usize),
     Em(usize),
     Auto,
+}
+impl Display for Unit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Unit::Pixel(px) => write!(f, "Unit::Pixel({})", px),
+            Unit::Percentage(p) => write!(f, "Unit::Percentage({})", p),
+            Unit::Em(em) => write!(f, "Unit::Em({})", em),
+            Unit::Auto => write!(f, "Unit::Auto"),
+        }
+    }
 }
 
 impl Unit {

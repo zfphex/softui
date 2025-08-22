@@ -25,35 +25,27 @@ use softui::*;
 //The root container always has a fixed size but a child container could ask to fill the avaliable space.
 
 fn main() {
-    // let window = Rect::new(0, 0, 800, 600);
-    let margin = 0;
-    let parent = Rect::new(margin, margin, 800, 600);
+    let parent = Rect::new(0, 0, 800, 600);
 
     let mut group = Group::new().direction(TopBottom);
     group.size = size(0, 0, 800, 600);
 
-    //(320, 200)
-    //(160, 200)
-    //(320, 200)
-    //(800, 0, 200, 200)
-    let mut subgroup = Group::new().direction(TopBottom);
+    // let mut subgroup2 = Group::new().direction(LeftRight);
+    // subgroup2.children.push(Box::new(rect().w(20.percent()).h(20)));
+    // subgroup2.children.push(Box::new(rect().w(80.percent()).h(20)));
+    // group.children.push(Box::new(subgroup2));
 
-    // subgroup.children.push(Box::new(rect().wh(100)));
-
-    subgroup.children.push(Box::new(rect().w(40.percent()).h(200)));
-    subgroup.children.push(Box::new(rect().w(20.percent()).h(200)));
-    subgroup.children.push(Box::new(rect().w(40.percent()).h(200)));
+    let mut subgroup = Group::new().direction(LeftRight);
+    subgroup.children.push(Box::new(rect().w(20.percent()).h(20)));
+    // subgroup.children.push(Box::new(rect().w(80.percent()).h(20)));
 
     group.children.push(Box::new(subgroup));
 
-    group.children.push(Box::new(rect().wh(200)));
+    // group.children.push(Box::new(rect().wh(20)));
 
-    dbg!(&group.children);
     let size = group.calculate_size(parent);
+
     group.position(size, parent);
 
-    let mut commands = Vec::new();
-    group.draw(&mut commands, None);
-
-    dbg!(commands);
+    assert_eq!(group.size.height, Unit::Pixel(20));
 }

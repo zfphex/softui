@@ -22,7 +22,7 @@ fn main() {
                 ),
                 rect().wh(20).bg(lime())
             )
-            .direction(LeftRight);
+            .direction(TopBottom);
         }
 
         ctx.draw_frame();
