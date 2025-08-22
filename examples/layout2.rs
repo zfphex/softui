@@ -11,20 +11,14 @@ fn main() {
         }
 
         {
-            let f = flex!(
+            flex!(
                 h!(
-                    rect().w(40.percent()).h(200),
-                    rect().w(20.percent()).h(200).bg(red()),
-                    rect().w(40.percent()).h(200).bg(blue())
+                    rect().w(20.percent()).h(20).bg(red()),
+                    rect().w(80.percent()).h(20).bg(blue())
                 ),
-                rect().wh(200).bg(green())
+                rect().wh(20).bg(purple())
             )
             .direction(LeftRight);
-
-            #[cfg(feature = "info")]
-            dbg!(&f.group);
-
-            // flex!(h!(rect().wh_new(200).bg(red())), rect().wh_new(200).bg(blue()),).direction(TopBottom);
         }
 
         ctx.draw_frame();

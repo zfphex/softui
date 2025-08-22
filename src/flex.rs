@@ -140,8 +140,8 @@ where
     fn size(&self, parent: Rect) -> Size {
         self.widget.size(parent)
     }
-    fn layout(&mut self, size: Size, parent: Rect) {
-        self.widget.layout(size, parent);
+    fn position(&mut self, size: Size, parent: Rect) {
+        self.widget.position(size, parent);
     }
 }
 
@@ -232,7 +232,7 @@ impl<'a> Widget<'a> for Group<'a> {
         &mut self.area_new
     }
 
-    fn layout(&mut self, size: Size, prev_area: Rect) {
+    fn position(&mut self, size: Size, prev_area: Rect) {
         self.area_new = prev_area.into();
 
         let content_w = prev_area.width.saturating_sub(self.padding * 2);
@@ -264,7 +264,7 @@ impl<'a> Widget<'a> for Group<'a> {
                 _ => size.height.to_pixels(content_h),
             };
 
-            child.layout(size, Rect::new(current_x, current_y, child_w, child_h));
+            child.position(size, Rect::new(current_x, current_y, child_w, child_h));
 
             match self.direction {
                 FlexDirection::LeftRight => current_x += child_w + if i != last_index { self.gap } else { 0 },
@@ -418,7 +418,7 @@ impl<'a> Drop for FlexRoot<'a> {
 
         // self.group.layout(total_area);
         let current_size = self.group.size(total_area);
-        self.group.layout(current_size, total_area);
+        self.group.position(current_size, total_area);
         self.group.handle_event(ctx);
 
         let mut commands = Vec::new();
@@ -457,7 +457,7 @@ mod tests {
             }
         );
 
-        group.layout(size, total_area);
+        group.position(size, total_area);
 
         assert_eq!(*group.children[0].area_mut(), *rect().w(300).h(200).area_mut());
         assert_eq!(*group.children[1].area_mut(), *rect().y(200).wh(200).area_mut());
@@ -484,7 +484,7 @@ mod tests {
             }
         );
 
-        group.layout(size, total_area);
+        group.position(size, total_area);
 
         assert_eq!(*group.children[0].area_mut(), *rect().y(0).w(320).h(200).area_mut());
         assert_eq!(*group.children[1].area_mut(), *rect().y(200).w(160).h(200).area_mut());
@@ -513,7 +513,7 @@ mod tests {
             }
         );
 
-        group.layout(size, total_area);
+        group.position(size, total_area);
 
         assert_eq!(*group.children[0].area_mut(), *rect().y(0).wh(100).area_mut());
         assert_eq!(*group.children[1].area_mut(), *rect().y(100).wh(200).area_mut());

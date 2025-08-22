@@ -40,7 +40,7 @@ impl<'a> Widget<'a> for Rectangle {
         }
     }
 
-    fn layout(&mut self, current_size: Size, parent: Rect) {
+    fn position(&mut self, current_size: Size, parent: Rect) {
         // self.area = parent;
         self.area = parent.into();
     }

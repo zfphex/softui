@@ -148,15 +148,15 @@ impl<'a> Widget<'a> for Text<'a> {
             primative: Primative::Text(self.text.to_string(), self.font_size, font_color),
         });
     }
-    
+
     fn size(&self, parent: Rect) -> Size {
         todo!()
     }
-    
-    fn layout(&mut self, size: Size, parent: Rect) {
+
+    fn position(&mut self, size: Size, parent: Rect) {
         todo!()
     }
-    
+
     fn area_mut(&mut self) -> &mut UnitRect {
         todo!()
     }
