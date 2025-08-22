@@ -4,7 +4,7 @@ use std::fmt;
 use softui::*;
 
 fn main() {
-    let ctx = create_ctx("Softui", 800, 600);
+    let ctx = unsafe {create_ctx("Softui", 800, 600) };
 
     let mut r1 = rect().bg(red()).wh(50);
     let mut r2 = rect().bg(lime()).wh(50);

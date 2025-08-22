@@ -36,7 +36,7 @@ fn triangle(ctx: &mut Context, area: Rect) {
 }
 
 fn main() {
-    let ctx = create_ctx("Softui", 800, 600);
+    let ctx = unsafe {create_ctx("Softui", 800, 600) };
 
     loop {
         match ctx.event() {

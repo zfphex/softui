@@ -7,7 +7,7 @@ fn main() {
 fn main() {
     use softui::*;
 
-    let ctx = create_ctx("Softui", 800, 600);
+    let ctx = unsafe {create_ctx("Softui", 800, 600) };
     let png = image("img/smol.png");
     let jpg = image("img/smol.jpg");
 

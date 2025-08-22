@@ -20,7 +20,7 @@ fn main() {
         WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
     );
 
-    let ctx = create_ctx_ex("Softui", window);
+    let ctx = unsafe { create_ctx_ex("Softui", window) };
     let accent = accent_color();
     ctx.set_fill_color(0x202020.into());
 

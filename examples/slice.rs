@@ -2,7 +2,7 @@
 use softui::*;
 
 fn main() {
-    let ctx = create_ctx("Softui", 800, 600);
+    let ctx = unsafe { create_ctx("Softui", 800, 600) };
 
     let mut group = group!(rect().wh(40), rect().wh(40), rect().wh(40)).gap(32).bg(blue());
 

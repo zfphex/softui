@@ -2,7 +2,7 @@
 use softui::*;
 
 fn main() {
-    let ctx = create_ctx("softui", 800, 600);
+    let ctx = unsafe { create_ctx("softui", 800, 600) };
 
     let mut click_count = 0;
 

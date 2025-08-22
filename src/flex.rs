@@ -277,7 +277,7 @@ impl<'a> Drop for FlexRoot<'a> {
         self.group.position(current_size, total_area);
 
         //TODO: Remove context from handle_event and use atomic mouse state :)
-        let ctx = ctx();
+        let ctx = unsafe { ctx() };
         self.group.handle_event(ctx);
 
         let mut commands = Vec::new();

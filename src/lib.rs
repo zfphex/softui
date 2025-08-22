@@ -146,11 +146,11 @@ pub fn ctx_height() -> usize {
 }
 
 #[inline]
-pub fn ctx() -> &'static mut Context {
+pub unsafe fn ctx() -> &'static mut Context {
     unsafe { CTX.as_mut().unwrap() }
 }
 
-pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Context {
+pub unsafe fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Context {
     unsafe {
         #[cfg(target_os = "windows")]
         let window = create_window(title, 0, 0, width as i32, height as i32, WindowStyle::DEFAULT);
@@ -177,7 +177,7 @@ pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Cont
 }
 
 //TODO: Consolidate, can't be bothered fixing all the other functions that don't take style into account.
-pub fn create_ctx_ex(title: &str, window: Pin<Box<Window>>) -> &'static mut Context {
+pub unsafe fn create_ctx_ex(title: &str, window: Pin<Box<Window>>) -> &'static mut Context {
     unsafe {
         CTX = Some(Context::new(title, window));
         CTX.as_mut().unwrap()
@@ -1003,7 +1003,7 @@ mod tests {
 
     #[test]
     fn rectangle() {
-        let ctx = create_ctx("Softui", 800, 600);
+        let ctx = unsafe { create_ctx("Softui", 800, 600) };
 
         //Rectangle
         {
