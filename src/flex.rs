@@ -2,149 +2,6 @@ use crate::*;
 
 use std::fmt::{self, Debug};
 
-pub enum MouseAction {
-    Pressed,
-    Released,
-    Clicked,
-}
-
-pub fn convert_button_to_state(ctx: &mut Context, button: MouseButton) -> MouseButtonState {
-    match button {
-        MouseButton::Left => ctx.window.left_mouse,
-        MouseButton::Right => ctx.window.right_mouse,
-        MouseButton::Middle => ctx.window.middle_mouse,
-        MouseButton::Mouse4 => ctx.window.mouse_4,
-        MouseButton::Mouse5 => ctx.window.mouse_5,
-    }
-}
-
-pub fn clicked(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
-    convert_button_to_state(ctx, button).clicked(area)
-}
-
-pub fn pressed(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
-    if !ctx.window.mouse_position.intersects(area) {
-        return false;
-    }
-
-    convert_button_to_state(ctx, button).is_pressed()
-}
-
-pub fn released(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
-    if !ctx.window.mouse_position.intersects(area) {
-        return false;
-    }
-
-    convert_button_to_state(ctx, button).is_released()
-}
-
-pub struct Click<'a, W> {
-    widget: W,
-    handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
-    style: Option<Style>,
-}
-
-#[rustfmt::skip] 
-impl<'a, W> Click<'a, W> {
-    pub fn new(style: Option<Style>, widget: W, button: MouseButton, action: MouseAction, handler: impl FnMut(&mut W) + 'a) -> Self {
-        let mut handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)> = Vec::new();
-        handlers.push((button, action, Box::new(handler)));
-        Click { widget, handlers, style}
-    }
-
-    pub fn on_click(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers.push((button, MouseAction::Clicked, Box::new(handler)));
-        self
-    }
-
-    pub fn on_press(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers.push((button, MouseAction::Pressed, Box::new(handler)));
-        self
-    }
-
-    pub fn on_release(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a,) -> Self {
-        self.handlers.push((button, MouseAction::Released, Box::new(handler)));
-        self
-    }
-}
-
-impl<'a, W> Debug for Click<'a, W>
-where
-    W: Debug,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let buttons: Vec<_> = self.handlers.iter().map(|(b, _, _)| b).collect();
-        f.debug_struct("OnClick")
-            .field("widget", &self.widget)
-            .field("buttons", &buttons)
-            .finish_non_exhaustive()
-    }
-}
-
-impl<'a, W> Widget<'a> for Click<'a, W>
-where
-    W: Widget<'a> + Debug,
-{
-    fn gap(mut self, gap: usize) -> Self
-    where
-        Self: Sized,
-    {
-        self.widget = self.widget.gap(gap);
-        self
-    }
-    fn margin(mut self, margin: usize) -> Self
-    where
-        Self: Sized,
-    {
-        self.widget = self.widget.margin(margin);
-        self
-    }
-    fn padding(mut self, padding: usize) -> Self
-    where
-        Self: Sized,
-    {
-        self.widget = self.widget.padding(padding);
-        self
-    }
-    fn direction(mut self, direction: FlexDirection) -> Self
-    where
-        Self: Sized,
-    {
-        self.widget = self.widget.direction(direction);
-        self
-    }
-    fn area_mut(&mut self) -> &mut UnitRect {
-        self.widget.area_mut()
-    }
-    fn draw(&self, cmds: &mut Vec<Command>, style: Option<Style>) {
-        self.widget.draw(cmds, self.style)
-    }
-    fn style(&self) -> Option<Style> {
-        self.widget.style()
-    }
-    fn handle_event(&mut self, ctx: &mut Context) {
-        // First let the wrapped widget handle the event
-        self.widget.handle_event(ctx);
-
-        // Then run all matching handlers
-        for (button, action, h) in &mut self.handlers {
-            if match action {
-                MouseAction::Pressed => pressed(ctx, self.widget.area_mut().into_rect(), *button),
-                MouseAction::Released => released(ctx, self.widget.area_mut().into_rect(), *button),
-                MouseAction::Clicked => clicked(ctx, self.widget.area_mut().into_rect(), *button),
-            } {
-                h(&mut self.widget);
-            }
-        }
-    }
-    fn size(&self, parent: Rect) -> Size {
-        self.widget.size(parent)
-    }
-    fn position(&mut self, size: Size, parent: Rect) {
-        self.widget.position(size, parent);
-    }
-}
-
 #[derive(Default, Debug, Clone, Copy)]
 pub enum FlexDirection {
     #[default]
@@ -242,7 +99,6 @@ impl<'a> Widget<'a> for Group<'a> {
         let mut current_y = prev_area.y + self.padding;
 
         // dbg!(prev_area.width, size.width.to_pixels(content_w));
-        dbg!(prev_area.height, size.height);
         let remaining_width = prev_area.width - size.width.to_pixels(content_w);
         let remaining_height = prev_area.height - size.height.to_pixels(content_h);
 
@@ -412,8 +268,6 @@ impl<'a> FlexRoot<'a> {
 
 impl<'a> Drop for FlexRoot<'a> {
     fn drop(&mut self) {
-        let ctx = ctx();
-        // let (w, h) = (ctx.window.width(), ctx.window.height());
         let (w, h) = (ctx_width(), ctx_height());
 
         let total_area = Rect::new(self.margin, self.margin, w, h);
@@ -421,6 +275,9 @@ impl<'a> Drop for FlexRoot<'a> {
         // self.group.layout(total_area);
         let current_size = self.group.size(total_area);
         self.group.position(current_size, total_area);
+
+        //TODO: Remove context from handle_event and use atomic mouse state :)
+        let ctx = ctx();
         self.group.handle_event(ctx);
 
         let mut commands = Vec::new();

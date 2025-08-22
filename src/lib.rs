@@ -8,6 +8,9 @@ pub use core::ffi::c_void;
 
 pub mod atomic_float;
 
+pub mod click;
+pub use click::*;
+
 pub mod flex;
 pub use flex::*;
 
@@ -165,6 +168,9 @@ pub fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Cont
             context.draw_frame();
         }
 
+        //Update the atomics with the correct area.
+        context.update_area();
+
         CTX = Some(context);
         CTX.as_mut().unwrap()
     }
@@ -204,7 +210,7 @@ impl Context {
     //     ScaledUnit::ViewportHeight(0)
     // }
 
-    fn update_area(&self) {
+    pub fn update_area(&self) {
         unsafe {
             WIDTH.store(self.window.width(), Ordering::Relaxed);
             HEIGHT.store(self.window.height(), Ordering::Relaxed);
@@ -225,7 +231,7 @@ impl Context {
     pub fn draw_frame(&mut self) {
         profile!();
 
-        //Update the atomic's used to access area.
+        //TODO: Currently if the area is (0, 0) the layout system will crash instead of rendering correctly the next frame.
         self.update_area();
 
         while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
