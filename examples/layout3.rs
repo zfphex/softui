@@ -11,7 +11,7 @@ fn main() {
         }
 
         {
-            flex!(
+            let f = flex!(
                 h!(
                     rect().w(20.percent()).h(20).bg(blue()),
                     rect().w(80.percent()).h(20).bg(red())
@@ -22,7 +22,9 @@ fn main() {
                 ),
                 rect().wh(20).bg(lime())
             )
-            .direction(TopBottom);
+            .direction(LeftRight);
+            dbg!(&f.group.children);
+            return;
         }
 
         ctx.draw_frame();

@@ -46,6 +46,7 @@ fn main() {
     let size = group.calculate_size(parent);
 
     group.position(size, parent);
+    // dbg!(group.children);
 
     assert_eq!(group.size.height, Unit::Pixel(20));
 }
