@@ -35,11 +35,11 @@ macro_rules! group {
     }};
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Group<'a> {
     //TODO: Does this need to be Boxed?
     pub children: Vec<Box<dyn Widget<'a> + 'a>>,
-    pub area_new: UnitRect,
+    pub size: Size,
     //Private for better LSP support.
     bg: Option<Color>,
     gap: usize,
@@ -54,7 +54,13 @@ impl<'a> Group<'a> {
             padding: 0,
             gap: 0,
             direction: FlexDirection::default(),
-            area_new: UnitRect::default(),
+            size: Size {
+                x: Unit::Pixel(0),
+                y: Unit::Pixel(0),
+                width: Unit::Auto,
+                height: Unit::Auto,
+                remaining_widgets: None,
+            },
             bg: None,
         }
     }
@@ -85,12 +91,12 @@ impl<'a> Widget<'a> for Group<'a> {
         self
     }
 
-    fn area_mut(&mut self) -> &mut UnitRect {
-        &mut self.area_new
+    fn size_mut(&mut self) -> &mut Size {
+        &mut self.size
     }
 
     fn position(&mut self, size: Size, prev_area: Rect) {
-        self.area_new = prev_area.into();
+        self.size = prev_area.into();
 
         let content_w = prev_area.width.saturating_sub(self.padding * 2);
         let content_h = prev_area.height.saturating_sub(self.padding * 2);
@@ -101,23 +107,30 @@ impl<'a> Widget<'a> for Group<'a> {
         // dbg!(prev_area.width, size.width.to_pixels(content_w));
         let remaining_width = prev_area.width - size.width.to_pixels(content_w);
         let remaining_height = prev_area.height - size.height.to_pixels(content_h);
-
         let remaining_widgets = size.remaining_widgets.unwrap_or(1);
-
+        let usable_width = remaining_width / remaining_widgets;
+        let usable_height = remaining_height / remaining_widgets;
         let last_index = self.children.len().saturating_sub(1);
+
+        dbg!(usable_width);
 
         for (i, child) in self.children.iter_mut().enumerate() {
             // Resolve the child's desired Unit size against the parent's content box.
-            let size = child.size(prev_area);
+            // let size = child.size(prev_area);
+            let size = child.size_mut().clone();
 
             let child_w = match size.width {
-                Unit::Auto => remaining_width / remaining_widgets,
-                _ => size.width.to_pixels(content_w),
+                Unit::Auto => usable_width,
+                Unit::Percentage(p) => ((p as f32 / 100.0) * usable_width as f32).round() as usize,
+                Unit::Pixel(px) => px,
+                _ => unreachable!(),
             };
 
             let child_h = match size.height {
-                Unit::Auto => remaining_height / remaining_widgets,
-                _ => size.height.to_pixels(content_h),
+                Unit::Auto => usable_height,
+                Unit::Percentage(p) => ((p as f32 / 100.0) * usable_height as f32).round() as usize,
+                Unit::Pixel(px) => px,
+                _ => unreachable!(),
             };
 
             child.position(size, Rect::new(current_x, current_y, child_w, child_h));
@@ -129,7 +142,7 @@ impl<'a> Widget<'a> for Group<'a> {
         }
     }
 
-    fn size(&self, parent: Rect) -> Size {
+    fn calculate_size(&self, parent: Rect) -> Size {
         let mut total_width = 0;
         let mut total_height = 0;
         let mut remaining_widgets = 0;
@@ -156,16 +169,27 @@ impl<'a> Widget<'a> for Group<'a> {
                 FlexDirection::LeftRight => {
                     total_width += total_gap;
                     for child in &self.children {
-                        let size = child.size(parent);
+                        let size = child.calculate_size(parent);
                         let (wu, hu) = (size.width, size.height);
 
+                        //A child has something that needs a second pass.
+                        if size.remaining_widgets.is_some() {
+                            remaining_widgets += 1;
+                        }
+
+                        if matches!(wu, Unit::Auto | Unit::Percentage(_))
+                            || matches!(hu, Unit::Auto | Unit::Percentage(_))
+                        {
+                            remaining_widgets += 1;
+                        }
+
                         let w = match wu {
-                            Unit::Auto => 0,
+                            Unit::Auto | Unit::Percentage(_) => 0,
                             _ => wu.to_pixels(content_w),
                         };
 
                         let h = match hu {
-                            Unit::Auto => 0,
+                            Unit::Auto | Unit::Percentage(_) => 0,
                             _ => hu.to_pixels(content_h),
                         };
 
@@ -174,40 +198,49 @@ impl<'a> Widget<'a> for Group<'a> {
                     }
                 }
                 FlexDirection::TopBottom => {
-                    total_height += total_gap;
-                    for child in &self.children {
-                        //TODO: The size of the current container isn't known
-                        //currently we just pass in the parent size.
-                        //This is probably not correct...
-                        let size = child.size(parent);
-                        let (wu, hu) = (size.width, size.height);
+                    todo!()
+                    // total_height += total_gap;
+                    // for child in &self.children {
+                    //     let size = child.size(parent);
+                    //     let (wu, hu) = (size.width, size.height);
 
-                        if wu == Unit::Auto || hu == Unit::Auto {
-                            remaining_widgets += 1;
-                        }
+                    //     if wu == Unit::Auto || hu == Unit::Auto {
+                    //         remaining_widgets += 1;
+                    //     }
 
-                        let w = match wu {
-                            Unit::Auto => 0,
-                            _ => wu.to_pixels(content_w),
-                        };
+                    //     let w = match wu {
+                    //         Unit::Auto => {
+                    //             requires_second_pass = true;
+                    //             0
+                    //         }
+                    //         _ => wu.to_pixels(content_w),
+                    //     };
 
-                        let h = match hu {
-                            Unit::Auto => 0,
-                            _ => hu.to_pixels(content_h),
-                        };
+                    //     let h = match hu {
+                    //         Unit::Auto => {
+                    //             requires_second_pass = true;
+                    //             0
+                    //         }
+                    //         _ => hu.to_pixels(content_h),
+                    //     };
 
-                        // dbg!(wu, w, hu, h);
-                        total_width = total_width.max(w);
-                        total_height += h;
-                    }
+                    //     total_width = total_width.max(w);
+                    //     total_height += h;
+                    // }
                 }
             }
         }
 
         Size {
+            x: Unit::Pixel(0),
+            y: Unit::Pixel(0),
             width: Unit::Pixel(total_width + self.padding * 2),
             height: Unit::Pixel(total_height + self.padding * 2),
-            remaining_widgets: Some(remaining_widgets),
+            remaining_widgets: if remaining_widgets == 0 {
+                None
+            } else {
+                Some(remaining_widgets)
+            },
         }
     }
 
@@ -273,7 +306,7 @@ impl<'a> Drop for FlexRoot<'a> {
         let total_area = Rect::new(self.margin, self.margin, w, h);
 
         // self.group.layout(total_area);
-        let current_size = self.group.size(total_area);
+        let current_size = self.group.calculate_size(total_area);
         self.group.position(current_size, total_area);
 
         //TODO: Remove context from handle_event and use atomic mouse state :)
@@ -305,11 +338,13 @@ mod tests {
         group.children.push(Box::new(rect().wh(200)));
         group.children.push(Box::new(rect().h_fill().w_fill()));
 
-        let size = group.size(total_area);
+        let size = group.calculate_size(total_area);
 
         assert_eq!(
             size,
             Size {
+                x: Unit::Pixel(0),
+                y: Unit::Pixel(0),
                 width: Unit::Pixel(200),
                 height: Unit::Pixel(200),
                 remaining_widgets: Some(2),
@@ -318,9 +353,9 @@ mod tests {
 
         group.position(size, total_area);
 
-        assert_eq!(*group.children[0].area_mut(), *rect().w(300).h(200).area_mut());
-        assert_eq!(*group.children[1].area_mut(), *rect().y(200).wh(200).area_mut());
-        assert_eq!(*group.children[2].area_mut(), *rect().y(400).w(300).h(200).area_mut());
+        assert_eq!(*group.children[0].size_mut(), *rect().w(300).h(200).size_mut());
+        assert_eq!(*group.children[1].size_mut(), *rect().y(200).wh(200).size_mut());
+        assert_eq!(*group.children[2].size_mut(), *rect().y(400).w(300).h(200).size_mut());
     }
 
     #[test]
@@ -332,11 +367,13 @@ mod tests {
         group.children.push(Box::new(rect().w(20.percent()).h(200)));
         group.children.push(Box::new(rect().w(40.percent()).h(200)));
 
-        let size = group.size(total_area);
+        let size = group.calculate_size(total_area);
 
         assert_eq!(
             size,
             Size {
+                x: Unit::Pixel(0),
+                y: Unit::Pixel(0),
                 width: Unit::Pixel(320),
                 height: Unit::Pixel(600),
                 remaining_widgets: Some(0),
@@ -345,9 +382,9 @@ mod tests {
 
         group.position(size, total_area);
 
-        assert_eq!(*group.children[0].area_mut(), *rect().y(0).w(320).h(200).area_mut());
-        assert_eq!(*group.children[1].area_mut(), *rect().y(200).w(160).h(200).area_mut());
-        assert_eq!(*group.children[2].area_mut(), *rect().y(400).w(320).h(200).area_mut());
+        assert_eq!(*group.children[0].size_mut(), *rect().y(0).w(320).h(200).size_mut());
+        assert_eq!(*group.children[1].size_mut(), *rect().y(200).w(160).h(200).size_mut());
+        assert_eq!(*group.children[2].size_mut(), *rect().y(400).w(320).h(200).size_mut());
     }
 
     #[test]
@@ -361,11 +398,13 @@ mod tests {
         group.children.push(Box::new(subgroup));
         group.children.push(Box::new(rect().wh(200)));
 
-        let size = group.size(total_area);
+        let size = group.calculate_size(total_area);
 
         assert_eq!(
             size,
             Size {
+                x: Unit::Pixel(0),
+                y: Unit::Pixel(0),
                 width: Unit::Pixel(200),
                 height: Unit::Pixel(300),
                 remaining_widgets: Some(0),
@@ -374,8 +413,8 @@ mod tests {
 
         group.position(size, total_area);
 
-        assert_eq!(*group.children[0].area_mut(), *rect().y(0).wh(100).area_mut());
-        assert_eq!(*group.children[1].area_mut(), *rect().y(100).wh(200).area_mut());
+        assert_eq!(*group.children[0].size_mut(), *rect().y(0).wh(100).size_mut());
+        assert_eq!(*group.children[1].size_mut(), *rect().y(100).wh(200).size_mut());
     }
 
     #[test]
@@ -392,7 +431,7 @@ mod tests {
         group.children.push(Box::new(subgroup));
         // group.children.push(Box::new(rect().wh(200)));
 
-        let size = group.size(total_area);
+        let size = group.calculate_size(total_area);
         dbg!(size);
 
         // assert_eq!(

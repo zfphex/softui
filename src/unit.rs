@@ -1,10 +1,55 @@
 use crate::*;
 
+pub fn size(x: impl Into<Unit>, y: impl Into<Unit>, width: impl Into<Unit>, height: impl Into<Unit>) -> Size {
+    Size {
+        x: x.into(),
+        y: y.into(),
+        width: width.into(),
+        height: height.into(),
+        remaining_widgets: None,
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Size {
+    pub x: Unit,
+    pub y: Unit,
     pub width: Unit,
     pub height: Unit,
     pub remaining_widgets: Option<usize>,
+}
+
+impl Size {
+    #[track_caller]
+    pub fn into_rect(self) -> Rect {
+        let x = match self.x {
+            Unit::Pixel(px) => px,
+            _ => unreachable!(),
+        };
+
+        let y = match self.y {
+            Unit::Pixel(px) => px,
+            _ => unreachable!(),
+        };
+
+        let width = match self.width {
+            Unit::Pixel(px) => px,
+            _ => unreachable!(),
+        };
+
+        let height = match self.height {
+            Unit::Pixel(px) => px,
+            _ => unreachable!(),
+        };
+
+        Rect::new(x, y, width, height)
+    }
+}
+
+impl From<Rect> for Size {
+    fn from(area: Rect) -> Self {
+        size(area.x, area.y, area.width, area.height)
+    }
 }
 
 pub trait RelativeWidth {
@@ -20,12 +65,6 @@ pub enum Unit {
     Percentage(usize),
     Em(usize),
     Auto,
-}
-
-impl From<Rect> for UnitRect {
-    fn from(area: Rect) -> Self {
-        urect(area.x, area.y, area.width, area.height)
-    }
 }
 
 impl Unit {
@@ -53,7 +92,7 @@ impl RelativeWidth for usize {
     fn em(self) -> Unit {
         Unit::Em(self)
     }
-    
+
     fn pixel(self) -> Unit {
         Unit::Pixel(self)
     }
@@ -62,54 +101,5 @@ impl RelativeWidth for usize {
 impl From<usize> for Unit {
     fn from(value: usize) -> Self {
         Unit::Pixel(value)
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub struct UnitRect {
-    pub x: Unit,
-    pub y: Unit,
-    pub width: Unit,
-    pub height: Unit,
-}
-
-impl UnitRect {
-    pub fn into_rect(self) -> Rect {
-        let x = match self.x {
-            Unit::Pixel(px) => px,
-            _ => unreachable!(),
-        };
-
-        let y = match self.y {
-            Unit::Pixel(px) => px,
-            _ => unreachable!(),
-        };
-
-        let width = match self.width {
-            Unit::Pixel(px) => px,
-            _ => unreachable!(),
-        };
-
-        let height = match self.height {
-            Unit::Pixel(px) => px,
-            _ => unreachable!(),
-        };
-
-        Rect::new(x, y, width, height)
-    }
-}
-
-impl Default for UnitRect {
-    fn default() -> Self {
-        urect(0, 0, Unit::Auto, Unit::Auto)
-    }
-}
-
-pub fn urect(x: impl Into<Unit>, y: impl Into<Unit>, width: impl Into<Unit>, height: impl Into<Unit>) -> UnitRect {
-    UnitRect {
-        x: x.into(),
-        y: y.into(),
-        width: width.into(),
-        height: height.into(),
     }
 }

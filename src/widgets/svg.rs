@@ -50,7 +50,7 @@ impl<'a> Widget<'a> for SvgRef<'a> {
         });
     }
     
-    fn size(&self, parent: Rect) -> Size {
+    fn calculate_size(&self, parent: Rect) -> Size {
         todo!()
     }
     
@@ -58,7 +58,7 @@ impl<'a> Widget<'a> for SvgRef<'a> {
         todo!()
     }
     
-    fn area_mut(&mut self) -> &mut UnitRect {
+    fn size_mut(&mut self) -> &mut Size {
         todo!()
     }
 }

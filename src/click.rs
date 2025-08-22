@@ -116,8 +116,8 @@ where
         self.widget = self.widget.direction(direction);
         self
     }
-    fn area_mut(&mut self) -> &mut UnitRect {
-        self.widget.area_mut()
+    fn size_mut(&mut self) -> &mut Size {
+        self.widget.size_mut()
     }
     fn draw(&self, cmds: &mut Vec<Command>, style: Option<Style>) {
         self.widget.draw(cmds, self.style)
@@ -133,16 +133,16 @@ where
         // Then run all matching handlers
         for (button, action, h) in &mut self.handlers {
             if match action {
-                MouseAction::Clicked => clicked(ctx, self.widget.area_mut().into_rect(), *button),
-                MouseAction::Pressed => pressed(ctx, self.widget.area_mut().into_rect(), *button),
-                MouseAction::Released => released(ctx, self.widget.area_mut().into_rect(), *button),
+                MouseAction::Clicked => clicked(ctx, self.widget.size_mut().clone().into_rect(), *button),
+                MouseAction::Pressed => pressed(ctx, self.widget.size_mut().clone().into_rect(), *button),
+                MouseAction::Released => released(ctx, self.widget.size_mut().clone().into_rect(), *button),
             } {
                 h(&mut self.widget);
             }
         }
     }
-    fn size(&self, parent: Rect) -> Size {
-        self.widget.size(parent)
+    fn calculate_size(&self, parent: Rect) -> Size {
+        self.widget.calculate_size(parent)
     }
     fn position(&mut self, size: Size, parent: Rect) {
         self.widget.position(size, parent);

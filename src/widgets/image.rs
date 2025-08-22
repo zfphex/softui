@@ -16,7 +16,7 @@ pub enum ImageFormat {
 pub fn image_ref<'a>(image: &'a Image) -> ImageRef<'a> {
     ImageRef {
         format: image.format,
-        area: image.area.into(),
+        size: image.area.into(),
         bitmap: &image.bitmap,
     }
 }
@@ -71,21 +71,17 @@ pub struct Image {
 #[derive(Debug, Clone)]
 pub struct ImageRef<'a> {
     pub format: ImageFormat,
-    pub area: UnitRect,
+    pub size: Size,
     pub bitmap: &'a [u8],
 }
 
 impl<'a> Widget<'a> for ImageRef<'a> {
-    fn size(&self, parent: Rect) -> Size {
-        Size {
-            width: self.area.width,
-            height: self.area.height,
-            remaining_widgets: None,
-        }
+    fn calculate_size(&self, parent: Rect) -> Size {
+        self.size.clone()
     }
 
     fn position(&mut self, size: Size, parent: Rect) {
-        self.area = parent.into();
+        self.size = parent.into();
     }
 
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
@@ -93,12 +89,12 @@ impl<'a> Widget<'a> for ImageRef<'a> {
         let bitmap = unsafe { std::mem::transmute::<&'a [u8], &'static [u8]>(self.bitmap) };
 
         commands.push(Command {
-            area: self.area.into_rect(),
+            area: self.size.clone().into_rect(),
             primative: Primative::ImageUnsafe(bitmap, self.format),
         });
     }
 
-    fn area_mut(&mut self) -> &mut UnitRect {
-        &mut self.area
+    fn size_mut(&mut self) -> &mut Size {
+        &mut self.size
     }
 }

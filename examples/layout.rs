@@ -27,10 +27,10 @@ use softui::*;
 fn main() {
     // let window = Rect::new(0, 0, 800, 600);
     let margin = 0;
-    let total_area = Rect::new(margin, margin, 800, 600);
+    let parent = Rect::new(margin, margin, 800, 600);
 
     let mut group = Group::new().direction(TopBottom);
-    group.area_new = urect(0, 0, 800, 600);
+    group.size = size(0, 0, 800, 600);
 
     //(320, 200)
     //(160, 200)
@@ -49,8 +49,8 @@ fn main() {
     group.children.push(Box::new(rect().wh(200)));
 
     dbg!(&group.children);
-    let size = group.size(total_area);
-    group.position(size, total_area);
+    let size = group.calculate_size(parent);
+    group.position(size, parent);
 
     let mut commands = Vec::new();
     group.draw(&mut commands, None);

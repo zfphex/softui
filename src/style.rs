@@ -62,8 +62,8 @@ where
         Some(self.style)
     }
 
-    fn area_mut(&mut self) -> &mut UnitRect {
-        self.widget.area_mut()
+    fn size_mut(&mut self) -> &mut Size {
+        self.widget.size_mut()
     }
 
     fn handle_event(&mut self, ctx: &mut Context) {
@@ -74,10 +74,10 @@ where
         self.widget.draw(commands, style);
     }
 
-    fn size(&self, parent: Rect) -> Size {
-        self.widget.size(parent)
+    fn calculate_size(&self, parent: Rect) -> Size {
+        self.widget.calculate_size(parent)
     }
-    
+
     fn position(&mut self, size: Size, parent: Rect) {
         self.widget.position(size, parent);
     }

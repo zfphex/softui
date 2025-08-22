@@ -44,10 +44,24 @@ Remaining.size (780, 600) //Not sure what to do about the height
 
 - Post Sizing Pass
 
-<!-- The size of H will need to be calculated again.
-Rect(156, 20), Rect(624, 20)
-H.size = (780, 20) -->
+Each unsized widget will get the remaining_length / remaining_widgets.
 
-- Layout Pass
+Usable Width = 780 / 2 = 390
 
-TODO
+H1.size = (78 + 312 = 390, 20)
+H2.size = (78 + 312 = 390, 20)
+
+- Position Pass
+
+Just sets the x and y position.
+
+# Implementation
+
+Root H1(Rect, Rect) H2(Rect, Rect) Rect
+
+Here we have a root container and seven widgets.
+The two containers have an unknown size.
+Their children have an unknown size.
+The last widget has a fixed size.
+
+We need a way for each parent container to have a size 

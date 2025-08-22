@@ -29,11 +29,11 @@ pub use dwrite::*;
 use crate::*;
 
 pub trait Widget<'a>: std::fmt::Debug {
-    fn size(&self, parent: Rect) -> Size;
+    fn calculate_size(&self, parent: Rect) -> Size;
 
     fn position(&mut self, size: Size, parent: Rect);
 
-    fn area_mut(&mut self) -> &mut UnitRect;
+    fn size_mut(&mut self) -> &mut Size;
 
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>);
 
@@ -83,8 +83,8 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut().height = Unit::Auto;
-        self.area_mut().width = Unit::Auto;
+        self.size_mut().height = Unit::Auto;
+        self.size_mut().width = Unit::Auto;
         self
     }
 
@@ -92,7 +92,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut().height = Unit::Auto;
+        self.size_mut().height = Unit::Auto;
         self
     }
 
@@ -100,7 +100,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut().width = Unit::Auto;
+        self.size_mut().width = Unit::Auto;
         self
     }
 
@@ -122,8 +122,8 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut().height = unit.into();
-        self.area_mut().width = unit.into();
+        self.size_mut().height = unit.into();
+        self.size_mut().width = unit.into();
         self
     }
 
@@ -131,7 +131,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut().x = unit.into();
+        self.size_mut().x = unit.into();
         self
     }
 
@@ -139,7 +139,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut().y = unit.into();
+        self.size_mut().y = unit.into();
         self
     }
 
@@ -147,7 +147,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut().width = unit.into();
+        self.size_mut().width = unit.into();
         self
     }
 
@@ -155,7 +155,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.area_mut().height = unit.into();
+        self.size_mut().height = unit.into();
         self
     }
 
