@@ -48,6 +48,7 @@ fn main() {
     // dbg!(size, group.children);
 
     group.position(size, parent);
+    dbg!(group.children);
 
     // let mut commands = Vec::new();
     // group.draw(&mut commands, None);

@@ -57,11 +57,18 @@ Just sets the x and y position.
 
 # Implementation
 
-Root H1(Rect, Rect) H2(Rect, Rect) Rect
+Group H1(Rect, Rect) H2(Rect, Rect) Rect
 
 Here we have a root container and seven widgets.
 The two containers have an unknown size.
 Their children have an unknown size.
 The last widget has a fixed size.
 
-We need a way for each parent container to have a size 
+Group has a size of (20, 20)
+H1 has a size of (Auto, Auto)
+    Rect(20%, 20)
+    Rect(80%, 20)
+H2 has a size of (Auto, Auto)
+    Rect(20%, 20)
+    Rect(80%, 20)
+

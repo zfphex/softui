@@ -95,24 +95,38 @@ impl<'a> Widget<'a> for Group<'a> {
         &mut self.size
     }
 
-    fn position(&mut self, size: Size, prev_area: Rect) {
-        self.size = prev_area.into();
+    fn position(&mut self, size: Size, parent: Rect) {
+        let content_w = parent.width.saturating_sub(self.padding * 2);
+        let content_h = parent.height.saturating_sub(self.padding * 2);
 
-        let content_w = prev_area.width.saturating_sub(self.padding * 2);
-        let content_h = prev_area.height.saturating_sub(self.padding * 2);
+        let mut current_x = parent.x + self.padding;
+        let mut current_y = parent.y + self.padding;
 
-        let mut current_x = prev_area.x + self.padding;
-        let mut current_y = prev_area.y + self.padding;
+        // dbg!(self.name());
 
-        // dbg!(prev_area.width, size.width.to_pixels(content_w));
-        let remaining_width = prev_area.width - size.width.to_pixels(content_w);
-        let remaining_height = prev_area.height - size.height.to_pixels(content_h);
+        let width = match size.width {
+            Unit::Pixel(px) => px,
+            Unit::Percentage(percent) => (content_w as f32 * percent as f32 / 100.0).round() as usize,
+            Unit::Em(em) => unimplemented!(),
+            Unit::Auto => 0,
+        };
+
+        let height = match size.height {
+            Unit::Pixel(px) => px,
+            Unit::Percentage(percent) => (content_h as f32 * percent as f32 / 100.0).round() as usize,
+            Unit::Em(em) => unimplemented!(),
+            Unit::Auto => 0,
+        };
+
+        let remaining_width = content_w - width;
+        let remaining_height = content_h - height;
         let remaining_widgets = size.remaining_widgets.unwrap_or(1);
+        debug_assert!(remaining_widgets >= 1);
         let usable_width = remaining_width / remaining_widgets;
         let usable_height = remaining_height / remaining_widgets;
         let last_index = self.children.len().saturating_sub(1);
 
-        dbg!(usable_width);
+        // dbg!(content_w, width, usable_width, remaining_widgets);
 
         for (i, child) in self.children.iter_mut().enumerate() {
             // Resolve the child's desired Unit size against the parent's content box.
