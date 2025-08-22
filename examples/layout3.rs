@@ -23,8 +23,6 @@ fn main() {
                 rect().wh(20).bg(lime())
             )
             .direction(LeftRight);
-            dbg!(&f.group.children);
-            return;
         }
 
         ctx.draw_frame();
