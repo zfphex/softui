@@ -59,7 +59,8 @@ impl<'a> Text<'a> {
         self.calculate_area()
     }
     fn calculate_area(mut self) -> Self {
-        let canvas_width = ctx().window.width();
+        // let canvas_width = ctx().window.width();
+        let canvas_width = ctx_width();
         let font = default_font().unwrap();
         let mut area = self.area;
 

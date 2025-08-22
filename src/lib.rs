@@ -1,6 +1,7 @@
 #![allow(unused, static_mut_refs, incomplete_features)]
 #![feature(associated_type_defaults, specialization)]
 use mini::{error, info, profile, warn};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{any::Any, borrow::Cow, pin::Pin, sync::Arc};
 
 pub use core::ffi::c_void;
@@ -130,6 +131,17 @@ pub unsafe fn extend_lifetime<'a, T>(t: &'a T) -> &'static T {
 //Use atomics and support multiple windows.
 pub static mut CTX: Option<Context> = None;
 
+pub static mut WIDTH: AtomicUsize = AtomicUsize::new(0);
+pub static mut HEIGHT: AtomicUsize = AtomicUsize::new(0);
+
+pub fn ctx_width() -> usize {
+    unsafe { WIDTH.load(Ordering::Relaxed) }
+}
+
+pub fn ctx_height() -> usize {
+    unsafe { HEIGHT.load(Ordering::Relaxed) }
+}
+
 #[inline]
 pub fn ctx() -> &'static mut Context {
     unsafe { CTX.as_mut().unwrap() }
@@ -192,6 +204,13 @@ impl Context {
     //     ScaledUnit::ViewportHeight(0)
     // }
 
+    fn update_area(&self) {
+        unsafe {
+            WIDTH.store(self.window.width(), Ordering::Relaxed);
+            HEIGHT.store(self.window.height(), Ordering::Relaxed);
+        }
+    }
+
     #[inline]
     pub fn event(&mut self) -> Option<Event> {
         self.window.event()
@@ -205,6 +224,9 @@ impl Context {
     //TODO: There is no support for depth.
     pub fn draw_frame(&mut self) {
         profile!();
+
+        //Update the atomic's used to access area.
+        self.update_area();
 
         while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
             let x = cmd.area.x;

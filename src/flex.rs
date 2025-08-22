@@ -407,7 +407,9 @@ impl<'a> FlexRoot<'a> {
 impl<'a> Drop for FlexRoot<'a> {
     fn drop(&mut self) {
         let ctx = ctx();
-        let (w, h) = (ctx.window.width(), ctx.window.height());
+        // let (w, h) = (ctx.window.width(), ctx.window.height());
+        let (w, h) = (ctx_width(), ctx_height());
+
         let total_area = Rect::new(self.margin, self.margin, w, h);
 
         // self.group.layout(total_area);
