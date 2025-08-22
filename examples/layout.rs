@@ -50,7 +50,7 @@ fn main() {
 
     dbg!(&group.children);
     let size = group.size(total_area);
-    group.layout(size, total_area);
+    group.position(size, total_area);
 
     let mut commands = Vec::new();
     group.draw(&mut commands, None);

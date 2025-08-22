@@ -154,7 +154,7 @@ impl<'a> Widget<'a> for Text<'a> {
         todo!()
     }
 
-    fn layout(&mut self, size: Size, parent: Rect) {
+    fn position(&mut self, size: Size, parent: Rect) {
         todo!()
     }
 

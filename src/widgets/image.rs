@@ -84,7 +84,7 @@ impl<'a> Widget<'a> for ImageRef<'a> {
         }
     }
 
-    fn layout(&mut self, size: Size, parent: Rect) {
+    fn position(&mut self, size: Size, parent: Rect) {
         self.area = parent.into();
     }
 

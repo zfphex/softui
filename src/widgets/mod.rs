@@ -31,7 +31,7 @@ use crate::*;
 pub trait Widget<'a>: std::fmt::Debug {
     fn size(&self, parent: Rect) -> Size;
 
-    fn layout(&mut self, size: Size, parent: Rect);
+    fn position(&mut self, size: Size, parent: Rect);
 
     fn area_mut(&mut self) -> &mut UnitRect;
 

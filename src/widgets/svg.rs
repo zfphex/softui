@@ -54,7 +54,7 @@ impl<'a> Widget<'a> for SvgRef<'a> {
         todo!()
     }
     
-    fn layout(&mut self, size: Size, parent: Rect) {
+    fn position(&mut self, size: Size, parent: Rect) {
         todo!()
     }
     
