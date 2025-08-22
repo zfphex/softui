@@ -14,11 +14,12 @@ fn main() {
             let f = flex!(
                 h!(
                     rect().w(40.percent()).h(200),
-                    rect().w(20.percent()).h(200),
-                    rect().w(40.percent()).h(200)
+                    rect().w(20.percent()).h(200).bg(red()),
+                    rect().w(20.percent()).h(200).bg(blue())
                 ),
-                rect().wh(200) // v!(rect().w_new(200).h_new(200).bg(blue()), rect().wh_new(200).bg(red())),
-            );
+                rect().wh(200).bg(green())
+            )
+            .direction(LeftRight);
 
             #[cfg(feature = "info")]
             dbg!(&f.group);

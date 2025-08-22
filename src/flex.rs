@@ -241,8 +241,11 @@ impl<'a> Widget<'a> for Group<'a> {
         let mut current_x = prev_area.x + self.padding;
         let mut current_y = prev_area.y + self.padding;
 
+        // dbg!(prev_area.width, size.width.to_pixels(content_w));
+        dbg!(prev_area.height, size.height);
         let remaining_width = prev_area.width - size.width.to_pixels(content_w);
         let remaining_height = prev_area.height - size.height.to_pixels(content_h);
+
         let remaining_widgets = size.remaining_widgets.unwrap_or(1);
 
         let last_index = self.children.len().saturating_sub(1);
@@ -278,17 +281,20 @@ impl<'a> Widget<'a> for Group<'a> {
         if !self.children.is_empty() {
             let total_gap = self.gap * (self.children.len() - 1);
 
-            let content_w = match self.area_new.width {
-                Unit::Pixel(px) => px.saturating_sub(self.padding * 2),
-                Unit::Percentage(percentage) => todo!("Group has size: {}", percentage),
-                Unit::Auto => parent.width,
-                _ => todo!("Assume fixed size for now"),
-            };
-            let content_h = match self.area_new.height {
-                Unit::Pixel(px) => px.saturating_sub(self.padding * 2),
-                Unit::Auto => parent.height,
-                _ => todo!("Assume fixed size for now"),
-            };
+            // let content_w = match self.area_new.width {
+            //     Unit::Pixel(px) => px.saturating_sub(self.padding * 2),
+            //     Unit::Percentage(percentage) => todo!("Group has size: {}", percentage),
+            //     Unit::Auto => parent.width,
+            //     _ => todo!("Assume fixed size for now"),
+            // };
+            // let content_h = match self.area_new.height {
+            //     Unit::Pixel(px) => px.saturating_sub(self.padding * 2),
+            //     Unit::Auto => parent.height,
+            //     _ => todo!("Assume fixed size for now"),
+            // };
+
+            let content_w = parent.width.saturating_sub(self.padding * 2);
+            let content_h = parent.height.saturating_sub(self.padding * 2);
 
             match self.direction {
                 FlexDirection::LeftRight => {
@@ -307,8 +313,8 @@ impl<'a> Widget<'a> for Group<'a> {
                             _ => hu.to_pixels(content_h),
                         };
 
-                        total_width += w;
                         total_height = total_height.max(h);
+                        total_width += w;
                     }
                 }
                 FlexDirection::TopBottom => {
@@ -334,7 +340,7 @@ impl<'a> Widget<'a> for Group<'a> {
                             _ => hu.to_pixels(content_h),
                         };
 
-                        dbg!(wu, w, hu, h);
+                        // dbg!(wu, w, hu, h);
                         total_width = total_width.max(w);
                         total_height += h;
                     }
