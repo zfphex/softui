@@ -43,12 +43,16 @@ fn main() {
 
     group.children.push(Box::new(rect().wh(20)));
 
-    // dbg!(&group.children);
     let size = group.calculate_size(parent);
-    // dbg!(size, group.children);
+    assert!(size.width == Unit::Auto);
+    assert!(size.height == 20.pixel());
 
     group.position(size, parent);
-    dbg!(group.children);
+
+    let size = group.children[0].size_mut().clone();
+    dbg!(size);
+
+    // dbg!(group.children);
 
     // let mut commands = Vec::new();
     // group.draw(&mut commands, None);

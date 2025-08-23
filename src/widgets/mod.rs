@@ -32,6 +32,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn calculate_size(&self, parent: Rect) -> Size;
 
     fn position(&mut self, size: Size, parent: Rect);
+    fn position_old(&mut self, size: Size, parent: Rect) {}
 
     fn size_mut(&mut self) -> &mut Size;
 

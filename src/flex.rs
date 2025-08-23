@@ -95,7 +95,43 @@ impl<'a> Widget<'a> for Group<'a> {
         &mut self.size
     }
 
-    fn position(&mut self, size: Size, parent: Rect) {
+    fn position(&mut self, current_widget_size: Size, parent: Rect) {
+        self.size = current_widget_size;
+        let mut x = parent.x + self.padding;
+        let mut y = parent.y + self.padding;
+        let widgets_remaining = self.size.remaining_widgets.unwrap_or(1);
+
+        let (rem_width, rem_height) = match self.direction {
+            LeftRight => {
+                let width = match self.size.width {
+                    Unit::Auto => parent.width - 0,
+                    Unit::Pixel(width) => parent.width - width,
+                    Unit::Percentage(_) => todo!(),
+                    Unit::Em(_) => todo!(),
+                };
+
+                let height = match self.size.height {
+                    Unit::Auto => parent.height - 0,
+                    Unit::Pixel(height) => parent.height.max(height),
+                    Unit::Percentage(_) => todo!(),
+                    Unit::Em(_) => todo!(),
+                };
+
+                (
+                    width.saturating_sub(self.padding * 2),
+                    height.saturating_sub(self.padding * 2),
+                )
+            }
+            TopBottom => todo!(),
+        };
+
+        let (available_width, available_height) = match self.direction {
+            LeftRight => (rem_width / widgets_remaining, rem_height),
+            TopBottom => (widgets_remaining, rem_height / widgets_remaining),
+        };
+    }
+
+    fn position_old(&mut self, size: Size, parent: Rect) {
         mini::info_raw!("{}\nsize: {:?}\n", self.name(), parent);
         // self.size = parent.into();
         self.size = size.clone();
