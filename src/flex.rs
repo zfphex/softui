@@ -124,8 +124,13 @@ impl<'a> Widget<'a> for Group<'a> {
         let remaining_height = content_h - height;
         let remaining_widgets = size.remaining_widgets.unwrap_or(1);
         debug_assert!(remaining_widgets >= 1);
-        let usable_width = remaining_width / remaining_widgets;
-        let usable_height = remaining_height / remaining_widgets;
+
+        //IDK if this is right.
+        let (usable_width, usable_height) = match self.direction {
+            LeftRight => (remaining_width / remaining_widgets, remaining_height),
+            TopBottom => (remaining_width, remaining_height / remaining_widgets),
+        };
+
         let last_index = self.children.len().saturating_sub(1);
 
         // dbg!(self.name());
@@ -133,8 +138,8 @@ impl<'a> Widget<'a> for Group<'a> {
 
         for (i, child) in self.children.iter_mut().enumerate() {
             // Resolve the child's desired Unit size against the parent's content box.
-            let size = child.calculate_size(parent);
-            // let size = child.size_mut().clone();
+            // let size = child.calculate_size(parent);
+            let size = child.size_mut().clone();
             // dbg!(&size, child.calculate_size(size.clone().into_rect()));
             // dbg!(&size, child.calculate_size(parent));
 

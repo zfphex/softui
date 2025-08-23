@@ -64,11 +64,74 @@ The two containers have an unknown size.
 Their children have an unknown size.
 The last widget has a fixed size.
 
-Group has a size of (20, 20)
+- Inital
+
+Direction LeftRight
+WindowSize (800, 600)
+Group has a size of (Auto, Auto)
 H1 has a size of (Auto, Auto)
     Rect(20%, 20)
     Rect(80%, 20)
 H2 has a size of (Auto, Auto)
     Rect(20%, 20)
     Rect(80%, 20)
+
+Rect(20, 20)
+
+- Calculate Size
+
+Group has a size of (20, 20, 1 widget remains)
+
+H1 has a size of (Auto, Auto, 2 widgets remain)
+    Rect(20%, 20)
+    Rect(80%, 20)
+
+H2 has a size of (Auto, Auto, 2 widgets remain)
+    Rect(20%, 20)
+    Rect(80%, 20)
+
+- Position
+
+Group.Position(Parent = WindowSize)
+    X = Parent.X + Padding
+    Y = Parent.Y + Padding
+    Width = Parent.Width - Group.Width = 800 - 20 = 780
+    Height = Parent.Height.Max(Group.Height) = 20 //can overflow the window
+
+    WidgetsLeft = 1
+    //Different for TopBottom direction
+    AvailableWidth = Width / WidgetsLeft = 780
+    AvailableHeight = Height
+
+        H1.Position(Parent = (AvailableWidth, AvailableHeight))
+            Width = Parent.Width - H1.Width = 780 - 0
+            Height = Parent.Height.Max(H1.Height) = 20
+            WidgetsLeft = 2
+            AvailableWidth = Width / WidgetsLeft = 390
+            AvailableHeight = Height = 20
+                Rect.Size = (20% * AvailableWidth, 20) = (78, 20)
+                Rect.Size = (80% * AvailableWidth, 20) = (312, 20)
+            
+            H1.Size = (78 + 312 = 390, 20)
+            X += H1.Size.X
+
+        H2.Position(Parent = (AvailableWidth, AvailableHeight))
+            Width = Parent.Width - H1.Width = 780 - 0
+            Height = Parent.Height.Max(H1.Height) = 20
+            WidgetsLeft = 2
+            AvailableWidth = Width / WidgetsLeft = 390
+            AvailableHeight = Height = 20
+                Rect.Size = (20% * AvailableWidth, 20) = (78, 20)
+                Rect.Size = (80% * AvailableWidth, 20) = (312, 20)
+            
+            H1.Size = (78 + 312 = 390, 20)
+            X += H1.Size.X
+        
+        Rect.Position(Parent = ???)
+            Width = Rect.Width = 20
+            Height = Rect.Height = 20
+            X += Rect.Size.X
+
+The avaliable space to distribute between H1 and H2 is (800 - 20 = 780, 600)
+Note the height doesn't change.
 
