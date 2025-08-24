@@ -100,6 +100,9 @@ impl<'a> Widget<'a> for Group<'a> {
     }
 
     fn position_new(&mut self, parent: Rect) {
+        let size = self.size.clone();
+        let widgets_remaining = size.remaining_widgets.unwrap_or(1);
+
         self.size = parent.into();
 
         let mut x = parent.x + self.padding;
@@ -107,23 +110,22 @@ impl<'a> Widget<'a> for Group<'a> {
         let mut width = 0;
         let mut height = 0;
 
-        let widgets_remaining = self.size.remaining_widgets.unwrap_or(1);
         let (available_width, available_height) = match self.direction {
             LeftRight => {
-                let width = match self.size.width {
-                    Unit::Auto(_) => parent.width - 0,
+                let width = match size.width {
+                    Unit::Auto(used_width) => parent.width - used_width,
                     Unit::Pixel(width) => width,
                     Unit::Percentage(_) => todo!(),
                     Unit::Em(_) => todo!(),
                 };
+                dbg!(size.width, parent.width, width);
 
-                let height = match self.size.height {
-                    Unit::Auto(_) => parent.height - 0,
-                    Unit::Pixel(height) => parent.height.max(height),
+                let height = match size.height {
+                    Unit::Auto(used_height) => parent.height.max(used_height),
+                    Unit::Pixel(height) => height,
                     Unit::Percentage(_) => todo!(),
                     Unit::Em(_) => todo!(),
                 };
-                dbg!(width, height);
 
                 (
                     width.saturating_sub(self.padding * 2) / widgets_remaining,
@@ -134,27 +136,30 @@ impl<'a> Widget<'a> for Group<'a> {
             // (widgets_remaining, available_height / widgets_remaining),
         };
 
-        dbg!(&available_width, &available_height, widgets_remaining);
+        dbg!(self.name(), &available_width, &available_height, widgets_remaining);
 
         let last_index = self.children.len().saturating_sub(1);
         for (i, child) in self.children.iter_mut().enumerate() {
             // child.position_new(parent);
             let name = child.name().to_string();
-            let size = child.size_mut();
+            let size = child.calculate_size(Rect::new(0, 0, available_width, available_height));
+            // let size = child.size_mut();
 
             // dbg!(&size);
             let width = match size.width {
                 Unit::Pixel(px) => px,
                 Unit::Percentage(p) => (p as f32 / 100.0 * available_width as f32).round() as usize,
                 Unit::Em(_) => todo!(),
-                Unit::Auto(_) => available_width,
+                Unit::Auto(0) => available_width,
+                Unit::Auto(used_width) => todo!(),
             };
 
             let height = match size.height {
                 Unit::Pixel(px) => px,
                 Unit::Percentage(_) => todo!(),
                 Unit::Em(_) => todo!(),
-                Unit::Auto(_) => available_height,
+                Unit::Auto(0) => available_height,
+                Unit::Auto(used_height) => available_height,
             };
 
             dbg!(name, &size, x, y, width, height);
@@ -165,6 +170,9 @@ impl<'a> Widget<'a> for Group<'a> {
                 FlexDirection::LeftRight => x += width + if i != last_index { self.gap } else { 0 },
                 FlexDirection::TopBottom => y += height + if i != last_index { self.gap } else { 0 },
             }
+            if i == 1 {
+                return;
+            };
         }
     }
 
@@ -182,13 +190,14 @@ impl<'a> Widget<'a> for Group<'a> {
                 FlexDirection::LeftRight => {
                     total_width += total_gap;
                     for child in &mut self.children {
-                        let size = child.calculate_size(parent);
+                        // let size = child.calculate_size(parent);
+                        let size = child.size_mut();
                         let (wu, hu) = (size.width, size.height);
 
                         //A child has something that needs a second pass.
-                        if size.remaining_widgets.is_some() {
-                            remaining_widgets += 1;
-                        }
+                        // if size.remaining_widgets.is_some() {
+                        //     remaining_widgets += 1;
+                        // }
 
                         // if matches!(wu, Unit::Auto | Unit::Percentage(_))
                         //     || matches!(hu, Unit::Auto | Unit::Percentage(_))
@@ -215,6 +224,7 @@ impl<'a> Widget<'a> for Group<'a> {
                     }
                 }
                 FlexDirection::TopBottom => {
+                    todo!();
                     total_height += total_gap;
                     for child in &mut self.children {
                         let size = child.calculate_size(parent);
@@ -252,15 +262,13 @@ impl<'a> Widget<'a> for Group<'a> {
             }
         }
 
-        // dbg!(self.name());
-        // dbg!(remaining_widgets);
-        let width = if remaining_widgets > 0 && self.direction == LeftRight {
+        let width = if remaining_widgets > 0 {
             Unit::Auto(total_width + self.padding * 2)
         } else {
             Unit::Pixel(total_width + self.padding * 2)
         };
 
-        let height = if remaining_widgets > 0 && self.direction == TopBottom {
+        let height = if remaining_widgets > 0 {
             Unit::Auto(total_height + self.padding * 2)
         } else {
             Unit::Pixel(total_height + self.padding * 2)
