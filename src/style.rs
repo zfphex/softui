@@ -74,7 +74,7 @@ where
         self.widget.draw(commands, style);
     }
 
-    fn calculate_size(&self, parent: Rect) -> Size {
+    fn calculate_size(&mut self, parent: Rect) -> Size {
         self.widget.calculate_size(parent)
     }
 

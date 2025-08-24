@@ -50,7 +50,7 @@ impl<'a> Widget<'a> for SvgRef<'a> {
         });
     }
     
-    fn calculate_size(&self, parent: Rect) -> Size {
+    fn calculate_size(&mut self, parent: Rect) -> Size {
         todo!()
     }
     

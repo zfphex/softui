@@ -29,7 +29,7 @@ pub use dwrite::*;
 use crate::*;
 
 pub trait Widget<'a>: std::fmt::Debug {
-    fn calculate_size(&self, parent: Rect) -> Size;
+    fn calculate_size(&mut self, parent: Rect) -> Size;
 
     fn position(&mut self, size: Size, parent: Rect);
     fn position_new(&mut self, parent: Rect) {}
@@ -89,8 +89,8 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.size_mut().height = Unit::Auto;
-        self.size_mut().width = Unit::Auto;
+        self.size_mut().height = Unit::Auto(0);
+        self.size_mut().width = Unit::Auto(0);
         self
     }
 
@@ -98,7 +98,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.size_mut().height = Unit::Auto;
+        self.size_mut().height = Unit::Auto(0);
         self
     }
 
@@ -106,7 +106,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.size_mut().width = Unit::Auto;
+        self.size_mut().width = Unit::Auto(0);
         self
     }
 

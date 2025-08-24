@@ -57,8 +57,8 @@ impl<'a> Group<'a> {
             size: Size {
                 x: Unit::Pixel(0),
                 y: Unit::Pixel(0),
-                width: Unit::Auto,
-                height: Unit::Auto,
+                width: Unit::Auto(0),
+                height: Unit::Auto(0),
                 remaining_widgets: None,
             },
             bg: None,
@@ -111,18 +111,19 @@ impl<'a> Widget<'a> for Group<'a> {
         let (available_width, available_height) = match self.direction {
             LeftRight => {
                 let width = match self.size.width {
-                    Unit::Auto => parent.width - 0,
+                    Unit::Auto(_) => parent.width - 0,
                     Unit::Pixel(width) => width,
                     Unit::Percentage(_) => todo!(),
                     Unit::Em(_) => todo!(),
                 };
 
                 let height = match self.size.height {
-                    Unit::Auto => parent.height - 0,
+                    Unit::Auto(_) => parent.height - 0,
                     Unit::Pixel(height) => parent.height.max(height),
                     Unit::Percentage(_) => todo!(),
                     Unit::Em(_) => todo!(),
                 };
+                dbg!(width, height);
 
                 (
                     width.saturating_sub(self.padding * 2) / widgets_remaining,
@@ -146,14 +147,14 @@ impl<'a> Widget<'a> for Group<'a> {
                 Unit::Pixel(px) => px,
                 Unit::Percentage(p) => (p as f32 / 100.0 * available_width as f32).round() as usize,
                 Unit::Em(_) => todo!(),
-                Unit::Auto => available_width,
+                Unit::Auto(_) => available_width,
             };
 
             let height = match size.height {
                 Unit::Pixel(px) => px,
                 Unit::Percentage(_) => todo!(),
                 Unit::Em(_) => todo!(),
-                Unit::Auto => available_height,
+                Unit::Auto(_) => available_height,
             };
 
             dbg!(name, &size, x, y, width, height);
@@ -167,83 +168,7 @@ impl<'a> Widget<'a> for Group<'a> {
         }
     }
 
-    fn position(&mut self, size: Size, parent: Rect) {
-        mini::info_raw!("{}\nsize: {:?}\n", self.name(), parent);
-        // self.size = parent.into();
-        self.size = size.clone();
-
-        let content_w = parent.width.saturating_sub(self.padding * 2);
-        let content_h = parent.height.saturating_sub(self.padding * 2);
-
-        let mut current_x = parent.x + self.padding;
-        let mut current_y = parent.y + self.padding;
-
-        let width = match size.width {
-            Unit::Pixel(px) => px,
-            Unit::Percentage(percent) => (content_w as f32 * percent as f32 / 100.0).round() as usize,
-            Unit::Em(em) => unimplemented!(),
-            Unit::Auto => 0,
-        };
-
-        let height = match size.height {
-            Unit::Pixel(px) => px,
-            Unit::Percentage(percent) => (content_h as f32 * percent as f32 / 100.0).round() as usize,
-            Unit::Auto => 0,
-            Unit::Em(_) => unimplemented!(),
-        };
-
-        let remaining_width = content_w - width;
-        let remaining_height = content_h - height;
-        let remaining_widgets = size.remaining_widgets.unwrap_or(1);
-        debug_assert!(remaining_widgets >= 1);
-
-        //IDK if this is right.
-        let (usable_width, usable_height) = match self.direction {
-            LeftRight => (remaining_width / remaining_widgets, remaining_height),
-            TopBottom => (remaining_width, remaining_height / remaining_widgets),
-        };
-
-        let last_index = self.children.len().saturating_sub(1);
-
-        // dbg!(self.name());
-        // dbg!(content_w, width, usable_width, remaining_widgets);
-
-        for (i, child) in self.children.iter_mut().enumerate() {
-            // Resolve the child's desired Unit size against the parent's content box.
-            // let size = child.calculate_size(parent);
-            let size = child.size_mut().clone();
-            // dbg!(&size, child.calculate_size(size.clone().into_rect()));
-            // dbg!(&size, child.calculate_size(parent));
-
-            mini::info_raw!("\t{}\n\twidth: {}\n\theight: {}", child.name(), size.width, size.height);
-
-            let child_w = match size.width {
-                // Unit::Auto if size.remaining_widgets.is_none() => 0,
-                Unit::Auto => usable_width,
-                Unit::Percentage(p) => ((p as f32 / 100.0) * content_w as f32).round() as usize,
-                Unit::Pixel(px) => px,
-                Unit::Em(_) => todo!(),
-            };
-
-            let child_h = match size.height {
-                // Unit::Auto if size.remaining_widgets.is_none() => 0,
-                Unit::Auto => usable_height,
-                Unit::Percentage(p) => ((p as f32 / 100.0) * content_h as f32).round() as usize,
-                Unit::Pixel(px) => px,
-                Unit::Em(_) => todo!(),
-            };
-
-            mini::info_raw!("\twidth: {} height: {}\n", child_w, child_h);
-            child.position(size, Rect::new(current_x, current_y, child_w, child_h));
-
-            match self.direction {
-                FlexDirection::LeftRight => current_x += child_w + if i != last_index { self.gap } else { 0 },
-                FlexDirection::TopBottom => current_y += child_h + if i != last_index { self.gap } else { 0 },
-            }
-        }
-    }
-
-    fn calculate_size(&self, parent: Rect) -> Size {
+    fn calculate_size(&mut self, parent: Rect) -> Size {
         let mut total_width = 0;
         let mut total_height = 0;
         let mut remaining_widgets = 0;
@@ -256,7 +181,7 @@ impl<'a> Widget<'a> for Group<'a> {
             match self.direction {
                 FlexDirection::LeftRight => {
                     total_width += total_gap;
-                    for child in &self.children {
+                    for child in &mut self.children {
                         let size = child.calculate_size(parent);
                         let (wu, hu) = (size.width, size.height);
 
@@ -271,17 +196,17 @@ impl<'a> Widget<'a> for Group<'a> {
                         //     remaining_widgets += 1;
                         // }
 
-                        if matches!(wu, Unit::Auto | Unit::Percentage(_)) {
+                        if matches!(wu, Unit::Auto(_) | Unit::Percentage(_)) {
                             remaining_widgets += 1;
                         }
 
                         let w = match wu {
-                            Unit::Auto | Unit::Percentage(_) => 0,
+                            Unit::Auto(_) | Unit::Percentage(_) => 0,
                             _ => wu.to_pixels(content_w),
                         };
 
                         let h = match hu {
-                            Unit::Auto | Unit::Percentage(_) => 0,
+                            Unit::Auto(_) | Unit::Percentage(_) => 0,
                             _ => hu.to_pixels(content_h),
                         };
 
@@ -291,7 +216,7 @@ impl<'a> Widget<'a> for Group<'a> {
                 }
                 FlexDirection::TopBottom => {
                     total_height += total_gap;
-                    for child in &self.children {
+                    for child in &mut self.children {
                         let size = child.calculate_size(parent);
                         let (wu, hu) = (size.width, size.height);
 
@@ -306,17 +231,17 @@ impl<'a> Widget<'a> for Group<'a> {
                         //     remaining_widgets += 1;
                         // }
 
-                        if matches!(hu, Unit::Auto | Unit::Percentage(_)) {
+                        if matches!(hu, Unit::Auto(_) | Unit::Percentage(_)) {
                             remaining_widgets += 1;
                         }
 
                         let w = match wu {
-                            Unit::Auto | Unit::Percentage(_) => 0,
+                            Unit::Auto(_) | Unit::Percentage(_) => 0,
                             _ => wu.to_pixels(content_w),
                         };
 
                         let h = match hu {
-                            Unit::Auto | Unit::Percentage(_) => 0,
+                            Unit::Auto(_) | Unit::Percentage(_) => 0,
                             _ => hu.to_pixels(content_h),
                         };
 
@@ -330,18 +255,18 @@ impl<'a> Widget<'a> for Group<'a> {
         // dbg!(self.name());
         // dbg!(remaining_widgets);
         let width = if remaining_widgets > 0 && self.direction == LeftRight {
-            Unit::Auto
+            Unit::Auto(total_width + self.padding * 2)
         } else {
             Unit::Pixel(total_width + self.padding * 2)
         };
 
         let height = if remaining_widgets > 0 && self.direction == TopBottom {
-            Unit::Auto
+            Unit::Auto(total_height + self.padding * 2)
         } else {
             Unit::Pixel(total_height + self.padding * 2)
         };
 
-        Size {
+        self.size = Size {
             x: Unit::Pixel(0),
             y: Unit::Pixel(0),
             // width: Unit::Pixel(total_width + self.padding * 2),
@@ -353,7 +278,85 @@ impl<'a> Widget<'a> for Group<'a> {
             } else {
                 Some(remaining_widgets)
             },
-        }
+        };
+
+        return self.size.clone();
+    }
+
+    fn position(&mut self, size: Size, parent: Rect) {
+        // mini::info_raw!("{}\nsize: {:?}\n", self.name(), parent);
+        // // self.size = parent.into();
+        // self.size = size.clone();
+
+        // let content_w = parent.width.saturating_sub(self.padding * 2);
+        // let content_h = parent.height.saturating_sub(self.padding * 2);
+
+        // let mut current_x = parent.x + self.padding;
+        // let mut current_y = parent.y + self.padding;
+
+        // let width = match size.width {
+        //     Unit::Pixel(px) => px,
+        //     Unit::Percentage(percent) => (content_w as f32 * percent as f32 / 100.0).round() as usize,
+        //     Unit::Em(em) => unimplemented!(),
+        //     Unit::Auto => 0,
+        // };
+
+        // let height = match size.height {
+        //     Unit::Pixel(px) => px,
+        //     Unit::Percentage(percent) => (content_h as f32 * percent as f32 / 100.0).round() as usize,
+        //     Unit::Auto => 0,
+        //     Unit::Em(_) => unimplemented!(),
+        // };
+
+        // let remaining_width = content_w - width;
+        // let remaining_height = content_h - height;
+        // let remaining_widgets = size.remaining_widgets.unwrap_or(1);
+        // debug_assert!(remaining_widgets >= 1);
+
+        // //IDK if this is right.
+        // let (usable_width, usable_height) = match self.direction {
+        //     LeftRight => (remaining_width / remaining_widgets, remaining_height),
+        //     TopBottom => (remaining_width, remaining_height / remaining_widgets),
+        // };
+
+        // let last_index = self.children.len().saturating_sub(1);
+
+        // // dbg!(self.name());
+        // // dbg!(content_w, width, usable_width, remaining_widgets);
+
+        // for (i, child) in self.children.iter_mut().enumerate() {
+        //     // Resolve the child's desired Unit size against the parent's content box.
+        //     // let size = child.calculate_size(parent);
+        //     let size = child.size_mut().clone();
+        //     // dbg!(&size, child.calculate_size(size.clone().into_rect()));
+        //     // dbg!(&size, child.calculate_size(parent));
+
+        //     mini::info_raw!("\t{}\n\twidth: {}\n\theight: {}", child.name(), size.width, size.height);
+
+        //     let child_w = match size.width {
+        //         // Unit::Auto if size.remaining_widgets.is_none() => 0,
+        //         Unit::Auto => usable_width,
+        //         Unit::Percentage(p) => ((p as f32 / 100.0) * content_w as f32).round() as usize,
+        //         Unit::Pixel(px) => px,
+        //         Unit::Em(_) => todo!(),
+        //     };
+
+        //     let child_h = match size.height {
+        //         // Unit::Auto if size.remaining_widgets.is_none() => 0,
+        //         Unit::Auto => usable_height,
+        //         Unit::Percentage(p) => ((p as f32 / 100.0) * content_h as f32).round() as usize,
+        //         Unit::Pixel(px) => px,
+        //         Unit::Em(_) => todo!(),
+        //     };
+
+        //     mini::info_raw!("\twidth: {} height: {}\n", child_w, child_h);
+        //     child.position(size, Rect::new(current_x, current_y, child_w, child_h));
+
+        //     match self.direction {
+        //         FlexDirection::LeftRight => current_x += child_w + if i != last_index { self.gap } else { 0 },
+        //         FlexDirection::TopBottom => current_y += child_h + if i != last_index { self.gap } else { 0 },
+        //     }
+        // }
     }
 
     fn handle_event(&mut self, ctx: &mut Context) {

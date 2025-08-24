@@ -66,7 +66,7 @@ pub enum Unit {
     Pixel(usize),
     Percentage(usize),
     Em(usize),
-    Auto,
+    Auto(usize),
 }
 impl Display for Unit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -74,7 +74,7 @@ impl Display for Unit {
             Unit::Pixel(px) => write!(f, "Unit::Pixel({})", px),
             Unit::Percentage(p) => write!(f, "Unit::Percentage({})", p),
             Unit::Em(em) => write!(f, "Unit::Em({})", em),
-            Unit::Auto => write!(f, "Unit::Auto"),
+            Unit::Auto(_) => write!(f, "Unit::Auto"),
         }
     }
 }
@@ -86,7 +86,7 @@ impl Unit {
             Unit::Pixel(px) => px,
             Unit::Percentage(percent) => (parent as f32 * percent as f32 / 100.0).round() as usize,
             Unit::Em(em) => unimplemented!(),
-            Unit::Auto => unimplemented!(),
+            Unit::Auto(_) => unimplemented!(),
         }
     }
 }
