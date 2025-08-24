@@ -113,39 +113,38 @@ impl<'a> Widget<'a> for Group<'a> {
         let (available_width, available_height) = match self.direction {
             LeftRight => {
                 let width = match size.width {
-                    Unit::Auto(used_width) => parent.width - used_width,
-                    Unit::Pixel(width) => width,
+                    Unit::Auto(0) => parent.width,
+                    Unit::Auto(used_width) => {
+                        (parent.width - used_width).saturating_sub(self.padding * 2) / widgets_remaining
+                    }
+                    Unit::Pixel(width) => width.saturating_sub(self.padding * 2),
                     Unit::Percentage(_) => todo!(),
                     Unit::Em(_) => todo!(),
                 };
-                dbg!(size.width, parent.width, width);
 
                 let height = match size.height {
                     Unit::Auto(used_height) => parent.height.max(used_height),
                     Unit::Pixel(height) => height,
                     Unit::Percentage(_) => todo!(),
                     Unit::Em(_) => todo!(),
-                };
+                }
+                .saturating_sub(self.padding * 2);
 
-                (
-                    width.saturating_sub(self.padding * 2) / widgets_remaining,
-                    height.saturating_sub(self.padding * 2),
-                )
+                (width, height)
             }
             TopBottom => todo!(),
             // (widgets_remaining, available_height / widgets_remaining),
         };
 
-        dbg!(self.name(), &available_width, &available_height, widgets_remaining);
+        println!("{}", self.name());
+        println!("{} {} {}", size.width, size.height, widgets_remaining);
+        println!();
 
         let last_index = self.children.len().saturating_sub(1);
         for (i, child) in self.children.iter_mut().enumerate() {
-            // child.position_new(parent);
             let name = child.name().to_string();
             let size = child.calculate_size(Rect::new(0, 0, available_width, available_height));
-            // let size = child.size_mut();
 
-            // dbg!(&size);
             let width = match size.width {
                 Unit::Pixel(px) => px,
                 Unit::Percentage(p) => (p as f32 / 100.0 * available_width as f32).round() as usize,
@@ -162,7 +161,10 @@ impl<'a> Widget<'a> for Group<'a> {
                 Unit::Auto(used_height) => available_height,
             };
 
-            dbg!(name, &size, x, y, width, height);
+            println!("\t{}", name);
+            println!("\t{} {} {} {}", size.width, size.height, width, height);
+            println!("\t{} {}", available_width, available_height);
+            println!();
 
             child.position_new(Rect::new(x, y, width, height));
 
@@ -190,8 +192,7 @@ impl<'a> Widget<'a> for Group<'a> {
                 FlexDirection::LeftRight => {
                     total_width += total_gap;
                     for child in &mut self.children {
-                        // let size = child.calculate_size(parent);
-                        let size = child.size_mut();
+                        let size = child.calculate_size(parent);
                         let (wu, hu) = (size.width, size.height);
 
                         //A child has something that needs a second pass.
@@ -262,13 +263,13 @@ impl<'a> Widget<'a> for Group<'a> {
             }
         }
 
-        let width = if remaining_widgets > 0 {
+        let width = if remaining_widgets > 0 && self.direction == LeftRight {
             Unit::Auto(total_width + self.padding * 2)
         } else {
             Unit::Pixel(total_width + self.padding * 2)
         };
 
-        let height = if remaining_widgets > 0 {
+        let height = if remaining_widgets > 0 && self.direction == TopBottom {
             Unit::Auto(total_height + self.padding * 2)
         } else {
             Unit::Pixel(total_height + self.padding * 2)
@@ -426,11 +427,12 @@ impl<'a> Drop for FlexRoot<'a> {
     fn drop(&mut self) {
         let (w, h) = (ctx_width(), ctx_height());
 
-        let total_area = Rect::new(self.margin, self.margin, w, h);
+        let window = Rect::new(self.margin, self.margin, w, h);
 
-        // self.group.layout(total_area);
-        let current_size = self.group.calculate_size(total_area);
-        self.group.position(current_size, total_area);
+        let _ = self.group.calculate_size(window);
+        self.group.position_new(window);
+        // let current_size = self.group.calculate_size(total_area);
+        // self.group.position(current_size, total_area);
 
         //TODO: Remove context from handle_event and use atomic mouse state :)
         let ctx = unsafe { ctx() };

@@ -71,10 +71,10 @@ pub enum Unit {
 impl Display for Unit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Unit::Pixel(px) => write!(f, "Unit::Pixel({})", px),
-            Unit::Percentage(p) => write!(f, "Unit::Percentage({})", p),
-            Unit::Em(em) => write!(f, "Unit::Em({})", em),
-            Unit::Auto(_) => write!(f, "Unit::Auto"),
+            Unit::Pixel(px) => write!(f, "Pixel({})", px),
+            Unit::Percentage(p) => write!(f, "Percentage({})", p),
+            Unit::Em(em) => write!(f, "Em({})", em),
+            Unit::Auto(used) => write!(f, "Auto({})", used),
         }
     }
 }
