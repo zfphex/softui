@@ -32,7 +32,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn calculate_size(&self, parent: Rect) -> Size;
 
     fn position(&mut self, size: Size, parent: Rect);
-    fn position_old(&mut self, size: Size, parent: Rect) {}
+    fn position_new(&mut self, parent: Rect) {}
 
     fn size_mut(&mut self) -> &mut Size;
 
@@ -46,6 +46,11 @@ pub trait Widget<'a>: std::fmt::Debug {
 
     fn name(&self) -> &str {
         std::any::type_name::<Self>()
+    }
+
+    //Used for debugging.
+    fn children(&mut self) -> &mut [Box<dyn Widget<'a> + 'a>] {
+        unimplemented!()
     }
 
     // I don't want to add an associated type to every single widget definition

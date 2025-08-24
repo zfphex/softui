@@ -95,17 +95,24 @@ impl<'a> Widget<'a> for Group<'a> {
         &mut self.size
     }
 
-    fn position(&mut self, current_widget_size: Size, parent: Rect) {
-        self.size = current_widget_size;
+    fn children(&mut self) -> &mut [Box<dyn Widget<'a> + 'a>] {
+        self.children.as_mut_slice()
+    }
+
+    fn position_new(&mut self, parent: Rect) {
+        self.size = parent.into();
+
         let mut x = parent.x + self.padding;
         let mut y = parent.y + self.padding;
-        let widgets_remaining = self.size.remaining_widgets.unwrap_or(1);
+        let mut width = 0;
+        let mut height = 0;
 
-        let (rem_width, rem_height) = match self.direction {
+        let widgets_remaining = self.size.remaining_widgets.unwrap_or(1);
+        let (available_width, available_height) = match self.direction {
             LeftRight => {
                 let width = match self.size.width {
                     Unit::Auto => parent.width - 0,
-                    Unit::Pixel(width) => parent.width - width,
+                    Unit::Pixel(width) => width,
                     Unit::Percentage(_) => todo!(),
                     Unit::Em(_) => todo!(),
                 };
@@ -118,20 +125,49 @@ impl<'a> Widget<'a> for Group<'a> {
                 };
 
                 (
-                    width.saturating_sub(self.padding * 2),
+                    width.saturating_sub(self.padding * 2) / widgets_remaining,
                     height.saturating_sub(self.padding * 2),
                 )
             }
             TopBottom => todo!(),
+            // (widgets_remaining, available_height / widgets_remaining),
         };
 
-        let (available_width, available_height) = match self.direction {
-            LeftRight => (rem_width / widgets_remaining, rem_height),
-            TopBottom => (widgets_remaining, rem_height / widgets_remaining),
-        };
+        dbg!(&available_width, &available_height, widgets_remaining);
+
+        let last_index = self.children.len().saturating_sub(1);
+        for (i, child) in self.children.iter_mut().enumerate() {
+            // child.position_new(parent);
+            let name = child.name().to_string();
+            let size = child.size_mut();
+
+            // dbg!(&size);
+            let width = match size.width {
+                Unit::Pixel(px) => px,
+                Unit::Percentage(p) => (p as f32 / 100.0 * available_width as f32).round() as usize,
+                Unit::Em(_) => todo!(),
+                Unit::Auto => available_width,
+            };
+
+            let height = match size.height {
+                Unit::Pixel(px) => px,
+                Unit::Percentage(_) => todo!(),
+                Unit::Em(_) => todo!(),
+                Unit::Auto => available_height,
+            };
+
+            dbg!(name, &size, x, y, width, height);
+
+            child.position_new(Rect::new(x, y, width, height));
+
+            match self.direction {
+                FlexDirection::LeftRight => x += width + if i != last_index { self.gap } else { 0 },
+                FlexDirection::TopBottom => y += height + if i != last_index { self.gap } else { 0 },
+            }
+        }
     }
 
-    fn position_old(&mut self, size: Size, parent: Rect) {
+    fn position(&mut self, size: Size, parent: Rect) {
         mini::info_raw!("{}\nsize: {:?}\n", self.name(), parent);
         // self.size = parent.into();
         self.size = size.clone();

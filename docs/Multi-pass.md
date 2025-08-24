@@ -95,13 +95,14 @@ H2 has a size of (Auto, Auto, 2 widgets remain)
 Group.Position(Parent = WindowSize)
     X = Parent.X + Padding
     Y = Parent.Y + Padding
-    Width = Parent.Width - Group.Width = 800 - 20 = 780
-    Height = Parent.Height.Max(Group.Height) = 20 //can overflow the window
+    GroupWidth = 0
+    GropuHeight = 0
 
     WidgetsLeft = 1
+
     //Different for TopBottom direction
-    AvailableWidth = Width / WidgetsLeft = 780
-    AvailableHeight = Height
+    AvailableWidth = Parent.Width - Group.Width / WidgetsLeft = 800 - 20 / 1 = 780
+    AvailableHeight = Parent.Height.Max(Group.Height)
 
         H1.Position(Parent = (AvailableWidth, AvailableHeight))
             Width = Parent.Width - H1.Width = 780 - 0
@@ -113,7 +114,10 @@ Group.Position(Parent = WindowSize)
                 Rect.Size = (80% * AvailableWidth, 20) = (312, 20)
             
             H1.Size = (78 + 312 = 390, 20)
+
             X += H1.Size.X
+            GroupWidth += Width
+            GroupHeight = GroupHeight.Max(Height) 
 
         H2.Position(Parent = (AvailableWidth, AvailableHeight))
             Width = Parent.Width - H1.Width = 780 - 0
@@ -125,12 +129,20 @@ Group.Position(Parent = WindowSize)
                 Rect.Size = (80% * AvailableWidth, 20) = (312, 20)
             
             H1.Size = (78 + 312 = 390, 20)
+
             X += H1.Size.X
+            GroupWidth += Width
+            GroupHeight = GroupHeight.Max(Height) 
         
         Rect.Position(Parent = ???)
             Width = Rect.Width = 20
             Height = Rect.Height = 20
+
             X += Rect.Size.X
+            GroupWidth += Width
+            GroupHeight = GroupHeight.Max(Height) 
+
+    Group.Size = (X, Y, GroupWidth, GroupHeight)
 
 The avaliable space to distribute between H1 and H2 is (800 - 20 = 780, 600)
 Note the height doesn't change.

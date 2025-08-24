@@ -14,6 +14,9 @@ pub use click::*;
 pub mod flex;
 pub use flex::*;
 
+#[cfg(test)]
+mod flex_tests;
+
 pub use flex::FlexDirection::*;
 
 pub mod macros;

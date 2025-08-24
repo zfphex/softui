@@ -37,6 +37,10 @@ impl<'a> Widget<'a> for Rectangle {
         self.size.clone()
     }
 
+    fn position_new(&mut self, parent: Rect) {
+        self.size = parent.into();
+    }
+
     fn position(&mut self, current_size: Size, parent: Rect) {
         // self.area = parent;
         self.size = parent.into();
