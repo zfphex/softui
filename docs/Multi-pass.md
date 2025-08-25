@@ -105,7 +105,7 @@ v!(rect().w(100.percent()), rect().w(100.percent()))
 Self.SetSize(Parent)
     TotalWidth = 0
     TotalHeight = 0
-    WidgetsToSecondPass = 0
+    WidgetsToSecondPass = 1
 
     ParentWidth = Parent.Width - Padding * 2
     ParentHeight = Parent.Height - Padding * 2
