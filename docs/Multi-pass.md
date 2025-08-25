@@ -90,6 +90,39 @@ H2 has a size of (Auto, Auto, 2 widgets remain)
     Rect(20%, 20)
     Rect(80%, 20)
 
+- Widgets Left
+
+Root
+    Group
+        Rect(50%, 20)
+        Rect(50%, 20)
+        SubGroup 
+            Rect(50%, 20)
+            Rect(50%, 20)
+    Group 
+        Rect(50%, 20)
+        Rect(50%, 20)
+        SubGroup 
+            Rect(50%, 20)
+            Rect(50%, 20)
+
+The groups should get 1/2 of the root width.
+
+The sub groups should get 1/3 of the groups width so 1/6 of the root width.
+
+The root has 2 widgets pending.
+
+The groups have 3 widgets pending.
+
+The subgroups have 2 widgets pending.
+
+We only care about remaining widgets if it's not the last child.
+
+The Rect(50%) should be 50% of the SubGroup, it does not need to calculate the area from the remaining widgets.
+
+Yeah idk...
+
+
 - Sizing (Requires Two Passes)
 
 TODO: I think I messed up a bit trying to put all the sizing information in the positioning pass.

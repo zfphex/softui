@@ -137,23 +137,23 @@ impl<'a> Widget<'a> for Group<'a> {
         //TODO: This should probably be part of the function since it's important for debugging.
         unsafe { RECURSE += 1 };
 
-        // print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-        // println!("Parent: {}", self.name());
+        print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+        println!("Parent: {}", self.name());
 
-        // print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-        // println!("{:?}", self.size);
+        print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+        println!("{:?}", self.size);
 
         unsafe { RECURSE += 1 };
 
         for child in &mut self.children {
             let is_container = child.is_container();
 
-            // print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-            // println!("Child: {}", child.name());
-            // print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-            // println!("{:?}", child.size_mut());
-            // print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-            // println!("{} {}", parent_width, parent_height);
+            print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+            println!("Child: {}", child.name());
+            print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+            println!("{:?}", child.size_mut());
+            print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+            println!("{} {}", parent_width, parent_height);
 
             if is_container {
                 child.size(Rect::new(0, 0, container_width, container_height));
@@ -221,6 +221,7 @@ impl<'a> Widget<'a> for Group<'a> {
             Unit::Auto(total_width)
         };
 
+        dbg!(total_width);
         self.size = size(0, 0, width, total_height);
         if widgets_left >= 1 {
             self.size.widgets_left = Some(widgets_left);

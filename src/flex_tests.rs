@@ -14,12 +14,18 @@ fn basic_multi() {
         .children
         .push(Box::new(h!(rect().w(50.percent()).h(20).bg(green()))));
 
-    group.size(parent);
-    group.size(parent);
-    // group.position(parent);
+    //TODO: We need to pass the widgets left to the next child container
 
-    assert_eq!(group.size.x, Unit::Pixel(0));
-    assert_eq!(group.size.y, Unit::Pixel(0));
+    group.size(parent);
+
+    assert_eq!(group.size.width, Unit::Auto(0));
+    assert_eq!(group.size.height, Unit::Pixel(20));
+
+    unsafe { RECURSE = 0 };
+    println!();
+
+    group.size(parent);
+
     assert_eq!(group.size.width, Unit::Pixel(800));
     assert_eq!(group.size.height, Unit::Pixel(600));
 
