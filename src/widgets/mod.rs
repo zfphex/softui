@@ -34,7 +34,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     ///The unused variable is the parent size used only for containers.
     fn size(&mut self, _: Rect) {}
 
-    fn position(&mut self, _: Size, parent: Rect);
+    fn position(&mut self, area: Rect);
 
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>);
 

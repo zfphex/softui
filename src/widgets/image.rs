@@ -76,7 +76,7 @@ pub struct ImageRef<'a> {
 }
 
 impl<'a> Widget<'a> for ImageRef<'a> {
-    fn position(&mut self, size: Size, parent: Rect) {
+    fn position(&mut self, parent: Rect) {
         self.size = parent.into();
     }
 

@@ -137,22 +137,23 @@ impl<'a> Widget<'a> for Group<'a> {
         //TODO: This should probably be part of the function since it's important for debugging.
         unsafe { RECURSE += 1 };
 
-        print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-        println!("Parent: {}", self.name());
+        // print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+        // println!("Parent: {}", self.name());
 
-        print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-        println!("{:?}", self.size);
+        // print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+        // println!("{:?}", self.size);
 
         unsafe { RECURSE += 1 };
 
         for child in &mut self.children {
             let is_container = child.is_container();
-            print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-            println!("Child: {}", child.name());
-            print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-            println!("{:?}", child.size_mut());
-            print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-            println!("{} {}", parent_width, parent_height);
+
+            // print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+            // println!("Child: {}", child.name());
+            // print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+            // println!("{:?}", child.size_mut());
+            // print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+            // println!("{} {}", parent_width, parent_height);
 
             if is_container {
                 child.size(Rect::new(0, 0, container_width, container_height));
@@ -226,9 +227,10 @@ impl<'a> Widget<'a> for Group<'a> {
         }
     }
 
-    fn position(&mut self, size: Size, parent: Rect) {
-        let mut current_x = parent.x + self.padding;
-        let mut current_y = parent.y + self.padding;
+    fn position(&mut self, area: Rect) {
+        self.size = area.into();
+        let mut current_x = area.x + self.padding;
+        let mut current_y = area.y + self.padding;
 
         let last_index = self.children.len().saturating_sub(1);
 
@@ -245,16 +247,15 @@ impl<'a> Widget<'a> for Group<'a> {
                 _ => unreachable!(),
             };
 
-            child.position(
-                unit::size(0, 0, 0, 0),
-                Rect::new(current_x, current_y, child_w, child_h),
-            );
+            child.position(Rect::new(current_x, current_y, child_w, child_h));
+            dbg!(Rect::new(current_x, current_y, child_w, child_h));
 
             match self.direction {
                 FlexDirection::LeftRight => current_x += child_w + if i != last_index { self.gap } else { 0 },
                 FlexDirection::TopBottom => current_y += child_h + if i != last_index { self.gap } else { 0 },
             }
         }
+
     }
 
     fn handle_event(&mut self, ctx: &mut Context) {
@@ -325,7 +326,7 @@ impl<'a> Drop for FlexRoot<'a> {
         self.group.size(window);
 
         //Set the (x, y) position of each widget.
-        self.group.position(size(0, 0, 0, 0), window);
+        self.group.position(window);
         // let current_size = self.group.calculate_size(total_area);
         // self.group.position(current_size, total_area);
 

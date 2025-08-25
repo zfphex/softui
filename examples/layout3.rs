@@ -14,7 +14,7 @@ fn main() {
             let f = flex!(
                 h!(
                     rect().w(20.percent()).h(20).bg(blue()),
-                    rect().w(80.percent()).h(20).bg(red())
+                    // rect().w(80.percent()).h(20).bg(red())
                 ),
                 h!(
                     //

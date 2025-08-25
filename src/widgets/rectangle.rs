@@ -37,9 +37,8 @@ impl<'a> Widget<'a> for Rectangle {
         //TODO: Should this be the default blanket implementation.
     }
 
-    fn position(&mut self, current_size: Size, parent: Rect) {
-        // self.area = parent;
-        self.size = parent.into();
+    fn position(&mut self, area: Rect) {
+        self.size = area.into();
     }
 
     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {

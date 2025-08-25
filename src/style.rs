@@ -78,8 +78,8 @@ where
         self.widget.draw(commands, style);
     }
 
-    fn position(&mut self, size: Size, parent: Rect) {
-        self.widget.position(size, parent);
+    fn position(&mut self, parent: Rect) {
+        self.widget.position(parent);
     }
 }
 

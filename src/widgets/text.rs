@@ -150,7 +150,7 @@ impl<'a> Widget<'a> for Text<'a> {
         });
     }
 
-    fn position(&mut self, size: Size, parent: Rect) {
+    fn position(&mut self, parent: Rect) {
         todo!()
     }
 
