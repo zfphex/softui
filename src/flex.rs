@@ -99,6 +99,15 @@ impl<'a> Widget<'a> for Group<'a> {
         self.children.as_mut_slice()
     }
 
+
+    fn is_container(&self) -> bool {
+        true
+    }
+
+    fn size_new(&mut self, parent: Rect) {
+
+    }
+
     fn position_new(&mut self, parent: Rect) {
         let size = self.size.clone();
         let widgets_remaining = size.remaining_widgets.unwrap_or(1);

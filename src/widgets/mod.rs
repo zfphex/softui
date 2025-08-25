@@ -29,6 +29,11 @@ pub use dwrite::*;
 use crate::*;
 
 pub trait Widget<'a>: std::fmt::Debug {
+    ///The unused variable is the parent size used only for containers.
+    fn size_new(&mut self, _: Rect) {
+        unimplemented!()
+    }
+
     fn calculate_size(&mut self, parent: Rect) -> Size;
 
     fn position(&mut self, size: Size, parent: Rect);
@@ -42,6 +47,10 @@ pub trait Widget<'a>: std::fmt::Debug {
 
     fn style(&self) -> Option<Style> {
         None
+    }
+
+    fn is_container(&self) -> bool {
+        false
     }
 
     fn name(&self) -> &str {

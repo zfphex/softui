@@ -102,7 +102,7 @@ Okay but what happens if we have two widgets with 100% Sizing?
 v!(rect().w(100.percent()), rect().w(100.percent()))
 
 //Example Assumes LeftRight only
-Self.Size(Parent)
+Self.SetSize(Parent)
     TotalWidth = 0
     TotalHeight = 0
     WidgetsToSecondPass = 0
@@ -118,17 +118,20 @@ Self.Size(Parent)
     AvailableHeight = ParentHeight
 
     If IsSecondPass
-        AvailableWidth = ParentWidth - Self.Size.Width / Self.Size.WidgetsToSecondPass
+        AvailableWidth = (ParentWidth - Self.Size.Width) / Self.Size.WidgetsToSecondPass
 
         //Not sure what this would be for LeftRight
         //AvailableHeight -= Self.Size.Height
 
     Child in Self.Children
-        //Parent is unused for non-container widgets.
+        //Calculate the size of containers.
+        //If it's not a container the Rect passed in will do nothing.
+        Child.SetSize((0, 0, AvailableWidth, AvailableHeight))
+
         WantedSize = Child.WantedSize()
 
-        If Not IsSecondPass
-            If Size.Width | Size.Height == Auto | Percentage
+        If Not IsSecondPass And Child.IsContaier()
+            If WantedSize.Width | WantedSize.Height == Auto | Percentage
                 WidgetsToSecondPass += 1
         Else 
             Match WantedSize.Width
