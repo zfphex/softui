@@ -227,13 +227,6 @@ impl<'a> Widget<'a> for Group<'a> {
     }
 
     fn position(&mut self, size: Size, parent: Rect) {
-        // mini::info_raw!("{}\nsize: {:?}\n", self.name(), parent);
-        // // self.size = parent.into();
-        // self.size = size.clone();
-
-        let content_w = parent.width.saturating_sub(self.padding * 2);
-        let content_h = parent.height.saturating_sub(self.padding * 2);
-
         let mut current_x = parent.x + self.padding;
         let mut current_y = parent.y + self.padding;
 
@@ -325,7 +318,13 @@ impl<'a> Drop for FlexRoot<'a> {
 
         let window = Rect::new(self.margin, self.margin, w, h);
 
-        let _ = self.group.size(window);
+        //First pass caculates the space with a fixed size.
+        self.group.size(window);
+
+        //Second pass calculates the size of the auto/relative percentage widgets.
+        self.group.size(window);
+
+        //Set the (x, y) position of each widget.
         self.group.position(size(0, 0, 0, 0), window);
         // let current_size = self.group.calculate_size(total_area);
         // self.group.position(current_size, total_area);

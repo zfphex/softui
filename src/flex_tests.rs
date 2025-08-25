@@ -9,11 +9,17 @@ fn basic_position() {
     group.children.push(Box::new(rect().w(80.percent()).h(20)));
 
     group.size(parent);
+    group.size(parent);
 
     group.position(size(0, 0, 0, 0), parent);
 
     let r1 = group.children[0].size_mut().clone();
-    // assert_eq!(r1,)
+    assert_eq!(r1.x, Unit::Pixel(0));
+    assert_eq!(r1.y, Unit::Pixel(0));
+
+    let r2 = group.children[1].size_mut().clone();
+    assert_eq!(r2.x, Unit::Pixel(160));
+    assert_eq!(r2.y, Unit::Pixel(0));
 }
 
 #[test]

@@ -32,9 +32,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn size_mut(&mut self) -> &mut Size;
 
     ///The unused variable is the parent size used only for containers.
-    fn size(&mut self, _: Rect) {
-        unimplemented!()
-    }
+    fn size(&mut self, _: Rect) {}
 
     fn position(&mut self, _: Size, parent: Rect);
 

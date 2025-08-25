@@ -93,4 +93,7 @@ impl<'a> Widget<'a> for ImageRef<'a> {
     fn size_mut(&mut self) -> &mut Size {
         &mut self.size
     }
+    
+    fn size(&mut self, _: Rect) {
+    }
 }

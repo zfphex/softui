@@ -157,6 +157,8 @@ impl<'a> Widget<'a> for Text<'a> {
     fn size_mut(&mut self) -> &mut Size {
         todo!()
     }
+
+    fn size(&mut self, _: Rect) {}
 }
 
 pub struct Atlas {

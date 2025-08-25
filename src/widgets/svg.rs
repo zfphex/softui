@@ -49,12 +49,14 @@ impl<'a> Widget<'a> for SvgRef<'a> {
             primative: Primative::SVGUnsafe(pixmap),
         });
     }
-    
+
     fn position(&mut self, size: Size, parent: Rect) {
         todo!()
     }
-    
+
     fn size_mut(&mut self) -> &mut Size {
         todo!()
     }
+
+    fn size(&mut self, _: Rect) {}
 }

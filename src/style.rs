@@ -66,6 +66,10 @@ where
         self.widget.size_mut()
     }
 
+    fn size(&mut self, parent: Rect) {
+        self.widget.size(parent);
+    }
+
     fn handle_event(&mut self, ctx: &mut Context) {
         self.widget.handle_event(ctx);
     }

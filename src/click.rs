@@ -122,6 +122,9 @@ where
     fn draw(&self, cmds: &mut Vec<Command>, style: Option<Style>) {
         self.widget.draw(cmds, self.style)
     }
+    fn size(&mut self, parent: Rect) {
+        self.widget.size(parent);
+    }
     fn style(&self) -> Option<Style> {
         self.widget.style()
     }
