@@ -141,9 +141,6 @@ where
             }
         }
     }
-    fn calculate_size(&mut self, parent: Rect) -> Size {
-        self.widget.calculate_size(parent)
-    }
     fn position(&mut self, size: Size, parent: Rect) {
         self.widget.position(size, parent);
     }

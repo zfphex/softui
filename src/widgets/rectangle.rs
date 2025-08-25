@@ -33,17 +33,8 @@ impl<'a> Widget<'a> for Rectangle {
         &mut self.size
     }
 
-    fn size_new(&mut self, _: Rect) {
+    fn size(&mut self, _: Rect) {
         //TODO: Should this be the default blanket implementation.
-
-    }
-
-    fn calculate_size(&mut self, _: Rect) -> Size {
-        self.size.clone()
-    }
-
-    fn position_new(&mut self, parent: Rect) {
-        self.size = parent.into();
     }
 
     fn position(&mut self, current_size: Size, parent: Rect) {

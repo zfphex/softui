@@ -76,10 +76,6 @@ pub struct ImageRef<'a> {
 }
 
 impl<'a> Widget<'a> for ImageRef<'a> {
-    fn calculate_size(&mut self, parent: Rect) -> Size {
-        self.size.clone()
-    }
-
     fn position(&mut self, size: Size, parent: Rect) {
         self.size = parent.into();
     }

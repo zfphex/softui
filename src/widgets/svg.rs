@@ -50,10 +50,6 @@ impl<'a> Widget<'a> for SvgRef<'a> {
         });
     }
     
-    fn calculate_size(&mut self, parent: Rect) -> Size {
-        todo!()
-    }
-    
     fn position(&mut self, size: Size, parent: Rect) {
         todo!()
     }

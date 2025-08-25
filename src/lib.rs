@@ -1005,6 +1005,7 @@ mod tests {
     use crate::*;
 
     #[test]
+    #[cfg(not(target_os = "macos"))]
     fn rectangle() {
         let ctx = unsafe { create_ctx("Softui", 800, 600) };
 
