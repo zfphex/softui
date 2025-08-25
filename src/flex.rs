@@ -59,12 +59,14 @@ impl<'a> Group<'a> {
                 y: Unit::Pixel(0),
                 width: Unit::Auto(0),
                 height: Unit::Auto(0),
-                remaining_widgets: None,
+                widgets_left: None,
             },
             bg: None,
         }
     }
 }
+
+pub static mut RECURSE: usize = 0;
 
 impl<'a> Widget<'a> for Group<'a> {
     fn gap(mut self, gap: usize) -> Self
@@ -99,18 +101,132 @@ impl<'a> Widget<'a> for Group<'a> {
         self.children.as_mut_slice()
     }
 
-
     fn is_container(&self) -> bool {
         true
     }
 
     fn size_new(&mut self, parent: Rect) {
+        let mut total_width = 0;
+        let mut total_height = 0;
+        let mut widgets_left = self.size.widgets_left.unwrap_or(0);
 
+        let parent_width = parent.width - (self.padding * 2);
+        let parent_height = parent.height - (self.padding * 2);
+
+        if !self.children.is_empty() {
+            total_width += self.gap * (self.children.len() - 1);
+        }
+
+        let is_second_pass = self.size.widgets_left.is_some();
+
+        // match self.direction {
+        //     // LeftRight => width_free = parent_width - self.size.width,
+        //     TopBottom => todo!(),
+        // }
+        // let mut width_free = parent_width;
+        // let mut height_free = parent_height;
+
+        // width_free = (parent_width - container_width) / widgets_left;
+        let container_width = match self.size.width {
+            Unit::Pixel(px) => px,
+            //TODO: Should take away the used space.
+            Unit::Auto(used) => parent_width - used,
+            _ if is_second_pass => unreachable!(),
+            _ => 0,
+        };
+
+        let container_height = match self.size.height {
+            Unit::Pixel(px) => px,
+            _ if is_second_pass => unreachable!(),
+            _ => 0,
+        };
+
+        dbg!(container_width, container_height);
+
+        //TODO: This should probably be part of the function since it's important for debugging.
+        unsafe { RECURSE += 1 };
+
+        print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+        println!("Parent: {}", self.name());
+
+        print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+        println!("{:?}", self.size);
+
+        unsafe { RECURSE += 1 };
+
+        for child in &mut self.children {
+            let is_container = child.is_container();
+            print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
+            println!("Child: {}", child.name());
+            child.size_new(Rect::new(0, 0, parent_width, parent_height));
+
+            let size = child.size_mut();
+
+            if !is_second_pass {
+                match size.width {
+                    Unit::Pixel(px) => total_width += px,
+                    Unit::Em(_) => todo!(),
+                    _ => widgets_left += 1,
+                }
+
+                match size.height {
+                    Unit::Pixel(px) => total_height = total_height.max(px),
+                    Unit::Em(_) => todo!(),
+                    _ => widgets_left += 1,
+                }
+            } else {
+                let width_free = if is_container {
+                    container_width / widgets_left
+                } else {
+                    container_width
+                };
+                // let height_free = if is_container {
+                //     container_height / widgets_left
+                // } else {
+                //     container_height
+                // };
+                let height_free = container_height;
+                let width = match size.width {
+                    Unit::Pixel(px) => px,
+                    Unit::Percentage(p) => (width_free as f32 * p as f32 / 100.0).round() as usize,
+                    // Unit::Auto(_) if is_container => width_free / widgets_left,
+                    Unit::Auto(_) => width_free,
+                    Unit::Em(_) => todo!(),
+                };
+
+                //TODO: IDK what height is supposed to be for LeftRight layouts.
+                let height = match size.height {
+                    Unit::Pixel(px) => px,
+                    Unit::Percentage(p) => (height_free as f32 * p as f32 / 100.0).round() as usize,
+                    // Unit::Auto(_) if is_container => height_free / widgets_left,
+                    Unit::Auto(_) => height_free,
+                    Unit::Em(_) => todo!(),
+                };
+
+                // dbg!(size.width, width_free, widgets_left);
+
+                total_width += width;
+                total_height = total_height.max(height);
+
+                size.width = width.pixel();
+                size.height = height.pixel();
+            }
+        }
+
+        let width = if is_second_pass {
+            Unit::Pixel(total_width)
+        } else {
+            Unit::Auto(total_width)
+        };
+        self.size = size(0, 0, width, total_height);
+        if widgets_left >= 1 {
+            self.size.widgets_left = Some(widgets_left);
+        }
     }
 
     fn position_new(&mut self, parent: Rect) {
         let size = self.size.clone();
-        let widgets_remaining = size.remaining_widgets.unwrap_or(1);
+        let widgets_remaining = size.widgets_left.unwrap_or(1);
 
         self.size = parent.into();
 
@@ -241,7 +357,7 @@ impl<'a> Widget<'a> for Group<'a> {
                         let (wu, hu) = (size.width, size.height);
 
                         //A child has something that needs a second pass.
-                        if size.remaining_widgets.is_some() {
+                        if size.widgets_left.is_some() {
                             remaining_widgets += 1;
                         }
 
@@ -291,7 +407,7 @@ impl<'a> Widget<'a> for Group<'a> {
             // height: Unit::Pixel(total_height + self.padding * 2),
             width,
             height,
-            remaining_widgets: if remaining_widgets == 0 {
+            widgets_left: if remaining_widgets == 0 {
                 None
             } else {
                 Some(remaining_widgets)
@@ -481,7 +597,7 @@ mod tests {
                 y: Unit::Pixel(0),
                 width: Unit::Pixel(200),
                 height: Unit::Pixel(200),
-                remaining_widgets: Some(2),
+                widgets_left: Some(2),
             }
         );
 
@@ -510,7 +626,7 @@ mod tests {
                 y: Unit::Pixel(0),
                 width: Unit::Pixel(320),
                 height: Unit::Pixel(600),
-                remaining_widgets: Some(0),
+                widgets_left: Some(0),
             }
         );
 
@@ -541,7 +657,7 @@ mod tests {
                 y: Unit::Pixel(0),
                 width: Unit::Pixel(200),
                 height: Unit::Pixel(300),
-                remaining_widgets: Some(0),
+                widgets_left: Some(0),
             }
         );
 

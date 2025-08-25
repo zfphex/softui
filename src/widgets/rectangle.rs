@@ -7,7 +7,7 @@ pub const fn rect() -> Rectangle {
             y: Unit::Pixel(0),
             width: Unit::Pixel(10),
             height: Unit::Pixel(10),
-            remaining_widgets: None,
+            widgets_left: None,
         },
         bg: white(),
         radius: 0,
@@ -31,6 +31,11 @@ impl Rectangle {
 impl<'a> Widget<'a> for Rectangle {
     fn size_mut(&mut self) -> &mut Size {
         &mut self.size
+    }
+
+    fn size_new(&mut self, _: Rect) {
+        //TODO: Should this be the default blanket implementation.
+
     }
 
     fn calculate_size(&mut self, _: Rect) -> Size {

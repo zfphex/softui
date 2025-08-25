@@ -2,13 +2,17 @@ use std::fmt::Display;
 
 use crate::*;
 
+pub fn percent_to_px(p: usize, parent: usize) -> usize {
+    (parent as f32 * p as f32 / 100.0).round() as usize
+}
+
 pub fn size(x: impl Into<Unit>, y: impl Into<Unit>, width: impl Into<Unit>, height: impl Into<Unit>) -> Size {
     Size {
         x: x.into(),
         y: y.into(),
         width: width.into(),
         height: height.into(),
-        remaining_widgets: None,
+        widgets_left: None,
     }
 }
 
@@ -18,7 +22,7 @@ pub struct Size {
     pub y: Unit,
     pub width: Unit,
     pub height: Unit,
-    pub remaining_widgets: Option<usize>,
+    pub widgets_left: Option<usize>,
 }
 
 impl Size {
@@ -68,6 +72,7 @@ pub enum Unit {
     Em(usize),
     Auto(usize),
 }
+
 impl Display for Unit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -87,6 +92,16 @@ impl Unit {
             Unit::Percentage(percent) => (parent as f32 * percent as f32 / 100.0).round() as usize,
             Unit::Em(em) => unimplemented!(),
             Unit::Auto(_) => unimplemented!(),
+        }
+    }
+
+    #[track_caller]
+    pub fn child_to_px(self, free: usize, widgets_left: usize) -> usize {
+        match self {
+            Unit::Pixel(px) => px,
+            Unit::Percentage(p) => (free as f32 * p as f32 / 100.0).round() as usize,
+            Unit::Auto(_) => free / widgets_left,
+            Unit::Em(_) => todo!(),
         }
     }
 }
