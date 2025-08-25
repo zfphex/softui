@@ -90,6 +90,66 @@ H2 has a size of (Auto, Auto, 2 widgets remain)
     Rect(20%, 20)
     Rect(80%, 20)
 
+- Sizing (Pre-Pass)
+
+TODO: I think I messed up a bit trying to put all the sizing information in the positioning pass.
+There should be enough information to calculate the size in a second pass.
+This way the code is a bit more fragmented and the x and y position calculations are not lumped together.
+I think that writing the position function like that is possible but it's way too complex for me to conceptualise.
+
+Okay but what happens if we have two widgets with 100% Sizing?
+
+v!(rect().w(100.percent()), rect().w(100.percent()))
+
+//Example Assumes LeftRight only
+Self.Size(Parent)
+    TotalWidth = 0
+    TotalHeight = 0
+    WidgetsToSecondPass = 0
+
+    ParentWidth = Parent.Width - Padding * 2
+    ParentHeight = Parent.Height - Padding * 2
+
+    TotalWidth += Gap * Self.Children.Len() - 1
+
+    IsSecondPass = Self.Size.WidgetsToSecondPass.IsSome()
+
+    AvailableWidth = ParentWidth
+    AvailableHeight = ParentHeight
+
+    If IsSecondPass
+        AvailableWidth = ParentWidth - Self.Size.Width / Self.Size.WidgetsToSecondPass
+
+        //Not sure what this would be for LeftRight
+        //AvailableHeight -= Self.Size.Height
+
+    Child in Self.Children
+        //Parent is unused for non-container widgets.
+        WantedSize = Child.WantedSize()
+
+        If Not IsSecondPass
+            If Size.Width | Size.Height == Auto | Percentage
+                WidgetsToSecondPass += 1
+        Else 
+            Match WantedSize.Width
+                Percent
+                    Child.SetWidth(AvailableWidth * Percent)
+                Auto
+                    Child.SetWidth(AvailableWidth / WidgetsToSecondPass)
+
+            Match WantedSize.Height
+                Percent
+                    Child.SetHeight(AvailableHeight * Percent)
+                Auto
+                    Child.SetHeight(AvailableHeight / WidgetsToSecondPass)
+
+        TotalWidth += Child.Size.Width
+        TotalHeight += TotalHeight.Max(Child.Size.Height)
+        
+    Self.Size = (0, 0, Width, Height)
+
+- Sizing (Final Pass)
+
 - Position
 
 Group.Position(Parent = WindowSize)

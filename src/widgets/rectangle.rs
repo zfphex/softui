@@ -33,7 +33,7 @@ impl<'a> Widget<'a> for Rectangle {
         &mut self.size
     }
 
-    fn calculate_size(&mut self, parent: Rect) -> Size {
+    fn calculate_size(&mut self, _: Rect) -> Size {
         self.size.clone()
     }
 
