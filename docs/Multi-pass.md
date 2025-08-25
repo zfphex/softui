@@ -90,7 +90,7 @@ H2 has a size of (Auto, Auto, 2 widgets remain)
     Rect(20%, 20)
     Rect(80%, 20)
 
-- Sizing (Pre-Pass)
+- Sizing (Requires Two Passes)
 
 TODO: I think I messed up a bit trying to put all the sizing information in the positioning pass.
 There should be enough information to calculate the size in a second pass.
@@ -105,7 +105,7 @@ v!(rect().w(100.percent()), rect().w(100.percent()))
 Self.SetSize(Parent)
     TotalWidth = 0
     TotalHeight = 0
-    WidgetsToSecondPass = 1
+    WidgetsToSecondPass = Self.Size.WidgetsToSecondPass.UnwrapOr(1)
 
     ParentWidth = Parent.Width - Padding * 2
     ParentHeight = Parent.Height - Padding * 2
@@ -151,7 +151,18 @@ Self.SetSize(Parent)
         
     Self.Size = (0, 0, Width, Height)
 
-- Sizing (Final Pass)
+- Position
+
+
+Group.Position(Parent = WindowSize)
+    X = Parent.X + Padding
+    Y = Parent.Y + Padding
+    Width = 0
+    Height = 0
+
+    For Child in Self.Children
+
+
 
 - Position
 
@@ -159,7 +170,7 @@ Group.Position(Parent = WindowSize)
     X = Parent.X + Padding
     Y = Parent.Y + Padding
     GroupWidth = 0
-    GropuHeight = 0
+    GroupHeight = 0
 
     WidgetsLeft = 1
 
