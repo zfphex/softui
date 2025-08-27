@@ -1,0 +1,2 @@
+- Fill/Grow (Fill the entire parent container)
+- Fit (sized to fit its children )
