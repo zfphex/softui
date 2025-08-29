@@ -3,14 +3,14 @@ Root (800)
   Group
     Rect(50%)        // 200
     Rect(50%)        // 200
-    SubGroup(auto)   // 0 leftover
+    SubGroup(fill)   // 0 leftover
 ```
 
 ```js
 Group(400)
-  Rect(auto) //133
-  Rect(auto) //133
-  SubGroup(auto) //133
+  Rect(fill) //133
+  Rect(fill) //133
+  SubGroup(fill) //133
 ```
 
 - Fixed
@@ -20,8 +20,8 @@ Group(400)
     - Percentages are relative to the parent’s content box width.
     - Percentages are never normalized (they can oversubscribe the parent).
     - If total % > 100%, children overflow (like CSS flex-basis).
-- Auto
-    - After fixed and % allocations, leftover width is divided equally among all auto children.
+- Fill/Grow
+    - After fixed and % allocations, leftover width is divided equally among all fill/grow children.
     - If leftover < 0 (oversubscribe), auto children shrink to 0.
     - Auto never steals space from % or fixed.
 - Nested Containers
