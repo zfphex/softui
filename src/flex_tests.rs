@@ -18,7 +18,7 @@ fn basic_multi() {
 
     group.size(parent);
 
-    assert_eq!(group.size.width, Unit::Auto(0));
+    assert_eq!(group.size.width, Unit::Fill { used: 0 });
     assert_eq!(group.size.height, Unit::Pixel(20));
 
     unsafe { RECURSE = 0 };
@@ -90,7 +90,7 @@ fn basic_size() {
 
     group.size(parent);
 
-    assert_eq!(group.size.width, Unit::Auto(0));
+    assert_eq!(group.size.width, Unit::Fill { used: 0 });
     assert_eq!(group.size.height, Unit::Pixel(20));
     assert_eq!(group.size.widgets_left, Some(2));
 
@@ -125,7 +125,7 @@ fn basic_nested_size() {
 
     group.size(parent);
 
-    assert_eq!(group.size.width, Unit::Auto(0));
+    assert_eq!(group.size.width, Unit::Fill { used: 0 });
     assert_eq!(group.size.height, Unit::Pixel(20));
     assert_eq!(group.size.widgets_left, Some(1));
 
@@ -162,7 +162,7 @@ fn basic_fixed_size() {
 
     group.size(parent);
 
-    assert_eq!(group.size.width, Unit::Auto(20));
+    assert_eq!(group.size.width, Unit::Fill { used: 20 });
     assert_eq!(group.size.height, Unit::Pixel(20));
     assert_eq!(group.size.widgets_left, Some(2));
 
@@ -204,7 +204,7 @@ fn basic_nested_fixed_size() {
 
     group.size(parent);
 
-    assert_eq!(group.size.width, Unit::Auto(20));
+    assert_eq!(group.size.width, Unit::Fill { used: 20 });
     assert_eq!(group.size.height, Unit::Pixel(20));
     assert_eq!(group.size.widgets_left, Some(1));
 

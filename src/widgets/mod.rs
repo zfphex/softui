@@ -93,8 +93,8 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.size_mut().height = Unit::Auto(0);
-        self.size_mut().width = Unit::Auto(0);
+        self.size_mut().height = Unit::Fill { used: 0 };
+        self.size_mut().width = Unit::Fill { used: 0 };
         self
     }
 
@@ -102,7 +102,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.size_mut().height = Unit::Auto(0);
+        self.size_mut().height = Unit::Fill { used: 0 };
         self
     }
 
@@ -110,7 +110,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     where
         Self: Sized,
     {
-        self.size_mut().width = Unit::Auto(0);
+        self.size_mut().width = Unit::Fill { used: 0 };
         self
     }
 

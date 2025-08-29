@@ -69,12 +69,12 @@ The last widget has a fixed size.
 Direction LeftRight
 WindowSize (800, 600)
 Group has a size of (Auto, Auto)
-H1 has a size of (Auto, Auto)
-    Rect(20%, 20)
-    Rect(80%, 20)
-H2 has a size of (Auto, Auto)
-    Rect(20%, 20)
-    Rect(80%, 20)
+    H1 has a size of (Auto, Auto)
+        Rect(20%, 20)
+        Rect(80%, 20)
+    H2 has a size of (Auto, Auto)
+        Rect(20%, 20)
+        Rect(80%, 20)
 
 Rect(20, 20)
 

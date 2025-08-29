@@ -1,0 +1,4 @@
+- Fill/Grow (Fill the entire parent container)
+- Fit (sized to fit its children)
+- Pecentage (Sized relative to parent container)
+- Font Relative (em, relative to the parent font size)
