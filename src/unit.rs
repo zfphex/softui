@@ -70,7 +70,12 @@ pub enum Unit {
     Pixel(usize),
     Percentage(usize),
     Em(usize),
-    Auto(usize),
+    ///Fill parent area
+    Fill {
+        used: usize,
+    },
+    ///Fit children area
+    Fit,
 }
 
 impl Display for Unit {
@@ -79,31 +84,34 @@ impl Display for Unit {
             Unit::Pixel(px) => write!(f, "Pixel({})", px),
             Unit::Percentage(p) => write!(f, "Percentage({})", p),
             Unit::Em(em) => write!(f, "Em({})", em),
-            Unit::Auto(used) => write!(f, "Auto({})", used),
+            Unit::Fill { used } => write!(f, "Auto({})", used),
+            Unit::Fit => write!(f, "Fit"),
         }
     }
 }
 
 impl Unit {
-    #[track_caller]
-    pub fn to_pixels(self, parent: usize) -> usize {
-        match self {
-            Unit::Pixel(px) => px,
-            Unit::Percentage(percent) => (parent as f32 * percent as f32 / 100.0).round() as usize,
-            Unit::Em(em) => unimplemented!(),
-            Unit::Auto(_) => unimplemented!(),
-        }
-    }
+    // #[track_caller]
+    // pub fn to_pixels(self, parent: usize) -> usize {
+    //     match self {
+    //         Unit::Pixel(px) => px,
+    //         Unit::Percentage(percent) => (parent as f32 * percent as f32 / 100.0).round() as usize,
+    //         Unit::Em(em) => unimplemented!(),
+    //         Unit::Fill(_) => unimplemented!(),
+    //         Unit::Fit => unimplemented!(),
+    //     }
+    // }
 
-    #[track_caller]
-    pub fn child_to_px(self, free: usize, widgets_left: usize) -> usize {
-        match self {
-            Unit::Pixel(px) => px,
-            Unit::Percentage(p) => (free as f32 * p as f32 / 100.0).round() as usize,
-            Unit::Auto(_) => free / widgets_left,
-            Unit::Em(_) => todo!(),
-        }
-    }
+    // #[track_caller]
+    // pub fn child_to_px(self, free: usize, widgets_left: usize) -> usize {
+    //     match self {
+    //         Unit::Pixel(px) => px,
+    //         Unit::Percentage(p) => (free as f32 * p as f32 / 100.0).round() as usize,
+    //         Unit::Fill { used }) => free / widgets_left,
+    //         Unit::Em(_) => unimplemented!(),
+    //         Unit::Fit => unimplemented!(),
+    //     }
+    // }
 }
 
 impl RelativeWidth for usize {

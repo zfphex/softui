@@ -57,8 +57,8 @@ impl<'a> Group<'a> {
             size: Size {
                 x: Unit::Pixel(0),
                 y: Unit::Pixel(0),
-                width: Unit::Auto(0),
-                height: Unit::Auto(0),
+                width: Unit::Fill { used: 0 },
+                height: Unit::Fill { used: 0 },
                 widgets_left: None,
             },
             bg: None,
@@ -121,7 +121,7 @@ impl<'a> Widget<'a> for Group<'a> {
 
         let container_width = match self.size.width {
             Unit::Pixel(px) => px,
-            Unit::Auto(used) => parent_width - used,
+            Unit::Fill { used } => parent_width - used,
             _ if is_second_pass => unreachable!(),
             _ => 0,
         };
@@ -192,8 +192,8 @@ impl<'a> Widget<'a> for Group<'a> {
                     Unit::Pixel(px) => px,
                     Unit::Percentage(p) => (width_free as f32 * p as f32 / 100.0).round() as usize,
                     // Unit::Auto(_) if is_container => width_free / widgets_left,
-                    Unit::Auto(_) => width_free,
-                    Unit::Em(_) => todo!(),
+                    Unit::Fill { used } => width_free,
+                    _ => todo!(),
                 };
 
                 //TODO: IDK what height is supposed to be for LeftRight layouts.
@@ -201,8 +201,8 @@ impl<'a> Widget<'a> for Group<'a> {
                     Unit::Pixel(px) => px,
                     Unit::Percentage(p) => (height_free as f32 * p as f32 / 100.0).round() as usize,
                     // Unit::Auto(_) if is_container => height_free / widgets_left,
-                    Unit::Auto(_) => height_free,
-                    Unit::Em(_) => todo!(),
+                    Unit::Fill { used } => height_free,
+                    _ => todo!(),
                 };
 
                 // dbg!(size.width, width_free, widgets_left);
@@ -218,7 +218,7 @@ impl<'a> Widget<'a> for Group<'a> {
         let width = if is_second_pass {
             Unit::Pixel(total_width)
         } else {
-            Unit::Auto(total_width)
+            Unit::Fill { used: total_width }
         };
 
         dbg!(total_width);
@@ -256,7 +256,6 @@ impl<'a> Widget<'a> for Group<'a> {
                 FlexDirection::TopBottom => current_y += child_h + if i != last_index { self.gap } else { 0 },
             }
         }
-
     }
 
     fn handle_event(&mut self, ctx: &mut Context) {
