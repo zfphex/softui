@@ -5,14 +5,20 @@ fn basic_multi() {
     let parent = Rect::new(0, 0, 800, 600);
 
     let mut group = Group::new();
+
+    //First group should get 50% i.e width is 400
     group.children.push(Box::new(h!(
-        rect().w(20.percent()).h(20).bg(blue()),
+        //70% of 400 is 280
+        rect().w(70.percent()).h(20).bg(blue()),
+        //30% of 400 is 120
         rect().w(30.percent()).h(20).bg(blue())
     )));
 
+    //Second group should also get 50%
     group
         .children
-        .push(Box::new(h!(rect().w(50.percent()).h(20).bg(green()))));
+        //100% of 400 is 400
+        .push(Box::new(h!(rect().w(100.percent()).h(20).bg(green()))));
 
     //TODO: We need to pass the widgets left to the next child container
 
@@ -27,35 +33,50 @@ fn basic_multi() {
     group.size(parent);
 
     assert_eq!(group.size.width, Unit::Pixel(800));
-    assert_eq!(group.size.height, Unit::Pixel(600));
+    assert_eq!(group.size.height, Unit::Pixel(20));
 
     let h1 = group.children[0].size_mut().clone();
-    assert_eq!(h1.x, Unit::Pixel(0));
-    assert_eq!(h1.y, Unit::Pixel(0));
     assert_eq!(h1.width, Unit::Pixel(400));
-    assert_eq!(h1.height, Unit::Pixel(300));
+    assert_eq!(h1.height, Unit::Pixel(20));
+
+    let h1c = group.children[0].children();
+    let r0 = h1c[0].size_mut().clone();
+
+    assert_eq!(r0.width, Unit::Pixel(280));
+    assert_eq!(r0.height, Unit::Pixel(20));
+
+    let r1 = h1c[1].size_mut().clone();
+    assert_eq!(r0.width, Unit::Pixel(120));
+    assert_eq!(r0.height, Unit::Pixel(20));
+
+    let h2 = group.children[1].size_mut().clone();
+    assert_eq!(h2.width, Unit::Pixel(400));
+    assert_eq!(h2.height, Unit::Pixel(20));
+
+    // group.position(parent);
+
+    // let h1 = group.children[0].size_mut().clone();
+    // assert_eq!(h1.x, Unit::Pixel(0));
+    // assert_eq!(h1.y, Unit::Pixel(0));
+
+    // let h2 = group.children[1].size_mut().clone();
+    // assert_eq!(h2.x, Unit::Pixel(400));
+    // assert_eq!(h2.y, Unit::Pixel(0));
 
     // let h1c = group.children[0].children();
 
-    // let r1 = h1c[0].size_mut().clone();
-    // assert_eq!(r1.x, Unit::Pixel(0));
+    // let r0 = h1c[0].size_mut().clone();
+    // let r1 = h1c[1].size_mut().clone();
+
+    // assert_eq!(r0.x, Unit::Pixel(0));
+    // assert_eq!(r0.y, Unit::Pixel(0));
+    // assert_eq!(r0.width, Unit::Pixel(80));
+    // assert_eq!(r0.height, Unit::Pixel(20));
+
+    // assert_eq!(r1.x, Unit::Pixel(80));
     // assert_eq!(r1.y, Unit::Pixel(0));
-    // assert_eq!(r1.width, Unit::Pixel(160));
+    // assert_eq!(r1.width, Unit::Pixel(120));
     // assert_eq!(r1.height, Unit::Pixel(20));
-
-    // let h2 = group.children[1].size_mut().clone();
-    // assert_eq!(h2.x, Unit::Pixel(160));
-    // assert_eq!(h2.y, Unit::Pixel(0));
-    // assert_eq!(h2.width, Unit::Pixel(640));
-    // assert_eq!(h2.height, Unit::Pixel(20));
-
-    // let h2c = group.children[1].children();
-
-    // let r2 = h2c[0].size_mut().clone();
-    // assert_eq!(r2.x, Unit::Pixel(160));
-    // assert_eq!(r2.y, Unit::Pixel(0));
-    // assert_eq!(r2.width, Unit::Pixel(640));
-    // assert_eq!(r2.height, Unit::Pixel(20));
 }
 
 #[test]

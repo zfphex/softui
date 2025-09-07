@@ -53,7 +53,7 @@ impl<'a> Group<'a> {
             children: Vec::new(),
             padding: 0,
             gap: 0,
-            direction: FlexDirection::default(),
+            direction: FlexDirection::LeftRight,
             size: Size {
                 x: Unit::Pixel(0),
                 y: Unit::Pixel(0),
@@ -221,7 +221,7 @@ impl<'a> Widget<'a> for Group<'a> {
             Unit::Fill { used: total_width }
         };
 
-        dbg!(total_width);
+        // dbg!(total_width);
         self.size = size(0, 0, width, total_height);
         if widgets_left >= 1 {
             self.size.widgets_left = Some(widgets_left);
