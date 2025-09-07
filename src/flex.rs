@@ -12,7 +12,7 @@ pub enum FlexDirection {
 #[macro_export]
 macro_rules! flex {
     ($($widget:expr),* $(,)?) => {{
-        FlexRoot { group: group!($($widget),*), margin: 0 }
+        $crate::FlexRoot { group: $crate::group!($($widget),*), margin: 0 }
     }};
 }
 
@@ -25,7 +25,7 @@ macro_rules! v { ($($widget:expr),* $(,)?) => { $crate::group!($($widget),*).dir
 #[macro_export]
 macro_rules! group {
     ($($widget:expr),* $(,)?) => {{
-        let mut group = Group::new();
+        let mut group = $crate::Group::new();
 
         $(
             group.children.push(Box::new($widget));
