@@ -1,5 +1,5 @@
 ```js
-Root (800)
+Root(800)
   Group()
     Rect(50%)        // 200
     Rect(50%)        // 200
