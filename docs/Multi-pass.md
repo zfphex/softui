@@ -186,19 +186,6 @@ Self.SetSize(Parent)
 
 - Position
 
-
-Group.Position(Parent = WindowSize)
-    X = Parent.X + Padding
-    Y = Parent.Y + Padding
-    Width = 0
-    Height = 0
-
-    For Child in Self.Children
-
-
-
-- Position
-
 Group.Position(Parent = WindowSize)
     X = Parent.X + Padding
     Y = Parent.Y + Padding
