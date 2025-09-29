@@ -105,6 +105,59 @@ impl<'a> Widget<'a> for Group<'a> {
         true
     }
 
+    fn size_new(&self, parent: Size) -> Size {
+        let parent = parent.into_rect();
+        let mut total_width = self.gap * self.children.len().saturating_sub(1);
+        let mut total_height = 0;
+
+        let parent_width = parent.width - self.padding * 2;
+        let parent_height = parent.height - self.padding * 2;
+
+        let rem_width = parent.width;
+        let rem_height = parent.height;
+
+        let mut widgets_left = 0;
+
+        let mut fill = false;
+        match self.size.width {
+            Unit::Fill { used } => fill = true,
+            _ => todo!(),
+        }
+
+        match self.size.height {
+            Unit::Fill { used } => fill = true,
+            _ => todo!(),
+        }
+
+        for child in &self.children {
+            let size = child.size_new(size(0, 0, rem_width, rem_height));
+
+            match size.width {
+                Unit::Pixel(px) => total_width += px,
+                Unit::Fill { used } => widgets_left += 1,
+                Unit::Percentage(percent) => {
+                    let p = (percent as f32 / 100.0 * rem_width as f32) as usize;
+                    total_width += p;
+                }
+                _ => unimplemented!(),
+            }
+
+            match size.height {
+                Unit::Pixel(px) => total_height = total_height.max(px),
+                Unit::Fill { used } => widgets_left += 1,
+                Unit::Percentage(percent) => {
+                    let p = (percent as f32 / 100.0 * rem_width as f32) as usize;
+                    total_height = total_height.max(p);
+                }
+                _ => unimplemented!(),
+            }
+        }
+
+        let mut size = size(0, 0, total_width, total_height);
+        size.widgets_left = Some(widgets_left);
+        return size;
+    }
+
     fn size(&mut self, parent: Rect) {
         let mut total_width = 0;
         let mut total_height = 0;

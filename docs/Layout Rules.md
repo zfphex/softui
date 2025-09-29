@@ -20,6 +20,7 @@ Group(400)
     - Percentages are relative to the parent’s content box width.
     - Percentages are never normalized (they can oversubscribe the parent).
     - If total % > 100%, children overflow (like CSS flex-basis).
+    - Percent sizing is only allowed when the parent has a definite size (Fixed or Fill allocation).
 - Fill/Grow
     - After fixed and % allocations, leftover width is divided equally among all fill/grow children.
     - If leftover < 0 (oversubscribe), auto children shrink to 0.
@@ -27,6 +28,6 @@ Group(400)
 - Nested Containers
     - They get an allocated width from their parent.
     - Then recursively apply the same rules to their children.
-
-
-
+- Fit 
+  - Shrink wrap to children
+  - Percentage sizes are invalid.

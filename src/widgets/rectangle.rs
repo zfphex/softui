@@ -37,6 +37,10 @@ impl<'a> Widget<'a> for Rectangle {
         //TODO: Should this be the default blanket implementation.
     }
 
+    fn size_new(&self, _: Size) -> Size {
+        self.size.clone()
+    }
+
     fn position(&mut self, area: Rect) {
         self.size = area.into();
     }
