@@ -31,4 +31,10 @@ Group(400)
 - Fit 
   - Fit containers need children that can size themselves without referring back to the parent.
   - Percentage and Fill children are not allowed.
+- Gap
+  - Gap adds space between consecutive children along the primary axis.
+  - Gap is applied between children, not before the first or after the last child.
+  - With N children, total gap space = gap × (N - 1).
+  - Gap space is deducted from available space before distributing to Fill children.
+  - Each container has its own independent gap value.
 

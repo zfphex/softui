@@ -34,17 +34,19 @@ pub struct Node {
     pub size: [f32; 2],
     pub pos: [f32; 2],
     pub direction: Direction,
+    pub gap: f32,
     pub children: Vec<usize>,
 }
 
 impl Node {
-    pub fn new(name: &str, width: Sizing, height: Sizing, direction: Direction) -> Self {
+    pub fn new(name: &str, width: Sizing, height: Sizing, direction: Direction, gap: f32) -> Self {
         Self {
             name: name.to_string(),
             desired_size: [width, height],
             size: [0.0, 0.0],
             pos: [0.0, 0.0],
             direction,
+            gap,
             children: Vec::new(),
         }
     }
@@ -59,9 +61,9 @@ impl Tree {
         Self { nodes: Vec::new() }
     }
 
-    pub fn add_node(&mut self, name: &str, width: Sizing, height: Sizing, direction: Direction) -> usize {
+    pub fn add_node(&mut self, name: &str, width: Sizing, height: Sizing, direction: Direction, gap: f32) -> usize {
         let id = self.nodes.len();
-        self.nodes.push(Node::new(name, width, height, direction));
+        self.nodes.push(Node::new(name, width, height, direction, gap));
         id
     }
 
@@ -95,7 +97,8 @@ impl Tree {
         // Avoid cloning by using raw pointer (safe because we only access distinct elements)
         let children_ptr = self.nodes[id].children.as_ptr();
         let children_len = self.nodes[id].children.len();
-        let mut used_primary = 0.0;
+        let gap = self.nodes[id].gap;
+        let mut used_primary = gap * (children_len.saturating_sub(1)) as f32;
         let mut fill_count = 0;
 
         // 2a. calculate sizes except Fill
@@ -152,9 +155,15 @@ impl Tree {
             if reversed {
                 offset -= self.nodes[c].size[primary];
                 self.nodes[c].pos[primary] = parent_pos[primary] + offset;
+                if i < children_len - 1 {
+                    offset -= gap;
+                }
             } else {
                 self.nodes[c].pos[primary] = parent_pos[primary] + offset;
                 offset += self.nodes[c].size[primary];
+                if i < children_len - 1 {
+                    offset += gap;
+                }
             }
             self.nodes[c].pos[cross] = parent_pos[cross];
         }
@@ -209,10 +218,10 @@ mod tests {
     #[test]
     fn test_left_to_right() {
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let b1 = tree.add_node("B1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::LeftToRight);
-        let b2 = tree.add_node("B2", Sizing::Fixed(40.0), Sizing::Fixed(40.0), Direction::LeftToRight);
-        let b3 = tree.add_node("B3", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let b1 = tree.add_node("B1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
+        let b2 = tree.add_node("B2", Sizing::Fixed(40.0), Sizing::Fixed(40.0), Direction::LeftToRight, 0.0);
+        let b3 = tree.add_node("B3", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, b1);
         tree.add_child(p, b2);
@@ -231,10 +240,10 @@ mod tests {
     #[test]
     fn test_right_to_left() {
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::RightToLeft);
-        let b1 = tree.add_node("B1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::RightToLeft);
-        let b2 = tree.add_node("B2", Sizing::Fixed(40.0), Sizing::Fixed(40.0), Direction::RightToLeft);
-        let b3 = tree.add_node("B3", Sizing::Fill, Sizing::Fixed(50.0), Direction::RightToLeft);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::RightToLeft, 0.0);
+        let b1 = tree.add_node("B1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::RightToLeft, 0.0);
+        let b2 = tree.add_node("B2", Sizing::Fixed(40.0), Sizing::Fixed(40.0), Direction::RightToLeft, 0.0);
+        let b3 = tree.add_node("B3", Sizing::Fill, Sizing::Fixed(50.0), Direction::RightToLeft, 0.0);
 
         tree.add_child(p, b1);
         tree.add_child(p, b2);
@@ -253,16 +262,17 @@ mod tests {
     #[test]
     fn test_fill_with_nested() {
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let r1 = tree.add_node("R1", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let h1 = tree.add_node("H1", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let r1 = tree.add_node("R1", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let h1 = tree.add_node("H1", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
         let r2 = tree.add_node(
             "R2",
             Sizing::Percentage(50.0),
             Sizing::Percentage(50.0),
             Direction::LeftToRight,
+            0.0,
         );
-        let h2 = tree.add_node("H2", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
+        let h2 = tree.add_node("H2", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
 
         tree.add_child(p, r1);
         tree.add_child(p, h1);
@@ -286,10 +296,10 @@ mod tests {
     #[test]
     fn test_top_to_bottom() {
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::TopToBottom);
-        let b1 = tree.add_node("B1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::TopToBottom);
-        let b2 = tree.add_node("B2", Sizing::Fixed(40.0), Sizing::Fixed(40.0), Direction::TopToBottom);
-        let b3 = tree.add_node("B3", Sizing::Fixed(50.0), Sizing::Fill, Direction::TopToBottom);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::TopToBottom, 0.0);
+        let b1 = tree.add_node("B1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::TopToBottom, 0.0);
+        let b2 = tree.add_node("B2", Sizing::Fixed(40.0), Sizing::Fixed(40.0), Direction::TopToBottom, 0.0);
+        let b3 = tree.add_node("B3", Sizing::Fixed(50.0), Sizing::Fill, Direction::TopToBottom, 0.0);
 
         tree.add_child(p, b1);
         tree.add_child(p, b2);
@@ -308,10 +318,10 @@ mod tests {
     #[test]
     fn test_bottom_to_top() {
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::BottomToTop);
-        let b1 = tree.add_node("B1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::BottomToTop);
-        let b2 = tree.add_node("B2", Sizing::Fixed(40.0), Sizing::Fixed(40.0), Direction::BottomToTop);
-        let b3 = tree.add_node("B3", Sizing::Fixed(50.0), Sizing::Fill, Direction::BottomToTop);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::BottomToTop, 0.0);
+        let b1 = tree.add_node("B1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::BottomToTop, 0.0);
+        let b2 = tree.add_node("B2", Sizing::Fixed(40.0), Sizing::Fixed(40.0), Direction::BottomToTop, 0.0);
+        let b3 = tree.add_node("B3", Sizing::Fixed(50.0), Sizing::Fill, Direction::BottomToTop, 0.0);
 
         tree.add_child(p, b1);
         tree.add_child(p, b2);
@@ -330,24 +340,27 @@ mod tests {
     #[test]
     fn test_nested_overflow() {
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
         let h1 = tree.add_node(
             "H1",
             Sizing::Percentage(50.0),
             Sizing::Percentage(50.0),
             Direction::LeftToRight,
+            0.0,
         );
         let r = tree.add_node(
             "R",
             Sizing::Percentage(50.0),
             Sizing::Percentage(50.0),
             Direction::LeftToRight,
+            0.0,
         );
         let h2 = tree.add_node(
             "H2",
             Sizing::Percentage(100.0),
             Sizing::Percentage(100.0),
             Direction::LeftToRight,
+            0.0,
         );
 
         tree.add_child(p, h1);
@@ -367,10 +380,10 @@ mod tests {
     #[test]
     fn test_fit_with_fill() {
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let g1 = tree.add_node("G1", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
-        let g2 = tree.add_node("G2", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let r = tree.add_node("R", Sizing::Fixed(10.0), Sizing::Fixed(10.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let g1 = tree.add_node("G1", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+        let g2 = tree.add_node("G2", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let r = tree.add_node("R", Sizing::Fixed(10.0), Sizing::Fixed(10.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, g1);
         tree.add_child(g1, g2);
@@ -392,12 +405,13 @@ mod tests {
     #[should_panic(expected = "Fit containers cannot have Percentage or Fill children")]
     fn test_invalid_fit_with_percentage() {
         let mut tree = Tree::new();
-        let h1 = tree.add_node("H1", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
+        let h1 = tree.add_node("H1", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
         let r = tree.add_node(
             "R",
             Sizing::Percentage(50.0),
             Sizing::Fixed(10.0),
             Direction::LeftToRight,
+            0.0,
         );
 
         tree.add_child(h1, r);
@@ -409,8 +423,8 @@ mod tests {
     #[should_panic(expected = "Fit containers cannot have Percentage or Fill children")]
     fn test_invalid_fit_with_fill() {
         let mut tree = Tree::new();
-        let h1 = tree.add_node("H1", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let r = tree.add_node("R", Sizing::Fill, Sizing::Fixed(10.0), Direction::LeftToRight);
+        let h1 = tree.add_node("H1", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let r = tree.add_node("R", Sizing::Fill, Sizing::Fixed(10.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(h1, r);
 
@@ -421,10 +435,10 @@ mod tests {
     fn test_multiple_fill_equal_distribution() {
         // Multiple Fill children should divide remaining space equally
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let f1 = tree.add_node("F1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let f2 = tree.add_node("F2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let f3 = tree.add_node("F3", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let f1 = tree.add_node("F1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let f2 = tree.add_node("F2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let f3 = tree.add_node("F3", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, f1);
         tree.add_child(p, f2);
@@ -445,10 +459,10 @@ mod tests {
     fn test_fill_with_fixed_leftovers() {
         // Fill gets only leftover space after Fixed allocations
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let r1 = tree.add_node("R1", Sizing::Fixed(60.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let r2 = tree.add_node("R2", Sizing::Fixed(40.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let f1 = tree.add_node("F1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let r1 = tree.add_node("R1", Sizing::Fixed(60.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let r2 = tree.add_node("R2", Sizing::Fixed(40.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let f1 = tree.add_node("F1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, r1);
         tree.add_child(p, r2);
@@ -465,10 +479,10 @@ mod tests {
     fn test_fill_with_percentage_leftovers() {
         // Fill gets leftover after Percentage allocations
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let pct = tree.add_node("Pct", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let f1 = tree.add_node("F1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let f2 = tree.add_node("F2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let pct = tree.add_node("Pct", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let f1 = tree.add_node("F1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let f2 = tree.add_node("F2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, pct);
         tree.add_child(p, f1);
@@ -489,9 +503,9 @@ mod tests {
     fn test_oversubscribed_percentage() {
         // Percentages > 100% cause overflow (like CSS flex-basis)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let p1 = tree.add_node("P1", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let p2 = tree.add_node("P2", Sizing::Percentage(75.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let p1 = tree.add_node("P1", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let p2 = tree.add_node("P2", Sizing::Percentage(75.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, p1);
         tree.add_child(p, p2);
@@ -509,10 +523,10 @@ mod tests {
     fn test_fill_shrinks_to_zero_on_overflow() {
         // When Fixed + Percentage oversubscribe, Fill shrinks to 0
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let r1 = tree.add_node("R1", Sizing::Fixed(60.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let p1 = tree.add_node("P1", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let f1 = tree.add_node("F1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let r1 = tree.add_node("R1", Sizing::Fixed(60.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let p1 = tree.add_node("P1", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let f1 = tree.add_node("F1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, r1);
         tree.add_child(p, p1);
@@ -528,14 +542,14 @@ mod tests {
     fn test_holy_grail_layout() {
         // Classic CSS holy grail: header, 3-column content, footer
         let mut tree = Tree::new();
-        let root = tree.add_node("Root", Sizing::Fixed(600.0), Sizing::Fixed(400.0), Direction::TopToBottom);
-        let header = tree.add_node("Header", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let content = tree.add_node("Content", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
-        let footer = tree.add_node("Footer", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let root = tree.add_node("Root", Sizing::Fixed(600.0), Sizing::Fixed(400.0), Direction::TopToBottom, 0.0);
+        let header = tree.add_node("Header", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let content = tree.add_node("Content", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+        let footer = tree.add_node("Footer", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
         
-        let sidebar_left = tree.add_node("SidebarL", Sizing::Fixed(100.0), Sizing::Fill, Direction::LeftToRight);
-        let main = tree.add_node("Main", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
-        let sidebar_right = tree.add_node("SidebarR", Sizing::Fixed(100.0), Sizing::Fill, Direction::LeftToRight);
+        let sidebar_left = tree.add_node("SidebarL", Sizing::Fixed(100.0), Sizing::Fill, Direction::LeftToRight, 0.0);
+        let main = tree.add_node("Main", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+        let sidebar_right = tree.add_node("SidebarR", Sizing::Fixed(100.0), Sizing::Fill, Direction::LeftToRight, 0.0);
 
         tree.add_child(root, header);
         tree.add_child(root, content);
@@ -565,10 +579,10 @@ mod tests {
     fn test_nested_direction_change() {
         // Parent is horizontal, child is vertical
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight);
-        let v_container = tree.add_node("V", Sizing::Fixed(100.0), Sizing::Fixed(200.0), Direction::TopToBottom);
-        let v1 = tree.add_node("V1", Sizing::Fixed(80.0), Sizing::Fixed(60.0), Direction::TopToBottom);
-        let v2 = tree.add_node("V2", Sizing::Fixed(80.0), Sizing::Fill, Direction::TopToBottom);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight, 0.0);
+        let v_container = tree.add_node("V", Sizing::Fixed(100.0), Sizing::Fixed(200.0), Direction::TopToBottom, 0.0);
+        let v1 = tree.add_node("V1", Sizing::Fixed(80.0), Sizing::Fixed(60.0), Direction::TopToBottom, 0.0);
+        let v2 = tree.add_node("V2", Sizing::Fixed(80.0), Sizing::Fill, Direction::TopToBottom, 0.0);
 
         tree.add_child(p, v_container);
         tree.add_child(v_container, v1);
@@ -587,10 +601,10 @@ mod tests {
     fn test_deeply_nested_percentages() {
         // Test percentage calculations through multiple levels (also covers test_nested_percentage)
         let mut tree = Tree::new();
-        let l1 = tree.add_node("L1", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight);
-        let l2 = tree.add_node("L2", Sizing::Percentage(80.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let l3 = tree.add_node("L3", Sizing::Percentage(50.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let l4 = tree.add_node("L4", Sizing::Percentage(25.0), Sizing::Fixed(100.0), Direction::LeftToRight);
+        let l1 = tree.add_node("L1", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight, 0.0);
+        let l2 = tree.add_node("L2", Sizing::Percentage(80.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let l3 = tree.add_node("L3", Sizing::Percentage(50.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let l4 = tree.add_node("L4", Sizing::Percentage(25.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(l1, l2);
         tree.add_child(l2, l3);
@@ -610,11 +624,11 @@ mod tests {
     fn test_fit_nested_horizontal_sum() {
         // Fit container with horizontal children should sum their widths
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Fixed(30.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Fixed(40.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let c3 = tree.add_node("C3", Sizing::Fixed(25.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(30.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(40.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c3 = tree.add_node("C3", Sizing::Fixed(25.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, c1);
@@ -631,11 +645,11 @@ mod tests {
     fn test_fit_nested_vertical_max() {
         // Fit container with vertical children should use max height
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::TopToBottom);
-        let fit = tree.add_node("Fit", Sizing::Fixed(100.0), Sizing::Fit, Direction::TopToBottom);
-        let c1 = tree.add_node("C1", Sizing::Fixed(50.0), Sizing::Fixed(30.0), Direction::TopToBottom);
-        let c2 = tree.add_node("C2", Sizing::Fixed(50.0), Sizing::Fixed(40.0), Direction::TopToBottom);
-        let c3 = tree.add_node("C3", Sizing::Fixed(50.0), Sizing::Fixed(25.0), Direction::TopToBottom);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::TopToBottom, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fixed(100.0), Sizing::Fit, Direction::TopToBottom, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(50.0), Sizing::Fixed(30.0), Direction::TopToBottom, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(50.0), Sizing::Fixed(40.0), Direction::TopToBottom, 0.0);
+        let c3 = tree.add_node("C3", Sizing::Fixed(50.0), Sizing::Fixed(25.0), Direction::TopToBottom, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, c1);
@@ -652,11 +666,11 @@ mod tests {
     fn test_fit_cross_axis_max() {
         // Fit in cross axis should take max of children
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Fixed(30.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Fixed(40.0), Sizing::Fixed(80.0), Direction::LeftToRight);
-        let c3 = tree.add_node("C3", Sizing::Fixed(25.0), Sizing::Fixed(60.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(30.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(40.0), Sizing::Fixed(80.0), Direction::LeftToRight, 0.0);
+        let c3 = tree.add_node("C3", Sizing::Fixed(25.0), Sizing::Fixed(60.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, c1);
@@ -673,11 +687,11 @@ mod tests {
     fn test_navbar_with_spacer() {
         // Common pattern: left items, spacer (Fill), right items
         let mut tree = Tree::new();
-        let nav = tree.add_node("Nav", Sizing::Fixed(800.0), Sizing::Fixed(60.0), Direction::LeftToRight);
-        let logo = tree.add_node("Logo", Sizing::Fixed(100.0), Sizing::Fixed(40.0), Direction::LeftToRight);
-        let spacer = tree.add_node("Spacer", Sizing::Fill, Sizing::Fixed(40.0), Direction::LeftToRight);
-        let btn1 = tree.add_node("Btn1", Sizing::Fixed(80.0), Sizing::Fixed(40.0), Direction::LeftToRight);
-        let btn2 = tree.add_node("Btn2", Sizing::Fixed(80.0), Sizing::Fixed(40.0), Direction::LeftToRight);
+        let nav = tree.add_node("Nav", Sizing::Fixed(800.0), Sizing::Fixed(60.0), Direction::LeftToRight, 0.0);
+        let logo = tree.add_node("Logo", Sizing::Fixed(100.0), Sizing::Fixed(40.0), Direction::LeftToRight, 0.0);
+        let spacer = tree.add_node("Spacer", Sizing::Fill, Sizing::Fixed(40.0), Direction::LeftToRight, 0.0);
+        let btn1 = tree.add_node("Btn1", Sizing::Fixed(80.0), Sizing::Fixed(40.0), Direction::LeftToRight, 0.0);
+        let btn2 = tree.add_node("Btn2", Sizing::Fixed(80.0), Sizing::Fixed(40.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(nav, logo);
         tree.add_child(nav, spacer);
@@ -701,11 +715,11 @@ mod tests {
     fn test_mixed_all_sizing_modes() {
         // Test all sizing modes together: Fixed, Percentage, Fill
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(500.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let fixed = tree.add_node("Fixed", Sizing::Fixed(100.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let pct = tree.add_node("Pct", Sizing::Percentage(20.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fill1 = tree.add_node("Fill1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fill2 = tree.add_node("Fill2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(500.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let fixed = tree.add_node("Fixed", Sizing::Fixed(100.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let pct = tree.add_node("Pct", Sizing::Percentage(20.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fill1 = tree.add_node("Fill1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fill2 = tree.add_node("Fill2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fixed);
         tree.add_child(p, pct);
@@ -729,14 +743,14 @@ mod tests {
     fn test_grid_like_cells() {
         // Simulate a 2x2 grid using nested containers
         let mut tree = Tree::new();
-        let root = tree.add_node("Root", Sizing::Fixed(400.0), Sizing::Fixed(400.0), Direction::TopToBottom);
-        let row1 = tree.add_node("Row1", Sizing::Fill, Sizing::Percentage(50.0), Direction::LeftToRight);
-        let row2 = tree.add_node("Row2", Sizing::Fill, Sizing::Percentage(50.0), Direction::LeftToRight);
+        let root = tree.add_node("Root", Sizing::Fixed(400.0), Sizing::Fixed(400.0), Direction::TopToBottom, 0.0);
+        let row1 = tree.add_node("Row1", Sizing::Fill, Sizing::Percentage(50.0), Direction::LeftToRight, 0.0);
+        let row2 = tree.add_node("Row2", Sizing::Fill, Sizing::Percentage(50.0), Direction::LeftToRight, 0.0);
         
-        let cell11 = tree.add_node("Cell11", Sizing::Percentage(50.0), Sizing::Fill, Direction::LeftToRight);
-        let cell12 = tree.add_node("Cell12", Sizing::Percentage(50.0), Sizing::Fill, Direction::LeftToRight);
-        let cell21 = tree.add_node("Cell21", Sizing::Percentage(50.0), Sizing::Fill, Direction::LeftToRight);
-        let cell22 = tree.add_node("Cell22", Sizing::Percentage(50.0), Sizing::Fill, Direction::LeftToRight);
+        let cell11 = tree.add_node("Cell11", Sizing::Percentage(50.0), Sizing::Fill, Direction::LeftToRight, 0.0);
+        let cell12 = tree.add_node("Cell12", Sizing::Percentage(50.0), Sizing::Fill, Direction::LeftToRight, 0.0);
+        let cell21 = tree.add_node("Cell21", Sizing::Percentage(50.0), Sizing::Fill, Direction::LeftToRight, 0.0);
+        let cell22 = tree.add_node("Cell22", Sizing::Percentage(50.0), Sizing::Fill, Direction::LeftToRight, 0.0);
 
         tree.add_child(root, row1);
         tree.add_child(root, row2);
@@ -762,7 +776,7 @@ mod tests {
     fn test_empty_container() {
         // Container with no children
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
 
         tree.layout(p, [100.0, 100.0], [0.0, 0.0]);
 
@@ -774,8 +788,8 @@ mod tests {
     fn test_single_fill_child() {
         // Single Fill child should take all available space
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let f = tree.add_node("F", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let f = tree.add_node("F", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
 
         tree.add_child(p, f);
 
@@ -789,10 +803,10 @@ mod tests {
     fn test_percentage_with_fit_sibling() {
         // Mix of Percentage and Fit (both definite)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let pct = tree.add_node("Pct", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fit_child = tree.add_node("FitChild", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let pct = tree.add_node("Pct", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fit_child = tree.add_node("FitChild", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, pct);
         tree.add_child(p, fit);
@@ -810,10 +824,10 @@ mod tests {
     fn test_rtl_with_percentages() {
         // Right-to-left layout with percentage sizing
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::RightToLeft);
-        let p1 = tree.add_node("P1", Sizing::Percentage(25.0), Sizing::Fixed(50.0), Direction::RightToLeft);
-        let p2 = tree.add_node("P2", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::RightToLeft);
-        let p3 = tree.add_node("P3", Sizing::Percentage(25.0), Sizing::Fixed(50.0), Direction::RightToLeft);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::RightToLeft, 0.0);
+        let p1 = tree.add_node("P1", Sizing::Percentage(25.0), Sizing::Fixed(50.0), Direction::RightToLeft, 0.0);
+        let p2 = tree.add_node("P2", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::RightToLeft, 0.0);
+        let p3 = tree.add_node("P3", Sizing::Percentage(25.0), Sizing::Fixed(50.0), Direction::RightToLeft, 0.0);
 
         tree.add_child(p, p1);
         tree.add_child(p, p2);
@@ -834,10 +848,10 @@ mod tests {
     fn test_btt_with_fill_and_fixed() {
         // Bottom-to-top with mixed sizing
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(300.0), Direction::BottomToTop);
-        let fixed = tree.add_node("Fixed", Sizing::Fixed(50.0), Sizing::Fixed(100.0), Direction::BottomToTop);
-        let fill = tree.add_node("Fill", Sizing::Fixed(50.0), Sizing::Fill, Direction::BottomToTop);
-        let pct = tree.add_node("Pct", Sizing::Fixed(50.0), Sizing::Percentage(20.0), Direction::BottomToTop);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(300.0), Direction::BottomToTop, 0.0);
+        let fixed = tree.add_node("Fixed", Sizing::Fixed(50.0), Sizing::Fixed(100.0), Direction::BottomToTop, 0.0);
+        let fill = tree.add_node("Fill", Sizing::Fixed(50.0), Sizing::Fill, Direction::BottomToTop, 0.0);
+        let pct = tree.add_node("Pct", Sizing::Fixed(50.0), Sizing::Percentage(20.0), Direction::BottomToTop, 0.0);
 
         tree.add_child(p, fixed);
         tree.add_child(p, fill);
@@ -862,8 +876,8 @@ mod tests {
     fn test_fit_with_no_children() {
         // Fit container with no children should be 0x0
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit);
 
@@ -877,11 +891,11 @@ mod tests {
     fn test_fit_nested_within_fit() {
         // Multi-level Fit calculation
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(300.0), Direction::LeftToRight);
-        let fit1 = tree.add_node("Fit1", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let fit2 = tree.add_node("Fit2", Sizing::Fit, Sizing::Fit, Direction::TopToBottom);
-        let r1 = tree.add_node("R1", Sizing::Fixed(40.0), Sizing::Fixed(30.0), Direction::LeftToRight);
-        let r2 = tree.add_node("R2", Sizing::Fixed(40.0), Sizing::Fixed(20.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(300.0), Direction::LeftToRight, 0.0);
+        let fit1 = tree.add_node("Fit1", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let fit2 = tree.add_node("Fit2", Sizing::Fit, Sizing::Fit, Direction::TopToBottom, 0.0);
+        let r1 = tree.add_node("R1", Sizing::Fixed(40.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
+        let r2 = tree.add_node("R2", Sizing::Fixed(40.0), Sizing::Fixed(20.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit1);
         tree.add_child(fit1, fit2);
@@ -900,12 +914,12 @@ mod tests {
     fn test_fit_deeply_nested_fixed() {
         // Fit with deeply nested Fixed children (3+ levels)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(500.0), Sizing::Fixed(500.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let l1 = tree.add_node("L1", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::TopToBottom);
-        let l2 = tree.add_node("L2", Sizing::Fixed(80.0), Sizing::Fixed(80.0), Direction::LeftToRight);
-        let l3 = tree.add_node("L3", Sizing::Fixed(60.0), Sizing::Fixed(60.0), Direction::TopToBottom);
-        let leaf = tree.add_node("Leaf", Sizing::Fixed(40.0), Sizing::Fixed(40.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(500.0), Sizing::Fixed(500.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let l1 = tree.add_node("L1", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::TopToBottom, 0.0);
+        let l2 = tree.add_node("L2", Sizing::Fixed(80.0), Sizing::Fixed(80.0), Direction::LeftToRight, 0.0);
+        let l3 = tree.add_node("L3", Sizing::Fixed(60.0), Sizing::Fixed(60.0), Direction::TopToBottom, 0.0);
+        let leaf = tree.add_node("Leaf", Sizing::Fixed(40.0), Sizing::Fixed(40.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, l1);
@@ -923,10 +937,10 @@ mod tests {
     fn test_fit_primary_fixed_cross() {
         // Fit in primary axis, Fixed in cross axis
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Fixed(30.0), Sizing::Fixed(20.0), Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Fixed(25.0), Sizing::Fixed(20.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(30.0), Sizing::Fixed(20.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(25.0), Sizing::Fixed(20.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, c1);
@@ -941,10 +955,10 @@ mod tests {
     fn test_fixed_primary_fit_cross() {
         // Fixed in primary axis, Fit in cross axis
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fixed(100.0), Sizing::Fit, Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Fixed(30.0), Sizing::Fixed(40.0), Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Fixed(25.0), Sizing::Fixed(60.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fixed(100.0), Sizing::Fit, Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(30.0), Sizing::Fixed(40.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(25.0), Sizing::Fixed(60.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, c1);
@@ -960,8 +974,8 @@ mod tests {
     fn test_zero_sized_parent() {
         // Zero-sized parent (0x0)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(0.0), Sizing::Fixed(0.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(0.0), Sizing::Fixed(0.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c);
 
@@ -975,9 +989,9 @@ mod tests {
     fn test_zero_width_parent() {
         // Parent with 0 width but nonzero height
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(0.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(0.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Percentage(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c1);
         tree.add_child(p, c2);
@@ -992,9 +1006,9 @@ mod tests {
     fn test_zero_percentage() {
         // 0% percentage sizing
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Percentage(0.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Percentage(0.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c1);
         tree.add_child(p, c2);
@@ -1009,8 +1023,8 @@ mod tests {
     fn test_hundred_percent_single_child() {
         // Single 100% child
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Percentage(100.0), Sizing::Percentage(100.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Percentage(100.0), Sizing::Percentage(100.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c);
 
@@ -1024,9 +1038,9 @@ mod tests {
     fn test_very_small_sizes() {
         // Very small sizes (< 1.0) for floating-point precision
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(0.5), Sizing::Fixed(0.3), Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Fixed(0.2), Sizing::Fill, Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(0.5), Sizing::Fixed(0.3), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(0.2), Sizing::Fill, Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c1);
         tree.add_child(p, c2);
@@ -1043,11 +1057,11 @@ mod tests {
     fn test_many_fill_children_precision() {
         // Large number of Fill children (100+) to test floating-point accumulation
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(1000.0), Sizing::Fixed(100.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(1000.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
         let mut children = Vec::new();
         
         for i in 0..150 {
-            let c = tree.add_node(&format!("C{}", i), Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+            let c = tree.add_node(&format!("C{}", i), Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
             children.push(c);
             tree.add_child(p, c);
         }
@@ -1071,10 +1085,10 @@ mod tests {
     fn test_btt_with_percentages() {
         // Bottom-to-top with percentage sizing (missing test case)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(200.0), Direction::BottomToTop);
-        let p1 = tree.add_node("P1", Sizing::Fixed(50.0), Sizing::Percentage(25.0), Direction::BottomToTop);
-        let p2 = tree.add_node("P2", Sizing::Fixed(50.0), Sizing::Percentage(50.0), Direction::BottomToTop);
-        let p3 = tree.add_node("P3", Sizing::Fixed(50.0), Sizing::Percentage(25.0), Direction::BottomToTop);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(200.0), Direction::BottomToTop, 0.0);
+        let p1 = tree.add_node("P1", Sizing::Fixed(50.0), Sizing::Percentage(25.0), Direction::BottomToTop, 0.0);
+        let p2 = tree.add_node("P2", Sizing::Fixed(50.0), Sizing::Percentage(50.0), Direction::BottomToTop, 0.0);
+        let p3 = tree.add_node("P3", Sizing::Fixed(50.0), Sizing::Percentage(25.0), Direction::BottomToTop, 0.0);
 
         tree.add_child(p, p1);
         tree.add_child(p, p2);
@@ -1099,8 +1113,8 @@ mod tests {
         // Test horizontal directions (primary=width, cross=height)
         for dir in [Direction::LeftToRight, Direction::RightToLeft] {
             let mut tree = Tree::new();
-            let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), dir);
-            let c = tree.add_node("C", Sizing::Fixed(50.0), Sizing::Fill, dir);
+            let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), dir, 0.0);
+            let c = tree.add_node("C", Sizing::Fixed(50.0), Sizing::Fill, dir, 0.0);
             tree.add_child(p, c);
             tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
             check_size(&tree, c, 50.0, 100.0);  // width=Fixed, height=Fill(cross)
@@ -1109,8 +1123,8 @@ mod tests {
         // Test vertical directions (primary=height, cross=width)
         for dir in [Direction::TopToBottom, Direction::BottomToTop] {
             let mut tree = Tree::new();
-            let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), dir);
-            let c = tree.add_node("C", Sizing::Fill, Sizing::Fixed(50.0), dir);
+            let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), dir, 0.0);
+            let c = tree.add_node("C", Sizing::Fill, Sizing::Fixed(50.0), dir, 0.0);
             tree.add_child(p, c);
             tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
             check_size(&tree, c, 200.0, 50.0);  // width=Fill(cross), height=Fixed
@@ -1121,9 +1135,9 @@ mod tests {
     fn test_cross_axis_percentage_ttb() {
         // Cross-axis Percentage in TopToBottom (previously only tested in LTR)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::TopToBottom);
-        let c1 = tree.add_node("C1", Sizing::Percentage(50.0), Sizing::Fixed(30.0), Direction::TopToBottom);
-        let c2 = tree.add_node("C2", Sizing::Percentage(75.0), Sizing::Fixed(30.0), Direction::TopToBottom);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::TopToBottom, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Percentage(50.0), Sizing::Fixed(30.0), Direction::TopToBottom, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Percentage(75.0), Sizing::Fixed(30.0), Direction::TopToBottom, 0.0);
 
         tree.add_child(p, c1);
         tree.add_child(p, c2);
@@ -1141,11 +1155,11 @@ mod tests {
     fn test_all_children_fill() {
         // All children are Fill (no Fixed/Percentage at all)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let f1 = tree.add_node("F1", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
-        let f2 = tree.add_node("F2", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
-        let f3 = tree.add_node("F3", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
-        let f4 = tree.add_node("F4", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let f1 = tree.add_node("F1", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+        let f2 = tree.add_node("F2", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+        let f3 = tree.add_node("F3", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+        let f4 = tree.add_node("F4", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
 
         tree.add_child(p, f1);
         tree.add_child(p, f2);
@@ -1168,8 +1182,8 @@ mod tests {
     fn test_single_percentage_child() {
         // Single Percentage child (common pattern not tested alone)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(400.0), Sizing::Fixed(300.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Percentage(60.0), Sizing::Percentage(40.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(400.0), Sizing::Fixed(300.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Percentage(60.0), Sizing::Percentage(40.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c);
 
@@ -1186,10 +1200,10 @@ mod tests {
     fn test_oversubscribed_fixed() {
         // Fixed children sum > parent size (like percentage overflow)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let f1 = tree.add_node("F1", Sizing::Fixed(60.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let f2 = tree.add_node("F2", Sizing::Fixed(70.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let f3 = tree.add_node("F3", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let f1 = tree.add_node("F1", Sizing::Fixed(60.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let f2 = tree.add_node("F2", Sizing::Fixed(70.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let f3 = tree.add_node("F3", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, f1);
         tree.add_child(p, f2);
@@ -1210,12 +1224,12 @@ mod tests {
     fn test_fit_and_fill_siblings() {
         // Fit + Fill siblings (more complex interaction)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fit_child = tree.add_node("FitChild", Sizing::Fixed(50.0), Sizing::Fixed(30.0), Direction::LeftToRight);
-        let fill1 = tree.add_node("Fill1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fill2 = tree.add_node("Fill2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fixed = tree.add_node("Fixed", Sizing::Fixed(80.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fit_child = tree.add_node("FitChild", Sizing::Fixed(50.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
+        let fill1 = tree.add_node("Fill1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fill2 = tree.add_node("Fill2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fixed = tree.add_node("Fixed", Sizing::Fixed(80.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, fit_child);
@@ -1241,9 +1255,9 @@ mod tests {
     fn test_relayout_different_parent_size() {
         // Re-layout with different parent sizes - state should reset properly
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Percentage(50.0), Sizing::Fill, Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Percentage(50.0), Sizing::Fill, Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c1);
         tree.add_child(p, c2);
@@ -1265,8 +1279,8 @@ mod tests {
     fn test_relayout_different_position() {
         // Re-layout with different parent position
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c);
 
@@ -1285,10 +1299,10 @@ mod tests {
     fn test_partial_tree_layout() {
         // Layout a subtree that's not the root
         let mut tree = Tree::new();
-        let root = tree.add_node("Root", Sizing::Fixed(500.0), Sizing::Fixed(500.0), Direction::LeftToRight);
-        let sub1 = tree.add_node("Sub1", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::TopToBottom);
-        let sub2 = tree.add_node("Sub2", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let leaf = tree.add_node("Leaf", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let root = tree.add_node("Root", Sizing::Fixed(500.0), Sizing::Fixed(500.0), Direction::LeftToRight, 0.0);
+        let sub1 = tree.add_node("Sub1", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::TopToBottom, 0.0);
+        let sub2 = tree.add_node("Sub2", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let leaf = tree.add_node("Leaf", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(root, sub1);
         tree.add_child(root, sub2);
@@ -1307,14 +1321,14 @@ mod tests {
     fn test_mixed_fit_percentage_fixed_fill() {
         // Complex scenario: all sizing modes together with Fit
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(500.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let fixed = tree.add_node("Fixed", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let pct = tree.add_node("Pct", Sizing::Percentage(10.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fit_c1 = tree.add_node("FitC1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::LeftToRight);
-        let fit_c2 = tree.add_node("FitC2", Sizing::Fixed(35.0), Sizing::Fixed(30.0), Direction::LeftToRight);
-        let fill1 = tree.add_node("Fill1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fill2 = tree.add_node("Fill2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(500.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let fixed = tree.add_node("Fixed", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let pct = tree.add_node("Pct", Sizing::Percentage(10.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fit_c1 = tree.add_node("FitC1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
+        let fit_c2 = tree.add_node("FitC2", Sizing::Fixed(35.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
+        let fill1 = tree.add_node("Fill1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fill2 = tree.add_node("Fill2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fixed);
         tree.add_child(p, pct);
@@ -1345,8 +1359,8 @@ mod tests {
     fn test_single_fixed_child() {
         // Baseline: single Fixed child (important common case not explicitly tested)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Fixed(50.0), Sizing::Fixed(30.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Fixed(50.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c);
         tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
@@ -1359,8 +1373,8 @@ mod tests {
     fn test_negative_fixed_size() {
         // Negative sizes should work but may produce unexpected layouts
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Fixed(-50.0), Sizing::Fixed(30.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Fixed(-50.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c);
         tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
@@ -1374,8 +1388,8 @@ mod tests {
     fn test_negative_percentage() {
         // Negative percentage should produce negative sizes
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Percentage(-25.0), Sizing::Fixed(30.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Percentage(-25.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c);
         tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
@@ -1388,8 +1402,8 @@ mod tests {
     fn test_infinity_size() {
         // Infinity sizes should propagate through layout
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(f32::INFINITY), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Percentage(50.0), Sizing::Fixed(30.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(f32::INFINITY), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Percentage(50.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c);
         tree.layout(p, [f32::INFINITY, 100.0], [0.0, 0.0]);
@@ -1402,8 +1416,8 @@ mod tests {
     fn test_nan_handling() {
         // NaN should propagate (NaN comparisons are always false)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Fixed(f32::NAN), Sizing::Fixed(30.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Fixed(f32::NAN), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c);
         tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
@@ -1415,17 +1429,17 @@ mod tests {
     fn test_all_fit_siblings() {
         // Multiple Fit siblings - should all calculate independently
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
         
-        let fit1 = tree.add_node("Fit1", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fit1_c = tree.add_node("Fit1C", Sizing::Fixed(40.0), Sizing::Fixed(30.0), Direction::LeftToRight);
+        let fit1 = tree.add_node("Fit1", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fit1_c = tree.add_node("Fit1C", Sizing::Fixed(40.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
         
-        let fit2 = tree.add_node("Fit2", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fit2_c1 = tree.add_node("Fit2C1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::LeftToRight);
-        let fit2_c2 = tree.add_node("Fit2C2", Sizing::Fixed(25.0), Sizing::Fixed(30.0), Direction::LeftToRight);
+        let fit2 = tree.add_node("Fit2", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fit2_c1 = tree.add_node("Fit2C1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
+        let fit2_c2 = tree.add_node("Fit2C2", Sizing::Fixed(25.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
         
-        let fit3 = tree.add_node("Fit3", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fit3_c = tree.add_node("Fit3C", Sizing::Fixed(60.0), Sizing::Fixed(30.0), Direction::LeftToRight);
+        let fit3 = tree.add_node("Fit3", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fit3_c = tree.add_node("Fit3C", Sizing::Fixed(60.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit1);
         tree.add_child(fit1, fit1_c);
@@ -1449,11 +1463,11 @@ mod tests {
     fn test_deeply_nested_fill_chain() {
         // Fill propagates down through multiple levels
         let mut tree = Tree::new();
-        let l1 = tree.add_node("L1", Sizing::Fixed(1000.0), Sizing::Fixed(800.0), Direction::LeftToRight);
-        let l2 = tree.add_node("L2", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
-        let l3 = tree.add_node("L3", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
-        let l4 = tree.add_node("L4", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
-        let l5 = tree.add_node("L5", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
+        let l1 = tree.add_node("L1", Sizing::Fixed(1000.0), Sizing::Fixed(800.0), Direction::LeftToRight, 0.0);
+        let l2 = tree.add_node("L2", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+        let l3 = tree.add_node("L3", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+        let l4 = tree.add_node("L4", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+        let l5 = tree.add_node("L5", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
 
         tree.add_child(l1, l2);
         tree.add_child(l2, l3);
@@ -1473,10 +1487,10 @@ mod tests {
     fn test_fit_with_mixed_direction_children() {
         // Fit container with children in different direction
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(300.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let v_child = tree.add_node("VChild", Sizing::Fixed(50.0), Sizing::Fixed(80.0), Direction::TopToBottom);
-        let h_child = tree.add_node("HChild", Sizing::Fixed(60.0), Sizing::Fixed(70.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(300.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let v_child = tree.add_node("VChild", Sizing::Fixed(50.0), Sizing::Fixed(80.0), Direction::TopToBottom, 0.0);
+        let h_child = tree.add_node("HChild", Sizing::Fixed(60.0), Sizing::Fixed(70.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, v_child);
@@ -1492,10 +1506,10 @@ mod tests {
     fn test_fractional_percentages() {
         // Percentages that don't divide evenly - test floating-point precision
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let p1 = tree.add_node("P1", Sizing::Percentage(33.333), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let p2 = tree.add_node("P2", Sizing::Percentage(33.333), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let p3 = tree.add_node("P3", Sizing::Percentage(33.334), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let p1 = tree.add_node("P1", Sizing::Percentage(33.333), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let p2 = tree.add_node("P2", Sizing::Percentage(33.333), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let p3 = tree.add_node("P3", Sizing::Percentage(33.334), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, p1);
         tree.add_child(p, p2);
@@ -1516,9 +1530,9 @@ mod tests {
     fn test_very_large_sizes() {
         // Test numerical stability with very large values
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(1e8), Sizing::Fixed(1e8), Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Percentage(25.0), Sizing::Fixed(1e7), Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fixed(1e7), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(1e8), Sizing::Fixed(1e8), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Percentage(25.0), Sizing::Fixed(1e7), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fixed(1e7), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c1);
         tree.add_child(p, c2);
@@ -1535,10 +1549,10 @@ mod tests {
     fn test_fit_with_cross_axis_fill_children() {
         // Fit in both axes with children that have Fill in cross-axis
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(200.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Fixed(40.0), Sizing::Fixed(60.0), Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Fixed(35.0), Sizing::Fixed(80.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(200.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(40.0), Sizing::Fixed(60.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(35.0), Sizing::Fixed(80.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, c1);
@@ -1558,8 +1572,8 @@ mod tests {
         // What happens when parent_size doesn't match node's Fixed size?
         // In current implementation, percentage calculations use parent_size parameter
         let mut tree = Tree::new();
-        let root = tree.add_node("Root", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Percentage(50.0), Sizing::Percentage(50.0), Direction::LeftToRight);
+        let root = tree.add_node("Root", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Percentage(50.0), Sizing::Percentage(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(root, c);
 
@@ -1576,8 +1590,8 @@ mod tests {
     fn test_single_child_percentage_over_100() {
         // Single child with percentage > 100%
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Percentage(150.0), Sizing::Percentage(120.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Percentage(150.0), Sizing::Percentage(120.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c);
         tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
@@ -1593,8 +1607,8 @@ mod tests {
     fn test_add_child_and_relayout() {
         // Mutate tree between layouts by adding children
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c1);
         tree.layout(p, [300.0, 100.0], [0.0, 0.0]);
@@ -1603,7 +1617,7 @@ mod tests {
         check_size(&tree, c1, 300.0, 50.0);
 
         // Add another child
-        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
         tree.add_child(p, c2);
         tree.layout(p, [300.0, 100.0], [0.0, 0.0]);
 
@@ -1618,10 +1632,10 @@ mod tests {
     fn test_child_order_matters() {
         // Same children, different order - positioning should differ
         let mut tree1 = Tree::new();
-        let p1 = tree1.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let a = tree1.add_node("A", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let b = tree1.add_node("B", Sizing::Fixed(100.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let c = tree1.add_node("C", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p1 = tree1.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let a = tree1.add_node("A", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let b = tree1.add_node("B", Sizing::Fixed(100.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c = tree1.add_node("C", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree1.add_child(p1, a);
         tree1.add_child(p1, b);
@@ -1634,10 +1648,10 @@ mod tests {
 
         // Different order
         let mut tree2 = Tree::new();
-        let p2 = tree2.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c2 = tree2.add_node("C", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let a2 = tree2.add_node("A", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let b2 = tree2.add_node("B", Sizing::Fixed(100.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p2 = tree2.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c2 = tree2.add_node("C", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let a2 = tree2.add_node("A", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let b2 = tree2.add_node("B", Sizing::Fixed(100.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree2.add_child(p2, c2);
         tree2.add_child(p2, a2);
@@ -1663,11 +1677,11 @@ mod tests {
     fn test_rtl_with_fit() {
         // Right-to-left with Fit sizing
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::RightToLeft);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fit_c1 = tree.add_node("FitC1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::LeftToRight);
-        let fit_c2 = tree.add_node("FitC2", Sizing::Fixed(40.0), Sizing::Fixed(30.0), Direction::LeftToRight);
-        let fixed = tree.add_node("Fixed", Sizing::Fixed(80.0), Sizing::Fixed(50.0), Direction::RightToLeft);
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::RightToLeft, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fit_c1 = tree.add_node("FitC1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
+        let fit_c2 = tree.add_node("FitC2", Sizing::Fixed(40.0), Sizing::Fixed(30.0), Direction::LeftToRight, 0.0);
+        let fixed = tree.add_node("Fixed", Sizing::Fixed(80.0), Sizing::Fixed(50.0), Direction::RightToLeft, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, fit_c1);
@@ -1687,11 +1701,11 @@ mod tests {
     fn test_btt_with_fit() {
         // Bottom-to-top with Fit sizing
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(300.0), Direction::BottomToTop);
-        let fit = tree.add_node("Fit", Sizing::Fixed(50.0), Sizing::Fit, Direction::TopToBottom);
-        let fit_c1 = tree.add_node("FitC1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::TopToBottom);
-        let fit_c2 = tree.add_node("FitC2", Sizing::Fixed(30.0), Sizing::Fixed(40.0), Direction::TopToBottom);
-        let fixed = tree.add_node("Fixed", Sizing::Fixed(50.0), Sizing::Fixed(80.0), Direction::BottomToTop);
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(300.0), Direction::BottomToTop, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fixed(50.0), Sizing::Fit, Direction::TopToBottom, 0.0);
+        let fit_c1 = tree.add_node("FitC1", Sizing::Fixed(30.0), Sizing::Fixed(30.0), Direction::TopToBottom, 0.0);
+        let fit_c2 = tree.add_node("FitC2", Sizing::Fixed(30.0), Sizing::Fixed(40.0), Direction::TopToBottom, 0.0);
+        let fixed = tree.add_node("Fixed", Sizing::Fixed(50.0), Sizing::Fixed(80.0), Direction::BottomToTop, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, fit_c1);
@@ -1711,9 +1725,9 @@ mod tests {
     fn test_fit_with_single_child() {
         // Fit with single child (baseline for Fit behavior)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight);
-        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let c = tree.add_node("C", Sizing::Fixed(75.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(200.0), Direction::LeftToRight, 0.0);
+        let fit = tree.add_node("Fit", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let c = tree.add_node("C", Sizing::Fixed(75.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit);
         tree.add_child(fit, c);
@@ -1728,10 +1742,10 @@ mod tests {
     fn test_zero_percentage_with_fill() {
         // 0% child alongside Fill child
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let zero_pct = tree.add_node("Zero", Sizing::Percentage(0.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fill = tree.add_node("Fill", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let fixed = tree.add_node("Fixed", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let zero_pct = tree.add_node("Zero", Sizing::Percentage(0.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fill = tree.add_node("Fill", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fixed = tree.add_node("Fixed", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, zero_pct);
         tree.add_child(p, fill);
@@ -1748,9 +1762,9 @@ mod tests {
     fn test_hundred_percent_multiple_children() {
         // Multiple 100% children (each takes full parent width, causing massive overflow)
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Percentage(100.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Percentage(100.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Percentage(100.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Percentage(100.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c1);
         tree.add_child(p, c2);
@@ -1768,11 +1782,11 @@ mod tests {
     fn test_alternating_directions_deeply_nested() {
         // Deep nesting with alternating directions (H->V->H->V->H)
         let mut tree = Tree::new();
-        let l1 = tree.add_node("L1", Sizing::Fixed(500.0), Sizing::Fixed(500.0), Direction::LeftToRight);
-        let l2 = tree.add_node("L2", Sizing::Percentage(80.0), Sizing::Percentage(80.0), Direction::TopToBottom);
-        let l3 = tree.add_node("L3", Sizing::Percentage(80.0), Sizing::Percentage(80.0), Direction::LeftToRight);
-        let l4 = tree.add_node("L4", Sizing::Percentage(80.0), Sizing::Percentage(80.0), Direction::TopToBottom);
-        let l5 = tree.add_node("L5", Sizing::Percentage(80.0), Sizing::Percentage(80.0), Direction::LeftToRight);
+        let l1 = tree.add_node("L1", Sizing::Fixed(500.0), Sizing::Fixed(500.0), Direction::LeftToRight, 0.0);
+        let l2 = tree.add_node("L2", Sizing::Percentage(80.0), Sizing::Percentage(80.0), Direction::TopToBottom, 0.0);
+        let l3 = tree.add_node("L3", Sizing::Percentage(80.0), Sizing::Percentage(80.0), Direction::LeftToRight, 0.0);
+        let l4 = tree.add_node("L4", Sizing::Percentage(80.0), Sizing::Percentage(80.0), Direction::TopToBottom, 0.0);
+        let l5 = tree.add_node("L5", Sizing::Percentage(80.0), Sizing::Percentage(80.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(l1, l2);
         tree.add_child(l2, l3);
@@ -1794,12 +1808,12 @@ mod tests {
     fn test_many_nested_fit_containers() {
         // Deep chain of Fit containers
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(500.0), Sizing::Fixed(500.0), Direction::LeftToRight);
-        let fit1 = tree.add_node("Fit1", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let fit2 = tree.add_node("Fit2", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let fit3 = tree.add_node("Fit3", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let fit4 = tree.add_node("Fit4", Sizing::Fit, Sizing::Fit, Direction::LeftToRight);
-        let leaf = tree.add_node("Leaf", Sizing::Fixed(100.0), Sizing::Fixed(80.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(500.0), Sizing::Fixed(500.0), Direction::LeftToRight, 0.0);
+        let fit1 = tree.add_node("Fit1", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let fit2 = tree.add_node("Fit2", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let fit3 = tree.add_node("Fit3", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let fit4 = tree.add_node("Fit4", Sizing::Fit, Sizing::Fit, Direction::LeftToRight, 0.0);
+        let leaf = tree.add_node("Leaf", Sizing::Fixed(100.0), Sizing::Fixed(80.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, fit1);
         tree.add_child(fit1, fit2);
@@ -1821,10 +1835,10 @@ mod tests {
     fn test_fill_in_fit_container_sibling() {
         // Fill child alongside Fixed child - Fill should take leftover space
         let mut tree = Tree::new();
-        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight);
-        let c1 = tree.add_node("C1", Sizing::Fixed(100.0), Sizing::Fixed(50.0), Direction::LeftToRight);
-        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
-        let c3 = tree.add_node("C3", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight);
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(100.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c3 = tree.add_node("C3", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
 
         tree.add_child(p, c1);
         tree.add_child(p, c2);
@@ -1838,6 +1852,199 @@ mod tests {
         check_pos(&tree, c1, 0.0, 0.0);
         check_pos(&tree, c2, 100.0, 0.0);
         check_pos(&tree, c3, 250.0, 0.0);
+    }
+
+    // ========== GAP TESTS ==========
+
+    #[test]
+    fn test_gap_basic_horizontal() {
+        // Basic gap between fixed-size children in horizontal layout
+        let mut tree = Tree::new();
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 10.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(60.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c3 = tree.add_node("C3", Sizing::Fixed(40.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+
+        tree.add_child(p, c1);
+        tree.add_child(p, c2);
+        tree.add_child(p, c3);
+
+        tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
+
+        // With gap=10, positions should be: 0, 50+10=60, 60+60+10=130
+        check_pos(&tree, c1, 0.0, 0.0);
+        check_pos(&tree, c2, 60.0, 0.0);
+        check_pos(&tree, c3, 130.0, 0.0);
+    }
+
+    #[test]
+    fn test_gap_basic_vertical() {
+        // Basic gap between fixed-size children in vertical layout
+        let mut tree = Tree::new();
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(300.0), Direction::TopToBottom, 15.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(50.0), Sizing::Fixed(80.0), Direction::TopToBottom, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(50.0), Sizing::Fixed(90.0), Direction::TopToBottom, 0.0);
+        let c3 = tree.add_node("C3", Sizing::Fixed(50.0), Sizing::Fixed(70.0), Direction::TopToBottom, 0.0);
+
+        tree.add_child(p, c1);
+        tree.add_child(p, c2);
+        tree.add_child(p, c3);
+
+        tree.layout(p, [100.0, 300.0], [0.0, 0.0]);
+
+        // With gap=15, y positions: 0, 80+15=95, 95+90+15=200
+        check_pos(&tree, c1, 0.0, 0.0);
+        check_pos(&tree, c2, 0.0, 95.0);
+        check_pos(&tree, c3, 0.0, 200.0);
+    }
+
+    #[test]
+    fn test_gap_with_fill_children() {
+        // Gap should reduce available space for Fill children
+        let mut tree = Tree::new();
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight, 20.0);
+        let c1 = tree.add_node("C1", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c3 = tree.add_node("C3", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+
+        tree.add_child(p, c1);
+        tree.add_child(p, c2);
+        tree.add_child(p, c3);
+
+        tree.layout(p, [300.0, 100.0], [0.0, 0.0]);
+
+        // Total gap space: 20 * 2 = 40
+        // Available for Fill: 300 - 40 = 260, divided by 3 = 86.666...
+        let expected_width = 260.0 / 3.0;
+        check_size(&tree, c1, expected_width, 50.0);
+        check_size(&tree, c2, expected_width, 50.0);
+        check_size(&tree, c3, expected_width, 50.0);
+        check_pos(&tree, c1, 0.0, 0.0);
+        check_pos(&tree, c2, expected_width + 20.0, 0.0);
+        check_pos(&tree, c3, expected_width * 2.0 + 40.0, 0.0);
+    }
+
+    #[test]
+    fn test_gap_with_mixed_sizing() {
+        // Gap with Fixed, Percentage, and Fill children
+        let mut tree = Tree::new();
+        let p = tree.add_node("P", Sizing::Fixed(500.0), Sizing::Fixed(100.0), Direction::LeftToRight, 10.0);
+        let fixed = tree.add_node("Fixed", Sizing::Fixed(100.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let pct = tree.add_node("Pct", Sizing::Percentage(20.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let fill = tree.add_node("Fill", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+
+        tree.add_child(p, fixed);
+        tree.add_child(p, pct);
+        tree.add_child(p, fill);
+
+        tree.layout(p, [500.0, 100.0], [0.0, 0.0]);
+
+        // Fixed: 100, Pct: 100 (20% of 500), Gap: 2*10=20
+        // Fill gets: 500 - 100 - 100 - 20 = 280
+        check_size(&tree, fixed, 100.0, 50.0);
+        check_size(&tree, pct, 100.0, 50.0);
+        check_size(&tree, fill, 280.0, 50.0);
+        check_pos(&tree, fixed, 0.0, 0.0);
+        check_pos(&tree, pct, 110.0, 0.0);
+        check_pos(&tree, fill, 220.0, 0.0);
+    }
+
+    #[test]
+    fn test_gap_right_to_left() {
+        // Gap should work correctly in reversed directions
+        let mut tree = Tree::new();
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::RightToLeft, 10.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::RightToLeft, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(60.0), Sizing::Fixed(50.0), Direction::RightToLeft, 0.0);
+        let c3 = tree.add_node("C3", Sizing::Fixed(40.0), Sizing::Fixed(50.0), Direction::RightToLeft, 0.0);
+
+        tree.add_child(p, c1);
+        tree.add_child(p, c2);
+        tree.add_child(p, c3);
+
+        tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
+
+        // RTL with gap=10: c1 at 150, c2 at 80, c3 at 30
+        check_pos(&tree, c1, 150.0, 0.0);
+        check_pos(&tree, c2, 80.0, 0.0);
+        check_pos(&tree, c3, 30.0, 0.0);
+    }
+
+    #[test]
+    fn test_gap_bottom_to_top() {
+        // Gap in bottom-to-top layout
+        let mut tree = Tree::new();
+        let p = tree.add_node("P", Sizing::Fixed(100.0), Sizing::Fixed(300.0), Direction::BottomToTop, 15.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(50.0), Sizing::Fixed(80.0), Direction::BottomToTop, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(50.0), Sizing::Fixed(90.0), Direction::BottomToTop, 0.0);
+
+        tree.add_child(p, c1);
+        tree.add_child(p, c2);
+
+        tree.layout(p, [100.0, 300.0], [0.0, 0.0]);
+
+        // BTT with gap=15: c1 at 220, c2 at 115
+        check_pos(&tree, c1, 0.0, 220.0);
+        check_pos(&tree, c2, 0.0, 115.0);
+    }
+
+    #[test]
+    fn test_gap_single_child() {
+        // Gap should have no effect with single child (no gaps to add)
+        let mut tree = Tree::new();
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 50.0);
+        let c = tree.add_node("C", Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+
+        tree.add_child(p, c);
+
+        tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
+
+        // With only 1 child, no gap is applied, so Fill gets full width
+        check_size(&tree, c, 200.0, 50.0);
+        check_pos(&tree, c, 0.0, 0.0);
+    }
+
+    #[test]
+    fn test_gap_zero() {
+        // Zero gap should behave like no gap
+        let mut tree = Tree::new();
+        let p = tree.add_node("P", Sizing::Fixed(200.0), Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(50.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let c2 = tree.add_node("C2", Sizing::Fixed(60.0), Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+
+        tree.add_child(p, c1);
+        tree.add_child(p, c2);
+
+        tree.layout(p, [200.0, 100.0], [0.0, 0.0]);
+
+        check_pos(&tree, c1, 0.0, 0.0);
+        check_pos(&tree, c2, 50.0, 0.0); // No gap
+    }
+
+    #[test]
+    fn test_gap_nested_containers() {
+        // Gap should be independent per container
+        let mut tree = Tree::new();
+        let p = tree.add_node("P", Sizing::Fixed(300.0), Sizing::Fixed(100.0), Direction::LeftToRight, 20.0);
+        let c1 = tree.add_node("C1", Sizing::Fixed(100.0), Sizing::Fixed(100.0), Direction::TopToBottom, 10.0);
+        let c2 = tree.add_node("C2", Sizing::Fill, Sizing::Fixed(100.0), Direction::LeftToRight, 0.0);
+
+        let gc1 = tree.add_node("GC1", Sizing::Fixed(80.0), Sizing::Fixed(30.0), Direction::TopToBottom, 0.0);
+        let gc2 = tree.add_node("GC2", Sizing::Fixed(80.0), Sizing::Fixed(40.0), Direction::TopToBottom, 0.0);
+
+        tree.add_child(p, c1);
+        tree.add_child(p, c2);
+        tree.add_child(c1, gc1);
+        tree.add_child(c1, gc2);
+
+        tree.layout(p, [300.0, 100.0], [0.0, 0.0]);
+
+        // Parent gap=20 between c1 and c2
+        check_pos(&tree, c1, 0.0, 0.0);
+        check_pos(&tree, c2, 120.0, 0.0);
+        // c1's internal gap=10 between grandchildren
+        check_pos(&tree, gc1, 0.0, 0.0);
+        check_pos(&tree, gc2, 0.0, 40.0); // 30 + 10
     }
 }
 
@@ -1868,9 +2075,9 @@ fn main() {
     
     // Benchmark 1: Shallow tree with many children
     let mut tree1 = Tree::new();
-    let p1 = tree1.add_node("P", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight);
+    let p1 = tree1.add_node("P", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight, 0.0);
     for i in 0..100 {
-        let child = tree1.add_node(&format!("C{}", i), Sizing::Fill, Sizing::Fixed(10.0), Direction::LeftToRight);
+        let child = tree1.add_node(&format!("C{}", i), Sizing::Fill, Sizing::Fixed(10.0), Direction::LeftToRight, 0.0);
         tree1.add_child(p1, child);
     }
     benchmark("Shallow (100 children)", 10_000, || {
@@ -1880,9 +2087,9 @@ fn main() {
 
     // Benchmark 2: Deep nested tree (10 levels)
     let mut tree2 = Tree::new();
-    let mut current = tree2.add_node("L0", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight);
+    let mut current = tree2.add_node("L0", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight, 0.0);
     for i in 1..10 {
-        let child = tree2.add_node(&format!("L{}", i), Sizing::Percentage(90.0), Sizing::Percentage(90.0), Direction::LeftToRight);
+        let child = tree2.add_node(&format!("L{}", i), Sizing::Percentage(90.0), Sizing::Percentage(90.0), Direction::LeftToRight, 0.0);
         tree2.add_child(current, child);
         current = child;
     }
@@ -1901,14 +2108,15 @@ fn main() {
                 &format!("N{}_{}", depth, i),
                 Sizing::Fill,
                 Sizing::Fill,
-                Direction::LeftToRight
+                Direction::LeftToRight,
+                0.0,
             );
             tree.add_child(parent, child);
             build_tree(tree, depth - 1, child);
         }
     }
     let mut tree3 = Tree::new();
-    let root3 = tree3.add_node("Root", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight);
+    let root3 = tree3.add_node("Root", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight, 0.0);
     build_tree(&mut tree3, 4, root3);
     benchmark("Balanced tree (4x3)", 10_000, || {
         tree3.layout(root3, [1000.0, 1000.0], [0.0, 0.0]);
@@ -1917,7 +2125,7 @@ fn main() {
 
     // Benchmark 4: Mixed sizing modes
     let mut tree4 = Tree::new();
-    let p4 = tree4.add_node("P", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight);
+    let p4 = tree4.add_node("P", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight, 0.0);
     for i in 0..20 {
         let sizing = match i % 4 {
             0 => Sizing::Fixed(50.0),
@@ -1925,12 +2133,12 @@ fn main() {
             2 => Sizing::Percentage(5.0),
             _ => Sizing::Fit,
         };
-        let child = tree4.add_node(&format!("C{}", i), sizing, Sizing::Fixed(10.0), Direction::LeftToRight);
+        let child = tree4.add_node(&format!("C{}", i), sizing, Sizing::Fixed(10.0), Direction::LeftToRight, 0.0);
         tree4.add_child(p4, child);
         
         if sizing == Sizing::Fit {
             // Add a child for Fit sizing
-            let grandchild = tree4.add_node(&format!("GC{}", i), Sizing::Fixed(10.0), Sizing::Fixed(10.0), Direction::LeftToRight);
+            let grandchild = tree4.add_node(&format!("GC{}", i), Sizing::Fixed(10.0), Sizing::Fixed(10.0), Direction::LeftToRight, 0.0);
             tree4.add_child(child, grandchild);
         }
     }
@@ -1941,29 +2149,29 @@ fn main() {
 
     // Benchmark 5: Wide and deep (realistic UI)
     let mut tree5 = Tree::new();
-    let root5 = tree5.add_node("Root", Sizing::Fixed(1920.0), Sizing::Fixed(1080.0), Direction::TopToBottom);
+    let root5 = tree5.add_node("Root", Sizing::Fixed(1920.0), Sizing::Fixed(1080.0), Direction::TopToBottom, 0.0);
     // Header
-    let header = tree5.add_node("Header", Sizing::Fill, Sizing::Fixed(60.0), Direction::LeftToRight);
+    let header = tree5.add_node("Header", Sizing::Fill, Sizing::Fixed(60.0), Direction::LeftToRight, 0.0);
     tree5.add_child(root5, header);
     for i in 0..5 {
-        let btn = tree5.add_node(&format!("Btn{}", i), Sizing::Fixed(100.0), Sizing::Fill, Direction::LeftToRight);
+        let btn = tree5.add_node(&format!("Btn{}", i), Sizing::Fixed(100.0), Sizing::Fill, Direction::LeftToRight, 0.0);
         tree5.add_child(header, btn);
     }
     // Content area
-    let content = tree5.add_node("Content", Sizing::Fill, Sizing::Fill, Direction::LeftToRight);
+    let content = tree5.add_node("Content", Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
     tree5.add_child(root5, content);
     // Sidebar
-    let sidebar = tree5.add_node("Sidebar", Sizing::Fixed(250.0), Sizing::Fill, Direction::TopToBottom);
+    let sidebar = tree5.add_node("Sidebar", Sizing::Fixed(250.0), Sizing::Fill, Direction::TopToBottom, 0.0);
     tree5.add_child(content, sidebar);
     for i in 0..10 {
-        let item = tree5.add_node(&format!("Item{}", i), Sizing::Fill, Sizing::Fixed(40.0), Direction::LeftToRight);
+        let item = tree5.add_node(&format!("Item{}", i), Sizing::Fill, Sizing::Fixed(40.0), Direction::LeftToRight, 0.0);
         tree5.add_child(sidebar, item);
     }
     // Main content
-    let main = tree5.add_node("Main", Sizing::Fill, Sizing::Fill, Direction::TopToBottom);
+    let main = tree5.add_node("Main", Sizing::Fill, Sizing::Fill, Direction::TopToBottom, 0.0);
     tree5.add_child(content, main);
     for i in 0..20 {
-        let row = tree5.add_node(&format!("Row{}", i), Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight);
+        let row = tree5.add_node(&format!("Row{}", i), Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
         tree5.add_child(main, row);
     }
     benchmark("Realistic UI layout", 10_000, || {
@@ -1973,14 +2181,14 @@ fn main() {
 
     // Benchmark 6: Stress test (1000 nodes)
     let mut tree6 = Tree::new();
-    let root6 = tree6.add_node("Root", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight);
+    let root6 = tree6.add_node("Root", Sizing::Fixed(1000.0), Sizing::Fixed(1000.0), Direction::LeftToRight, 0.0);
     // Create 10 columns with 100 items each
     for col in 0..10 {
-        let column = tree6.add_node(&format!("Col{}", col), Sizing::Fill, Sizing::Fill, Direction::TopToBottom);
+        let column = tree6.add_node(&format!("Col{}", col), Sizing::Fill, Sizing::Fill, Direction::TopToBottom, 0.0);
         tree6.add_child(root6, column);
         
         for row in 0..100 {
-            let item = tree6.add_node(&format!("Item{}_{}", col, row), Sizing::Fill, Sizing::Fixed(10.0), Direction::LeftToRight);
+            let item = tree6.add_node(&format!("Item{}_{}", col, row), Sizing::Fill, Sizing::Fixed(10.0), Direction::LeftToRight, 0.0);
             tree6.add_child(column, item);
         }
     }
