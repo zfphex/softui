@@ -71,20 +71,64 @@ fn size(parent)
     return (0, 0, total_width, total_height)
 ```
 
-- Basic Cases
+- Fill Cases
 
 ```
 Parent(100, 100)
+    Rect(50, 50)
     H1(Fill, Fill)
-```
-
-H1Size = (100, 100)
-
-```
-Parent(100, 100)
-    H1(Fill, Fill)
+        Rect(50%, 50%)
     H2(Fill, Fill)
 ```
 
-H1Size = (50, 50)
-H2Size = (50, 50)
+Rect = (50, 50)
+H1 = (25, 25)
+Rect = (12.5, 12.5)
+H2 = (25, 25)
+
+- Nested Cases
+
+```
+Parent(100, 100)
+    H1(50%, 50%)
+        Rect(50%, 50%)
+    H2(100%, 100%)
+
+H1 = (50, 50)
+Rect = (25, 25)
+H2 = (100, 100) //Overflow
+```
+
+```
+Parent(100, 100)
+    H1(50%, 50%)
+        H2(50%, 50%)
+
+H1 = (50, 50)
+    H2 = (25, 25)
+```
+
+- Fit Cases
+
+```
+Parent(100, 100)
+    Group(Fill)
+        Group(Fit)
+            Rect(10, 10)
+
+Group = (100, 100)
+    Group = (10, 10)
+        Rect = (10, 10)
+```
+
+- Invalid Cases
+
+```
+H1(Fit)  //  needs to know children size
+    Rect(50%) //  needs to know parent size
+```
+
+```
+H1(Fit)        //  needs to know children size
+    Rect(Fill) //  needs to know parent size
+```

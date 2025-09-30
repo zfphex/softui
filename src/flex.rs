@@ -6,7 +6,9 @@ use std::fmt::{self, Debug};
 pub enum FlexDirection {
     #[default]
     LeftRight,
+    RightLeft,
     TopBottom,
+    BottomTop,
 }
 
 #[macro_export]
@@ -105,57 +107,61 @@ impl<'a> Widget<'a> for Group<'a> {
         true
     }
 
+    //When called on a container.
+    //If it's children have a fixed size, the size is added.
+    //If it's children have a relative size, the size is added unless it's a container.
     fn size_new(&self, parent: Size) -> Size {
         let parent = parent.into_rect();
-        let mut total_width = self.gap * self.children.len().saturating_sub(1);
-        let mut total_height = 0;
 
-        let parent_width = parent.width - self.padding * 2;
-        let parent_height = parent.height - self.padding * 2;
+        let available_width = parent.width - (self.padding * 2);
+        let available_height = parent.height - (self.padding * 2);
 
-        let rem_width = parent.width;
-        let rem_height = parent.height;
+        let mut fixed_width = 0;
+        let mut fixed_height = 0;
+        let mut fill_count = 0;
 
-        let mut widgets_left = 0;
-
-        let mut fill = false;
-        match self.size.width {
-            Unit::Fill { used } => fill = true,
-            _ => todo!(),
-        }
-
-        match self.size.height {
-            Unit::Fill { used } => fill = true,
-            _ => todo!(),
+        if !self.children.is_empty() {
+            fixed_width += self.gap * (self.children.len() - 1);
         }
 
         for child in &self.children {
-            let size = child.size_new(size(0, 0, rem_width, rem_height));
+            let size = child.size_new(size(0, 0, available_width, available_height));
 
             match size.width {
-                Unit::Pixel(px) => total_width += px,
-                Unit::Fill { used } => widgets_left += 1,
-                Unit::Percentage(percent) => {
-                    let p = (percent as f32 / 100.0 * rem_width as f32) as usize;
-                    total_width += p;
+                Unit::Pixel(px) => fixed_width += px,
+                Unit::Fill { used } => {
+                    fixed_width += used;
+                    fill_count += 1;
+                }
+                Unit::Percentage(p) => {
+                    let px = (available_width as f32 * p as f32 / 100.0).round() as usize;
+                    fixed_width += px;
                 }
                 _ => unimplemented!(),
             }
 
             match size.height {
-                Unit::Pixel(px) => total_height = total_height.max(px),
-                Unit::Fill { used } => widgets_left += 1,
-                Unit::Percentage(percent) => {
-                    let p = (percent as f32 / 100.0 * rem_width as f32) as usize;
-                    total_height = total_height.max(p);
+                Unit::Pixel(px) => fixed_height = fixed_height.max(px),
+                Unit::Fill { used } => {
+                    fixed_height += used;
+                    fill_count += 1;
+                }
+                Unit::Percentage(p) => {
+                    let px = (available_height as f32 * p as f32 / 100.0).round() as usize;
+                    fixed_height += px;
                 }
                 _ => unimplemented!(),
             }
         }
 
-        let mut size = size(0, 0, total_width, total_height);
-        size.widgets_left = Some(widgets_left);
-        return size;
+        let mut current_size = size(0, 0, fixed_width, fixed_height);
+
+        if fill_count > 0 {
+            current_size.width = Unit::Fill { used: fixed_width };
+            current_size.widgets_left = Some(fill_count);
+        }
+
+        current_size
     }
 
     fn size(&mut self, parent: Rect) {
@@ -307,6 +313,7 @@ impl<'a> Widget<'a> for Group<'a> {
             match self.direction {
                 FlexDirection::LeftRight => current_x += child_w + if i != last_index { self.gap } else { 0 },
                 FlexDirection::TopBottom => current_y += child_h + if i != last_index { self.gap } else { 0 },
+                _ => unimplemented!(),
             }
         }
     }

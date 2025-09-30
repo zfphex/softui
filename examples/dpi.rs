@@ -1,7 +1,7 @@
 use softui::*;
 
 fn main() {
-    let ctx = unsafe {create_ctx("Softui", 800, 600) };
+    let ctx = unsafe { create_ctx("Softui", 800, 600) };
     ctx.set_fill_color(rgb(103, 39, 116));
 
     loop {
