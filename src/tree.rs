@@ -40,19 +40,113 @@ macro_rules! groupt {
         let mut nodes = Vec::new();
 
         $(
-            nodes.push($node);
+            nodes.push($node.into_node());
         )*
 
         nodes
     }};
 }
 
+pub fn rect() -> Rectangle {
+    Rectangle {
+        size: Size {
+            pos: [0.0; 2],
+            dimensions: [Unit::Fixed(10.0), Unit::Fixed(10.0)],
+        },
+        radius: 0,
+    }
+}
+
+pub trait IntoNode {
+    fn into_node(self) -> Node;
+}
+
+impl IntoNode for Rectangle {
+    fn into_node(self) -> Node {
+        Node {
+            pos: self.size.pos,
+            desired_size: self.size.dimensions,
+            size: [0.0, 0.0],
+            padding: 0.0,
+            direction: Direction::LeftToRight,
+            gap: 0.0,
+            children: Vec::new(),
+        }
+    }
+}
+
+impl IntoNode for Node {
+    fn into_node(self) -> Node {
+        unreachable!()
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Size {
+    pub pos: [f32; 2],
+    pub dimensions: [Unit; 2],
+}
+
+#[derive(Clone, Debug)]
+pub struct Rectangle {
+    pub size: Size,
+    pub radius: usize,
+}
+
+impl Rectangle {
+    pub fn w(mut self, w: impl Into<Unit>) -> Self {
+        self.size.dimensions[0] = w.into();
+        self
+    }
+    pub fn h(mut self, h: impl Into<Unit>) -> Self {
+        self.size.dimensions[1] = h.into();
+        self
+    }
+    pub fn wfill(mut self) -> Self {
+        self.size.dimensions[0] = Unit::Fill;
+        self
+    }
+    pub fn hfill(mut self) -> Self {
+        self.size.dimensions[1] = Unit::Fill;
+        self
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Sizing {
+pub enum Unit {
     Fixed(f32),
     Percentage(f32),
     Fill,
     Fit,
+}
+
+impl Into<Unit> for usize {
+    fn into(self) -> Unit {
+        Unit::Fixed(self as f32)
+    }
+}
+
+pub trait SimpleUnit {
+    fn px(self) -> Unit;
+    fn percent(self) -> Unit;
+}
+
+impl SimpleUnit for f32 {
+    fn px(self) -> Unit {
+        Unit::Fixed(self)
+    }
+    fn percent(self) -> Unit {
+        Unit::Percentage(self)
+    }
+}
+
+impl SimpleUnit for usize {
+    fn px(self) -> Unit {
+        Unit::Fixed(self as f32)
+    }
+    fn percent(self) -> Unit {
+        Unit::Percentage(self as f32)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -78,7 +172,7 @@ impl Direction {
 
 #[derive(Debug, Clone)]
 pub struct Node {
-    pub desired_size: [Sizing; 2],
+    pub desired_size: [Unit; 2],
     pub size: [f32; 2],
     pub pos: [f32; 2],
     pub direction: Direction,
@@ -94,7 +188,7 @@ impl Default for Node {
             padding: 0.0,
             gap: 0.0,
             direction: Direction::LeftToRight,
-            desired_size: [Sizing::Fill, Sizing::Fill],
+            desired_size: [Unit::Fill, Unit::Fill],
             size: [0.0; 2],
             pos: [0.0; 2],
         }
@@ -102,7 +196,7 @@ impl Default for Node {
 }
 
 impl Node {
-    pub fn new(width: Sizing, height: Sizing, direction: Direction, gap: f32) -> Self {
+    pub fn new(width: Unit, height: Unit, direction: Direction, gap: f32) -> Self {
         Self {
             desired_size: [width, height],
             size: [0.0, 0.0],
@@ -125,7 +219,7 @@ impl Tree {
         Self { nodes: Vec::new() }
     }
 
-    pub fn add_node(&mut self, width: Sizing, height: Sizing, direction: Direction, gap: f32) -> usize {
+    pub fn add_node(&mut self, width: Unit, height: Unit, direction: Direction, gap: f32) -> usize {
         let id = self.nodes.len();
         self.nodes.push(Node::new(width, height, direction, gap));
         id
@@ -168,10 +262,10 @@ impl Tree {
         let mut size = [0.0, 0.0];
         for axis in 0..2 {
             size[axis] = match self.nodes[id].desired_size[axis] {
-                Sizing::Fixed(v) => v,
-                Sizing::Percentage(p) => original_parent_size[axis] * (p / 100.0),
-                Sizing::Fill => self.nodes[id].size[axis], // Use size already set by parent
-                Sizing::Fit => self.calculate_fit(id, axis),
+                Unit::Fixed(v) => v,
+                Unit::Percentage(p) => original_parent_size[axis] * (p / 100.0),
+                Unit::Fill => self.nodes[id].size[axis], // Use size already set by parent
+                Unit::Fit => self.calculate_fit(id, axis),
             };
         }
         self.nodes[id].size = size;
@@ -200,27 +294,27 @@ impl Tree {
 
             // Cross axis: always relative to parent
             child_size[cross] = match self.nodes[c].desired_size[cross] {
-                Sizing::Fixed(v) => v,
-                Sizing::Percentage(p) => size[cross] * (p / 100.0),
-                Sizing::Fill => size[cross],
-                Sizing::Fit => self.calculate_fit(c, cross),
+                Unit::Fixed(v) => v,
+                Unit::Percentage(p) => size[cross] * (p / 100.0),
+                Unit::Fill => size[cross],
+                Unit::Fit => self.calculate_fit(c, cross),
             };
 
             // Primary axis
             match self.nodes[c].desired_size[primary] {
-                Sizing::Fixed(v) => {
+                Unit::Fixed(v) => {
                     child_size[primary] = v;
                     used_primary += v;
                 }
-                Sizing::Percentage(p) => {
+                Unit::Percentage(p) => {
                     child_size[primary] = size[primary] * (p / 100.0);
                     used_primary += child_size[primary];
                 }
-                Sizing::Fit => {
+                Unit::Fit => {
                     child_size[primary] = self.calculate_fit(c, primary);
                     used_primary += child_size[primary];
                 }
-                Sizing::Fill => fill_count += 1,
+                Unit::Fill => fill_count += 1,
             }
 
             self.nodes[c].size = child_size;
@@ -232,7 +326,7 @@ impl Tree {
             let fill_size = remaining / fill_count as f32;
             for i in 0..children_len {
                 let c = unsafe { *children_ptr.add(i) };
-                if matches!(self.nodes[c].desired_size[primary], Sizing::Fill) {
+                if matches!(self.nodes[c].desired_size[primary], Unit::Fill) {
                     self.nodes[c].size[primary] = fill_size;
                 }
             }
@@ -275,9 +369,9 @@ impl Tree {
         let mut result = 0.0;
         for &c in &self.nodes[id].children {
             let child_size = match self.nodes[c].desired_size[axis] {
-                Sizing::Fixed(v) => v,
-                Sizing::Fit => self.calculate_fit(c, axis),
-                Sizing::Percentage(_) | Sizing::Fill => {
+                Unit::Fixed(v) => v,
+                Unit::Fit => self.calculate_fit(c, axis),
+                Unit::Percentage(_) | Unit::Fill => {
                     panic!("Fit containers cannot have Percentage or Fill children");
                 }
             };

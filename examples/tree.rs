@@ -28,14 +28,9 @@ fn main() {
 
     // Benchmark 1: Shallow tree with many children
     let mut tree1 = Tree::new();
-    let p1 = tree1.add_node(
-        Sizing::Fixed(1000.0),
-        Sizing::Fixed(1000.0),
-        Direction::LeftToRight,
-        0.0,
-    );
+    let p1 = tree1.add_node(Unit::Fixed(1000.0), Unit::Fixed(1000.0), Direction::LeftToRight, 0.0);
     for i in 0..100 {
-        let child = tree1.add_node(Sizing::Fill, Sizing::Fixed(10.0), Direction::LeftToRight, 0.0);
+        let child = tree1.add_node(Unit::Fill, Unit::Fixed(10.0), Direction::LeftToRight, 0.0);
         tree1.add_child(p1, child);
     }
     benchmark("Shallow (100 children)", 10_000, || {
@@ -45,16 +40,11 @@ fn main() {
 
     // Benchmark 2: Deep nested tree (10 levels)
     let mut tree2 = Tree::new();
-    let mut current = tree2.add_node(
-        Sizing::Fixed(1000.0),
-        Sizing::Fixed(1000.0),
-        Direction::LeftToRight,
-        0.0,
-    );
+    let mut current = tree2.add_node(Unit::Fixed(1000.0), Unit::Fixed(1000.0), Direction::LeftToRight, 0.0);
     for i in 1..10 {
         let child = tree2.add_node(
-            Sizing::Percentage(90.0),
-            Sizing::Percentage(90.0),
+            Unit::Percentage(90.0),
+            Unit::Percentage(90.0),
             Direction::LeftToRight,
             0.0,
         );
@@ -72,18 +62,13 @@ fn main() {
             return;
         }
         for i in 0..3 {
-            let child = tree.add_node(Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+            let child = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0);
             tree.add_child(parent, child);
             build_tree(tree, depth - 1, child);
         }
     }
     let mut tree3 = Tree::new();
-    let root3 = tree3.add_node(
-        Sizing::Fixed(1000.0),
-        Sizing::Fixed(1000.0),
-        Direction::LeftToRight,
-        0.0,
-    );
+    let root3 = tree3.add_node(Unit::Fixed(1000.0), Unit::Fixed(1000.0), Direction::LeftToRight, 0.0);
     build_tree(&mut tree3, 4, root3);
     benchmark("Balanced tree (4x3)", 10_000, || {
         tree3.layout(root3, [1000.0, 1000.0], [0.0, 0.0]);
@@ -92,25 +77,20 @@ fn main() {
 
     // Benchmark 4: Mixed sizing modes
     let mut tree4 = Tree::new();
-    let p4 = tree4.add_node(
-        Sizing::Fixed(1000.0),
-        Sizing::Fixed(1000.0),
-        Direction::LeftToRight,
-        0.0,
-    );
+    let p4 = tree4.add_node(Unit::Fixed(1000.0), Unit::Fixed(1000.0), Direction::LeftToRight, 0.0);
     for i in 0..20 {
         let sizing = match i % 4 {
-            0 => Sizing::Fixed(50.0),
-            1 => Sizing::Fill,
-            2 => Sizing::Percentage(5.0),
-            _ => Sizing::Fit,
+            0 => Unit::Fixed(50.0),
+            1 => Unit::Fill,
+            2 => Unit::Percentage(5.0),
+            _ => Unit::Fit,
         };
-        let child = tree4.add_node(sizing, Sizing::Fixed(10.0), Direction::LeftToRight, 0.0);
+        let child = tree4.add_node(sizing, Unit::Fixed(10.0), Direction::LeftToRight, 0.0);
         tree4.add_child(p4, child);
 
-        if sizing == Sizing::Fit {
+        if sizing == Unit::Fit {
             // Add a child for Fit sizing
-            let grandchild = tree4.add_node(Sizing::Fixed(10.0), Sizing::Fixed(10.0), Direction::LeftToRight, 0.0);
+            let grandchild = tree4.add_node(Unit::Fixed(10.0), Unit::Fixed(10.0), Direction::LeftToRight, 0.0);
             tree4.add_child(child, grandchild);
         }
     }
@@ -121,34 +101,29 @@ fn main() {
 
     // Benchmark 5: Wide and deep (realistic UI)
     let mut tree5 = Tree::new();
-    let root5 = tree5.add_node(
-        Sizing::Fixed(1920.0),
-        Sizing::Fixed(1080.0),
-        Direction::TopToBottom,
-        0.0,
-    );
+    let root5 = tree5.add_node(Unit::Fixed(1920.0), Unit::Fixed(1080.0), Direction::TopToBottom, 0.0);
     // Header
-    let header = tree5.add_node(Sizing::Fill, Sizing::Fixed(60.0), Direction::LeftToRight, 0.0);
+    let header = tree5.add_node(Unit::Fill, Unit::Fixed(60.0), Direction::LeftToRight, 0.0);
     tree5.add_child(root5, header);
     for i in 0..5 {
-        let btn = tree5.add_node(Sizing::Fixed(100.0), Sizing::Fill, Direction::LeftToRight, 0.0);
+        let btn = tree5.add_node(Unit::Fixed(100.0), Unit::Fill, Direction::LeftToRight, 0.0);
         tree5.add_child(header, btn);
     }
     // Content area
-    let content = tree5.add_node(Sizing::Fill, Sizing::Fill, Direction::LeftToRight, 0.0);
+    let content = tree5.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0);
     tree5.add_child(root5, content);
     // Sidebar
-    let sidebar = tree5.add_node(Sizing::Fixed(250.0), Sizing::Fill, Direction::TopToBottom, 0.0);
+    let sidebar = tree5.add_node(Unit::Fixed(250.0), Unit::Fill, Direction::TopToBottom, 0.0);
     tree5.add_child(content, sidebar);
     for i in 0..10 {
-        let item = tree5.add_node(Sizing::Fill, Sizing::Fixed(40.0), Direction::LeftToRight, 0.0);
+        let item = tree5.add_node(Unit::Fill, Unit::Fixed(40.0), Direction::LeftToRight, 0.0);
         tree5.add_child(sidebar, item);
     }
     // Main content
-    let main = tree5.add_node(Sizing::Fill, Sizing::Fill, Direction::TopToBottom, 0.0);
+    let main = tree5.add_node(Unit::Fill, Unit::Fill, Direction::TopToBottom, 0.0);
     tree5.add_child(content, main);
     for i in 0..20 {
-        let row = tree5.add_node(Sizing::Fill, Sizing::Fixed(50.0), Direction::LeftToRight, 0.0);
+        let row = tree5.add_node(Unit::Fill, Unit::Fixed(50.0), Direction::LeftToRight, 0.0);
         tree5.add_child(main, row);
     }
     benchmark("Realistic UI layout", 10_000, || {
@@ -158,19 +133,14 @@ fn main() {
 
     // Benchmark 6: Stress test (1000 nodes)
     let mut tree6 = Tree::new();
-    let root6 = tree6.add_node(
-        Sizing::Fixed(1000.0),
-        Sizing::Fixed(1000.0),
-        Direction::LeftToRight,
-        0.0,
-    );
+    let root6 = tree6.add_node(Unit::Fixed(1000.0), Unit::Fixed(1000.0), Direction::LeftToRight, 0.0);
     // Create 10 columns with 100 items each
     for col in 0..10 {
-        let column = tree6.add_node(Sizing::Fill, Sizing::Fill, Direction::TopToBottom, 0.0);
+        let column = tree6.add_node(Unit::Fill, Unit::Fill, Direction::TopToBottom, 0.0);
         tree6.add_child(root6, column);
 
         for row in 0..100 {
-            let item = tree6.add_node(Sizing::Fill, Sizing::Fixed(10.0), Direction::LeftToRight, 0.0);
+            let item = tree6.add_node(Unit::Fill, Unit::Fixed(10.0), Direction::LeftToRight, 0.0);
             tree6.add_child(column, item);
         }
     }
