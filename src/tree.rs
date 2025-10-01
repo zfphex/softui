@@ -29,7 +29,6 @@ impl Direction {
 
 #[derive(Debug, Clone)]
 pub struct Node {
-    pub name: String,
     pub desired_size: [Sizing; 2],
     pub size: [f32; 2],
     pub pos: [f32; 2],
@@ -39,9 +38,8 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn new(name: &str, width: Sizing, height: Sizing, direction: Direction, gap: f32) -> Self {
+    pub fn new(width: Sizing, height: Sizing, direction: Direction, gap: f32) -> Self {
         Self {
-            name: name.to_string(),
             desired_size: [width, height],
             size: [0.0, 0.0],
             pos: [0.0, 0.0],
@@ -61,9 +59,9 @@ impl Tree {
         Self { nodes: Vec::new() }
     }
 
-    pub fn add_node(&mut self, name: &str, width: Sizing, height: Sizing, direction: Direction, gap: f32) -> usize {
+    pub fn add_node(&mut self, width: Sizing, height: Sizing, direction: Direction, gap: f32) -> usize {
         let id = self.nodes.len();
-        self.nodes.push(Node::new(name, width, height, direction, gap));
+        self.nodes.push(Node::new(width, height, direction, gap));
         id
     }
 
