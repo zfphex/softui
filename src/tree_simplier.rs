@@ -6,11 +6,11 @@ macro_rules! flext {
         let mut tree = Tree::new();
 
         //Window root container
-        let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0);
+        let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, 0.0);
 
         $(
             //Child containers
-            let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0);
+            let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, 0.0);
             tree.add_child(root, parent);
 
             //Child elements inside of container

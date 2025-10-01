@@ -43,12 +43,12 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn new(width: Unit, height: Unit, direction: Direction, gap: f32) -> Self {
+    pub fn new(width: Unit, height: Unit, direction: Direction, gap: f32, padding: f32) -> Self {
         Self {
             desired_size: [width, height],
             size: [0.0, 0.0],
             pos: [0.0, 0.0],
-            padding: 0.0,
+            padding,
             direction,
             gap,
             children: Vec::new(),
@@ -66,14 +66,10 @@ impl Tree {
         Self { nodes: Vec::new() }
     }
 
-    pub fn add_node(&mut self, width: Unit, height: Unit, direction: Direction, gap: f32) -> usize {
+    pub fn add_node(&mut self, width: Unit, height: Unit, direction: Direction, gap: f32, padding: f32) -> usize {
         let id = self.nodes.len();
-        self.nodes.push(Node::new(width, height, direction, gap));
+        self.nodes.push(Node::new(width, height, direction, gap, padding));
         id
-    }
-
-    pub fn set_padding(&mut self, id: usize, padding: f32) {
-        self.nodes[id].padding = padding;
     }
 
     pub fn add_child(&mut self, parent: usize, child: usize) {
@@ -101,17 +97,11 @@ impl Tree {
         }
         self.nodes[id].size = size;
         self.nodes[id].pos = parent_pos;
-        
+
         // Account for padding - reduce available space for children
         let padding = self.nodes[id].padding;
-        let content_size = [
-            (size[0] - 2.0 * padding).max(0.0),
-            (size[1] - 2.0 * padding).max(0.0),
-        ];
-        let content_pos = [
-            parent_pos[0] + padding,
-            parent_pos[1] + padding,
-        ];
+        let content_size = [(size[0] - 2.0 * padding).max(0.0), (size[1] - 2.0 * padding).max(0.0)];
+        let content_pos = [parent_pos[0] + padding, parent_pos[1] + padding];
 
         // Step 2: compute children - cache direction info
         let direction = self.nodes[id].direction;
@@ -223,12 +213,12 @@ impl Tree {
                 result = result.max(child_size);
             }
         }
-        
+
         // Add gap space for primary axis
         if sum_mode && !self.nodes[id].children.is_empty() {
             result += self.nodes[id].gap * (self.nodes[id].children.len() - 1) as f32;
         }
-        
+
         // Add padding to both axes
         result + 2.0 * self.nodes[id].padding
     }

@@ -36,11 +36,11 @@ fn main() {
 
     let mut tree = Tree::new();
 
-    let nav = tree.add_node(Unit::Fixed(800.0), Unit::Fixed(60.0), Direction::LeftToRight, 0.0);
-    let logo = tree.add_node(Unit::Fixed(100.0), Unit::Fixed(40.0), Direction::LeftToRight, 0.0);
-    let spacer = tree.add_node(Unit::Fill, Unit::Fixed(40.0), Direction::LeftToRight, 0.0);
-    let btn1 = tree.add_node(Unit::Fixed(80.0), Unit::Fixed(40.0), Direction::LeftToRight, 0.0);
-    let btn2 = tree.add_node(Unit::Fixed(80.0), Unit::Fixed(40.0), Direction::LeftToRight, 0.0);
+    let nav = tree.add_node(Unit::Fixed(800.0), Unit::Fixed(60.0), Direction::LeftToRight, 0.0, 0.0);
+    let logo = tree.add_node(Unit::Fixed(100.0), Unit::Fixed(40.0), Direction::LeftToRight, 0.0, 0.0);
+    let spacer = tree.add_node(Unit::Fill, Unit::Fixed(40.0), Direction::LeftToRight, 0.0, 0.0);
+    let btn1 = tree.add_node(Unit::Fixed(80.0), Unit::Fixed(40.0), Direction::LeftToRight, 0.0, 0.0);
+    let btn2 = tree.add_node(Unit::Fixed(80.0), Unit::Fixed(40.0), Direction::LeftToRight, 0.0, 0.0);
 
     tree.add_child(nav, logo);
     tree.add_child(nav, spacer);
