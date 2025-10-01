@@ -37,4 +37,28 @@ Group(400)
   - With N children, total gap space = gap × (N - 1).
   - Gap space is deducted from available space before distributing to Fill children.
   - Each container has its own independent gap value.
+- Padding
+  - Padding creates an inset space on all four sides of a container.
+  - Content area = container size - (2 × padding) for each axis.
+  - All child sizing modes (Fixed, Percentage, Fill, Fit) work with padding.
+  - Percentage children calculate their size relative to the content area, not the container size.
+  - Fit containers include their padding in the calculated size: fit size = children size + gap + (2 × padding).
+
+```js
+Container(200px, padding: 20px)
+  ├─ Content area = 200 - (2 × 20) = 160px
+  └─ Child(50%)  // 50% of 160 = 80px (not 50% of 200 = 100px)
+
+Container: 200px
+┌─────────────────────────────────────┐
+│  Padding: 20px                      │  
+│  ┌───────────────────────────────┐  │
+│  │ Content Area: 160px           │  │
+│  │  ┌─────────────┐              │  │
+│  │  │ Child: 80px │              │  │
+│  │  │   (50%)     │              │  │
+│  │  └─────────────┘              │  │
+│  └───────────────────────────────┘  │
+└─────────────────────────────────────┘
+```
 

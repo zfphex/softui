@@ -99,14 +99,17 @@ fn main() {
         std::hint::black_box(&tree4);
     });
 
-    // Benchmark 5: Wide and deep (realistic UI)
+    // Benchmark 5: Wide and deep (realistic UI with padding)
     let mut tree5 = Tree::new();
     let root5 = tree5.add_node(Unit::Fixed(1920.0), Unit::Fixed(1080.0), Direction::TopToBottom, 0.0);
+    tree5.set_padding(root5, 10.0);
     // Header
     let header = tree5.add_node(Unit::Fill, Unit::Fixed(60.0), Direction::LeftToRight, 0.0);
+    tree5.set_padding(header, 10.0);
     tree5.add_child(root5, header);
     for i in 0..5 {
         let btn = tree5.add_node(Unit::Fixed(100.0), Unit::Fill, Direction::LeftToRight, 0.0);
+        tree5.set_padding(btn, 5.0);
         tree5.add_child(header, btn);
     }
     // Content area

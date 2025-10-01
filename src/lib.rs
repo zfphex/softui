@@ -11,6 +11,7 @@ pub mod atomic_float;
 pub mod click;
 pub use click::*;
 
+pub mod tree_simplier;
 pub mod tree;
 
 pub mod flex;
