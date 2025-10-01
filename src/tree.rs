@@ -1,3 +1,44 @@
+#[macro_export]
+macro_rules! flext {
+    ($($group:expr),* $(,)?) => {{
+        let mut tree = Tree::new();
+
+        $(
+            let parent = tree.add_node_new(Node::default());
+            //Assume $group is Vec<usize>
+            tree.add_children(parent, $group);
+        )*
+        tree
+    }};
+}
+
+#[macro_export]
+macro_rules! ht {
+    ($($widget:expr),* $(,)?) => {{
+        //
+    }};
+}
+
+#[macro_export]
+macro_rules! vt {
+    ($($widget:expr),* $(,)?) => {{
+        //
+    }};
+}
+
+#[macro_export]
+macro_rules! groupt {
+    ($($node:expr),* $(,)?) => {{
+        let mut nodes = Vec::new();
+
+        $(
+            nodes.push($node);
+        )*
+
+        nodes
+    }};
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Sizing {
     Fixed(f32),
@@ -34,7 +75,22 @@ pub struct Node {
     pub pos: [f32; 2],
     pub direction: Direction,
     pub gap: f32,
+    pub padding: f32,
     pub children: Vec<usize>,
+}
+
+impl Default for Node {
+    fn default() -> Self {
+        Self {
+            children: Vec::new(),
+            padding: 0.0,
+            gap: 0.0,
+            direction: Direction::LeftToRight,
+            desired_size: [Sizing::Fill, Sizing::Fill],
+            size: [0.0; 2],
+            pos: [0.0; 2],
+        }
+    }
 }
 
 impl Node {
@@ -43,6 +99,7 @@ impl Node {
             desired_size: [width, height],
             size: [0.0, 0.0],
             pos: [0.0, 0.0],
+            padding: 0.0,
             direction,
             gap,
             children: Vec::new(),
@@ -50,6 +107,7 @@ impl Node {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Tree {
     pub nodes: Vec<Node>,
 }
@@ -65,10 +123,38 @@ impl Tree {
         id
     }
 
+    pub fn add_node_new(&mut self, node: Node) -> usize {
+        let id = self.nodes.len();
+        self.nodes.push(node);
+        id
+    }
+
+    pub fn add_nodes(&mut self, nodes: Vec<Node>) -> Option<usize> {
+        let mut root = None;
+        for (i, node) in nodes.into_iter().enumerate() {
+            let id = self.nodes.len();
+            if i == 0 {
+                root = Some(id);
+            }
+
+            self.nodes.push(node);
+        }
+        root
+    }
+
     pub fn add_child(&mut self, parent: usize, child: usize) {
         self.nodes[parent].children.push(child);
     }
 
+    pub fn add_children(&mut self, parent: usize, child: Vec<Node>) {
+        for (i, node) in child.into_iter().enumerate() {
+            let id = self.nodes.len();
+            self.nodes.push(node);
+            self.nodes[parent].children.push(id);
+        }
+    }
+
+    //TODO: Allow for padding.
     pub fn layout(&mut self, id: usize, original_parent_size: [f32; 2], parent_pos: [f32; 2]) {
         // Step 1: calculate own size
         let mut size = [0.0, 0.0];
