@@ -68,8 +68,6 @@ impl<'a> Group<'a> {
     }
 }
 
-pub static mut RECURSE: usize = 0;
-
 impl<'a> Widget<'a> for Group<'a> {
     fn gap(mut self, gap: usize) -> Self
     where
@@ -107,217 +105,6 @@ impl<'a> Widget<'a> for Group<'a> {
         true
     }
 
-    //When called on a container.
-    //If it's children have a fixed size, the size is added.
-    //If it's children have a relative size, the size is added unless it's a container.
-    fn size_new(&self, parent: Size) -> Size {
-        let parent = parent.into_rect();
-
-        let available_width = parent.width - (self.padding * 2);
-        let available_height = parent.height - (self.padding * 2);
-
-        let mut fixed_width = 0;
-        let mut fixed_height = 0;
-        let mut fill_count = 0;
-
-        if !self.children.is_empty() {
-            fixed_width += self.gap * (self.children.len() - 1);
-        }
-
-        for child in &self.children {
-            let size = child.size_new(size(0, 0, available_width, available_height));
-
-            match size.width {
-                Unit::Pixel(px) => fixed_width += px,
-                Unit::Fill { used } => {
-                    fixed_width += used;
-                    fill_count += 1;
-                }
-                Unit::Percentage(p) => {
-                    let px = (available_width as f32 * p as f32 / 100.0).round() as usize;
-                    fixed_width += px;
-                }
-                _ => unimplemented!(),
-            }
-
-            match size.height {
-                Unit::Pixel(px) => fixed_height = fixed_height.max(px),
-                Unit::Fill { used } => {
-                    fixed_height += used;
-                    fill_count += 1;
-                }
-                Unit::Percentage(p) => {
-                    let px = (available_height as f32 * p as f32 / 100.0).round() as usize;
-                    fixed_height += px;
-                }
-                _ => unimplemented!(),
-            }
-        }
-
-        let mut current_size = size(0, 0, fixed_width, fixed_height);
-
-        if fill_count > 0 {
-            current_size.width = Unit::Fill { used: fixed_width };
-            current_size.widgets_left = Some(fill_count);
-        }
-
-        current_size
-    }
-
-    fn size(&mut self, parent: Rect) {
-        let mut total_width = 0;
-        let mut total_height = 0;
-        let mut widgets_left = self.size.widgets_left.unwrap_or(0);
-
-        let parent_width = parent.width - (self.padding * 2);
-        let parent_height = parent.height - (self.padding * 2);
-
-        if !self.children.is_empty() {
-            total_width += self.gap * (self.children.len() - 1);
-        }
-
-        let is_second_pass = self.size.widgets_left.is_some();
-
-        let container_width = match self.size.width {
-            Unit::Pixel(px) => px,
-            Unit::Fill { used } => parent_width - used,
-            _ if is_second_pass => unreachable!(),
-            _ => 0,
-        };
-
-        let container_height = match self.size.height {
-            Unit::Pixel(px) => px,
-            _ if is_second_pass => unreachable!(),
-            _ => 0,
-        };
-
-        // dbg!(container_width, container_height, &self.size.width);
-
-        //TODO: This should probably be part of the function since it's important for debugging.
-        unsafe { RECURSE += 1 };
-
-        print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-        println!("Parent: {}", self.name());
-
-        print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-        println!("{:?}", self.size);
-
-        unsafe { RECURSE += 1 };
-
-        for child in &mut self.children {
-            let is_container = child.is_container();
-
-            print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-            println!("Child: {}", child.name());
-            print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-            println!("{:?}", child.size_mut());
-            print!("{}", "\t".repeat(unsafe { RECURSE - 1 }));
-            println!("{} {}", parent_width, parent_height);
-
-            if is_container {
-                child.size(Rect::new(0, 0, container_width, container_height));
-            } else {
-                //Doesn't matter what we pass in at all.
-                child.size(Rect::new(0, 0, 0, 0));
-            }
-
-            let size = child.size_mut();
-
-            if !is_second_pass {
-                match size.width {
-                    Unit::Pixel(px) => total_width += px,
-                    Unit::Em(_) => todo!(),
-                    _ => widgets_left += 1,
-                }
-
-                match size.height {
-                    Unit::Pixel(px) => total_height = total_height.max(px),
-                    Unit::Em(_) => todo!(),
-                    _ => widgets_left += 1,
-                }
-            } else {
-                let width_free = if is_container {
-                    container_width / widgets_left
-                } else {
-                    container_width
-                };
-                // let height_free = if is_container {
-                //     container_height / widgets_left
-                // } else {
-                //     container_height
-                // };
-                let height_free = container_height;
-                let width = match size.width {
-                    Unit::Pixel(px) => px,
-                    Unit::Percentage(p) => (width_free as f32 * p as f32 / 100.0).round() as usize,
-                    // Unit::Auto(_) if is_container => width_free / widgets_left,
-                    Unit::Fill { used } => width_free,
-                    _ => todo!(),
-                };
-
-                //TODO: IDK what height is supposed to be for LeftRight layouts.
-                let height = match size.height {
-                    Unit::Pixel(px) => px,
-                    Unit::Percentage(p) => (height_free as f32 * p as f32 / 100.0).round() as usize,
-                    // Unit::Auto(_) if is_container => height_free / widgets_left,
-                    Unit::Fill { used } => height_free,
-                    _ => todo!(),
-                };
-
-                // dbg!(size.width, width_free, widgets_left);
-
-                total_width += width;
-                total_height = total_height.max(height);
-
-                size.width = width.pixel();
-                size.height = height.pixel();
-            }
-        }
-
-        let width = if is_second_pass {
-            Unit::Pixel(total_width)
-        } else {
-            Unit::Fill { used: total_width }
-        };
-
-        // dbg!(total_width);
-        self.size = size(0, 0, width, total_height);
-        if widgets_left >= 1 {
-            self.size.widgets_left = Some(widgets_left);
-        }
-    }
-
-    fn position(&mut self, area: Rect) {
-        self.size = area.into();
-        let mut current_x = area.x + self.padding;
-        let mut current_y = area.y + self.padding;
-
-        let last_index = self.children.len().saturating_sub(1);
-
-        for (i, child) in self.children.iter_mut().enumerate() {
-            let size = child.size_mut().clone();
-
-            let child_w = match size.width {
-                Unit::Pixel(px) => px,
-                _ => unreachable!(),
-            };
-
-            let child_h = match size.height {
-                Unit::Pixel(px) => px,
-                _ => unreachable!(),
-            };
-
-            child.position(Rect::new(current_x, current_y, child_w, child_h));
-            dbg!(Rect::new(current_x, current_y, child_w, child_h));
-
-            match self.direction {
-                FlexDirection::LeftRight => current_x += child_w + if i != last_index { self.gap } else { 0 },
-                FlexDirection::TopBottom => current_y += child_h + if i != last_index { self.gap } else { 0 },
-                _ => unimplemented!(),
-            }
-        }
-    }
-
     fn handle_event(&mut self, ctx: &mut Context) {
         for child in &mut self.children {
             child.handle_event(ctx);
@@ -336,6 +123,10 @@ impl<'a> Widget<'a> for Group<'a> {
         for child in &self.children {
             child.draw(commands, child.style());
         }
+    }
+
+    fn position(&mut self, area: Rect) {
+        todo!()
     }
 }
 

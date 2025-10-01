@@ -170,6 +170,10 @@ impl Direction {
     }
 }
 
+//I feel like we could get rid of type chaining if we just shoved eveything into every node.
+//For example every node has Style and handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)>
+//It would also need a &dyn Widget pointer, that way it can refer back to it's own data.
+//TODO: How would you convert an image or text into a node???
 #[derive(Debug, Clone)]
 pub struct Node {
     pub desired_size: [Unit; 2],

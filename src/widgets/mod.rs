@@ -35,6 +35,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn size_new(&self, _: Size) -> Size {
         unimplemented!()
     }
+
     fn size(&mut self, _: Rect) {}
 
     fn position(&mut self, area: Rect);

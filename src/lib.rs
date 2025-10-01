@@ -16,9 +16,6 @@ pub mod tree;
 pub mod flex;
 pub use flex::*;
 
-#[cfg(test)]
-mod flex_tests;
-
 pub use flex::FlexDirection::*;
 
 pub mod macros;
