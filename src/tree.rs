@@ -3,26 +3,34 @@ macro_rules! flext {
     ($($group:expr),* $(,)?) => {{
         let mut tree = Tree::new();
 
+        //Window root container
+        let root = tree.add_node_new(Node::default());
+
         $(
+            //Child containers
             let parent = tree.add_node_new(Node::default());
+            tree.add_child(root, parent);
+
+            //Child elements inside of container
             //Assume $group is Vec<usize>
             tree.add_children(parent, $group);
         )*
+
         tree
     }};
 }
 
 #[macro_export]
 macro_rules! ht {
-    ($($widget:expr),* $(,)?) => {{
-        //
+    ($($node:expr),* $(,)?) => {{
+        groupt!($(node)*)
     }};
 }
 
 #[macro_export]
 macro_rules! vt {
-    ($($widget:expr),* $(,)?) => {{
-        //
+    ($($node:expr),* $(,)?) => {{
+        groupt!($(node)*)
     }};
 }
 

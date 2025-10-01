@@ -21,10 +21,15 @@ fn main() {
     tree.nodes[0].size = [800.0, 60.0];
     tree.layout(0, [800.0, 60.0], [0.0, 0.0]);
 
-    check_size(&tree, 1, 100.0, 40.0);
-    check_size(&tree, 2, 540.0, 40.0);
-    check_size(&tree, 3, 80.0, 40.0);
+    //Window node
+    check_size(&tree, 0, 800.0, 60.0);
+
+    //Container node
+    check_size(&tree, 1, 800.0, 60.0);
+    check_size(&tree, 2, 100.0, 40.0);
+    check_size(&tree, 3, 540.0, 40.0);
     check_size(&tree, 4, 80.0, 40.0);
+    check_size(&tree, 5, 80.0, 40.0);
 
     return;
 
