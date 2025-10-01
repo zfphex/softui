@@ -13,9 +13,6 @@ pub use click::*;
 
 pub mod tree;
 
-#[cfg(test)]
-mod tree_tests;
-
 pub mod flex;
 pub use flex::*;
 
