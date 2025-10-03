@@ -13,32 +13,24 @@ fn main() {
 
         let mut tree = flext!(
             //
-            ht!(
-                rect().w(40).h(10.percent()),
-                rect().w(40).h(10.percent()),
-                rect().w(40.percent()).h(10.percent()),
-            )
-            .gap(12)
-            .padding(10),
-            ht!(
-                rect().w(40).h(10.percent()),
-                rect().w(40).h(10.percent()),
-                rect().w(40.percent()).h(10.percent()),
-            )
-            .direction(RightToLeft)
-            .gap(12)
-            .padding(10),
+            ht!(rect().w(60).h(5.percent()), rect().w(60).h(10.percent()))
+                .gap(12)
+                .padding(10),
+            ht!(rect().w(80).h(15.percent()), rect().w(80).h(15.percent()))
+                .direction(RightToLeft)
+                .gap(12)
+                .padding(10),
             vt!(
-                rect().w(40).h(10.percent()),
-                rect().w(40).h(10.percent()),
-                rect().w(40.percent()).h(10.percent()),
+                rect().w(40).h(30.percent()),
+                rect().w(40).h(35.percent()),
+                rect().w(40.percent()).h(20.percent()),
             )
             .gap(12)
             .padding(10),
             vt!(
-                rect().w(40).h(10.percent()),
-                rect().w(40).h(10.percent()),
-                rect().w(40.percent()).h(10.percent()),
+                rect().w(20).h(20.percent()),
+                rect().w(20).h(30.percent()),
+                rect().w(20.percent()).h(5.percent()),
             )
             .direction(BottomToTop)
             .gap(12)
