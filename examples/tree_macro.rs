@@ -1,12 +1,6 @@
 #![allow(unused)]
 use softui::{flext, groupt, tree::*, tree_simplier::*};
 
-fn check_size(tree: &Tree, id: usize, w: f32, h: f32) {
-    let node = &tree.nodes[id];
-    assert_eq!(node.size[0], w, "width {} != {}", node.size[0], w);
-    assert_eq!(node.size[1], h, "height {} != {}", node.size[1], h);
-}
-
 fn main() {
     let mut tree = flext!(groupt!(
         rect().w(100).h(40),

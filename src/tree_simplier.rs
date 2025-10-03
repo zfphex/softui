@@ -49,6 +49,14 @@ macro_rules! groupt {
     }};
 }
 
+#[derive(Clone, Debug)]
+pub struct Group {
+    pub widgets: Vec<usize>,
+}
+impl Group {
+
+}
+
 pub fn rect() -> Rectangle {
     Rectangle {
         size: Size {

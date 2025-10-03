@@ -27,10 +27,6 @@ impl Direction {
     }
 }
 
-//I feel like we could get rid of type chaining if we just shoved eveything into every node.
-//For example every node has Style and handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)>
-//It would also need a &dyn Widget pointer, that way it can refer back to it's own data.
-//TODO: How would you convert an image or text into a node???
 #[derive(Debug, Clone)]
 pub struct Node {
     pub desired_size: [Unit; 2],
@@ -91,7 +87,7 @@ impl Tree {
             size[axis] = match self.nodes[id].desired_size[axis] {
                 Unit::Fixed(v) => v,
                 Unit::Percentage(p) => original_parent_size[axis] * (p / 100.0),
-                Unit::Fill => self.nodes[id].size[axis], // Use size already set by parent
+                Unit::Fill => original_parent_size[axis],
                 Unit::Fit => self.calculate_fit(id, axis),
             };
         }
@@ -100,7 +96,10 @@ impl Tree {
 
         // Account for padding - reduce available space for children
         let padding = self.nodes[id].padding;
-        let content_size = [(size[0] - 2.0 * padding).max(0.0), (size[1] - 2.0 * padding).max(0.0)];
+        let content_size = [
+            (size[0] - (2.0 * padding)).max(0.0),
+            (size[1] - (2.0 * padding)).max(0.0),
+        ];
         let content_pos = [parent_pos[0] + padding, parent_pos[1] + padding];
 
         // Step 2: compute children - cache direction info
@@ -189,8 +188,7 @@ impl Tree {
         // 4. recurse, pass content size (after padding) as reference for percentage calculations
         for i in 0..children_len {
             let c = unsafe { *children_ptr.add(i) };
-            let child_pos = self.nodes[c].pos;
-            self.layout(c, content_size, child_pos);
+            self.layout(c, self.nodes[c].size, self.nodes[c].pos);
         }
     }
 
@@ -222,4 +220,10 @@ impl Tree {
         // Add padding to both axes
         result + 2.0 * self.nodes[id].padding
     }
+}
+
+pub fn check_size(tree: &Tree, id: usize, w: f32, h: f32) {
+    let node = &tree.nodes[id];
+    assert_eq!(node.size[0], w, "width {} != {}", node.size[0], w);
+    assert_eq!(node.size[1], h, "height {} != {}", node.size[1], h);
 }
