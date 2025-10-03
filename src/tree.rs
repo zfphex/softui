@@ -73,7 +73,7 @@ impl Tree {
     }
 
     pub fn add_children(&mut self, parent: usize, child: Vec<Node>) {
-        for (i, node) in child.into_iter().enumerate() {
+        for node in child {
             let id = self.nodes.len();
             self.nodes.push(node);
             self.nodes[parent].children.push(id);
@@ -94,38 +94,44 @@ impl Tree {
         self.nodes[id].pos = parent_pos;
     }
 
-    pub fn layout(&mut self, id: usize, original_parent_size: [f32; 2], parent_pos: [f32; 2]) {
-        self.nodes[id].pos = parent_pos;
-
+    pub fn layout(&mut self, id: usize) {
         // Get node's size (root was just set, non-root was set by parent)
         let size = self.nodes[id].size;
+        let pos = self.nodes[id].pos;
         let padding = self.nodes[id].padding;
+        let gap = self.nodes[id].gap;
+
+        // Get node direction.
+        let direction = self.nodes[id].direction;
+        let primary = direction.axis();
+        let cross = 1 - primary;
 
         // Account for padding - reduce available space for children
-        let padding = self.nodes[id].padding;
         let content_size = [
             (size[0] - (2.0 * padding)).max(0.0),
             (size[1] - (2.0 * padding)).max(0.0),
         ];
-        let content_pos = [parent_pos[0] + padding, parent_pos[1] + padding];
-
-        // Step 2: compute children - cache direction info
-        let direction = self.nodes[id].direction;
-        let primary = direction.axis();
-        let cross = 1 - primary;
 
         if self.nodes[id].children.is_empty() {
             return;
         }
 
+        // step 1: compute children - cache direction info
         // Avoid cloning by using raw pointer (safe because we only access distinct elements)
         let children_ptr = self.nodes[id].children.as_ptr();
         let children_len = self.nodes[id].children.len();
-        let gap = self.nodes[id].gap;
         let mut used_primary = gap * (children_len.saturating_sub(1)) as f32;
         let mut fill_count = 0;
 
-        // 2a. calculate sizes except Fill
+        //Panic if the gaps overflow the container.
+        if used_primary > content_size[primary] {
+            panic!(
+                "total gap ({}) > available space ({}) in node {}",
+                used_primary, content_size[primary], id
+            );
+        }
+
+        // 1a. calculate sizes except Fill
         for i in 0..children_len {
             let c = unsafe { *children_ptr.add(i) };
             let mut child_size = [0.0, 0.0];
@@ -158,7 +164,7 @@ impl Tree {
             self.nodes[c].size = child_size;
         }
 
-        // 2b. distribute remaining space to Fill children
+        // 1b. distribute remaining space to Fill children
         if fill_count > 0 {
             let remaining = (content_size[primary] - used_primary).max(0.0);
             let fill_size = remaining / fill_count as f32;
@@ -170,9 +176,10 @@ impl Tree {
             }
         }
 
-        // 3. position children
+        // 2. position children
         let reversed = direction.reversed();
         let mut offset = if reversed { content_size[primary] } else { 0.0 };
+        let content_pos = [pos[0] + padding, pos[1] + padding];
 
         for i in 0..children_len {
             let c = unsafe { *children_ptr.add(i) };
@@ -192,10 +199,10 @@ impl Tree {
             self.nodes[c].pos[cross] = content_pos[cross];
         }
 
-        // 4. recurse, pass content size (after padding) as reference for percentage calculations
+        // 3. recurse, pass content size (after padding) as reference for percentage calculations
         for i in 0..children_len {
             let c = unsafe { *children_ptr.add(i) };
-            self.layout(c, self.nodes[c].size, self.nodes[c].pos);
+            self.layout(c);
         }
     }
 

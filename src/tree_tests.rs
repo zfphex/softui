@@ -17,7 +17,7 @@ fn fill() {
     tree.add_child(parent, fill);
 
     tree.calculate_root_size(0, [800.0, 600.0], [0.0, 0.0]);
-    tree.layout(0, [800.0, 600.0], [0.0, 0.0]);
+    tree.layout(0);
 
     check_size(&tree, 0, 800.0, 600.0);
     check_size(&tree, 1, 800.0, 600.0);
@@ -51,7 +51,7 @@ fn percentage() {
     let parent_pos = [0.0, 0.0];
 
     tree.calculate_root_size(id, original_parent_size, parent_pos);
-    tree.layout(id, original_parent_size, parent_pos);
+    tree.layout(id);
 
     check_size(&tree, 0, 800.0, 600.0);
     check_size(&tree, 1, 800.0, 600.0);

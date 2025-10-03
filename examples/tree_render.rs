@@ -13,17 +13,21 @@ fn main() {
 
         let mut tree = flext!(
             //
-            ht!(
-                rect().w(10.percent()).h(40),
-                rect().wfill().h(40),
-                rect().w(15.percent()).h(40),
-                rect().w(30.percent()).h(40),
-                rect().wfill().h(40),
-            ).gap(10).padding(10),
+            vt!(
+                rect().wfill().h(10.percent()),
+                rect().wfill().h(10.percent()),
+                rect().wfill().h(10.percent()),
+                rect().wfill().h(10.percent()),
+                rect().wfill().h(10.percent()),
+                rect().wfill().h(10.percent()),
+            )
+            //TODO: If the gap is really big something bad happens????
+            .gap(12)
+            .padding(10),
         );
 
         tree.calculate_root_size(0, window_size, [0.0, 0.0]);
-        tree.layout(0, window_size, [0.0, 0.0]);
+        tree.layout(0);
 
         // let mut group = groupt!(
         //     rect().w(40).h(40),
@@ -53,7 +57,7 @@ fn main() {
             let width = node.size[0] as usize;
             let height = node.size[1] as usize;
 
-            ctx.draw_rectangle(x, y, width, height, fixed_random_color(idx + 10));
+            ctx.draw_rectangle(x, y, width, height, fixed_random_color(idx + 38));
         }
 
         ctx.draw_frame();
