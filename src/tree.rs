@@ -106,24 +106,21 @@ impl Tree {
         let primary = direction.axis();
         let cross = 1 - primary;
 
-        // Account for padding - reduce available space for children
-        let content_size = [
-            (size[0] - (2.0 * padding)).max(0.0),
-            (size[1] - (2.0 * padding)).max(0.0),
-        ];
-
         if self.nodes[id].children.is_empty() {
             return;
         }
 
-        // step 1: compute children - cache direction info
+        // Step 1: compute children - cache direction info
         // Avoid cloning by using raw pointer (safe because we only access distinct elements)
         let children_ptr = self.nodes[id].children.as_ptr();
         let children_len = self.nodes[id].children.len();
+
+        // Account for padding - reduce available space for children
+        let content_size = [(size[0] - 2.0 * padding).max(0.0), (size[1] - 2.0 * padding).max(0.0)];
         let mut used_primary = gap * (children_len.saturating_sub(1)) as f32;
         let mut fill_count = 0;
 
-        //Panic if the gaps overflow the container.
+        // Panic if the gaps overflow the container.
         if used_primary > content_size[primary] {
             panic!(
                 "total gap ({}) > available space ({}) in node {}",
@@ -131,7 +128,7 @@ impl Tree {
             );
         }
 
-        // 1a. calculate sizes except Fill
+        // 1a. Calculate sizes except Fill
         for i in 0..children_len {
             let c = unsafe { *children_ptr.add(i) };
             let mut child_size = [0.0, 0.0];
@@ -145,26 +142,22 @@ impl Tree {
             };
 
             // Primary axis
-            match self.nodes[c].desired_size[primary] {
-                Unit::Fixed(v) => {
-                    child_size[primary] = v;
-                    used_primary += v;
+            child_size[primary] = match self.nodes[c].desired_size[primary] {
+                Unit::Fixed(v) => v,
+                Unit::Percentage(p) => content_size[primary] * (p / 100.0),
+                Unit::Fit => self.calculate_fit(c, primary),
+                Unit::Fill => {
+                    fill_count += 1;
+                    0.0 // Should be fine setting this to zero.
                 }
-                Unit::Percentage(p) => {
-                    child_size[primary] = content_size[primary] * (p / 100.0);
-                    used_primary += child_size[primary];
-                }
-                Unit::Fit => {
-                    child_size[primary] = self.calculate_fit(c, primary);
-                    used_primary += child_size[primary];
-                }
-                Unit::Fill => fill_count += 1,
-            }
+            };
+
+            used_primary += child_size[primary];
 
             self.nodes[c].size = child_size;
         }
 
-        // 1b. distribute remaining space to Fill children
+        // 1b. Distribute remaining space to Fill children
         if fill_count > 0 {
             let remaining = (content_size[primary] - used_primary).max(0.0);
             let fill_size = remaining / fill_count as f32;
@@ -176,7 +169,7 @@ impl Tree {
             }
         }
 
-        // 2. position children
+        // 2. Position children
         let reversed = direction.reversed();
         let mut offset = if reversed { content_size[primary] } else { 0.0 };
         let content_pos = [pos[0] + padding, pos[1] + padding];
@@ -185,21 +178,21 @@ impl Tree {
             let c = unsafe { *children_ptr.add(i) };
             if reversed {
                 offset -= self.nodes[c].size[primary];
-                self.nodes[c].pos[primary] = content_pos[primary] + offset;
-                if i < children_len - 1 {
-                    offset -= gap;
-                }
-            } else {
-                self.nodes[c].pos[primary] = content_pos[primary] + offset;
-                offset += self.nodes[c].size[primary];
-                if i < children_len - 1 {
-                    offset += gap;
-                }
             }
+
+            self.nodes[c].pos[primary] = content_pos[primary] + offset;
+            if !reversed {
+                offset += self.nodes[c].size[primary];
+            }
+
+            if i < children_len - 1 {
+                offset += if reversed { -gap } else { gap };
+            }
+
             self.nodes[c].pos[cross] = content_pos[cross];
         }
 
-        // 3. recurse, pass content size (after padding) as reference for percentage calculations
+        // 3. Recurse
         for i in 0..children_len {
             let c = unsafe { *children_ptr.add(i) };
             self.layout(c);
@@ -219,6 +212,7 @@ impl Tree {
                     panic!("Fit containers cannot have Percentage or Fill children");
                 }
             };
+
             if sum_mode {
                 result += child_size;
             } else {

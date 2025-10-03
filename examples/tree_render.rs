@@ -1,5 +1,5 @@
 #![allow(unused)]
-use softui::{create_ctx, flext, groupt, ht, style::*, tree::*, tree_simplier::*, vt, Event, Key};
+use softui::{create_ctx, flext, groupt, ht, style::*, tree::Direction::*, tree::*, tree_simplier::*, vt, Event, Key};
 
 fn main() {
     let ctx = unsafe { create_ctx("Softui", 800, 600) };
@@ -13,15 +13,34 @@ fn main() {
 
         let mut tree = flext!(
             //
-            vt!(
-                rect().wfill().h(10.percent()),
-                rect().wfill().h(10.percent()),
-                rect().wfill().h(10.percent()),
-                rect().wfill().h(10.percent()),
-                rect().wfill().h(10.percent()),
-                rect().wfill().h(10.percent()),
+            ht!(
+                rect().w(40).h(10.percent()),
+                rect().w(40).h(10.percent()),
+                rect().w(40.percent()).h(10.percent()),
             )
-            //TODO: If the gap is really big something bad happens????
+            .gap(12)
+            .padding(10),
+            ht!(
+                rect().w(40).h(10.percent()),
+                rect().w(40).h(10.percent()),
+                rect().w(40.percent()).h(10.percent()),
+            )
+            .direction(RightToLeft)
+            .gap(12)
+            .padding(10),
+            vt!(
+                rect().w(40).h(10.percent()),
+                rect().w(40).h(10.percent()),
+                rect().w(40.percent()).h(10.percent()),
+            )
+            .gap(12)
+            .padding(10),
+            vt!(
+                rect().w(40).h(10.percent()),
+                rect().w(40).h(10.percent()),
+                rect().w(40.percent()).h(10.percent()),
+            )
+            .direction(BottomToTop)
             .gap(12)
             .padding(10),
         );
@@ -56,6 +75,11 @@ fn main() {
             let y = node.pos[1] as usize;
             let width = node.size[0] as usize;
             let height = node.size[1] as usize;
+
+            //Skip the containers... :)
+            if height > 300 {
+                continue;
+            }
 
             ctx.draw_rectangle(x, y, width, height, fixed_random_color(idx + 38));
         }

@@ -101,7 +101,8 @@ impl DWrite {
         profile!();
         let glyph_id = self
             .font_face
-            .get_glyph_indices(&[char as u32])
+            .glyph_indices(&[char as u32])
+            .unwrap()
             .into_iter()
             .next()
             .and_then(|g| if g != 0 { Some(g) } else { None })
@@ -113,7 +114,8 @@ impl DWrite {
 
         let gm = self
             .font_face
-            .get_gdi_compatible_glyph_metrics(design_units, 1.0, null(), true, &[glyph_id], false)[0];
+            .gdi_compatible_glyph_metrics(design_units, 1.0, null(), true, &[glyph_id], false)
+            .unwrap()[0];
         // let gm = self.font_face.get_design_glyph_metrics(&[glyph_id], false)[0];
 
         let glyph_metrics = GlyphMetrics {
