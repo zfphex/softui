@@ -27,27 +27,18 @@ macro_rules! flext {
 #[macro_export]
 macro_rules! ht {
     ($($node:expr),* $(,)?) => {{
-        groupt!($($node),*).direction(Direction::LeftToRight)
+        let mut nodes = Vec::new();
+        $( nodes.push($node.into_node()); )*
+        Container { nodes, gap: 0.0, padding: 0.0, direction: Direction::LeftToRight }
     }};
 }
 
 #[macro_export]
 macro_rules! vt {
     ($($node:expr),* $(,)?) => {{
-        groupt!($($node),*).direction(Direction::TopToBottom)
-    }};
-}
-
-#[macro_export]
-macro_rules! groupt {
-    ($($node:expr),* $(,)?) => {{
         let mut nodes = Vec::new();
-
-        $(
-            nodes.push($node.into_node());
-        )*
-
-        Container { nodes, gap: 0.0, padding: 0.0, direction: Direction::LeftToRight }
+        $( nodes.push($node.into_node()); )*
+        Container { nodes, gap: 0.0, padding: 0.0, direction: Direction::TopToBottom }
     }};
 }
 
