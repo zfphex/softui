@@ -1,3 +1,5 @@
+//! A collection of traits/macros/structs to simplify the api of building a widget tree.
+//! It's split up since extra abstraction can make debugging very difficult.
 use crate::tree::*;
 
 #[macro_export]
