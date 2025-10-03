@@ -11,8 +11,11 @@ pub mod atomic_float;
 pub mod click;
 pub use click::*;
 
-pub mod tree_simplier;
 pub mod tree;
+pub mod tree_simplier;
+
+#[cfg(test)]
+pub mod tree_tests;
 
 pub mod flex;
 pub use flex::*;

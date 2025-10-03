@@ -1,5 +1,5 @@
 #![allow(unused)]
-use softui::{create_ctx, flext, groupt, style::*, tree::*, tree_simplier::*, Event, Key};
+use softui::{create_ctx, flext, groupt, ht, style::*, tree::*, tree_simplier::*, vt, Event, Key};
 
 fn main() {
     let ctx = unsafe { create_ctx("Softui", 800, 600) };
@@ -11,25 +11,39 @@ fn main() {
             _ => {}
         }
 
-        let mut group = groupt!(
-            rect().w(40).h(40),
-            rect().w(40).h(40),
-            rect().wfill().h(40),
-            rect().w(40).h(40),
+        let mut tree = flext!(
+            //
+            ht!(
+                rect().w(10.percent()).h(40),
+                rect().wfill().h(40),
+                rect().w(15.percent()).h(40),
+                rect().w(30.percent()).h(40),
+                rect().wfill().h(40),
+            ).gap(10).padding(10),
         );
 
-        let mut tree = Tree::new();
-
-        //Window root container
-        let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, 0.0);
-
-        //Child containers
-        let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 10.0, 10.0);
-        tree.add_child(root, parent);
-
-        tree.add_children(parent, group);
-
+        tree.calculate_root_size(0, window_size, [0.0, 0.0]);
         tree.layout(0, window_size, [0.0, 0.0]);
+
+        // let mut group = groupt!(
+        //     rect().w(40).h(40),
+        //     rect().w(40).h(40),
+        //     rect().wfill().h(40),
+        //     rect().w(40).h(40),
+        // );
+
+        // let mut tree = Tree::new();
+
+        // //Window root container
+        // let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, 0.0);
+
+        // //Child containers
+        // let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::TopToBottom, 10.0, 10.0);
+        // tree.add_child(root, parent);
+
+        // tree.add_children(parent, group);
+
+        // tree.layout(0, window_size, [0.0, 0.0]);
         // dbg!(tree);
         // return;
 

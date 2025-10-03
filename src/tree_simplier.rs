@@ -10,12 +10,12 @@ macro_rules! flext {
 
         $(
             //Child containers
-            let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, 0.0);
+            let parent = tree.add_node(Unit::Fill, Unit::Fill, $group.direction, $group.gap, $group.padding);
             tree.add_child(root, parent);
 
             //Child elements inside of container
             //Assume $group is Vec<usize>
-            tree.add_children(parent, $group);
+            tree.add_children(parent, $group.nodes);
         )*
 
         tree
@@ -25,14 +25,14 @@ macro_rules! flext {
 #[macro_export]
 macro_rules! ht {
     ($($node:expr),* $(,)?) => {{
-        groupt!($(node)*)
+        groupt!($($node),*).direction(Direction::LeftToRight)
     }};
 }
 
 #[macro_export]
 macro_rules! vt {
     ($($node:expr),* $(,)?) => {{
-        groupt!($(node)*)
+        groupt!($($node),*).direction(Direction::TopToBottom)
     }};
 }
 
@@ -45,16 +45,30 @@ macro_rules! groupt {
             nodes.push($node.into_node());
         )*
 
-        nodes
+        Container { nodes, gap: 0.0, padding: 0.0, direction: Direction::LeftToRight }
     }};
 }
 
-#[derive(Clone, Debug)]
-pub struct Group {
-    pub widgets: Vec<usize>,
+pub struct Container {
+    pub nodes: Vec<Node>,
+    pub gap: f32,
+    pub padding: f32,
+    pub direction: Direction,
 }
-impl Group {
 
+impl Container {
+    pub fn gap(mut self, gap: impl IntoF32) -> Self {
+        self.gap = gap.into_f32();
+        self
+    }
+    pub fn padding(mut self, padding: impl IntoF32) -> Self {
+        self.padding = padding.into_f32();
+        self
+    }
+    pub fn direction(mut self, direction: Direction) -> Self {
+        self.direction = direction;
+        self
+    }
 }
 
 pub fn rect() -> Rectangle {
@@ -101,21 +115,13 @@ pub trait SimpleUnit {
     fn percent(self) -> Unit;
 }
 
-impl SimpleUnit for f32 {
+impl<T: IntoF32> SimpleUnit for T {
     fn px(self) -> Unit {
-        Unit::Fixed(self)
+        Unit::Fixed(self.into_f32())
     }
-    fn percent(self) -> Unit {
-        Unit::Percentage(self)
-    }
-}
 
-impl SimpleUnit for usize {
-    fn px(self) -> Unit {
-        Unit::Fixed(self as f32)
-    }
     fn percent(self) -> Unit {
-        Unit::Percentage(self as f32)
+        Unit::Percentage(self.into_f32())
     }
 }
 
@@ -163,3 +169,24 @@ impl Default for Node {
         }
     }
 }
+
+//There must be a better way to handle these cases?
+
+pub trait IntoF32 {
+    fn into_f32(self) -> f32;
+}
+
+macro_rules! impl_intof32 {
+    ($($t:ty),*) => {
+        $(
+            impl IntoF32 for $t {
+                #[inline]
+                fn into_f32(self) -> f32 {
+                    self as f32
+                }
+            }
+        )*
+    };
+}
+
+impl_intof32!(f32, usize, isize, i32, i64);

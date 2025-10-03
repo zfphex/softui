@@ -80,8 +80,7 @@ impl Tree {
         }
     }
 
-    pub fn layout(&mut self, id: usize, original_parent_size: [f32; 2], parent_pos: [f32; 2]) {
-        // Step 1: calculate own size
+    pub fn calculate_root_size(&mut self, id: usize, original_parent_size: [f32; 2], parent_pos: [f32; 2]) {
         let mut size = [0.0, 0.0];
         for axis in 0..2 {
             size[axis] = match self.nodes[id].desired_size[axis] {
@@ -93,6 +92,14 @@ impl Tree {
         }
         self.nodes[id].size = size;
         self.nodes[id].pos = parent_pos;
+    }
+
+    pub fn layout(&mut self, id: usize, original_parent_size: [f32; 2], parent_pos: [f32; 2]) {
+        self.nodes[id].pos = parent_pos;
+
+        // Get node's size (root was just set, non-root was set by parent)
+        let size = self.nodes[id].size;
+        let padding = self.nodes[id].padding;
 
         // Account for padding - reduce available space for children
         let padding = self.nodes[id].padding;
@@ -192,7 +199,7 @@ impl Tree {
         }
     }
 
-    fn calculate_fit(&self, id: usize, axis: usize) -> f32 {
+    pub fn calculate_fit(&self, id: usize, axis: usize) -> f32 {
         let primary = self.nodes[id].direction.axis();
         let sum_mode = axis == primary;
 
@@ -222,6 +229,7 @@ impl Tree {
     }
 }
 
+#[track_caller]
 pub fn check_size(tree: &Tree, id: usize, w: f32, h: f32) {
     let node = &tree.nodes[id];
     assert_eq!(node.size[0], w, "width {} != {}", node.size[0], w);
