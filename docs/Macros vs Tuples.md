@@ -1,6 +1,6 @@
 # Macros vs Tuples
 
-A very important aspect of this library is error messages, they should be clear and easy to understand.
+One of the most important aspect of a UI library is the error messages, they should be clear and easy to understand.
 This is not an easy task given Rust's lack of compile time reflection, specialisation and varidics.
 
 Consider this error:
@@ -103,7 +103,7 @@ It is confusing to get errors inside the expanded macro.
 
 ----
 
-The errors are even worse in [xilem](https://github.com/linebender/xilem)
+I love [xilem](https://github.com/linebender/xilem) but, the errors are even worse.
 
 ```rs
 error[E0277]: the trait bound `(E, xilem::view::FlexSpacer, impl WidgetView<i32>, xilem::view::FlexSpacer, FlexItem<xilem::view::Label, _, _>, xilem::view::FlexSpacer, impl WidgetView<i32>, xilem::view::FlexSpacer): FlexSequence<_, _>` is not satisfied

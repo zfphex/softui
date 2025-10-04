@@ -1,9 +1,0 @@
-- [ ] Layout slices and mutable slices...
-- [ ] Better widgets, lists, button
-- [ ] Styling, rounded borders, em sizing.
-- [ ] Lines widget with line wrapping (how to handle clicking different lines???)
-- [ ] Frame-rate limiter
-- [ ] The custom primative functions do not allow for any arguments such as radius on area, so it's not very useful.
-- [ ] Rewrite almost every single instance of Rect with UnitRect, the current layout system does not allow for relative units.
-- [ ] Style and click propigation is awful...
-- [ ] Primative currently has no lifetime since static mut does not support it. Image/Svg should probably use RefCell or something. 

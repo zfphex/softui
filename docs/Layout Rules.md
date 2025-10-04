@@ -1,16 +1,16 @@
-```js
+```rs
 Root(800)
   Group()
     Rect(50%)        // 200
     Rect(50%)        // 200
-    SubGroup(fill)   // 0 leftover
+    SubGroup(Fill)   // 0 leftover
 ```
 
-```js
+```rs
 Group(400)
-  Rect(fill) //133
-  Rect(fill) //133
-  SubGroup(fill) //133
+  Rect(Fill) //133
+  Rect(Fill) //133
+  SubGroup(Fill) //133
 ```
 
 - Fixed
@@ -28,6 +28,9 @@ Group(400)
 - Nested Containers
     - They get an allocated width from their parent.
     - Then recursively apply the same rules to their children.
+- Font Relative (em)
+  - TODO
+  -
 - Fit 
   - Fit containers need children that can size themselves without referring back to the parent.
   - Percentage and Fill children are not allowed.
@@ -44,7 +47,7 @@ Group(400)
   - Percentage children calculate their size relative to the content area, not the container size.
   - Fit containers include their padding in the calculated size: fit size = children size + gap + (2 × padding).
 
-```js
+```rs
 Container(200px, padding: 20px)
   ├─ Content area = 200 - (2 × 20) = 160px
   └─ Child(50%)  // 50% of 160 = 80px (not 50% of 200 = 100px)
