@@ -15,6 +15,7 @@ pub enum Direction {
 }
 
 impl Direction {
+    //TODO: Consider adding constants for the axes.
     pub fn axis(&self) -> usize {
         match self {
             Direction::LeftToRight | Direction::RightToLeft => 0,
@@ -27,14 +28,29 @@ impl Direction {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct Amount {
+    pub top: f32,
+    pub bottom: f32,
+    pub left: f32,
+    pub right: f32,
+}
+
 #[derive(Debug, Clone)]
 pub struct Node {
     pub desired_size: [Unit; 2],
+    pub min_size: [Option<Unit>; 2],
+    pub max_size: [Option<Unit>; 2],
     pub size: [f32; 2],
     pub pos: [f32; 2],
+    pub padding: Amount,
+    pub margin: Amount,
     pub direction: Direction,
     pub gap: f32,
-    pub padding: f32,
+    //Background color and foreground color properties.
+    pub style: Option<crate::Style>,
+    //A node can point to a widget.
+    pub widget: Option<usize>,
     pub children: Vec<usize>,
 }
 
@@ -44,10 +60,25 @@ impl Node {
             desired_size: [width, height],
             size: [0.0, 0.0],
             pos: [0.0, 0.0],
-            padding,
+            padding: Amount {
+                top: padding,
+                bottom: padding,
+                left: padding,
+                right: padding,
+            },
+            margin: Amount {
+                top: 0.0,
+                bottom: 0.0,
+                left: 0.0,
+                right: 0.0,
+            },
+            style: None,
+            widget: None,
             direction,
             gap,
             children: Vec::new(),
+            min_size: [None; 2],
+            max_size: [None; 2],
         }
     }
 }
@@ -116,7 +147,11 @@ impl Tree {
         let children_len = self.nodes[id].children.len();
 
         // Account for padding - reduce available space for children
-        let content_size = [(size[0] - 2.0 * padding).max(0.0), (size[1] - 2.0 * padding).max(0.0)];
+        // TODO: Check if the padding is correct.
+        let content_size = [
+            (size[0] - padding.left - padding.right).max(0.0),
+            (size[1] - padding.top - padding.bottom).max(0.0),
+        ];
         let mut used_primary = gap * (children_len.saturating_sub(1)) as f32;
         let mut fill_count = 0;
 
@@ -172,7 +207,9 @@ impl Tree {
         // 2. Position children
         let reversed = direction.reversed();
         let mut offset = if reversed { content_size[primary] } else { 0.0 };
-        let content_pos = [pos[0] + padding, pos[1] + padding];
+
+        // TODO: Check if the padding is correct.
+        let content_pos = [pos[0] + padding.left, pos[1] + padding.top];
 
         for i in 0..children_len {
             let c = unsafe { *children_ptr.add(i) };
@@ -226,7 +263,11 @@ impl Tree {
         }
 
         // Add padding to both axes
-        result + 2.0 * self.nodes[id].padding
+        if axis == 0 {
+            result + self.nodes[id].padding.left + self.nodes[id].padding.right
+        } else {
+            result + self.nodes[id].padding.top + self.nodes[id].padding.bottom
+        }
     }
 }
 

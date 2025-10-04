@@ -83,11 +83,7 @@ impl IntoNode for Rectangle {
         Node {
             pos: self.size.pos,
             desired_size: self.size.dimensions,
-            size: [0.0, 0.0],
-            padding: 0.0,
-            direction: Direction::LeftToRight,
-            gap: 0.0,
-            children: Vec::new(),
+            ..Default::default()
         }
     }
 }
@@ -153,12 +149,27 @@ impl Default for Node {
     fn default() -> Self {
         Self {
             children: Vec::new(),
-            padding: 0.0,
+            padding: Amount {
+                top: 0.0,
+                bottom: 0.0,
+                left: 0.0,
+                right: 0.0,
+            },
             gap: 0.0,
             direction: Direction::LeftToRight,
             desired_size: [Unit::Fill, Unit::Fill],
             size: [0.0; 2],
             pos: [0.0; 2],
+            min_size: [None; 2],
+            max_size: [None; 2],
+            margin: Amount {
+                top: 0.0,
+                bottom: 0.0,
+                left: 0.0,
+                right: 0.0,
+            },
+            style: None,
+            widget: None,
         }
     }
 }

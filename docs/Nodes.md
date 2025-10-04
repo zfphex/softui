@@ -1,18 +1,4 @@
 ```rust
-
-pub trait Widget {
-    fn desired_size(&self) -> [Unit; 2];
-    fn set_size(&mut self, size: [f32; 2]);
-}
-
-pub WidgetWrapper<W: Widget> {
-    pub widget: W
-    pub click_handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
-    pub desired_size: [Unit; 2],
-    pub min_size: [Unit; 2],
-    pub max_size: [Unit; 2],
-}
-
 pub struct Tree {
     pub nodes: Vec<Node>,
     pub widgets: Vec<Box<dyn Widget>>,
@@ -20,7 +6,7 @@ pub struct Tree {
 
 pub struct Image {
     pub image_data: &[u8],
-    pub size: Size,
+    pub size: [Unit; 2],
     // Required elements for layout but not required for user to implement.
     // These are in size struct.
     // size: [f32; 2],
@@ -29,6 +15,12 @@ pub struct Image {
     // margin: f32,
     // style: Style,
     // Direction and gap are not required since they are container only...
+}
+
+impl Widget for Image {
+    fn desired_size(&self) -> [Unit; 2] {
+        self.size
+    }
 }
 
 pub struct Node {
