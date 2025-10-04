@@ -8,7 +8,7 @@ macro_rules! flext {
         let mut tree = Tree::new();
 
         //Window root container
-        let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, 0.0);
+        let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, Amount::splat(0.0));
 
         $(
             //Child containers
@@ -29,7 +29,7 @@ macro_rules! ht {
     ($($node:expr),* $(,)?) => {{
         let mut nodes = Vec::new();
         $( nodes.push($node.into_node()); )*
-        Container { nodes, gap: 0.0, padding: 0.0, direction: Direction::LeftToRight }
+        Container { nodes, gap: 0.0, padding: Amount::splat(0.0), direction: Direction::LeftToRight }
     }};
 }
 
@@ -38,14 +38,14 @@ macro_rules! vt {
     ($($node:expr),* $(,)?) => {{
         let mut nodes = Vec::new();
         $( nodes.push($node.into_node()); )*
-        Container { nodes, gap: 0.0, padding: 0.0, direction: Direction::TopToBottom }
+        Container { nodes, gap: 0.0, padding: Amount::splat(0.0), direction: Direction::TopToBottom }
     }};
 }
 
 pub struct Container {
     pub nodes: Vec<Node>,
     pub gap: f32,
-    pub padding: f32,
+    pub padding: Amount,
     pub direction: Direction,
 }
 
@@ -55,7 +55,29 @@ impl Container {
         self
     }
     pub fn padding(mut self, padding: impl IntoF32) -> Self {
-        self.padding = padding.into_f32();
+        let padding = padding.into_f32();
+        self.padding = Amount {
+            top: padding,
+            bottom: padding,
+            left: padding,
+            right: padding,
+        };
+        self
+    }
+    pub fn pl(mut self, padding: impl IntoF32) -> Self {
+        self.padding.left = padding.into_f32();
+        self
+    }
+    pub fn pr(mut self, padding: impl IntoF32) -> Self {
+        self.padding.right = padding.into_f32();
+        self
+    }
+    pub fn pt(mut self, padding: impl IntoF32) -> Self {
+        self.padding.top = padding.into_f32();
+        self
+    }
+    pub fn pb(mut self, padding: impl IntoF32) -> Self {
+        self.padding.bottom = padding.into_f32();
         self
     }
     pub fn direction(mut self, direction: Direction) -> Self {
@@ -142,35 +164,6 @@ impl Rectangle {
     pub fn hfill(mut self) -> Self {
         self.size.dimensions[1] = Unit::Fill;
         self
-    }
-}
-
-impl Default for Node {
-    fn default() -> Self {
-        Self {
-            children: Vec::new(),
-            padding: Amount {
-                top: 0.0,
-                bottom: 0.0,
-                left: 0.0,
-                right: 0.0,
-            },
-            gap: 0.0,
-            direction: Direction::LeftToRight,
-            desired_size: [Unit::Fill, Unit::Fill],
-            size: [0.0; 2],
-            pos: [0.0; 2],
-            min_size: [None; 2],
-            max_size: [None; 2],
-            margin: Amount {
-                top: 0.0,
-                bottom: 0.0,
-                left: 0.0,
-                right: 0.0,
-            },
-            style: None,
-            widget: None,
-        }
     }
 }
 

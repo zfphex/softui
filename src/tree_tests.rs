@@ -5,14 +5,14 @@ fn fill() {
     let mut tree = Tree::new();
 
     //Window root container
-    let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, 0.0);
+    let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, Amount::splat(0.0));
 
     //Child containers
-    let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 10.0, 10.0);
+    let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 10.0, Amount::splat(10.0));
     tree.add_child(root, parent);
 
-    let fixed = tree.add_node(Unit::Fixed(40.0), Unit::Fixed(40.0), Direction::LeftToRight, 0.0, 0.0);
-    let fill = tree.add_node(Unit::Fill, Unit::Fixed(40.0), Direction::LeftToRight, 0.0, 0.0);
+    let fixed = tree.add_node(Unit::Fixed(40.0), Unit::Fixed(40.0), Direction::LeftToRight, 0.0, Amount::splat(0.0));
+    let fill = tree.add_node(Unit::Fill, Unit::Fixed(40.0), Direction::LeftToRight, 0.0, Amount::splat(0.0));
     tree.add_child(parent, fixed);
     tree.add_child(parent, fill);
 
@@ -30,10 +30,10 @@ fn percentage() {
     let mut tree = Tree::new();
 
     //Window root container
-    let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, 0.0);
+    let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, Amount::splat(0.0));
 
     //Child containers
-    let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 10.0, 10.0);
+    let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 10.0, Amount::splat(10.0));
     tree.add_child(root, parent);
 
     let percent = tree.add_node(
@@ -41,7 +41,7 @@ fn percentage() {
         Unit::Percentage(50.0),
         Direction::LeftToRight,
         0.0,
-        0.0,
+        Amount::splat(0.0),
     );
 
     tree.add_child(parent, percent);

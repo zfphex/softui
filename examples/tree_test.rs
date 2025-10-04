@@ -4,14 +4,14 @@ fn main() {
     let mut tree = Tree::new();
 
     //Window root container
-    let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, 0.0);
+    let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, Amount::splat(0.0));
 
     //Child containers
-    let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 2.0, 10.0);
+    let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 2.0, Amount::splat(10.0));
     tree.add_child(root, parent);
 
     for _ in 0..100 {
-        let child = tree.add_node(Unit::Fill, Unit::Percentage(40.0), Direction::LeftToRight, 0.0, 0.0);
+        let child = tree.add_node(Unit::Fill, Unit::Percentage(40.0), Direction::LeftToRight, 0.0, Amount::splat(0.0));
         tree.add_child(parent, child);
     }
 

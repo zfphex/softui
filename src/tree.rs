@@ -36,6 +36,17 @@ pub struct Amount {
     pub right: f32,
 }
 
+impl Amount {
+    pub fn splat(amount: f32) -> Self {
+        Self {
+            top: amount,
+            bottom: amount,
+            left: amount,
+            right: amount,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Node {
     pub desired_size: [Unit; 2],
@@ -54,31 +65,21 @@ pub struct Node {
     pub children: Vec<usize>,
 }
 
-impl Node {
-    pub fn new(width: Unit, height: Unit, direction: Direction, gap: f32, padding: f32) -> Self {
+impl Default for Node {
+    fn default() -> Self {
         Self {
-            desired_size: [width, height],
-            size: [0.0, 0.0],
-            pos: [0.0, 0.0],
-            padding: Amount {
-                top: padding,
-                bottom: padding,
-                left: padding,
-                right: padding,
-            },
-            margin: Amount {
-                top: 0.0,
-                bottom: 0.0,
-                left: 0.0,
-                right: 0.0,
-            },
-            style: None,
-            widget: None,
-            direction,
-            gap,
             children: Vec::new(),
+            padding: Amount::splat(0.0),
+            gap: 0.0,
+            direction: Direction::LeftToRight,
+            desired_size: [Unit::Fill, Unit::Fill],
+            size: [0.0; 2],
+            pos: [0.0; 2],
             min_size: [None; 2],
             max_size: [None; 2],
+            margin: Amount::splat(0.0),
+            style: None,
+            widget: None,
         }
     }
 }
@@ -93,9 +94,15 @@ impl Tree {
         Self { nodes: Vec::new() }
     }
 
-    pub fn add_node(&mut self, width: Unit, height: Unit, direction: Direction, gap: f32, padding: f32) -> usize {
+    pub fn add_node(&mut self, width: Unit, height: Unit, direction: Direction, gap: f32, padding: Amount) -> usize {
         let id = self.nodes.len();
-        self.nodes.push(Node::new(width, height, direction, gap, padding));
+        self.nodes.push(Node {
+            desired_size: [width, height],
+            direction,
+            gap,
+            padding,
+            ..Default::default()
+        });
         id
     }
 
