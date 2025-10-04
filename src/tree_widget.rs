@@ -68,8 +68,8 @@ pub struct GenericWidget<'a, W: Widget<'a>> {
     pub size: [f32; 2],
     pub min_size: [Option<Unit>; 2],
     pub max_size: [Option<Unit>; 2],
-    pub padding: f32,
-    pub margin: f32,
+    pub padding: Amount,
+    pub margin: Amount,
     pub style: Option<Style>,
 }
 
@@ -83,8 +83,8 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
             pos: [0.0; 2],
             min_size: [None; 2],
             max_size: [None; 2],
-            padding: 0.0,
-            margin: 0.0,
+            padding: Amount::splat(0.0),
+            margin: Amount::splat(0.0),
             style: None,
         }
     }
@@ -96,12 +96,8 @@ impl<'a, W: Widget<'a>> IntoNode for GenericWidget<'a, W> {
             desired_size: self.desired_size,
             size: self.size,
             pos: self.pos,
-            padding: Amount {
-                top: self.padding,
-                bottom: self.padding,
-                left: self.padding,
-                right: self.padding,
-            },
+            padding: self.padding,
+            margin: self.margin,
             min_size: self.min_size,
             max_size: self.max_size,
             style: self.style,
@@ -128,12 +124,27 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
     }
 
     pub fn padding(mut self, padding: impl IntoF32) -> Self {
-        self.padding = padding.into_f32();
+        self.padding = Amount::splat(padding.into_f32());
         self
     }
 
-    pub fn margin(mut self, margin: impl IntoF32) -> Self {
-        self.margin = margin.into_f32();
+    pub fn pl(mut self, left: impl IntoF32) -> Self {
+        self.padding.left = left.into_f32();
+        self
+    }
+
+    pub fn pr(mut self, right: impl IntoF32) -> Self {
+        self.padding.right = right.into_f32();
+        self
+    }
+
+    pub fn pt(mut self, top: impl IntoF32) -> Self {
+        self.padding.top = top.into_f32();
+        self
+    }
+
+    pub fn pb(mut self, bottom: impl IntoF32) -> Self {
+        self.padding.bottom = bottom.into_f32();
         self
     }
 }

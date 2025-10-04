@@ -55,29 +55,23 @@ impl Container {
         self
     }
     pub fn padding(mut self, padding: impl IntoF32) -> Self {
-        let padding = padding.into_f32();
-        self.padding = Amount {
-            top: padding,
-            bottom: padding,
-            left: padding,
-            right: padding,
-        };
+        self.padding = Amount::splat(padding.into_f32());
         self
     }
-    pub fn pl(mut self, padding: impl IntoF32) -> Self {
-        self.padding.left = padding.into_f32();
+    pub fn pl(mut self, left: impl IntoF32) -> Self {
+        self.padding.left = left.into_f32();
         self
     }
-    pub fn pr(mut self, padding: impl IntoF32) -> Self {
-        self.padding.right = padding.into_f32();
+    pub fn pr(mut self, right: impl IntoF32) -> Self {
+        self.padding.right = right.into_f32();
         self
     }
-    pub fn pt(mut self, padding: impl IntoF32) -> Self {
-        self.padding.top = padding.into_f32();
+    pub fn pt(mut self, top: impl IntoF32) -> Self {
+        self.padding.top = top.into_f32();
         self
     }
-    pub fn pb(mut self, padding: impl IntoF32) -> Self {
-        self.padding.bottom = padding.into_f32();
+    pub fn pb(mut self, bottom: impl IntoF32) -> Self {
+        self.padding.bottom = bottom.into_f32();
         self
     }
     pub fn direction(mut self, direction: Direction) -> Self {
@@ -187,3 +181,30 @@ macro_rules! impl_intof32 {
 }
 
 impl_intof32!(f32, usize, isize, i32, i64);
+
+//Debug function for visualizing the layout.
+pub fn draw_tree(mut tree: Tree) {
+    use crate::{create_ctx, fixed_random_color, tree::*, Event, Key};
+    let ctx = unsafe { create_ctx("Softui", 800, 600) };
+
+    loop {
+        let window_size = [ctx.window.width() as f32, ctx.window.height() as f32];
+        match ctx.event() {
+            Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
+            _ => {}
+        }
+
+        tree.calculate_root_size(0, window_size, [0.0, 0.0]);
+        tree.layout(0);
+
+        for (idx, _) in tree.nodes.iter().enumerate() {
+            let x = tree.nodes[idx].pos[0] as usize;
+            let y = tree.nodes[idx].pos[1] as usize;
+            let width = tree.nodes[idx].size[0] as usize;
+            let height = tree.nodes[idx].size[1] as usize;
+            ctx.draw_rectangle(x, y, width, height, fixed_random_color(idx + 38));
+        }
+
+        ctx.draw_frame();
+    }
+}
