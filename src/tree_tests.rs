@@ -5,32 +5,27 @@ fn fill() {
     let mut tree = Tree::new();
 
     //Window root container
-    let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, Amount::splat(0.0));
+    let root = tree.add_node(Node::default());
 
     //Child containers
     let parent = tree.add_node(
-        Unit::Fill,
-        Unit::Fill,
-        Direction::LeftToRight,
-        10.0,
-        Amount::splat(10.0),
+        //
+        Node {
+            gap: 10.0,
+            padding: Amount::splat(10.0),
+            ..Default::default()
+        },
     );
     tree.add_child(root, parent);
 
-    let fixed = tree.add_node(
-        Unit::Fixed(40.0),
-        Unit::Fixed(40.0),
-        Direction::LeftToRight,
-        0.0,
-        Amount::splat(0.0),
-    );
-    let fill = tree.add_node(
-        Unit::Fill,
-        Unit::Fixed(40.0),
-        Direction::LeftToRight,
-        0.0,
-        Amount::splat(0.0),
-    );
+    let fixed = tree.add_node(Node {
+        desired_size: [Unit::Fixed(40.0), Unit::Fixed(40.0)],
+        ..Default::default()
+    });
+    let fill = tree.add_node(Node {
+        desired_size: [Unit::Fill, Unit::Fixed(40.0)],
+        ..Default::default()
+    });
     tree.add_child(parent, fixed);
     tree.add_child(parent, fill);
 
@@ -50,25 +45,22 @@ fn percentage() {
     let mut tree = Tree::new();
 
     //Window root container
-    let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, Amount::splat(0.0));
+    let root = tree.add_node(Node::default());
 
     //Child containers
-    let parent = tree.add_node(
-        Unit::Fill,
-        Unit::Fill,
-        Direction::LeftToRight,
-        10.0,
-        Amount::splat(10.0),
-    );
+
+    let parent = tree.add_node(Node {
+        desired_size: [Unit::Fill, Unit::Fill],
+        gap: 10.0,
+        padding: Amount::splat(10.0),
+        ..Default::default()
+    });
     tree.add_child(root, parent);
 
-    let percent = tree.add_node(
-        Unit::Percentage(50.0),
-        Unit::Percentage(50.0),
-        Direction::LeftToRight,
-        0.0,
-        Amount::splat(0.0),
-    );
+    let percent = tree.add_node(Node {
+        desired_size: [Unit::Percentage(50.0), Unit::Percentage(50.0)],
+        ..Default::default()
+    });
 
     tree.add_child(parent, percent);
 

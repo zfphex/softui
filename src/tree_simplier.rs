@@ -8,16 +8,39 @@ macro_rules! flext {
         let mut tree = Tree::new();
 
         //Window root container
-        let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, Amount::splat(0.0));
+        let root = tree.add_node(Node::default());
 
         $(
             //Child containers
-            let parent = tree.add_node(Unit::Fill, Unit::Fill, $group.direction, $group.gap, $group.padding);
+            let node = Node {direction: $group.direction, gap: $group.gap, padding: $group.padding, ..Default::default()};
+            let parent = tree.add_node(node);
             tree.add_child(root, parent);
 
             //Child elements inside of container
             //Assume $group is Vec<usize>
             tree.add_children(parent, $group.nodes);
+        )*
+
+        tree
+    }};
+}
+
+#[macro_export]
+macro_rules! flext2 {
+    ($($group:expr),* $(,)?) => {{
+        let mut tree = Tree::new();
+
+        //Window root container
+        let root = tree.add_node(Node::default());
+
+        $(
+            //Child containers
+            let node = $group.create_node();
+            let parent = tree.add_node(node);
+            tree.add_child(root, parent);
+
+            // Append to tree.widgets and add a node for each widget?
+            // tree.add_widgets($group.widgets);
         )*
 
         tree
@@ -41,6 +64,50 @@ macro_rules! vt {
         Container { nodes, gap: 0.0, padding: Amount::splat(0.0), direction: Direction::TopToBottom }
     }};
 }
+
+#[macro_export]
+macro_rules! ht2 {
+    ($($widget:expr),* $(,)?) => {{
+        let mut container = $crate::tree_simplier::Container2::default();
+        $( container.widgets.push(Box::new($widget)); )*
+        container
+    }};
+}
+
+#[derive(Default, Debug)]
+pub struct Container2<'a> {
+    pub widgets: Vec<Box<dyn crate::tree_widget::Widget<'a> + 'a>>,
+    pub desired_size: [Unit; 2],
+
+    bg: Option<crate::Color>,
+    gap: f32,
+    padding: Amount,
+    direction: Direction,
+}
+
+impl<'a> Container2<'a> {
+    pub fn create_node(&self) -> Node {
+        Node {
+            gap: self.gap,
+            padding: self.padding,
+            direction: self.direction,
+            desired_size: self.desired_size,
+            ..Default::default()
+        }
+    }
+}
+
+// impl<'a> IntoNode for Container2<'a> {
+//     fn into_node(self) -> Node {
+//         Node {
+//             gap: self.gap,
+//             padding: self.padding,
+//             direction: self.direction,
+//             desired_size: self.desired_size,
+//             ..Default::default()
+//         }
+//     }
+// }
 
 pub struct Container {
     pub nodes: Vec<Node>,
@@ -80,27 +147,20 @@ impl Container {
     }
 }
 
-pub fn rect() -> Rectangle {
-    Rectangle {
-        size: Size {
-            pos: [0.0; 2],
-            dimensions: [Unit::Fixed(10.0), Unit::Fixed(10.0)],
-        },
-        radius: 0,
-    }
-}
-
 pub trait IntoNode {
     fn into_node(self) -> Node;
 }
 
-impl IntoNode for Rectangle {
-    fn into_node(self) -> Node {
-        Node {
-            pos: self.size.pos,
-            desired_size: self.size.dimensions,
-            ..Default::default()
-        }
+impl Tree {
+    pub fn add_generic_node(&mut self, node: impl IntoNode) -> usize {
+        let id = self.nodes.len();
+        self.nodes.push(node.into_node());
+        id
+    }
+    pub fn add_generic_child(&mut self, parent: usize, node: impl IntoNode) {
+        let child = self.nodes.len();
+        self.nodes.push(node.into_node());
+        self.nodes[parent].children.push(child);
     }
 }
 
@@ -130,35 +190,10 @@ impl<T: IntoF32> SimpleUnit for T {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Size {
     pub pos: [f32; 2],
     pub dimensions: [Unit; 2],
-}
-
-#[derive(Clone, Debug)]
-pub struct Rectangle {
-    pub size: Size,
-    pub radius: usize,
-}
-
-impl Rectangle {
-    pub fn w(mut self, w: impl Into<Unit>) -> Self {
-        self.size.dimensions[0] = w.into();
-        self
-    }
-    pub fn h(mut self, h: impl Into<Unit>) -> Self {
-        self.size.dimensions[1] = h.into();
-        self
-    }
-    pub fn wfill(mut self) -> Self {
-        self.size.dimensions[0] = Unit::Fill;
-        self
-    }
-    pub fn hfill(mut self) -> Self {
-        self.size.dimensions[1] = Unit::Fill;
-        self
-    }
 }
 
 //There must be a better way to handle these cases?

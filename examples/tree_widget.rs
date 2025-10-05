@@ -1,9 +1,10 @@
 #![allow(unused)]
-use softui::{create_ctx, vt, Event, Key};
-use softui::{flext, ht, image, tree::*, tree_simplier::*, tree_widget::*, tree_widget::image_ref::*};
 
+#[cfg(feature = "image")]
 fn main() {
-    let image = image("img/ben.png");
+    use softui::{create_ctx, vt, Event, Key};
+    use softui::{flext, ht, tree::*, tree_simplier::*, tree_widget::image_ref::*, tree_widget::*};
+    let image = softui::image("img/ben.png");
     let image_ref = image_ref(&image);
 
     let h = ht!(
@@ -50,3 +51,6 @@ fn main() {
         ctx.draw_frame();
     }
 }
+
+#[cfg(not(feature = "image"))]
+fn main() {}

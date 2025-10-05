@@ -1,13 +1,15 @@
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Unit {
     Fixed(f32),
     Percentage(f32),
+    #[default]
     Fill,
     Fit,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Direction {
+    #[default]
     LeftToRight,
     RightToLeft,
     TopToBottom,
@@ -28,7 +30,7 @@ impl Direction {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Amount {
     pub top: f32,
     pub bottom: f32,
@@ -94,15 +96,9 @@ impl Tree {
         Self { nodes: Vec::new() }
     }
 
-    pub fn add_node(&mut self, width: Unit, height: Unit, direction: Direction, gap: f32, padding: Amount) -> usize {
+    pub fn add_node(&mut self, node: Node) -> usize {
         let id = self.nodes.len();
-        self.nodes.push(Node {
-            desired_size: [width, height],
-            direction,
-            gap,
-            padding,
-            ..Default::default()
-        });
+        self.nodes.push(node);
         id
     }
 

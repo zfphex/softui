@@ -1,6 +1,7 @@
 use crate::*;
 use std::fmt::Debug;
 
+#[derive(Debug)]
 pub enum MouseAction {
     Pressed,
     Released,

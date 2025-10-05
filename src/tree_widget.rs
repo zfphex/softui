@@ -1,5 +1,37 @@
 use crate::{tree::*, tree_simplier::*, MouseAction, MouseButton, Style};
 
+pub fn rect() -> Rectangle {
+    Rectangle {
+        size: Size {
+            pos: [0.0; 2],
+            dimensions: [Unit::Fixed(10.0), Unit::Fixed(10.0)],
+        },
+        radius: 0,
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Rectangle {
+    pub size: Size,
+    pub radius: usize,
+}
+
+impl<'a> Widget<'a> for Rectangle {
+    fn desired_size(&self) -> [Unit; 2] {
+        self.size.dimensions
+    }
+}
+
+// impl IntoNode for Rectangle {
+//     fn into_node(self) -> Node {
+//         Node {
+//             pos: self.size.pos,
+//             desired_size: self.size.dimensions,
+//             ..Default::default()
+//         }
+//     }
+// }
+
 #[cfg(feature = "image")]
 pub mod image_ref {
     use super::*;
@@ -16,7 +48,7 @@ pub mod image_ref {
     }
 
     //Test widget.
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     pub struct ImageRef<'a> {
         pub format: crate::widgets::image::ImageFormat,
         pub size: [Unit; 2],
@@ -39,7 +71,7 @@ pub mod image_ref {
     }
 }
 
-pub trait Widget<'a> {
+pub trait Widget<'a>: std::fmt::Debug {
     fn desired_size(&self) -> [Unit; 2];
 
     fn w(self, w: impl Into<Unit>) -> GenericWidget<'a, Self>
@@ -54,6 +86,18 @@ pub trait Widget<'a> {
         Self: Sized,
     {
         GenericWidget::new(self).h(h)
+    }
+    fn wfill(self) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).wfill()
+    }
+    fn hfill(self) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).hfill()
     }
 }
 
@@ -71,6 +115,30 @@ pub struct GenericWidget<'a, W: Widget<'a>> {
     pub padding: Amount,
     pub margin: Amount,
     pub style: Option<Style>,
+}
+
+impl<'a, W: Widget<'a>> std::fmt::Debug for GenericWidget<'a, W> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GenericWidget")
+            .field("widget", &self.widget)
+            .field(
+                "click_handlers",
+                &self
+                    .click_handlers
+                    .iter()
+                    .map(|(button, action, _)| format!("{:?} {:?}", button, action))
+                    .collect::<Vec<_>>(),
+            )
+            .field("desired_size", &self.desired_size)
+            .field("pos", &self.pos)
+            .field("size", &self.size)
+            .field("min_size", &self.min_size)
+            .field("max_size", &self.max_size)
+            .field("padding", &self.padding)
+            .field("margin", &self.margin)
+            .field("style", &self.style)
+            .finish()
+    }
 }
 
 impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
@@ -120,6 +188,16 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
 
     pub fn h(mut self, h: impl Into<Unit>) -> Self {
         self.desired_size[1] = h.into();
+        self
+    }
+
+    pub fn wfill(mut self) -> Self {
+        self.desired_size[0] = Unit::Fill;
+        self
+    }
+
+    pub fn hfill(mut self) -> Self {
+        self.desired_size[1] = Unit::Fill;
         self
     }
 

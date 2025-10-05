@@ -65,3 +65,28 @@ I think that an arena would just be too complicated to implement, it's already a
 I think the weird thing about decoupling the widgets and layout nodes, is that you could reference the same widget in different nodes really easily.
 
 If there is a single widgets vector, the lifetime of every widget is always <'a>.
+
+- Tree (holds all nodes)
+  - Node (a single node in the tree)
+    - Container (just Vec<Node> but allows user to change direction, padding, gap, etc.)
+      - Generic Widget (Not sure about this yet, it's basically a node but contains a widget?)
+      - Image (Basic widget)
+      - Rect (Basic widget)
+
+User creates a rectangle.
+
+```rs
+flex!(
+    v!(
+        rect().wh(20)
+    )
+)
+
+
+let rect = rect().wh(20)
+//This will not work with click handlers?
+let container = vec![rect.into_node()]; 
+let root = Tree::new();
+root.add(container);
+
+```
