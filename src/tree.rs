@@ -144,13 +144,12 @@ impl Tree {
             return;
         }
 
-        // Step 1: compute children - cache direction info
+        // Step 1: compute children
         // Avoid cloning by using raw pointer (safe because we only access distinct elements)
         let children_ptr = self.nodes[id].children.as_ptr();
         let children_len = self.nodes[id].children.len();
 
         // Account for padding - reduce available space for children
-        // TODO: Check if the padding is correct.
         let content_size = [
             (size[0] - padding.left - padding.right).max(0.0),
             (size[1] - padding.top - padding.bottom).max(0.0),
@@ -210,8 +209,6 @@ impl Tree {
         // 2. Position children
         let reversed = direction.reversed();
         let mut offset = if reversed { content_size[primary] } else { 0.0 };
-
-        // TODO: Check if the padding is correct.
         let content_pos = [pos[0] + padding.left, pos[1] + padding.top];
 
         for i in 0..children_len {

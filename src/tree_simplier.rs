@@ -92,23 +92,14 @@ impl<'a> Container2<'a> {
             padding: self.padding,
             direction: self.direction,
             desired_size: self.desired_size,
+            //Cannot add children here since the root tree does not exist yet???
+            children: todo!(),
             ..Default::default()
         }
     }
 }
 
-// impl<'a> IntoNode for Container2<'a> {
-//     fn into_node(self) -> Node {
-//         Node {
-//             gap: self.gap,
-//             padding: self.padding,
-//             direction: self.direction,
-//             desired_size: self.desired_size,
-//             ..Default::default()
-//         }
-//     }
-// }
-
+#[derive(Default, Debug)]
 pub struct Container {
     pub nodes: Vec<Node>,
     pub gap: f32,
@@ -144,6 +135,17 @@ impl Container {
     pub fn direction(mut self, direction: Direction) -> Self {
         self.direction = direction;
         self
+    }
+}
+
+impl IntoNode for Container {
+    fn into_node(self) -> Node {
+        Node {
+            gap: self.gap,
+            padding: self.padding,
+            direction: self.direction,
+            ..Default::default()
+        }
     }
 }
 

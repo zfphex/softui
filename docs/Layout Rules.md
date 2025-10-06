@@ -40,7 +40,10 @@ Group(400)
   - With N children, total gap space = gap × (N - 1).
   - Gap space is deducted from available space before distributing to Fill children.
   - Each container has its own independent gap value.
-- Padding
+- Margin (Space outside element)
+  - Basically the same as gap but can be set on each side individually.
+  - This should replace gap.
+- Padding (Space iside element)
   - Padding creates an inset space on all four sides of a container.
   - Content area = container size - (2 × padding) for each axis.
   - All child sizing modes (Fixed, Percentage, Fill, Fit) work with padding.
