@@ -80,12 +80,17 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).w(w)
     }
-
     fn h(self, h: impl Into<Unit>) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
         GenericWidget::new(self).h(h)
+    }
+    fn wh(self, wh: impl Into<Unit>) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).wh(wh)
     }
     fn wfill(self) -> GenericWidget<'a, Self>
     where
@@ -98,6 +103,12 @@ pub trait Widget<'a>: std::fmt::Debug {
         Self: Sized,
     {
         GenericWidget::new(self).hfill()
+    }
+    fn whfill(self) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).whfill()
     }
 }
 
@@ -191,12 +202,28 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         self
     }
 
+    pub fn wh(mut self, wh: impl Into<Unit>) -> Self {
+        let unit = wh.into();
+        self.desired_size[0] = unit;
+        self.desired_size[1] = unit;
+        self
+    }
+
     pub fn wfill(mut self) -> Self {
         self.desired_size[0] = Unit::Fill;
         self
     }
 
     pub fn hfill(mut self) -> Self {
+        self.desired_size[1] = Unit::Fill;
+        self
+    }
+
+    fn whfill(mut self) -> Self
+    where
+        Self: Sized,
+    {
+        self.desired_size[0] = Unit::Fill;
         self.desired_size[1] = Unit::Fill;
         self
     }

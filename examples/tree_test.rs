@@ -15,29 +15,20 @@ fn main() {
             _ => {}
         }
 
-        // Create nested container layout
         flext!(
-            // Outer horizontal container with padding
+            //
             ht!(
-                // Left sidebar - vertical container
-                vt!(rect().w(200).h(100), rect().w(200).h(100), rect().w(200).h(100),)
-                    .gap(10)
-                    .padding(15),
-                // Middle section - nested vertical and horizontal
+                vt!(rect().wh(100), rect().wh(100), rect().wh(100)).gap(10).padding(15),
                 vt!(
-                    // Top bar
                     rect().wfill().h(80),
-                    // Middle content - horizontal row
-                    ht!(rect().w(150).hfill(), rect().wfill().hfill(), rect().w(150).hfill(),)
+                    ht!(rect().w(20).hfill(), rect().whfill(), rect().w(20).hfill())
                         .gap(20)
                         .padding(10),
-                    // Bottom bar
                     rect().wfill().h(60),
                 )
-                .gap(15)
-                .padding(20),
-                // Right sidebar - vertical container
-                vt!(rect().w(180).h(120), rect().w(180).hfill(), rect().w(180).h(80),)
+                .gap(10)
+                .padding(15),
+                vt!(rect().w(180).h(120), rect().w(180).hfill(), rect().w(180).h(80))
                     .gap(10)
                     .padding(15),
             )

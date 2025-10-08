@@ -1,6 +1,6 @@
 //! A collection of traits/macros/structs to simplify the api of building a widget tree.
 //! It's split up since extra abstraction can make debugging very difficult.
-use crate::tree::*;
+use crate::{tree::*, tree_widget::Widget};
 
 #[macro_export]
 macro_rules! flext {
@@ -53,7 +53,12 @@ macro_rules! vt {
     }};
 }
 
+//These are basically overrides for widget. It's weird that node is not a widget, but it's a bit simplier to reason about.
 impl Node {
+    pub fn direction(mut self, direction: Direction) -> Self {
+        self.direction = direction;
+        self
+    }
     pub fn gap(mut self, gap: impl IntoF32) -> Self {
         self.gap = gap.into_f32();
         self
@@ -76,10 +81,6 @@ impl Node {
     }
     pub fn pb(mut self, bottom: impl IntoF32) -> Self {
         self.padding.bottom = bottom.into_f32();
-        self
-    }
-    pub fn direction(mut self, direction: Direction) -> Self {
-        self.direction = direction;
         self
     }
 }

@@ -921,6 +921,8 @@ impl Context {
     }
 
     #[cfg(feature = "image")]
+    //TODO: Does not support up/downscaling images.
+    //TODO: Swap from zune to image-rs.
     pub fn draw_image(&mut self, x: usize, y: usize, width: usize, height: usize, bitmap: &[u8], format: ImageFormat) {
         let start_x = x;
         let start_y = y;
