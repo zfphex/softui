@@ -5,33 +5,11 @@ use crate::{tree::*, tree_widget::Widget};
 #[macro_export]
 macro_rules! flext {
     ($($group:expr),* $(,)?) => {{
-        let root = add_node(Node::default());
+        let root = $crate::tree::add_node($crate::tree::Node::default());
         $(
-            let child = add_node($group);
-            add_child(root, child);
+            let child = $crate::tree::add_node($group);
+            $crate::tree::add_child(root, child);
         )*
-    }};
-}
-
-#[macro_export]
-macro_rules! flext2 {
-    ($($group:expr),* $(,)?) => {{
-        let mut tree = Tree::new();
-
-        //Window root container
-        let root = tree.add_node(Node::default());
-
-        $(
-            //Child containers
-            let node = $group.create_node();
-            let parent = tree.add_node(node);
-            tree.add_child(root, parent);
-
-            // Append to tree.widgets and add a node for each widget?
-            // tree.add_widgets($group.widgets);
-        )*
-
-        tree
     }};
 }
 
@@ -39,17 +17,26 @@ macro_rules! flext2 {
 macro_rules! ht {
     ($($node:expr),* $(,)?) => {{
         let mut children = Vec::new();
-        $( children.push(add_node($node.into_node())); )*
-        Node { children, direction: Direction::LeftToRight, ..Default::default() }
+        $(
+            children.push($crate::tree::add_node($node.into_node()));
+        )*
+        $crate::tree::Node { children, direction: $crate::tree::Direction::LeftToRight, ..Default::default() }
     }};
 }
 
+// TODO: Hygine
+// tree::Node
+// tree_simplier::IntoNode,
+// add_node
 #[macro_export]
 macro_rules! vt {
     ($($node:expr),* $(,)?) => {{
         let mut children = Vec::new();
-        $( children.push(add_node($node.into_node())); )*
-        Node { children, direction: Direction::TopToBottom, ..Default::default() }
+        $( 
+            $crate::tree::WIDGETS.alloc(Box::new($node));
+            children.push($crate::tree::add_node($node.into_node())); 
+        )*
+        $crate::tree::Node { children, direction: $crate::tree::Direction::TopToBottom, ..Default::default() }
     }};
 }
 
@@ -82,6 +69,12 @@ impl Node {
     pub fn pb(mut self, bottom: impl IntoF32) -> Self {
         self.padding.bottom = bottom.into_f32();
         self
+    }
+}
+
+impl<'a> Widget<'a> for Node {
+    fn desired_size(&self) -> [Unit; 2] {
+        self.desired_size
     }
 }
 

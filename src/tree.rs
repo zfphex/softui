@@ -293,3 +293,4 @@ pub fn check_size(nodes: &[Node], id: usize, w: f32, h: f32) {
 
 // #[thread_local]
 pub static TREE: Arena<Node> = Arena::new();
+pub static WIDGETS: Arena<Box<dyn crate::tree_widget::Widget>> = Arena::new();

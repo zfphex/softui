@@ -110,6 +110,31 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).whfill()
     }
+    #[inline(always)]
+    fn on_click<F>(self, button: MouseButton, handler: F) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+        F: FnMut(&mut Self) + 'a,
+    {
+        GenericWidget::new(self).on_click(button, handler)
+    }
+    #[inline(always)]
+    fn on_press<F>(self, button: MouseButton, handler: F) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+        F: FnMut(&mut Self) + 'a,
+    {
+        GenericWidget::new(self).on_press(button, handler)
+    }
+    #[inline(always)]
+    fn on_release<F>(self, button: MouseButton, handler: F) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+        F: FnMut(&mut Self) + 'a,
+    {
+        GenericWidget::new(self).on_release(button, handler)
+    }
+    fn try_click(&mut self) {}
 }
 
 //This is basically just a node...
@@ -117,7 +142,7 @@ pub trait Widget<'a>: std::fmt::Debug {
 //Allows the user to only implement desired_size and leave the rest to us.
 pub struct GenericWidget<'a, W: Widget<'a>> {
     pub widget: W,
-    pub click_handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
+    pub handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
     pub desired_size: [Unit; 2],
     pub pos: [f32; 2],
     pub size: [f32; 2],
@@ -135,7 +160,7 @@ impl<'a, W: Widget<'a>> std::fmt::Debug for GenericWidget<'a, W> {
             .field(
                 "click_handlers",
                 &self
-                    .click_handlers
+                    .handlers
                     .iter()
                     .map(|(button, action, _)| format!("{:?} {:?}", button, action))
                     .collect::<Vec<_>>(),
@@ -157,7 +182,7 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         GenericWidget {
             desired_size: widget.desired_size(),
             widget,
-            click_handlers: Vec::new(),
+            handlers: Vec::new(),
             size: [0.0; 2],
             pos: [0.0; 2],
             min_size: [None; 2],
@@ -251,5 +276,26 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
     pub fn pb(mut self, bottom: impl IntoF32) -> Self {
         self.padding.bottom = bottom.into_f32();
         self
+    }
+
+    pub fn on_click(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, MouseAction::Clicked, Box::new(handler)));
+        self
+    }
+
+    pub fn on_press(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, MouseAction::Pressed, Box::new(handler)));
+        self
+    }
+
+    pub fn on_release(mut self, button: MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, MouseAction::Released, Box::new(handler)));
+        self
+    }
+    pub fn try_click(&mut self) {
+        for handler in &mut self.handlers {
+
+        }
+
     }
 }
