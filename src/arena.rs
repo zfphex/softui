@@ -1,158 +1,65 @@
-//! From https://github.com/zed-industries/zed/blob/main/crates/gpui/src/arena.rs
 use std::{
-    alloc::{self, handle_alloc_error},
-    cell::Cell,
-    num::NonZeroUsize,
-    ops::{Deref, DerefMut},
-    ptr::{self, NonNull},
-    rc::Rc,
+    cell::UnsafeCell,
+    fmt::Debug,
+    ops::{Index, IndexMut},
 };
 
-struct ArenaElement<T> {
-    value: *mut T,
-}
-
-impl<T> Drop for ArenaElement<T> {
-    #[inline(always)]
-    fn drop(&mut self) {
-        unsafe {
-            std::ptr::drop_in_place(self.value);
-        }
-    }
-}
-
-struct Chunk {
-    start: *mut u8,
-    end: *mut u8,
-    offset: *mut u8,
-}
-
-impl Drop for Chunk {
-    fn drop(&mut self) {
-        unsafe {
-            let chunk_size = self.end.offset_from_unsigned(self.start);
-            // SAFETY: This succeeded during allocation.
-            let layout = alloc::Layout::from_size_align_unchecked(chunk_size, 1);
-            alloc::dealloc(self.start, layout);
-        }
-    }
-}
-
-impl Chunk {
-    fn new(chunk_size: usize) -> Self {
-        unsafe {
-            // this only fails if chunk_size is unreasonably huge
-            let Ok(layout) = alloc::Layout::from_size_align(chunk_size, 1) else {
-                unreachable!();
-            };
-            let start = alloc::alloc(layout);
-            if start.is_null() {
-                handle_alloc_error(layout);
-            }
-            let end = start.add(chunk_size);
-            Self {
-                start,
-                end,
-                offset: start,
-            }
-        }
-    }
-
-    fn allocate(&mut self, layout: alloc::Layout) -> Option<NonNull<u8>> {
-        unsafe {
-            let aligned = self.offset.add(self.offset.align_offset(layout.align()));
-            let next = aligned.add(layout.size());
-
-            if next <= self.end {
-                self.offset = next;
-                NonNull::new(aligned)
-            } else {
-                None
-            }
-        }
-    }
-
-    fn reset(&mut self) {
-        self.offset = self.start;
-    }
-}
-
 pub struct Arena<T> {
-    chunks: Vec<Chunk>,
-    elements: Vec<ArenaElement<T>>,
-    current_chunk_index: usize,
-    chunk_size: usize,
-}
-
-impl<T> Drop for Arena<T> {
-    fn drop(&mut self) {
-        self.clear();
-    }
+    pub items: UnsafeCell<Vec<T>>,
 }
 
 impl<T> Arena<T> {
-    pub fn new(chunk_size: usize) -> Self {
-        assert_ne!(chunk_size, 0);
+    pub const fn new() -> Self {
         Self {
-            chunks: vec![Chunk::new(chunk_size)],
-            elements: Vec::new(),
-            current_chunk_index: 0,
-            chunk_size,
+            items: UnsafeCell::new(Vec::new()),
         }
     }
-
-    pub fn capacity(&self) -> usize {
-        self.chunks.len() * self.chunk_size
+    pub fn alloc(&self, item: T) -> usize {
+        let items = unsafe { &mut *self.items.get() };
+        let id = items.len();
+        items.push(item);
+        id
     }
-
-    pub fn clear(&mut self) {
-        self.elements.clear();
-        for chunk_index in 0..=self.current_chunk_index {
-            self.chunks[chunk_index].reset();
-        }
-        self.current_chunk_index = 0;
+    pub fn clear(&self) {
+        let items = unsafe { &mut *self.items.get() };
+        items.clear();
     }
-
-    #[inline(always)]
-    pub fn get(&self, idx: usize) -> Option<&T> {
-        unsafe { self.elements.get(idx).and_then(|e| e.value.as_ref()) }
+    pub fn iter(&self) -> core::slice::Iter<'_, T> {
+        let items = unsafe { &*self.items.get() };
+        items.iter()
     }
-
-    #[inline(always)]
-    //TODO:
-    pub fn iter<'a>(&'a self) -> impl Iterator + 'a {
-        unsafe { self.elements.iter().map(|e| e.value.as_ref()).flatten() }
+    pub fn get(&self, index: usize) -> Option<&T> {
+        unsafe { (&*self.items.get()).get(index) }
     }
-
-    #[inline(always)]
-    pub fn alloc(&mut self, f: T) -> usize {
-        unsafe {
-            let layout = alloc::Layout::new::<T>();
-            let mut current_chunk = &mut self.chunks[self.current_chunk_index];
-
-            let ptr = if let Some(ptr) = current_chunk.allocate(layout) {
-                ptr.as_ptr()
-            } else {
-                self.current_chunk_index += 1;
-                if self.current_chunk_index >= self.chunks.len() {
-                    self.chunks.push(Chunk::new(self.chunk_size));
-                    assert_eq!(self.current_chunk_index, self.chunks.len() - 1);
-                }
-                current_chunk = &mut self.chunks[self.current_chunk_index];
-                if let Some(ptr) = current_chunk.allocate(layout) {
-                    ptr.as_ptr()
-                } else {
-                    panic!(
-                        "Arena chunk_size of {} is too small to allocate {} bytes",
-                        self.chunk_size,
-                        layout.size()
-                    );
-                }
-            };
-
-            let len = self.elements.len();
-            self.elements.push(ArenaElement { value: ptr as *mut T });
-            len
-        }
+    pub unsafe fn get_mut(&self, index: usize) -> Option<&mut T> {
+        unsafe { (&mut *self.items.get()).get_mut(index) }
+    }
+    pub unsafe fn as_mut_slice(&self) -> &mut [T] {
+        unsafe { (&mut *self.items.get()).as_mut_slice() }
     }
 }
+
+impl<T> Index<usize> for Arena<T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        unsafe { &(&*self.items.get())[index] }
+    }
+}
+
+impl<T: Debug> Debug for Arena<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Arena")
+            .field("items", unsafe { &*self.items.get() })
+            .finish()
+    }
+}
+
+// impl<T> IndexMut<usize> for Arena<T> {
+//     fn index_mut(&mut self, index: usize) -> &mut T {
+//         unsafe { &mut (&mut *self.items.get())[index] }
+//     }
+// }
+
+unsafe impl<T> Send for Arena<T> {}
+unsafe impl<T> Sync for Arena<T> {}
