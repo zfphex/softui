@@ -5,23 +5,11 @@ use crate::tree::*;
 #[macro_export]
 macro_rules! flext {
     ($($group:expr),* $(,)?) => {{
-        let mut tree = Tree::new();
-
-        //Window root container
-        let root = tree.add_node(Node::default());
-
+        let root = add_node(Node::default());
         $(
-            //Child containers
-            let node = Node {direction: $group.direction, gap: $group.gap, padding: $group.padding, ..Default::default()};
-            let parent = tree.add_node(node);
-            tree.add_child(root, parent);
-
-            //Child elements inside of container
-            //Assume $group is Vec<usize>
-            tree.add_children(parent, $group.nodes);
+            let child = add_node($group);
+            add_child(root, child);
         )*
-
-        tree
     }};
 }
 
@@ -50,64 +38,22 @@ macro_rules! flext2 {
 #[macro_export]
 macro_rules! ht {
     ($($node:expr),* $(,)?) => {{
-        let mut nodes = Vec::new();
-        $( nodes.push($node.into_node()); )*
-        Container { nodes, gap: 0.0, padding: Amount::splat(0.0), direction: Direction::LeftToRight }
+        let mut children = Vec::new();
+        $( children.push(add_node($node.into_node())); )*
+        Node { children, direction: Direction::LeftToRight, ..Default::default() }
     }};
 }
 
 #[macro_export]
 macro_rules! vt {
     ($($node:expr),* $(,)?) => {{
-        let mut nodes = Vec::new();
-        $( nodes.push($node.into_node()); )*
-        Container { nodes, gap: 0.0, padding: Amount::splat(0.0), direction: Direction::TopToBottom }
+        let mut children = Vec::new();
+        $( children.push(add_node($node.into_node())); )*
+        Node { children, direction: Direction::TopToBottom, ..Default::default() }
     }};
 }
 
-#[macro_export]
-macro_rules! ht2 {
-    ($($widget:expr),* $(,)?) => {{
-        let mut container = $crate::tree_simplier::Container2::default();
-        $( container.widgets.push(Box::new($widget)); )*
-        container
-    }};
-}
-
-#[derive(Default, Debug)]
-pub struct Container2<'a> {
-    pub widgets: Vec<Box<dyn crate::tree_widget::Widget<'a> + 'a>>,
-    pub desired_size: [Unit; 2],
-
-    bg: Option<crate::Color>,
-    gap: f32,
-    padding: Amount,
-    direction: Direction,
-}
-
-impl<'a> Container2<'a> {
-    pub fn create_node(&self) -> Node {
-        Node {
-            gap: self.gap,
-            padding: self.padding,
-            direction: self.direction,
-            desired_size: self.desired_size,
-            //Cannot add children here since the root tree does not exist yet???
-            children: todo!(),
-            ..Default::default()
-        }
-    }
-}
-
-#[derive(Default, Debug)]
-pub struct Container {
-    pub nodes: Vec<Node>,
-    pub gap: f32,
-    pub padding: Amount,
-    pub direction: Direction,
-}
-
-impl Container {
+impl Node {
     pub fn gap(mut self, gap: impl IntoF32) -> Self {
         self.gap = gap.into_f32();
         self
@@ -138,39 +84,16 @@ impl Container {
     }
 }
 
-impl IntoNode for Container {
-    fn into_node(self) -> Node {
-        Node {
-            gap: self.gap,
-            padding: self.padding,
-            direction: self.direction,
-            ..Default::default()
-        }
-    }
-}
-
 pub trait IntoNode {
     fn into_node(self) -> Node;
 }
 
-impl Tree {
-    pub fn add_generic_node(&mut self, node: impl IntoNode) -> usize {
-        let id = self.nodes.len();
-        self.nodes.push(node.into_node());
-        id
-    }
-    pub fn add_generic_child(&mut self, parent: usize, node: impl IntoNode) {
-        let child = self.nodes.len();
-        self.nodes.push(node.into_node());
-        self.nodes[parent].children.push(child);
+impl IntoNode for Node {
+    fn into_node(self) -> Node {
+        self
     }
 }
 
-impl IntoNode for Node {
-    fn into_node(self) -> Node {
-        unreachable!()
-    }
-}
 impl Into<Unit> for usize {
     fn into(self) -> Unit {
         Unit::Fixed(self as f32)
@@ -220,28 +143,28 @@ macro_rules! impl_intof32 {
 impl_intof32!(f32, usize, isize, i32, i64);
 
 //Debug function for visualizing the layout.
-pub fn draw_tree(mut tree: Tree) {
-    use crate::{create_ctx, fixed_random_color, tree::*, Event, Key};
-    let ctx = unsafe { create_ctx("Softui", 800, 600) };
+// pub fn draw_tree(mut tree: &[Node]) {
+//     use crate::{create_ctx, fixed_random_color, tree::*, Event, Key};
+//     let ctx = unsafe { create_ctx("Softui", 800, 600) };
 
-    loop {
-        let window_size = [ctx.window.width() as f32, ctx.window.height() as f32];
-        match ctx.event() {
-            Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
-            _ => {}
-        }
+//     loop {
+//         let window_size = [ctx.window.width() as f32, ctx.window.height() as f32];
+//         match ctx.event() {
+//             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
+//             _ => {}
+//         }
 
-        tree.calculate_root_size(0, window_size, [0.0, 0.0]);
-        tree.layout(0);
+//         tree.calculate_root_size(0, window_size, [0.0, 0.0]);
+//         tree.layout(0);
 
-        for (idx, _) in tree.nodes.iter().enumerate() {
-            let x = tree.nodes[idx].pos[0] as usize;
-            let y = tree.nodes[idx].pos[1] as usize;
-            let width = tree.nodes[idx].size[0] as usize;
-            let height = tree.nodes[idx].size[1] as usize;
-            ctx.draw_rectangle(x, y, width, height, fixed_random_color(idx + 38));
-        }
+//         for (idx, _) in tree.nodes.iter().enumerate() {
+//             let x = tree.nodes[idx].pos[0] as usize;
+//             let y = tree.nodes[idx].pos[1] as usize;
+//             let width = tree.nodes[idx].size[0] as usize;
+//             let height = tree.nodes[idx].size[1] as usize;
+//             ctx.draw_rectangle(x, y, width, height, fixed_random_color(idx + 38));
+//         }
 
-        ctx.draw_frame();
-    }
-}
+//         ctx.draw_frame();
+//     }
+// }

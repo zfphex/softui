@@ -23,49 +23,38 @@ fn main() {
             .direction(Direction::BottomToTop)
             .gap(12)
             .pb(10)
-            .pl(30) // .pt(100)
-                    // .pr(100)
+            .pl(30),
+            vt!(
+                rect().wfill().h(40),
+                rect().wfill().h(30),
+                rect().wfill().h(20),
+                rect().wfill().h(50),
+            )
+            .gap(30)
         );
 
-        tree.calculate_root_size(0, window_size, [0.0, 0.0]);
-        tree.layout(0);
+        //This is only safe in a single threaded context.
+        {
+            let nodes = unsafe { TREE.as_mut_slice() };
+            calculate_root_size(nodes, 0, window_size, [0.0, 0.0]);
+            layout(nodes, 0);
 
-        // let mut group = groupt!(
-        //     rect().w(40).h(40),
-        //     rect().w(40).h(40),
-        //     rect().wfill().h(40),
-        //     rect().w(40).h(40),
-        // );
+            for (idx, node) in nodes.iter().enumerate() {
+                let x = node.pos[0] as usize;
+                let y = node.pos[1] as usize;
+                let width = node.size[0] as usize;
+                let height = node.size[1] as usize;
 
-        // let mut tree = Tree::new();
+                //Skip the containers... :)
+                if height > 300 {
+                    continue;
+                }
 
-        // //Window root container
-        // let root = tree.add_node(Unit::Fill, Unit::Fill, Direction::LeftToRight, 0.0, 0.0);
-
-        // //Child containers
-        // let parent = tree.add_node(Unit::Fill, Unit::Fill, Direction::TopToBottom, 10.0, 10.0);
-        // tree.add_child(root, parent);
-
-        // tree.add_children(parent, group);
-
-        // tree.layout(0, window_size, [0.0, 0.0]);
-        // dbg!(tree);
-        // return;
-
-        for (idx, node) in tree.nodes.iter().skip(2).enumerate() {
-            let x = node.pos[0] as usize;
-            let y = node.pos[1] as usize;
-            let width = node.size[0] as usize;
-            let height = node.size[1] as usize;
-
-            //Skip the containers... :)
-            if height > 300 {
-                continue;
+                ctx.draw_rectangle(x, y, width, height, fixed_random_color(idx + 38));
             }
-
-            ctx.draw_rectangle(x, y, width, height, fixed_random_color(idx + 38));
         }
 
+        TREE.clear();
         ctx.draw_frame();
     }
 }

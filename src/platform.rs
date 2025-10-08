@@ -79,6 +79,12 @@ pub mod macos {
 
         pub fn draw(&mut self) {
             let (width, height) = self.minifb.get_size();
+
+            //Resize buffer when the window size changes.
+            if width * height != self.buffer.len() {
+                self.buffer.resize(width * height, 0);
+            }
+
             self.area = Rect::new(0, 0, width, height);
             self.minifb.update_with_buffer(&self.buffer, width, height).unwrap();
             self.drawn = true;
@@ -259,6 +265,7 @@ pub mod macos {
                 height,
                 WindowOptions {
                     scale: Scale::X1,
+                    resize: true,
                     ..Default::default()
                 },
             )

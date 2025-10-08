@@ -1,3 +1,7 @@
+use mini::profile;
+
+use crate::Arena;
+
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Unit {
     Fixed(f32),
@@ -49,7 +53,7 @@ impl Amount {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Node {
     pub desired_size: [Unit; 2],
     pub min_size: [Option<Unit>; 2],
@@ -65,6 +69,15 @@ pub struct Node {
     //A node can point to a widget.
     pub widget: Option<usize>,
     pub children: Vec<usize>,
+}
+
+impl std::fmt::Debug for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "Node {{ desired_size: {:?}, pos: {:?} children: {:?} }}",
+            &self.desired_size, self.pos, self.children
+        ))
+    }
 }
 
 impl Default for Node {
@@ -86,194 +99,197 @@ impl Default for Node {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Tree {
-    pub nodes: Vec<Node>,
+pub fn add_node(node: Node) -> usize {
+    TREE.alloc(node)
 }
 
-impl Tree {
-    pub fn new() -> Self {
-        Self { nodes: Vec::new() }
+pub fn add_child(parent: usize, child: usize) {
+    unsafe {
+        if let Some(parent) = TREE.get_mut(parent) {
+            parent.children.push(child);
+        }
     }
+}
 
-    pub fn add_node(&mut self, node: Node) -> usize {
-        let id = self.nodes.len();
-        self.nodes.push(node);
-        id
-    }
+pub fn add_children(parent: usize, child: Vec<Node>) {
+    unsafe {
+        let Some(parent) = TREE.get_mut(parent) else {
+            panic!("Invalid parent node");
+        };
 
-    pub fn add_child(&mut self, parent: usize, child: usize) {
-        self.nodes[parent].children.push(child);
-    }
-
-    pub fn add_children(&mut self, parent: usize, child: Vec<Node>) {
         for node in child {
-            let id = self.nodes.len();
-            self.nodes.push(node);
-            self.nodes[parent].children.push(id);
+            let id = TREE.alloc(node);
+            //Safety: This should not alias since nodes are always appened.
+            parent.children.push(id);
+        }
+    }
+}
+
+pub fn calculate_root_size(nodes: &mut [Node], id: usize, original_parent_size: [f32; 2], parent_pos: [f32; 2]) {
+    profile!();
+    let mut size = [0.0, 0.0];
+    for axis in 0..2 {
+        size[axis] = match nodes[id].desired_size[axis] {
+            Unit::Fixed(v) => v,
+            Unit::Percentage(p) => original_parent_size[axis] * (p / 100.0),
+            Unit::Fill => original_parent_size[axis],
+            Unit::Fit => calculate_fit(nodes, id, axis),
+        };
+    }
+
+    nodes[id].size = size;
+    nodes[id].pos = parent_pos;
+}
+
+pub fn layout(nodes: &mut [Node], id: usize) {
+    profile!();
+    // Get node's size (root was just set, non-root was set by parent)
+    let size = nodes[id].size;
+    let pos = nodes[id].pos;
+    let padding = nodes[id].padding;
+    let gap = nodes[id].gap;
+
+    // Get node direction.
+    let direction = nodes[id].direction;
+    let primary = direction.axis();
+    let cross = 1 - primary;
+
+    if nodes[id].children.is_empty() {
+        return;
+    }
+
+    // Step 1: compute children
+    // Avoid cloning by using raw pointer (safe because we only access distinct elements)
+    let children_ptr = nodes[id].children.as_ptr();
+    let children_len = nodes[id].children.len();
+
+    // Account for padding - reduce available space for children
+    let content_size = [
+        (size[0] - padding.left - padding.right).max(0.0),
+        (size[1] - padding.top - padding.bottom).max(0.0),
+    ];
+    let mut used_primary = gap * (children_len.saturating_sub(1)) as f32;
+    let mut fill_count = 0;
+
+    // Panic if the gaps overflow the container.
+    if used_primary > content_size[primary] {
+        panic!(
+            "total gap ({}) > available space ({}) in node {}",
+            used_primary, content_size[primary], id
+        );
+    }
+
+    // 1a. Calculate sizes except Fill
+    for i in 0..children_len {
+        let c = unsafe { *children_ptr.add(i) };
+        let mut child_size = [0.0, 0.0];
+
+        // Cross axis: always relative to parent content area (with padding)
+        child_size[cross] = match nodes[c].desired_size[cross] {
+            Unit::Fixed(v) => v,
+            Unit::Percentage(p) => content_size[cross] * (p / 100.0),
+            Unit::Fill => content_size[cross],
+            Unit::Fit => calculate_fit(nodes, c, cross),
+        };
+
+        // Primary axis
+        child_size[primary] = match nodes[c].desired_size[primary] {
+            Unit::Fixed(v) => v,
+            Unit::Percentage(p) => content_size[primary] * (p / 100.0),
+            Unit::Fit => calculate_fit(nodes, c, primary),
+            Unit::Fill => {
+                fill_count += 1;
+                0.0 // Should be fine setting this to zero.
+            }
+        };
+
+        used_primary += child_size[primary];
+
+        nodes[c].size = child_size;
+    }
+
+    // 1b. Distribute remaining space to Fill children
+    if fill_count > 0 {
+        let remaining = (content_size[primary] - used_primary).max(0.0);
+        let fill_size = remaining / fill_count as f32;
+        for i in 0..children_len {
+            let c = unsafe { *children_ptr.add(i) };
+            if matches!(nodes[c].desired_size[primary], Unit::Fill) {
+                nodes[c].size[primary] = fill_size;
+            }
         }
     }
 
-    pub fn calculate_root_size(&mut self, id: usize, original_parent_size: [f32; 2], parent_pos: [f32; 2]) {
-        let mut size = [0.0, 0.0];
-        for axis in 0..2 {
-            size[axis] = match self.nodes[id].desired_size[axis] {
-                Unit::Fixed(v) => v,
-                Unit::Percentage(p) => original_parent_size[axis] * (p / 100.0),
-                Unit::Fill => original_parent_size[axis],
-                Unit::Fit => self.calculate_fit(id, axis),
-            };
+    // 2. Position children
+    let reversed = direction.reversed();
+    let mut offset = if reversed { content_size[primary] } else { 0.0 };
+    let content_pos = [pos[0] + padding.left, pos[1] + padding.top];
+
+    for i in 0..children_len {
+        let c = unsafe { *children_ptr.add(i) };
+        if reversed {
+            offset -= nodes[c].size[primary];
         }
-        self.nodes[id].size = size;
-        self.nodes[id].pos = parent_pos;
+
+        nodes[c].pos[primary] = content_pos[primary] + offset;
+        if !reversed {
+            offset += nodes[c].size[primary];
+        }
+
+        if i < children_len - 1 {
+            offset += if reversed { -gap } else { gap };
+        }
+
+        nodes[c].pos[cross] = content_pos[cross];
     }
 
-    pub fn layout(&mut self, id: usize) {
-        // Get node's size (root was just set, non-root was set by parent)
-        let size = self.nodes[id].size;
-        let pos = self.nodes[id].pos;
-        let padding = self.nodes[id].padding;
-        let gap = self.nodes[id].gap;
-
-        // Get node direction.
-        let direction = self.nodes[id].direction;
-        let primary = direction.axis();
-        let cross = 1 - primary;
-
-        if self.nodes[id].children.is_empty() {
-            return;
-        }
-
-        // Step 1: compute children
-        // Avoid cloning by using raw pointer (safe because we only access distinct elements)
-        let children_ptr = self.nodes[id].children.as_ptr();
-        let children_len = self.nodes[id].children.len();
-
-        // Account for padding - reduce available space for children
-        let content_size = [
-            (size[0] - padding.left - padding.right).max(0.0),
-            (size[1] - padding.top - padding.bottom).max(0.0),
-        ];
-        let mut used_primary = gap * (children_len.saturating_sub(1)) as f32;
-        let mut fill_count = 0;
-
-        // Panic if the gaps overflow the container.
-        if used_primary > content_size[primary] {
-            panic!(
-                "total gap ({}) > available space ({}) in node {}",
-                used_primary, content_size[primary], id
-            );
-        }
-
-        // 1a. Calculate sizes except Fill
-        for i in 0..children_len {
-            let c = unsafe { *children_ptr.add(i) };
-            let mut child_size = [0.0, 0.0];
-
-            // Cross axis: always relative to parent content area (with padding)
-            child_size[cross] = match self.nodes[c].desired_size[cross] {
-                Unit::Fixed(v) => v,
-                Unit::Percentage(p) => content_size[cross] * (p / 100.0),
-                Unit::Fill => content_size[cross],
-                Unit::Fit => self.calculate_fit(c, cross),
-            };
-
-            // Primary axis
-            child_size[primary] = match self.nodes[c].desired_size[primary] {
-                Unit::Fixed(v) => v,
-                Unit::Percentage(p) => content_size[primary] * (p / 100.0),
-                Unit::Fit => self.calculate_fit(c, primary),
-                Unit::Fill => {
-                    fill_count += 1;
-                    0.0 // Should be fine setting this to zero.
-                }
-            };
-
-            used_primary += child_size[primary];
-
-            self.nodes[c].size = child_size;
-        }
-
-        // 1b. Distribute remaining space to Fill children
-        if fill_count > 0 {
-            let remaining = (content_size[primary] - used_primary).max(0.0);
-            let fill_size = remaining / fill_count as f32;
-            for i in 0..children_len {
-                let c = unsafe { *children_ptr.add(i) };
-                if matches!(self.nodes[c].desired_size[primary], Unit::Fill) {
-                    self.nodes[c].size[primary] = fill_size;
-                }
-            }
-        }
-
-        // 2. Position children
-        let reversed = direction.reversed();
-        let mut offset = if reversed { content_size[primary] } else { 0.0 };
-        let content_pos = [pos[0] + padding.left, pos[1] + padding.top];
-
-        for i in 0..children_len {
-            let c = unsafe { *children_ptr.add(i) };
-            if reversed {
-                offset -= self.nodes[c].size[primary];
-            }
-
-            self.nodes[c].pos[primary] = content_pos[primary] + offset;
-            if !reversed {
-                offset += self.nodes[c].size[primary];
-            }
-
-            if i < children_len - 1 {
-                offset += if reversed { -gap } else { gap };
-            }
-
-            self.nodes[c].pos[cross] = content_pos[cross];
-        }
-
-        // 3. Recurse
-        for i in 0..children_len {
-            let c = unsafe { *children_ptr.add(i) };
-            self.layout(c);
-        }
+    // 3. Recurse
+    for i in 0..children_len {
+        let c = unsafe { *children_ptr.add(i) };
+        layout(nodes, c);
     }
+}
 
-    pub fn calculate_fit(&self, id: usize, axis: usize) -> f32 {
-        let primary = self.nodes[id].direction.axis();
-        let sum_mode = axis == primary;
+pub fn calculate_fit(nodes: &[Node], id: usize, axis: usize) -> f32 {
+    let primary = nodes[id].direction.axis();
+    let sum_mode = axis == primary;
 
-        let mut result = 0.0;
-        for &c in &self.nodes[id].children {
-            let child_size = match self.nodes[c].desired_size[axis] {
-                Unit::Fixed(v) => v,
-                Unit::Fit => self.calculate_fit(c, axis),
-                Unit::Percentage(_) | Unit::Fill => {
-                    panic!("Fit containers cannot have Percentage or Fill children");
-                }
-            };
-
-            if sum_mode {
-                result += child_size;
-            } else {
-                result = result.max(child_size);
+    let mut result = 0.0;
+    for &c in &nodes[id].children {
+        let child_size = match nodes[c].desired_size[axis] {
+            Unit::Fixed(v) => v,
+            Unit::Fit => calculate_fit(nodes, c, axis),
+            Unit::Percentage(_) | Unit::Fill => {
+                panic!("Fit containers cannot have Percentage or Fill children");
             }
-        }
+        };
 
-        // Add gap space for primary axis
-        if sum_mode && !self.nodes[id].children.is_empty() {
-            result += self.nodes[id].gap * (self.nodes[id].children.len() - 1) as f32;
-        }
-
-        // Add padding to both axes
-        if axis == 0 {
-            result + self.nodes[id].padding.left + self.nodes[id].padding.right
+        if sum_mode {
+            result += child_size;
         } else {
-            result + self.nodes[id].padding.top + self.nodes[id].padding.bottom
+            result = result.max(child_size);
         }
+    }
+
+    // Add gap space for primary axis
+    if sum_mode && !nodes[id].children.is_empty() {
+        result += nodes[id].gap * (nodes[id].children.len() - 1) as f32;
+    }
+
+    // Add padding to both axes
+    if axis == 0 {
+        result + nodes[id].padding.left + nodes[id].padding.right
+    } else {
+        result + nodes[id].padding.top + nodes[id].padding.bottom
     }
 }
 
 #[track_caller]
-pub fn check_size(tree: &Tree, id: usize, w: f32, h: f32) {
-    let node = &tree.nodes[id];
+pub fn check_size(nodes: &[Node], id: usize, w: f32, h: f32) {
+    let node = &nodes[id];
     assert_eq!(node.size[0], w, "width {} != {}", node.size[0], w);
     assert_eq!(node.size[1], h, "height {} != {}", node.size[1], h);
 }
+
+// #[thread_local]
+pub static TREE: Arena<Node> = Arena::new();

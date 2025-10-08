@@ -16,7 +16,7 @@ fn main() {
         }
 
         // Create nested container layout
-        let mut tree = flext!(
+        flext!(
             // Outer horizontal container with padding
             ht!(
                 // Left sidebar - vertical container
@@ -45,11 +45,12 @@ fn main() {
             .padding(20)
         );
 
-        tree.calculate_root_size(0, window_size, [0.0, 0.0]);
-        tree.layout(0);
+        let nodes = unsafe { TREE.as_mut_slice() };
+        calculate_root_size(nodes, 0, window_size, [0.0, 0.0]);
+        layout(nodes, 0);
 
         // Render all nodes with different colors
-        for (idx, node) in tree.nodes.iter().enumerate() {
+        for (idx, node) in nodes.iter().enumerate() {
             let x = node.pos[0] as usize;
             let y = node.pos[1] as usize;
             let width = node.size[0] as usize;

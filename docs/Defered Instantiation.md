@@ -2,6 +2,7 @@ The main things holding back this library are:
 - No native varidics
 - No compile time type reflection
 - No way to do defered instantiation
+- No way to bypass macro hygine
 
 What is defered instantiation.
 
