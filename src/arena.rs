@@ -39,6 +39,16 @@ impl<T> Arena<T> {
     }
 }
 
+impl Arena<crate::tree::Node> {
+    pub fn add_child(&self, parent: usize, child: usize) {
+        unsafe {
+            if let Some(parent) = self.get_mut(parent) {
+                parent.children.push(child);
+            }
+        }
+    }
+}
+
 impl<T> Index<usize> for Arena<T> {
     type Output = T;
 

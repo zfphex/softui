@@ -137,28 +137,28 @@ macro_rules! impl_intof32 {
 impl_intof32!(f32, usize, isize, i32, i64);
 
 //Debug function for visualizing the layout.
-// pub fn draw_tree(mut tree: &[Node]) {
-//     use crate::{create_ctx, fixed_random_color, tree::*, Event, Key};
-//     let ctx = unsafe { create_ctx("Softui", 800, 600) };
+pub fn draw_tree(nodes: &mut [Node]) {
+    use crate::{create_ctx, fixed_random_color, tree::*, Event, Key};
+    let ctx = unsafe { create_ctx("Softui", 800, 600) };
 
-//     loop {
-//         let window_size = [ctx.window.width() as f32, ctx.window.height() as f32];
-//         match ctx.event() {
-//             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
-//             _ => {}
-//         }
+    loop {
+        let window_size = [ctx.window.width() as f32, ctx.window.height() as f32];
+        match ctx.event() {
+            Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
+            _ => {}
+        }
 
-//         tree.calculate_root_size(0, window_size, [0.0, 0.0]);
-//         tree.layout(0);
+        calculate_root_size(nodes, 0, window_size, [0.0, 0.0]);
+        layout(nodes, 0);
 
-//         for (idx, _) in tree.nodes.iter().enumerate() {
-//             let x = tree.nodes[idx].pos[0] as usize;
-//             let y = tree.nodes[idx].pos[1] as usize;
-//             let width = tree.nodes[idx].size[0] as usize;
-//             let height = tree.nodes[idx].size[1] as usize;
-//             ctx.draw_rectangle(x, y, width, height, fixed_random_color(idx + 38));
-//         }
+        for (idx, _) in nodes.iter().enumerate() {
+            let x = nodes[idx].pos[0] as usize;
+            let y = nodes[idx].pos[1] as usize;
+            let width = nodes[idx].size[0] as usize;
+            let height = nodes[idx].size[1] as usize;
+            ctx.draw_rectangle(x, y, width, height, fixed_random_color(idx + 38));
+        }
 
-//         ctx.draw_frame();
-//     }
-// }
+        ctx.draw_frame();
+    }
+}
