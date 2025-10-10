@@ -18,7 +18,7 @@ macro_rules! flex {
     ($($container:expr),* $(,)?) => {{
         let root = $crate::taffy::add_node(taffy::Style::DEFAULT);
         $(
-            $crate::taffy::add_child(root, $container);
+            $crate::taffy::add_child(root, $container.node);
         )*
         root
     }};
@@ -33,24 +33,41 @@ macro_rules! h {
             let child = $crate::taffy::add_node(style);
             $crate::taffy::add_child(h, child);
         )*
-        h
+        NodeWrapper::new(h, taffy::Style::DEFAULT)
     }};
 }
 
 #[macro_export]
 macro_rules! v {
     ($($widget:expr),* $(,)?) => {{
-        let v = $crate::taffy::add_node(taffy::Style {
+        let vstyle = taffy::Style {
                 flex_direction: taffy::FlexDirection::Column,
                 ..Default::default()
-        });
+        };
+        let v = $crate::taffy::add_node(vstyle.clone());
         $(
             let style = $widget.into_style();
             let child = $crate::taffy::add_node(style);
             $crate::taffy::add_child(v, child);
         )*
-        v
+        NodeWrapper::new(v, vstyle)
     }};
+}
+
+pub struct NodeWrapper {
+    pub node: NodeId,
+    pub style: Style,
+}
+
+impl NodeWrapper {
+    pub fn new(node: NodeId, style: Style) -> Self {
+        Self { node, style }
+    }
+    pub fn gap(mut self, gap: impl IntoF32) -> Self {
+        self.style.gap = length(gap.into_f32());
+        unsafe { TREE.set_style(self.node, self.style.clone()).unwrap() };
+        self
+    }
 }
 
 pub trait Widget<'a>: std::fmt::Debug {
@@ -66,6 +83,79 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).h(h)
     }
+    fn max_w(self, w: impl IntoTaffy) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).max_w(w)
+    }
+    fn min_w(self, w: impl IntoTaffy) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).min_w(w)
+    }
+    fn max_h(self, h: impl IntoTaffy) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).max_h(h)
+    }
+    fn min_h(self, h: impl IntoTaffy) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).min_h(h)
+    }
+    fn wh(self, wh: impl IntoTaffy) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).wh(wh)
+    }
+    fn wfill(self) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).wfill()
+    }
+    fn hfill(self) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).hfill()
+    }
+    fn whfill(self) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).whfill()
+    }
+    #[inline(always)]
+    fn on_click<F>(self, button: crate::MouseButton, handler: F) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+        F: FnMut(&mut Self) + 'a,
+    {
+        GenericWidget::new(self).on_click(button, handler)
+    }
+    #[inline(always)]
+    fn on_press<F>(self, button: crate::MouseButton, handler: F) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+        F: FnMut(&mut Self) + 'a,
+    {
+        GenericWidget::new(self).on_press(button, handler)
+    }
+    #[inline(always)]
+    fn on_release<F>(self, button: crate::MouseButton, handler: F) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+        F: FnMut(&mut Self) + 'a,
+    {
+        GenericWidget::new(self).on_release(button, handler)
+    }
+    fn try_click(&mut self) {}
     fn into_style(self) -> Style
     where
         Self: Sized,
@@ -98,6 +188,83 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
     pub fn h(mut self, h: impl IntoTaffy) -> Self {
         self.style.size.height = h.into();
         self
+    }
+    pub fn max_w(mut self, w: impl IntoTaffy) -> Self {
+        self.style.max_size.width = w.into();
+        self
+    }
+    pub fn min_w(mut self, w: impl IntoTaffy) -> Self {
+        self.style.min_size.width = w.into();
+        self
+    }
+    pub fn max_h(mut self, h: impl IntoTaffy) -> Self {
+        self.style.max_size.height = h.into();
+        self
+    }
+    pub fn min_h(mut self, h: impl IntoTaffy) -> Self {
+        self.style.min_size.height = h.into();
+        self
+    }
+    pub fn wh(mut self, wh: impl IntoTaffy) -> Self {
+        let dim = wh.into();
+        self.style.size.width = dim;
+        self.style.size.height = self.style.size.width;
+        self
+    }
+    pub fn wfill(mut self) -> Self {
+        self.style.size.width = Dimension::percent(100.0);
+        self
+    }
+    pub fn hfill(mut self) -> Self {
+        self.style.size.height = Dimension::percent(100.0);
+        self
+    }
+    pub fn whfill(mut self) -> Self {
+        self.style.size.width = Dimension::percent(100.0);
+        self.style.size.height = Dimension::percent(100.0);
+        self
+    }
+    pub fn padding(mut self, padding: impl IntoF32) -> Self {
+        let v = padding.into_f32();
+        self.style.padding.left = length(v);
+        self.style.padding.right = length(v);
+        self.style.padding.top = length(v);
+        self.style.padding.bottom = length(v);
+        self
+    }
+    pub fn pl(mut self, left: impl IntoF32) -> Self {
+        self.style.padding.left = length(left.into_f32());
+        self
+    }
+    pub fn pr(mut self, right: impl IntoF32) -> Self {
+        self.style.padding.right = length(right.into_f32());
+        self
+    }
+    pub fn pt(mut self, top: impl IntoF32) -> Self {
+        self.style.padding.top = length(top.into_f32());
+        self
+    }
+    pub fn pb(mut self, bottom: impl IntoF32) -> Self {
+        self.style.padding.bottom = length(bottom.into_f32());
+        self
+    }
+    pub fn on_click(mut self, button: crate::MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers
+            .push((button, crate::MouseAction::Clicked, Box::new(handler)));
+        self
+    }
+    pub fn on_press(mut self, button: crate::MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers
+            .push((button, crate::MouseAction::Pressed, Box::new(handler)));
+        self
+    }
+    pub fn on_release(mut self, button: crate::MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers
+            .push((button, crate::MouseAction::Released, Box::new(handler)));
+        self
+    }
+    pub fn try_click(&mut self) {
+        for _handler in &mut self.handlers {}
     }
     pub fn into_style(self) -> Style
     where
