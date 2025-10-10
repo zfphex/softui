@@ -4,7 +4,7 @@ pub fn rect() -> Rectangle {
     Rectangle {
         size: Size {
             pos: [0.0; 2],
-            dimensions: [Unit::Fixed(10.0), Unit::Fixed(10.0)],
+            dimensions: [Unit::Fill, Unit::Fill],
         },
         radius: 0,
     }
@@ -80,11 +80,35 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).w(w)
     }
+    fn max_w(self, w: impl Into<Unit>) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).max_w(w)
+    }
+    fn min_w(self, w: impl Into<Unit>) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).min_w(w)
+    }
     fn h(self, h: impl Into<Unit>) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
         GenericWidget::new(self).h(h)
+    }
+    fn max_h(self, h: impl Into<Unit>) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).max_h(h)
+    }
+    fn min_h(self, h: impl Into<Unit>) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).min_h(h)
     }
     fn wh(self, wh: impl Into<Unit>) -> GenericWidget<'a, Self>
     where
@@ -222,8 +246,40 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         self
     }
 
+    fn max_w(mut self, w: impl Into<Unit>) -> Self
+    where
+        Self: Sized,
+    {
+        self.max_size[0] = Some(w.into());
+        self
+    }
+
+    fn min_w(mut self, w: impl Into<Unit>) -> Self
+    where
+        Self: Sized,
+    {
+        self.min_size[0] = Some(w.into());
+        self
+    }
+
     pub fn h(mut self, h: impl Into<Unit>) -> Self {
         self.desired_size[1] = h.into();
+        self
+    }
+
+    fn max_h(mut self, h: impl Into<Unit>) -> Self
+    where
+        Self: Sized,
+    {
+        self.max_size[1] = Some(h.into());
+        self
+    }
+
+    fn min_h(mut self, h: impl Into<Unit>) -> Self
+    where
+        Self: Sized,
+    {
+        self.min_size[1] = Some(h.into());
         self
     }
 
@@ -293,9 +349,6 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         self
     }
     pub fn try_click(&mut self) {
-        for handler in &mut self.handlers {
-
-        }
-
+        for handler in &mut self.handlers {}
     }
 }

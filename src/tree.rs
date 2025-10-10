@@ -125,6 +125,32 @@ pub fn add_children(parent: usize, child: Vec<Node>) {
     }
 }
 
+pub fn apply_size_constraints(node: &Node, size: [f32; 2]) -> [f32; 2] {
+    let mut result = size;
+    for axis in 0..2 {
+        // Apply min constraint
+        if let Some(min) = node.min_size[axis] {
+            let min_value = match min {
+                Unit::Fixed(v) => v,
+                Unit::Percentage(p) => size[axis] * (p / 100.0),
+                Unit::Fill | Unit::Fit => size[axis], // Treat as no constraint
+            };
+            result[axis] = result[axis].max(min_value);
+        }
+
+        // Apply max constraint
+        if let Some(max) = node.max_size[axis] {
+            let max_value = match max {
+                Unit::Fixed(v) => v,
+                Unit::Percentage(p) => size[axis] * (p / 100.0),
+                Unit::Fill | Unit::Fit => size[axis], // Treat as no constraint
+            };
+            result[axis] = result[axis].min(max_value);
+        }
+    }
+    result
+}
+
 pub fn calculate_root_size(nodes: &mut [Node], id: usize, original_parent_size: [f32; 2], parent_pos: [f32; 2]) {
     profile!();
     let mut size = [0.0, 0.0];
@@ -136,6 +162,9 @@ pub fn calculate_root_size(nodes: &mut [Node], id: usize, original_parent_size: 
             Unit::Fit => calculate_fit(nodes, id, axis),
         };
     }
+
+    // Apply min/max constraints
+    size = apply_size_constraints(&nodes[id], size);
 
     nodes[id].size = size;
     nodes[id].pos = parent_pos;
@@ -193,18 +222,27 @@ pub fn layout(nodes: &mut [Node], id: usize) {
         };
 
         // Primary axis
+        let is_fill_primary = matches!(nodes[c].desired_size[primary], Unit::Fill);
         child_size[primary] = match nodes[c].desired_size[primary] {
             Unit::Fixed(v) => v,
             Unit::Percentage(p) => content_size[primary] * (p / 100.0),
             Unit::Fit => calculate_fit(nodes, c, primary),
             Unit::Fill => {
                 fill_count += 1;
-                0.0 // Should be fine setting this to zero.
+                // For Fill children, only constrain the cross axis
+                child_size[cross] = apply_size_constraints(&nodes[c], child_size)[cross];
+                // Will be calculated in step 1b.
+                0.0
             }
         };
 
-        used_primary += child_size[primary];
+        // Apply min/max constraints only to non-Fill children on primary axis
+        // Fill children will be constrained after space distribution
+        if !is_fill_primary {
+            child_size = apply_size_constraints(&nodes[c], child_size);
+        }
 
+        used_primary += child_size[primary];
         nodes[c].size = child_size;
     }
 
@@ -216,6 +254,8 @@ pub fn layout(nodes: &mut [Node], id: usize) {
             let c = unsafe { *children_ptr.add(i) };
             if matches!(nodes[c].desired_size[primary], Unit::Fill) {
                 nodes[c].size[primary] = fill_size;
+                // Apply constraints to Fill children as well
+                nodes[c].size = apply_size_constraints(&nodes[c], nodes[c].size);
             }
         }
     }

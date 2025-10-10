@@ -13,29 +13,20 @@ fn main() {
             _ => {}
         }
 
-        let mut tree = flext!(
-            //
-            ht!(
-                //
-                rect().w(60).h(5.percent()),
-                rect().w(60).h(10.percent()),
-            )
-            .direction(Direction::BottomToTop)
-            .gap(12)
-            .pb(10)
-            .pl(30),
+        flext!(
+            //TODO: There is a big gap and the first rect gets smaller than 100px!!!
             vt!(
-                rect().wfill().h(40),
-                rect().wfill().h(30),
-                rect().wfill().h(20),
-                rect().wfill().h(50),
+                ht!(rect().min_w(100).max_w(200).h(50), rect().wfill().h(50)),
+                ht!(rect().w(200).h(50)),
+                ht!(rect().w(100).h(50)),
             )
-            .gap(30)
         );
 
         //This is only safe in a single threaded context.
         {
             let nodes = unsafe { TREE.as_mut_slice() };
+            // dbg!(nodes);
+            // return;
             calculate_root_size(nodes, 0, window_size, [0.0, 0.0]);
             layout(nodes, 0);
 
@@ -46,7 +37,7 @@ fn main() {
                 let height = node.size[1] as usize;
 
                 //Skip the containers... :)
-                if height > 300 {
+                if !node.children.is_empty() {
                     continue;
                 }
 
