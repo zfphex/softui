@@ -6,9 +6,9 @@ use softui::{flex, h, taffy::*};
 use taffy::prelude::TaffyMaxContent;
 use taffy::PrintTree;
 
+#[rustfmt::skip] 
 fn draw_tree(ctx: &mut softui::Context, tree: &taffy::TaffyTree<()>, node_id: taffy::NodeId, offset_x: f32, offset_y: f32, idx: &mut usize) {
     let layout = tree.layout(node_id).unwrap();
-    println!("id: {:?}, size: {:?}, pos: {:?}", node_id, layout.size, layout.location);
     let children = tree.children(node_id).unwrap();
 
     let abs_x = offset_x + layout.location.x;
