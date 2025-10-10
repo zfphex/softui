@@ -61,34 +61,34 @@ fn main() {
         //TODO: I want the flex to fill the viewport 100%
         //Then I want to fill the text 100% and change the background color.
         //Currently basic things like this will not work.
-        flex!(
-            text("High performance")
-                //TODO: Text padding and margin.
-                .w(p.width)
-                // .bg(accent)
-                //TODO: How to set rectangle border for this bad boy.
-                // .bg((current_plan.get() == "High performance")
-                //     .then_some(accent)
-                //     .unwrap_or_default())
-                .on_click(Left, |_| {
-                    std::thread::spawn(|| high_performance());
-                    current_plan.set("High performance");
-                }),
-            text("Balanced")
-                .on_click(Left, |_| {
-                    std::thread::spawn(|| balanced());
-                    current_plan.set("Balanced");
-                })
-                .w(p.width),
-            text("Power saver")
-                .on_click(Left, |_| {
-                    std::thread::spawn(|| power_saver());
-                    current_plan.set("Power saver");
-                })
-                .w(p.width)
-        )
-        .direction(FlexDirection::TopBottom)
-        .gap(gap);
+        // flex!(
+        //     text("High performance")
+        //         //TODO: Text padding and margin.
+        //         .w(p.width)
+        //         // .bg(accent)
+        //         //TODO: How to set rectangle border for this bad boy.
+        //         // .bg((current_plan.get() == "High performance")
+        //         //     .then_some(accent)
+        //         //     .unwrap_or_default())
+        //         .on_click(Left, |_| {
+        //             std::thread::spawn(|| high_performance());
+        //             current_plan.set("High performance");
+        //         }),
+        //     text("Balanced")
+        //         .on_click(Left, |_| {
+        //             std::thread::spawn(|| balanced());
+        //             current_plan.set("Balanced");
+        //         })
+        //         .w(p.width),
+        //     text("Power saver")
+        //         .on_click(Left, |_| {
+        //             std::thread::spawn(|| power_saver());
+        //             current_plan.set("Power saver");
+        //         })
+        //         .w(p.width)
+        // )
+        // .direction(FlexDirection::TopBottom)
+        // .gap(gap);
 
         //TODO: Left pad
         // .left_pad(4);

@@ -1,4 +1,4 @@
-use crate::{tree::*, tree_simplier::*, MouseAction, MouseButton, Style};
+use crate::{IntoF32, MouseAction, MouseButton, Style, tree::*, tree_simplier::*};
 
 pub fn rect() -> Rectangle {
     Rectangle {

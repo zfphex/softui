@@ -13,14 +13,12 @@ fn main() {
             _ => {}
         }
 
-        flext!(
-            //TODO: There is a big gap and the first rect gets smaller than 100px!!!
-            vt!(
-                ht!(rect().min_w(100).max_w(200).h(50), rect().wfill().h(50)),
-                ht!(rect().w(200).h(50)),
-                ht!(rect().w(100).h(50)),
-            )
-        );
+        flext!(vt!(
+            //TODO: Doesn't keep it's min size?
+            ht!(rect().w(100).min_w(100).max_w(200).h(50), rect().wfill().h(50)),
+            ht!(rect().w(200).h(50)),
+            ht!(rect().w(100).h(50)),
+        ));
 
         //This is only safe in a single threaded context.
         {

@@ -1,6 +1,6 @@
 //! A collection of traits/macros/structs to simplify the api of building a widget tree.
 //! It's split up since extra abstraction can make debugging very difficult.
-use crate::{tree::*, tree_widget::Widget};
+use crate::{IntoF32, tree::*, tree_widget::Widget};
 
 #[macro_export]
 macro_rules! flext {
@@ -114,27 +114,6 @@ pub struct Size {
     pub pos: [f32; 2],
     pub dimensions: [Unit; 2],
 }
-
-//There must be a better way to handle these cases?
-
-pub trait IntoF32 {
-    fn into_f32(self) -> f32;
-}
-
-macro_rules! impl_intof32 {
-    ($($t:ty),*) => {
-        $(
-            impl IntoF32 for $t {
-                #[inline]
-                fn into_f32(self) -> f32 {
-                    self as f32
-                }
-            }
-        )*
-    };
-}
-
-impl_intof32!(f32, usize, isize, i32, i64);
 
 //Debug function for visualizing the layout.
 pub fn draw_tree(nodes: &mut [Node]) {

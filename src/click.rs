@@ -110,13 +110,13 @@ where
         self.widget = self.widget.padding(padding);
         self
     }
-    fn direction(mut self, direction: FlexDirection) -> Self
-    where
-        Self: Sized,
-    {
-        self.widget = self.widget.direction(direction);
-        self
-    }
+    // fn direction(mut self, direction: FlexDirection) -> Self
+    // where
+    //     Self: Sized,
+    // {
+    //     self.widget = self.widget.direction(direction);
+    //     self
+    // }
     fn size_mut(&mut self) -> &mut Size {
         self.widget.size_mut()
     }

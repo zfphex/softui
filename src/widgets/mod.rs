@@ -189,12 +189,12 @@ pub trait Widget<'a>: std::fmt::Debug {
         unimplemented!()
     }
 
-    fn direction(self, direction: FlexDirection) -> Self
-    where
-        Self: Sized,
-    {
-        unimplemented!()
-    }
+    // fn direction(self, direction: FlexDirection) -> Self
+    // where
+    //     Self: Sized,
+    // {
+    //     unimplemented!()
+    // }
 
     fn padding(self, padding: usize) -> Self
     where

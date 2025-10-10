@@ -11,16 +11,17 @@ pub mod atomic_float;
 pub mod click;
 pub use click::*;
 
+pub mod taffy;
+
 pub mod tree;
 pub mod tree_simplier;
 #[cfg(test)]
 pub mod tree_tests;
 pub mod tree_widget;
 
-pub mod flex;
-pub use flex::*;
-
-pub use flex::FlexDirection::*;
+// pub mod flex;
+// pub use flex::*;
+// pub use flex::FlexDirection::*;
 
 pub mod arena;
 pub use arena::*;
@@ -44,6 +45,25 @@ pub use unit::*;
 pub mod unit;
 
 pub use platform::MouseButton::*;
+
+pub trait IntoF32 {
+    fn into_f32(self) -> f32;
+}
+
+macro_rules! impl_intof32 {
+    ($($t:ty),*) => {
+        $(
+            impl IntoF32 for $t {
+                #[inline(always)]
+                fn into_f32(self) -> f32 {
+                    self as f32
+                }
+            }
+        )*
+    };
+}
+
+impl_intof32!(f32, usize, isize, i32, i64);
 
 //Ideally the user could write there own commands
 //Then they would send custom commands to the context.
