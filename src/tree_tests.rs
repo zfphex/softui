@@ -157,7 +157,7 @@ fn min_max_with_fill_sibling() {
     check_size(nodes, 3, 200.0, 50.0);  // min_max_child clamped to max 200px
     check_size(nodes, 4, 600.0, 50.0);  // fill_child gets remaining space
 
-    crate::tree_simplier::draw_tree(nodes);
+    // crate::tree_simplier::draw_tree(nodes);
 }
 
 #[test]
