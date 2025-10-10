@@ -27,6 +27,10 @@ pub fn root_style() -> Style {
 
 pub fn vstyle() -> Style {
     Style {
+        size: Size {
+            width: Dimension::percent(1.0),
+            height: Dimension::percent(1.0),
+        },
         flex_direction: taffy::FlexDirection::Column,
         align_items: Some(taffy::AlignItems::Start),
         ..Default::default()
@@ -35,6 +39,10 @@ pub fn vstyle() -> Style {
 
 pub fn hstyle() -> Style {
     Style {
+        size: Size {
+            width: Dimension::percent(1.0),
+            height: Dimension::percent(1.0),
+        },
         flex_direction: taffy::FlexDirection::Row,
         align_items: Some(taffy::AlignItems::Start),
         ..Default::default()
@@ -52,43 +60,44 @@ macro_rules! flex {
         $(
             $crate::taffy::add_child(root, $container.node);
         )*
-        NodeWrapper::new(root, $crate::taffy::root_style())
+        Container::new(root, $crate::taffy::root_style())
+    }};
+}
+#[macro_export]
+macro_rules! container {
+    ($style:expr, $($widget:expr),* $(,)?) => {{
+        let container = $crate::taffy::add_node($style);
+
+        $(
+            //Containers will return their existing node.
+            let node = $widget.add_node();
+            $crate::taffy::add_child(container, node);
+        )*
+
+        Container::new(container, $style)
     }};
 }
 
 #[macro_export]
 macro_rules! h {
     ($($widget:expr),* $(,)?) => {{
-        let h = $crate::taffy::add_node($crate::taffy::hstyle());
-        $(
-            let style = $widget.into_style();
-            let child = $crate::taffy::add_node(style);
-            $crate::taffy::add_child(h, child);
-        )*
-        NodeWrapper::new(h, $crate::taffy::hstyle())
-    }};
+        $crate::container!(hstyle(), $($widget),*)
+    }}
 }
 
 #[macro_export]
 macro_rules! v {
     ($($widget:expr),* $(,)?) => {{
-
-        let v = $crate::taffy::add_node($crate::taffy::vstyle());
-        $(
-            let style = $widget.into_style();
-            let child = $crate::taffy::add_node(style);
-            $crate::taffy::add_child(v, child);
-        )*
-        NodeWrapper::new(v, $crate::taffy::vstyle())
-    }};
+        $crate::container!(vstyle(), $($widget),*)
+    }}
 }
 
-pub struct NodeWrapper {
+pub struct Container {
     pub node: NodeId,
     pub style: Style,
 }
 
-impl NodeWrapper {
+impl Container {
     pub fn new(node: NodeId, style: Style) -> Self {
         Self { node, style }
     }
@@ -105,9 +114,18 @@ impl NodeWrapper {
     pub fn into_style(self) -> Style {
         self.style
     }
+    pub fn add_node(&self) -> NodeId {
+        self.node
+    }
 }
 
 pub trait Widget<'a>: std::fmt::Debug {
+    fn add_node(&self) -> NodeId
+    where
+        Self: Sized,
+    {
+        unreachable!();
+    }
     fn w(self, w: impl IntoTaffy) -> GenericWidget<'a, Self>
     where
         Self: Sized,
@@ -218,6 +236,9 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
 }
 
 impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
+    pub fn add_node(&self) -> NodeId {
+        add_node(self.style.clone())
+    }
     pub fn w(mut self, w: impl IntoTaffy) -> Self {
         self.style.size.width = w.into();
         self
@@ -245,7 +266,7 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
     pub fn wh(mut self, wh: impl IntoTaffy) -> Self {
         let dim = wh.into();
         self.style.size.width = dim;
-        self.style.size.height = self.style.size.width;
+        self.style.size.height = dim;
         self
     }
     pub fn wfill(mut self) -> Self {

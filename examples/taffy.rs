@@ -40,25 +40,24 @@ fn main() {
             _ => {}
         }
 
-        // let root = flex!(h!(rect().w(50).h(50), rect().w(50).h(50)).gap(10));
-
         let root = flex!(
             v!(rect().w(150).h(30), rect().w(150).h(30)).gap(5),
             h!(rect().wh(40), rect().w(200).h(20)),
-            // h!(v!(
-            //     rect().w(40).h(65),
-            //     rect().w(40).h(65),
-            //     h!(
-            //         rect().wh(30),
-            //         rect().wh(40),
-            //         v!(
-            //             rect().wh(12),
-            //             rect().wh(20),
-            //             v!(rect().wh(30), h!(rect().wh(30), rect().wh(30)))
-            //         )
-            //     )
-            // )
-            // .gap(5))
+            h!(v!(rect().wh(40))),
+            h!(v!(
+                rect().w(40).h(65),
+                rect().w(40).h(65),
+                h!(
+                    rect().wh(30),
+                    rect().wh(40),
+                    v!(
+                        rect().wh(12),
+                        rect().wh(20),
+                        v!(rect().wh(30), h!(rect().wh(30), rect().wh(30)))
+                    )
+                )
+            )
+            .gap(5))
         )
         .padding(10)
         .gap(10);
