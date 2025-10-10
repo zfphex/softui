@@ -63,6 +63,7 @@ macro_rules! flex {
         Container::new(root, $crate::taffy::root_style())
     }};
 }
+
 #[macro_export]
 macro_rules! container {
     ($style:expr, $($widget:expr),* $(,)?) => {{
@@ -92,6 +93,8 @@ macro_rules! v {
     }}
 }
 
+//Container nodes are added first, then we modify the existing node when changing style.
+//This could be done another way be collecting the children, then pushing in the node after styling.
 pub struct Container {
     pub node: NodeId,
     pub style: Style,
