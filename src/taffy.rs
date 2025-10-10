@@ -13,44 +13,73 @@ pub fn add_child(parent: NodeId, child: NodeId) {
     unsafe { TREE.add_child(parent, child) };
 }
 
+pub fn root_style() -> Style {
+    Style {
+        size: Size {
+            width: Dimension::percent(1.0),
+            height: Dimension::percent(1.0),
+        },
+        flex_direction: taffy::FlexDirection::Column,
+        align_items: Some(taffy::AlignItems::Start),
+        ..Default::default()
+    }
+}
+
+pub fn vstyle() -> Style {
+    Style {
+        flex_direction: taffy::FlexDirection::Column,
+        align_items: Some(taffy::AlignItems::Start),
+        ..Default::default()
+    }
+}
+
+pub fn hstyle() -> Style {
+    Style {
+        flex_direction: taffy::FlexDirection::Row,
+        align_items: Some(taffy::AlignItems::Start),
+        ..Default::default()
+    }
+}
+
 #[macro_export]
 macro_rules! flex {
     ($($container:expr),* $(,)?) => {{
-        let root = $crate::taffy::add_node(taffy::Style::DEFAULT);
+        // let root = unsafe {TREE.new_with_children(taffy::Style::DEFAULT, &[
+        //     $($container.node),*
+        // ]).unwrap()};
+
+        let root = $crate::taffy::add_node($crate::taffy::root_style());
         $(
             $crate::taffy::add_child(root, $container.node);
         )*
-        root
+        NodeWrapper::new(root, $crate::taffy::root_style())
     }};
 }
 
 #[macro_export]
 macro_rules! h {
     ($($widget:expr),* $(,)?) => {{
-        let h = $crate::taffy::add_node(taffy::Style::DEFAULT);
+        let h = $crate::taffy::add_node($crate::taffy::hstyle());
         $(
             let style = $widget.into_style();
             let child = $crate::taffy::add_node(style);
             $crate::taffy::add_child(h, child);
         )*
-        NodeWrapper::new(h, taffy::Style::DEFAULT)
+        NodeWrapper::new(h, $crate::taffy::hstyle())
     }};
 }
 
 #[macro_export]
 macro_rules! v {
     ($($widget:expr),* $(,)?) => {{
-        let vstyle = taffy::Style {
-                flex_direction: taffy::FlexDirection::Column,
-                ..Default::default()
-        };
-        let v = $crate::taffy::add_node(vstyle.clone());
+
+        let v = $crate::taffy::add_node($crate::taffy::vstyle());
         $(
             let style = $widget.into_style();
             let child = $crate::taffy::add_node(style);
             $crate::taffy::add_child(v, child);
         )*
-        NodeWrapper::new(v, vstyle)
+        NodeWrapper::new(v, $crate::taffy::vstyle())
     }};
 }
 
@@ -67,6 +96,14 @@ impl NodeWrapper {
         self.style.gap = length(gap.into_f32());
         unsafe { TREE.set_style(self.node, self.style.clone()).unwrap() };
         self
+    }
+    pub fn padding(mut self, gap: impl IntoF32) -> Self {
+        self.style.padding = length(gap.into_f32());
+        unsafe { TREE.set_style(self.node, self.style.clone()).unwrap() };
+        self
+    }
+    pub fn into_style(self) -> Style {
+        self.style
     }
 }
 
@@ -212,16 +249,16 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         self
     }
     pub fn wfill(mut self) -> Self {
-        self.style.size.width = Dimension::percent(100.0);
+        self.style.size.width = Dimension::percent(1.0);
         self
     }
     pub fn hfill(mut self) -> Self {
-        self.style.size.height = Dimension::percent(100.0);
+        self.style.size.height = Dimension::percent(1.0);
         self
     }
     pub fn whfill(mut self) -> Self {
-        self.style.size.width = Dimension::percent(100.0);
-        self.style.size.height = Dimension::percent(100.0);
+        self.style.size.width = Dimension::percent(1.0);
+        self.style.size.height = Dimension::percent(1.0);
         self
     }
     pub fn padding(mut self, padding: impl IntoF32) -> Self {
@@ -326,6 +363,6 @@ impl<T: IntoF32> SimpleUnit for T {
 
     #[inline(always)]
     fn percent(self) -> Dimension {
-        Dimension::percent(self.into_f32())
+        Dimension::percent(self.into_f32() / 100.0)
     }
 }
