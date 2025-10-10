@@ -198,7 +198,7 @@ pub fn layout(nodes: &mut [Node], id: usize) {
         (size[1] - padding.top - padding.bottom).max(0.0),
     ];
     let mut used_primary = gap * (children_len.saturating_sub(1)) as f32;
-    let mut fill_count = 0;
+    let mut fill_indices = Vec::new();
 
     // Panic if the gaps overflow the container.
     if used_primary > content_size[primary] {
@@ -228,7 +228,7 @@ pub fn layout(nodes: &mut [Node], id: usize) {
             Unit::Percentage(p) => content_size[primary] * (p / 100.0),
             Unit::Fit => calculate_fit(nodes, c, primary),
             Unit::Fill => {
-                fill_count += 1;
+                fill_indices.push(i);
                 // For Fill children, only constrain the cross axis
                 child_size[cross] = apply_size_constraints(&nodes[c], child_size)[cross];
                 // Will be calculated in step 1b.
@@ -246,17 +246,36 @@ pub fn layout(nodes: &mut [Node], id: usize) {
         nodes[c].size = child_size;
     }
 
-    // 1b. Distribute remaining space to Fill children
-    if fill_count > 0 {
-        let remaining = (content_size[primary] - used_primary).max(0.0);
-        let fill_size = remaining / fill_count as f32;
-        for i in 0..children_len {
-            let c = unsafe { *children_ptr.add(i) };
-            if matches!(nodes[c].desired_size[primary], Unit::Fill) {
+    // 1b. Distribute remaining space to Fill children with constraint handling
+    if !fill_indices.is_empty() {
+        let mut remaining = (content_size[primary] - used_primary).max(0.0);
+        let mut active = fill_indices;
+
+        while !active.is_empty() {
+            let fill_size = remaining / active.len() as f32;
+            let mut next_active = Vec::new();
+            let mut consumed = 0.0;
+
+            for &child_index in &active {
+                let c = unsafe { *children_ptr.add(child_index) };
                 nodes[c].size[primary] = fill_size;
-                // Apply constraints to Fill children as well
-                nodes[c].size = apply_size_constraints(&nodes[c], nodes[c].size);
+                let constrained = apply_size_constraints(&nodes[c], nodes[c].size);
+
+                if constrained[primary] < fill_size {
+                    nodes[c].size = constrained;
+                    consumed += constrained[primary];
+                } else {
+                    nodes[c].size = constrained;
+                    next_active.push(child_index);
+                }
             }
+
+            if next_active.len() == active.len() {
+                break;
+            }
+
+            remaining = (remaining - consumed).max(0.0);
+            active = next_active;
         }
     }
 

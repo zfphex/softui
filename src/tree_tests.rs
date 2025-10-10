@@ -148,15 +148,14 @@ fn min_max_with_fill_sibling() {
     layout(nodes, 0);
 
     // First row children: min_max_child should respect min 100px, max 200px
-    // With 800px available and 2 Fill children, each would get 400px initially
-    // min_max_child: gets clamped to max 200px ✓
-    // fill_child: CURRENTLY gets 400px (BUG: should get 600px - the space freed by clamping)
+    // With 800px available and 2 Fill children:
+    // - Initial distribution: each gets 400px
+    // - min_max_child hits max constraint of 200px
+    // - Freed space (200px) is redistributed to fill_child
 
-    // Current behavior (partial bug):
-    // min_max_child is correctly clamped to 200px
-    check_size(nodes, 3, 200.0, 50.0);
-    // But fill_child doesn't get the freed space (200px lost in the void!)
-    check_size(nodes, 4, 400.0, 50.0);  // BUG: Should be 600.0
+    // Expected behavior (after fix):
+    check_size(nodes, 3, 200.0, 50.0);  // min_max_child clamped to max 200px
+    check_size(nodes, 4, 600.0, 50.0);  // fill_child gets remaining space
 
     crate::tree_simplier::draw_tree(nodes);
 }
@@ -228,6 +227,72 @@ fn min_max_constraints() {
     check_size(nodes, 5, 50.0, 150.0);
     // Max height: Fill gets (500-150-10)=340px, clamped to max 100px
     check_size(nodes, 6, 50.0, 100.0);
+
+    // crate::tree_simplier::draw_tree(nodes);
+}
+
+#[test]
+fn cascading_fill_constraints() {
+    let mut tree = Arena::new();
+
+    let root = tree.alloc(Node::default());
+
+    // Horizontal container with 4 Fill children, each with different constraints
+    let container = tree.alloc(Node {
+        desired_size: [Unit::Fill, Unit::Fixed(100.0)],
+        direction: Direction::LeftToRight,
+        ..Default::default()
+    });
+    tree.add_child(root, container);
+
+    // Child 1: Fill with max 100px
+    let child1 = tree.alloc(Node {
+        desired_size: [Unit::Fill, Unit::Fixed(100.0)],
+        max_size: [Some(Unit::Fixed(100.0)), None],
+        ..Default::default()
+    });
+    tree.add_child(container, child1);
+
+    // Child 2: Fill with max 150px (should hit constraint in second iteration)
+    let child2 = tree.alloc(Node {
+        desired_size: [Unit::Fill, Unit::Fixed(100.0)],
+        max_size: [Some(Unit::Fixed(150.0)), None],
+        ..Default::default()
+    });
+    tree.add_child(container, child2);
+
+    // Child 3: Fill with max 200px (should hit constraint in third iteration)
+    let child3 = tree.alloc(Node {
+        desired_size: [Unit::Fill, Unit::Fixed(100.0)],
+        max_size: [Some(Unit::Fixed(200.0)), None],
+        ..Default::default()
+    });
+    tree.add_child(container, child3);
+
+    // Child 4: Fill with no constraints (gets all remaining space)
+    let child4 = tree.alloc(Node {
+        desired_size: [Unit::Fill, Unit::Fixed(100.0)],
+        ..Default::default()
+    });
+    tree.add_child(container, child4);
+
+    let nodes = unsafe { tree.as_mut_slice() };
+    calculate_root_size(nodes, 0, [800.0, 600.0], [0.0, 0.0]);
+    layout(nodes, 0);
+
+    // With 800px available and 4 Fill children:
+    // Iteration 1: Each would get 200px
+    //   - child1 hits max 100px, freed 100px, 3 children remain
+    // Iteration 2: Each remaining gets (700/3) ≈ 233.33px
+    //   - child2 hits max 150px, freed ~83.33px, 2 children remain
+    // Iteration 3: Each remaining gets (550/2) = 275px
+    //   - child3 hits max 200px, freed 75px, 1 child remains
+    // Iteration 4: child4 gets all remaining = 350px
+
+    check_size(nodes, 2, 100.0, 100.0);  // child1: clamped to max 100px
+    check_size(nodes, 3, 150.0, 100.0);  // child2: clamped to max 150px
+    check_size(nodes, 4, 200.0, 100.0);  // child3: clamped to max 200px
+    check_size(nodes, 5, 350.0, 100.0);  // child4: gets remaining space
 
     // crate::tree_simplier::draw_tree(nodes);
 }
