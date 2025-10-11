@@ -17,7 +17,6 @@ error = ["mini/error", "window/error"]
 svg = ["dep:resvg"]
 image = ["dep:zune-image"]
 dwrite = ["dep:dwrote"]
-dhat-heap = ["dep:dhat"]
 
 [target.'cfg(windows)'.dependencies]
 # window = { version = "0.1.0", git = "https://github.com/zx3no/window" }
@@ -40,7 +39,6 @@ zune-image = { version = "0.4.15", optional = true, default-features = false, fe
     # "simd",
     # "all"
 ] }
-dhat = { version = "0.3.3", optional = true }
 taffy = { version = "0.9.1", default-features = false, features = ["flexbox", "taffy_tree", "std"] }
 # windows = { version = "0.59.0", features = ["Win32_System_Services", "Win32_System_SystemServices"] }
 # lay_out = { version = "0.1.0", path = "../lay_out" }

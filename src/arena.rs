@@ -37,6 +37,10 @@ impl<T> Arena<T> {
     pub unsafe fn as_mut_slice(&self) -> &mut [T] {
         unsafe { (&mut *self.items.get()).as_mut_slice() }
     }
+
+    pub fn len(&self) -> usize {
+        unsafe { (*self.items.get()).len() }
+    }
 }
 
 impl Arena<crate::tree::Node> {
@@ -65,11 +69,11 @@ impl<T: Debug> Debug for Arena<T> {
     }
 }
 
-// impl<T> IndexMut<usize> for Arena<T> {
-//     fn index_mut(&mut self, index: usize) -> &mut T {
-//         unsafe { &mut (&mut *self.items.get())[index] }
-//     }
-// }
+impl<T> IndexMut<usize> for Arena<T> {
+    fn index_mut(&mut self, index: usize) -> &mut T {
+        unsafe { &mut (&mut *self.items.get())[index] }
+    }
+}
 
 unsafe impl<T> Send for Arena<T> {}
 unsafe impl<T> Sync for Arena<T> {}

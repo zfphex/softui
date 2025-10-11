@@ -49,49 +49,49 @@ pub fn hstyle() -> Style {
     }
 }
 
-#[macro_export]
-macro_rules! flex {
-    ($($container:expr),* $(,)?) => {{
-        // let root = unsafe {TREE.new_with_children(taffy::Style::DEFAULT, &[
-        //     $($container.node),*
-        // ]).unwrap()};
+// #[macro_export]
+// macro_rules! flex {
+//     ($($container:expr),* $(,)?) => {{
+//         // let root = unsafe {TREE.new_with_children(taffy::Style::DEFAULT, &[
+//         //     $($container.node),*
+//         // ]).unwrap()};
 
-        let root = $crate::taffy::add_node($crate::taffy::root_style());
-        $(
-            $crate::taffy::add_child(root, $container.node);
-        )*
-        Container::new(root, $crate::taffy::root_style())
-    }};
-}
+//         let root = $crate::taffy::add_node($crate::taffy::root_style());
+//         $(
+//             $crate::taffy::add_child(root, $container.node);
+//         )*
+//         Container::new(root, $crate::taffy::root_style())
+//     }};
+// }
 
-#[macro_export]
-macro_rules! container {
-    ($style:expr, $($widget:expr),* $(,)?) => {{
-        let container = $crate::taffy::add_node($style);
+// #[macro_export]
+// macro_rules! container {
+//     ($style:expr, $($widget:expr),* $(,)?) => {{
+//         let container = $crate::taffy::add_node($style);
 
-        $(
-            //Containers will return their existing node.
-            let node = $widget.add_node();
-            $crate::taffy::add_child(container, node);
-        )*
+//         $(
+//             //Containers will return their existing node.
+//             let node = $widget.add_node();
+//             $crate::taffy::add_child(container, node);
+//         )*
 
-        Container::new(container, $style)
-    }};
-}
+//         Container::new(container, $style)
+//     }};
+// }
 
-#[macro_export]
-macro_rules! h {
-    ($($widget:expr),* $(,)?) => {{
-        $crate::container!(hstyle(), $($widget),*)
-    }}
-}
+// #[macro_export]
+// macro_rules! h {
+//     ($($widget:expr),* $(,)?) => {{
+//         $crate::container!(hstyle(), $($widget),*)
+//     }}
+// }
 
-#[macro_export]
-macro_rules! v {
-    ($($widget:expr),* $(,)?) => {{
-        $crate::container!(vstyle(), $($widget),*)
-    }}
-}
+// #[macro_export]
+// macro_rules! v {
+//     ($($widget:expr),* $(,)?) => {{
+//         $crate::container!(vstyle(), $($widget),*)
+//     }}
+// }
 
 //Container nodes are added first, then we modify the existing node when changing style.
 //This could be done another way be collecting the children, then pushing in the node after styling.

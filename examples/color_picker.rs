@@ -66,15 +66,8 @@ const ZOOM_400: i32 = 400;
 
 //TODO: EnumDisplaySettingsA and lock the framerate to the current monitor refresh rate.
 
-#[cfg(feature = "dhat-heap")]
-#[global_allocator]
-static ALLOC: dhat::Alloc = dhat::Alloc;
-
 #[cfg(target_os = "windows")]
 fn main() {
-    #[cfg(feature = "dhat-heap")]
-    let _profiler = dhat::Profiler::new_heap();
-
     mini::defer_results!();
 
     unsafe {
