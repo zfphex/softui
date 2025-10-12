@@ -2,7 +2,7 @@ use crate::*;
 
 pub fn rect() -> Rectangle {
     Rectangle {
-        style: taffy::Style {
+        layout: TaffyLayout {
             size: taffy::Size {
                 width: taffy::style_helpers::length(20.0),
                 height: taffy::style_helpers::length(20.0),
@@ -15,20 +15,20 @@ pub fn rect() -> Rectangle {
 
 #[derive(Clone, Debug)]
 pub struct Rectangle {
-    pub style: taffy::Style,
+    pub layout: TaffyLayout,
     pub radius: usize,
 }
 
 impl<'a> Widget<'a> for Rectangle {
-    fn style(&self) -> taffy::Style {
-        self.style.clone()
+    fn layout(&self) -> taffy::Style {
+        self.layout.clone()
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
-        //  let bg = style.unwrap_or(TaffyStyle::new()).background_color.unwrap_or(white());
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+        let bg = style.unwrap_or(Style::new()).background_color.unwrap_or(white());
         commands.push(Command {
             area,
-            primative: Primative::Ellipse(self.radius, white()),
+            primative: Primative::Ellipse(self.radius, bg),
         });
     }
 }

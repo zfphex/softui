@@ -11,6 +11,8 @@ use taffy::{
 
 pub static mut TREE: Tree = Tree::new();
 
+pub type TaffyLayout = taffy::Style;
+
 #[derive(Debug, Copy, Clone, Default)]
 pub enum NodeKind {
     #[default]
@@ -22,7 +24,7 @@ pub enum NodeKind {
 
 #[derive(Default, Debug)]
 pub struct Node<'a> {
-    pub style: taffy::Style,
+    pub layout: TaffyLayout,
     pub cache: Cache,
     pub kind: NodeKind,
     // pub unrounded_layout: Layout,
@@ -40,8 +42,8 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
 
     if let Some(widget) = &mut tree[id].widget {
         let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
-        widget.draw(&mut ctx.commands, area);
-        widget.try_click(area);
+        widget.draw(&mut ctx.commands, area, widget.style());
+        widget.try_click(ctx, area);
     }
 
     //TODO: Maybe do this better.
@@ -53,10 +55,10 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
     }
 }
 
-pub fn add_node(style: taffy::Style) -> usize {
+pub fn add_node(layout: TaffyLayout) -> usize {
     unsafe {
         TREE.alloc(Node {
-            style,
+            layout,
             ..Default::default()
         })
     }
@@ -171,12 +173,12 @@ impl<'a> taffy::LayoutPartialTree for Tree<'a> {
     type CustomIdent = String;
 
     type CoreContainerStyle<'b>
-        = &'b taffy::Style
+        = &'b TaffyLayout
     where
         Self: 'b;
 
     fn get_core_container_style(&self, node_id: NodeId) -> Self::CoreContainerStyle<'_> {
-        &self[node_id.into()].style
+        &self[node_id.into()].layout
     }
 
     fn set_unrounded_layout(&mut self, node_id: NodeId, layout: &Layout) {
@@ -193,7 +195,7 @@ impl<'a> taffy::LayoutPartialTree for Tree<'a> {
         compute_cached_layout(self, node_id, inputs, |tree, node_id, inputs| {
             let id = node_id.into();
             let node = &mut tree[id];
-            let display_mode = node.style.display;
+            let display_mode = node.layout.display;
             let has_children = node.children.len() > 0;
 
             match (display_mode, has_children) {
@@ -202,7 +204,7 @@ impl<'a> taffy::LayoutPartialTree for Tree<'a> {
                 (Display::Flex, true) => compute_flexbox_layout(tree, node_id, inputs),
                 // (Display::Grid, true) => compute_grid_layout(tree, node, inputs),
                 (_, false) => {
-                    let style = &node.style;
+                    let style = &node.layout;
                     let measure_function =
                         |known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>| {
                             //
@@ -255,33 +257,33 @@ impl<'a> CacheTree for Tree<'a> {
 
 impl<'a> taffy::LayoutFlexboxContainer for Tree<'a> {
     type FlexboxContainerStyle<'b>
-        = &'b taffy::Style
+        = &'b TaffyLayout
     where
         Self: 'b;
 
     type FlexboxItemStyle<'b>
-        = &'b taffy::Style
+        = &'b TaffyLayout
     where
         Self: 'b;
 
     fn get_flexbox_container_style(&self, node_id: NodeId) -> Self::FlexboxContainerStyle<'_> {
-        &self[node_id.into()].style
+        &self[node_id.into()].layout
     }
 
     fn get_flexbox_child_style(&self, child_node_id: NodeId) -> Self::FlexboxItemStyle<'_> {
-        &self[child_node_id.into()].style
+        &self[child_node_id.into()].layout
     }
 }
 
 impl<'a> taffy::PrintTree for Tree<'a> {
     fn get_debug_label(&self, node_id: NodeId) -> &'static str {
         let node = &self[node_id.into()];
-        let dir = &node.style.flex_direction;
+        let dir = &node.layout.flex_direction;
         let num_children = node.children.len();
 
         match (num_children, node.kind) {
             (0, _) => "LEAF",
-            (_, NodeKind::Flex) => match node.style.flex_direction {
+            (_, NodeKind::Flex) => match node.layout.flex_direction {
                 FlexDirection::Row | FlexDirection::RowReverse => "H_ROW",
                 FlexDirection::Column | FlexDirection::ColumnReverse => "V_FLEX",
             },
@@ -296,8 +298,8 @@ impl<'a> taffy::PrintTree for Tree<'a> {
     }
 }
 
-pub fn vstyle() -> taffy::Style {
-    taffy::Style {
+pub fn vstyle() -> TaffyLayout {
+    TaffyLayout {
         size: Size {
             width: Dimension::percent(1.0),
             height: Dimension::percent(1.0),
@@ -308,8 +310,8 @@ pub fn vstyle() -> taffy::Style {
     }
 }
 
-pub fn hstyle() -> taffy::Style {
-    taffy::Style {
+pub fn hstyle() -> TaffyLayout {
+    TaffyLayout {
         size: Size {
             width: Dimension::percent(1.0),
             height: Dimension::percent(1.0),
@@ -323,14 +325,14 @@ pub fn hstyle() -> taffy::Style {
 #[derive(Debug)]
 pub struct Container {
     pub node: usize,
-    pub style: taffy::Style,
+    pub layout: TaffyLayout,
 }
 
 impl Container {
-    pub fn new(style: taffy::Style) -> Self {
+    pub fn new(layout: TaffyLayout) -> Self {
         let node = unsafe {
             TREE.alloc(Node {
-                style: style.clone(),
+                layout: layout.clone(),
                 widget: None,
                 ..Default::default()
             })
@@ -338,28 +340,28 @@ impl Container {
 
         Self {
             node,
-            style: style.clone(),
+            layout: layout.clone(),
         }
     }
     pub fn gap(mut self, gap: impl IntoF32) -> Self {
         let gap = length(gap.into_f32());
-        self.style.gap = gap;
-        unsafe { TREE[self.node].style.gap = gap };
+        self.layout.gap = gap;
+        unsafe { TREE[self.node].layout.gap = gap };
 
         self
     }
     pub fn padding(mut self, padding: impl IntoF32) -> Self {
         let padding = length(padding.into_f32());
-        self.style.padding = padding;
-        unsafe { TREE[self.node].style.padding = padding };
+        self.layout.padding = padding;
+        unsafe { TREE[self.node].layout.padding = padding };
 
         self
     }
 }
 
 impl<'a> Widget<'a> for Container {
-    fn style(&self) -> taffy::Style {
-        self.style.clone()
+    fn layout(&self) -> TaffyLayout {
+        self.layout.clone()
     }
     fn is_container(&self) -> bool {
         true
@@ -368,7 +370,7 @@ impl<'a> Widget<'a> for Container {
         self.node
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
         todo!()
     }
 }
@@ -378,12 +380,12 @@ pub fn into_node<'a, T: Widget<'a> + 'a>(widget: T) -> usize {
         return widget.node();
     }
 
-    let style = widget.style();
+    let style = widget.layout();
     //Safety: Oh yeah! Yeah you like that? 😳
     let widget = unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
     unsafe {
         TREE.alloc(Node {
-            style,
+            layout: style,
             widget: Some(widget),
             ..Default::default()
         })
@@ -417,13 +419,28 @@ macro_rules! v {
 }
 
 pub trait Widget<'a>: std::fmt::Debug {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect);
-    fn style(&self) -> taffy::Style;
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>);
+    fn layout(&self) -> TaffyLayout;
+    fn style(&self) -> Option<Style> {
+        None
+    }
     fn is_container(&self) -> bool {
         false
     }
     fn node(&self) -> usize {
         unreachable!()
+    }
+    fn fg(self, fg: Color) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).fg(fg)
+    }
+    fn bg(self, bg: Color) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).bg(bg)
     }
     fn w(self, w: impl IntoDimension) -> GenericWidget<'a, Self>
     where
@@ -506,14 +523,14 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).on_release(button, handler)
     }
-    fn try_click(&mut self, area: Rect) {
+    fn try_click(&mut self, ctx: &mut Context, area: Rect) {
         unreachable!()
     }
-    fn into_style(self) -> taffy::Style
+    fn into_layout(self) -> TaffyLayout
     where
         Self: Sized,
     {
-        GenericWidget::new(self).into_style()
+        GenericWidget::new(self).into_layout()
     }
 }
 
@@ -554,7 +571,8 @@ impl<T: IntoF32> SimpleUnit for T {
 
 pub struct GenericWidget<'a, W: Widget<'a>> {
     pub widget: W,
-    pub style: taffy::Style,
+    pub layout: TaffyLayout,
+    pub style: Style,
     pub node: Option<usize>,
     pub handlers: Vec<(crate::MouseButton, crate::MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
 }
@@ -563,7 +581,7 @@ impl<'a, W: Widget<'a>> Debug for GenericWidget<'a, W> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("GenericWidget")
             .field("widget", &self.widget)
-            .field("style", &self.style)
+            .field("style", &self.layout)
             // .field("handlers", &self.handlers)
             .finish()
     }
@@ -572,8 +590,9 @@ impl<'a, W: Widget<'a>> Debug for GenericWidget<'a, W> {
 impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
     pub fn new(widget: W) -> Self {
         GenericWidget {
-            style: widget.style(),
+            layout: widget.layout(),
             node: None,
+            style: Style::new(),
             widget,
             handlers: Vec::new(),
         }
@@ -581,12 +600,15 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
 }
 
 impl<'a, W: Widget<'a>> Widget<'a> for GenericWidget<'a, W> {
-    fn style(&self) -> taffy::Style {
-        self.style.clone()
+    fn layout(&self) -> TaffyLayout {
+        self.layout.clone()
     }
 
-    fn try_click(&mut self, area: Rect) {
-        let ctx = unsafe { ctx() };
+    fn style(&self) -> Option<Style> {
+        Some(self.style)
+    }
+
+    fn try_click(&mut self, ctx: &mut Context, area: Rect) {
         for (button, action, f) in &mut self.handlers {
             match *action {
                 MouseAction::Clicked if clicked(ctx, area, *button) => f(&mut self.widget),
@@ -597,8 +619,8 @@ impl<'a, W: Widget<'a>> Widget<'a> for GenericWidget<'a, W> {
         }
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
-        self.widget.draw(commands, area);
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+        self.widget.draw(commands, area, style);
     }
 }
 
@@ -611,74 +633,82 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         if let Some(node) = self.node {
             node
         } else {
-            add_node(self.style.clone())
+            add_node(self.layout.clone())
         }
     }
+    pub fn fg(mut self, fg: Color) -> Self {
+        self.style.foreground_color = Some(fg);
+        self
+    }
+    pub fn bg(mut self, bg: Color) -> Self {
+        self.style.background_color = Some(bg);
+        self
+    }
     pub fn w(mut self, w: impl IntoDimension) -> Self {
-        self.style.size.width = w.into_dimension();
+        self.layout.size.width = w.into_dimension();
         self
     }
     pub fn h(mut self, h: impl IntoDimension) -> Self {
-        self.style.size.height = h.into_dimension();
+        self.layout.size.height = h.into_dimension();
         self
     }
     pub fn max_w(mut self, w: impl IntoDimension) -> Self {
-        self.style.max_size.width = w.into_dimension();
+        self.layout.max_size.width = w.into_dimension();
         self
     }
     pub fn min_w(mut self, w: impl IntoDimension) -> Self {
-        self.style.min_size.width = w.into_dimension();
+        self.layout.min_size.width = w.into_dimension();
         self
     }
     pub fn max_h(mut self, h: impl IntoDimension) -> Self {
-        self.style.max_size.height = h.into_dimension();
+        self.layout.max_size.height = h.into_dimension();
         self
     }
     pub fn min_h(mut self, h: impl IntoDimension) -> Self {
-        self.style.min_size.height = h.into_dimension();
+        self.layout.min_size.height = h.into_dimension();
         self
     }
     pub fn wh(mut self, wh: impl IntoDimension) -> Self {
         let dim = wh.into_dimension();
-        self.style.size.width = dim;
-        self.style.size.height = dim;
+        self.layout.size.width = dim;
+        self.layout.size.height = dim;
         self
     }
     pub fn wfill(mut self) -> Self {
-        self.style.size.width = Dimension::percent(1.0);
+        self.layout.size.width = Dimension::percent(1.0);
         self
     }
     pub fn hfill(mut self) -> Self {
-        self.style.size.height = Dimension::percent(1.0);
+        self.layout.size.height = Dimension::percent(1.0);
         self
     }
     pub fn whfill(mut self) -> Self {
-        self.style.size.width = Dimension::percent(1.0);
-        self.style.size.height = Dimension::percent(1.0);
+        self.layout.size.width = Dimension::percent(1.0);
+        self.layout.size.height = Dimension::percent(1.0);
         self
     }
     pub fn padding(mut self, padding: impl IntoF32) -> Self {
         let v = padding.into_f32();
-        self.style.padding.left = length(v);
-        self.style.padding.right = length(v);
-        self.style.padding.top = length(v);
-        self.style.padding.bottom = length(v);
+        self.layout.padding.left = length(v);
+        self.layout.padding.right = length(v);
+        self.layout.padding.top = length(v);
+        self.layout.padding.bottom = length(v);
         self
     }
     pub fn pl(mut self, left: impl IntoF32) -> Self {
-        self.style.padding.left = length(left.into_f32());
+        self.layout.padding.left = length(left.into_f32());
         self
     }
     pub fn pr(mut self, right: impl IntoF32) -> Self {
-        self.style.padding.right = length(right.into_f32());
+        self.layout.padding.right = length(right.into_f32());
         self
     }
     pub fn pt(mut self, top: impl IntoF32) -> Self {
-        self.style.padding.top = length(top.into_f32());
+        self.layout.padding.top = length(top.into_f32());
         self
     }
     pub fn pb(mut self, bottom: impl IntoF32) -> Self {
-        self.style.padding.bottom = length(bottom.into_f32());
+        self.layout.padding.bottom = length(bottom.into_f32());
         self
     }
     pub fn on_click(mut self, button: crate::MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
@@ -696,11 +726,11 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
             .push((button, crate::MouseAction::Released, Box::new(handler)));
         self
     }
-    pub fn into_style(self) -> taffy::Style
+    pub fn into_layout(self) -> TaffyLayout
     where
         Self: Sized,
     {
-        self.style
+        self.layout
     }
 }
 
@@ -710,7 +740,7 @@ pub fn debug_tree(tree: &Tree, root: NodeId) {
 
     /// Recursive function that prints each node in the tree
     fn print_node(tree: &Tree, node_id: NodeId, has_sibling: bool, lines_string: String) {
-        let style = &tree[node_id.into()].style;
+        let style = &tree[node_id.into()].layout;
         let display = tree.get_debug_label(node_id);
         let num_children = tree.child_count(node_id);
 

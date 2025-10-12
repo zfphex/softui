@@ -44,12 +44,15 @@ fn main() {
         // .padding(10)
         // .gap(10);
 
-        let root = v!(rect().wh(100).on_click(Left, |_| {
-            //
-            let data = data.get_mut();
-            *data += 10;
-            println!("Clicked on v! {}", data);
-        }));
+        let root = v!(rect()
+            .wh(100)
+            .on_click(Left, |_| {
+                //
+                let data = data.get_mut();
+                *data += 10;
+                println!("Clicked on v! {}", data);
+            })
+            .yellow());
 
         unsafe {
             // debug_tree(&TREE, root.node.into());

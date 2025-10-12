@@ -13,53 +13,67 @@ pub struct Style {
 }
 
 impl Style {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Style {
             background_color: None,
             foreground_color: None,
         }
     }
-    pub fn bg(mut self, color: Color) -> Self {
+    pub const fn bg(mut self, color: Color) -> Self {
         self.background_color = Some(color);
         self
     }
-    pub fn fg(mut self, color: Color) -> Self {
+    pub const fn fg(mut self, color: Color) -> Self {
         self.foreground_color = Some(color);
         self
     }
 }
 
-// #[rustfmt::skip]
-// pub trait StyleBuilder: for<'a> Widget<'a> + Sized {
-//     fn rgb(self, r: u8, g: u8, b: u8) -> StyledWidget<Self> { self.bg(rgb(r, g, b)) }
-//     fn pink(self) -> StyledWidget<Self> { self.bg(pink()) }
-//     fn red(self) -> StyledWidget<Self> { self.bg(red()) }
-//     fn orange(self) -> StyledWidget<Self> { self.bg(orange()) }
-//     fn yellow(self) -> StyledWidget<Self> { self.bg(yellow()) }
-//     fn green(self) -> StyledWidget<Self> { self.bg(green()) }
-//     fn lime(self) -> StyledWidget<Self> { self.bg(lime()) }
-//     fn blue(self) -> StyledWidget<Self> { self.bg(blue()) }
-//     fn cyan(self) -> StyledWidget<Self> { self.bg(cyan()) }
-//     fn turquoise(self) -> StyledWidget<Self> { self.bg(turquoise()) }
-//     fn navy(self) -> StyledWidget<Self> { self.bg(navy()) }
-//     fn purple(self) -> StyledWidget<Self> { self.bg(purple()) }
-//     fn magenta(self) -> StyledWidget<Self> { self.bg(magenta()) }
-//     fn violet(self) -> StyledWidget<Self> { self.bg(violet()) }
-//     fn brown(self) -> StyledWidget<Self> { self.bg(brown()) }
-//     fn tan(self) -> StyledWidget<Self> { self.bg(tan()) }
-//     fn black(self) -> StyledWidget<Self> { self.bg(black()) }
-//     fn white(self) -> StyledWidget<Self> { self.bg(white()) }
-//     fn gray(self) -> StyledWidget<Self> { self.bg(gray()) }
-//     fn silver(self) -> StyledWidget<Self> { self.bg(silver()) }
-//     fn gold(self) -> StyledWidget<Self> { self.bg(gold()) }
-//     fn indigo(self) -> StyledWidget<Self> { self.bg(indigo()) }
-//     fn lavender(self) -> StyledWidget<Self> { self.bg(lavender()) }
-//     fn coral(self) -> StyledWidget<Self> { self.bg(coral()) }
-//     fn olive(self) -> StyledWidget<Self> { self.bg(olive()) }
-//     fn teal(self) -> StyledWidget<Self> { self.bg(teal()) }
+#[rustfmt::skip]
+pub trait StyleBuilder<'a>: Sized {
+    fn bg(self, color: Color) -> Self;
+    fn rgb(self, r: u8, g: u8, b: u8) -> Self { self.bg(rgb(r, g, b)) }
+    fn pink(self) -> Self { self.bg(pink()) }
+    fn red(self) -> Self { self.bg(red()) }
+    fn orange(self) -> Self { self.bg(orange()) }
+    fn yellow(self) -> Self { self.bg(yellow()) }
+    fn green(self) -> Self { self.bg(green()) }
+    fn lime(self) -> Self { self.bg(lime()) }
+    fn blue(self) -> Self { self.bg(blue()) }
+    fn cyan(self) -> Self { self.bg(cyan()) }
+    fn turquoise(self) -> Self { self.bg(turquoise()) }
+    fn navy(self) -> Self { self.bg(navy()) }
+    fn purple(self) -> Self { self.bg(purple()) }
+    fn magenta(self) -> Self { self.bg(magenta()) }
+    fn violet(self) -> Self { self.bg(violet()) }
+    fn brown(self) -> Self { self.bg(brown()) }
+    fn tan(self) -> Self { self.bg(tan()) }
+    fn black(self) -> Self { self.bg(black()) }
+    fn white(self) -> Self { self.bg(white()) }
+    fn gray(self) -> Self { self.bg(gray()) }
+    fn silver(self) -> Self { self.bg(silver()) }
+    fn gold(self) -> Self { self.bg(gold()) }
+    fn indigo(self) -> Self { self.bg(indigo()) }
+    fn lavender(self) -> Self { self.bg(lavender()) }
+    fn coral(self) -> Self { self.bg(coral()) }
+    fn olive(self) -> Self { self.bg(olive()) }
+    fn teal(self) -> Self { self.bg(teal()) }
+}
+
+//TODO: IDK What to do here.
+// impl<'a, W: Widget<'a>> StyleBuilder<'a> for W {
+//     fn bg(self, color: Color) -> Self {
+//     }
 // }
 
-// #[inline]
+impl<'a, W: Widget<'a>> StyleBuilder<'a> for GenericWidget<'a, W> {
+    fn bg(mut self, color: Color) -> Self {
+        self.style.background_color = Some(color);
+        self
+    }
+}
+
+#[inline(always)]
 pub const fn rgb(r: u8, g: u8, b: u8) -> Color {
     Color::new(r, g, b)
 }
@@ -191,6 +205,7 @@ pub fn random_color() -> Color {
     // Return only the lower 24 bits (0x00RRGGBB format)
     Color::from(x & 0xFFFFFF)
 }
+
 pub fn fixed_random_color(index: usize) -> Color {
     // Simple integer hash function (Thomas Wang's 32-bit mix)
     let mut x = index;
