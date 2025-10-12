@@ -33,7 +33,7 @@ pub struct Node<'a> {
     pub children: Vec<usize>,
 }
 
-pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x: f32, offset_y: f32, idx: &mut usize) {
+pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x: f32, offset_y: f32) {
     let layout = tree[id].final_layout;
     let abs_x = offset_x + layout.location.x;
     let abs_y = offset_y + layout.location.y;
@@ -42,6 +42,7 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
 
     if let Some(widget) = &mut tree[id].widget {
         let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
+        // println!("{:?}", area);
         widget.draw(&mut ctx.commands, area, widget.style());
         widget.try_click(ctx, area);
     }
@@ -50,7 +51,7 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
     let children = std::mem::take(&mut tree[id].children);
     if !children.is_empty() {
         for child in children {
-            draw_tree(ctx, tree, child, abs_x, abs_y, idx);
+            draw_tree(ctx, tree, child, abs_x, abs_y);
         }
     }
 }
@@ -322,13 +323,23 @@ pub fn hstyle() -> TaffyLayout {
     }
 }
 
-#[derive(Debug)]
-pub struct Container {
+pub struct Container<'a> {
     pub node: usize,
     pub layout: TaffyLayout,
+    pub handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut Self) + 'a>)>,
 }
 
-impl Container {
+impl<'a> Debug for Container<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Container")
+            .field("node", &self.node)
+            .field("layout", &self.layout)
+            // .field("handlers", &self.handlers)
+            .finish()
+    }
+}
+
+impl<'a> Container<'a> {
     pub fn new(layout: TaffyLayout) -> Self {
         let node = unsafe {
             TREE.alloc(Node {
@@ -341,6 +352,7 @@ impl Container {
         Self {
             node,
             layout: layout.clone(),
+            handlers: Vec::new(),
         }
     }
     pub fn gap(mut self, gap: impl IntoF32) -> Self {
@@ -357,11 +369,40 @@ impl Container {
 
         self
     }
-    //TODO: What do I do here :(
-    // pub fn on_click<'a, W: Widget<'a>>(mut self, button: crate::MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {}
+    //TODO: This is pretty awful.
+    pub fn on_click(mut self, button: crate::MouseButton, handler: impl FnMut(&mut Self) + 'a) -> Self {
+        self.handlers
+            .push((button, crate::MouseAction::Clicked, Box::new(handler)));
+        self
+    }
+    pub fn on_press(mut self, button: crate::MouseButton, handler: impl FnMut(&mut Self) + 'a) -> Self {
+        self.handlers
+            .push((button, crate::MouseAction::Pressed, Box::new(handler)));
+        self
+    }
+    pub fn on_release(mut self, button: crate::MouseButton, handler: impl FnMut(&mut Self) + 'a) -> Self {
+        self.handlers
+            .push((button, crate::MouseAction::Released, Box::new(handler)));
+        self
+    }
+    fn try_click(&mut self, ctx: &mut Context, area: Rect) {
+        let handlers = core::mem::take(&mut self.handlers);
+        for (button, action, mut f) in handlers {
+            match action {
+                MouseAction::Clicked if clicked(ctx, area, button) => f(self),
+                MouseAction::Pressed if pressed(ctx, area, button) => f(self),
+                MouseAction::Released if released(ctx, area, button) => f(self),
+                _ => {}
+            }
+        }
+    }
 }
 
-impl<'a> Widget<'a> for Container {
+impl<'a> Widget<'a> for Container<'a> {
+    fn try_click(&mut self, ctx: &mut Context, area: Rect) {
+        self.try_click(ctx, area);
+    }
+
     fn layout(&self) -> TaffyLayout {
         self.layout.clone()
     }
@@ -374,14 +415,15 @@ impl<'a> Widget<'a> for Container {
         self.node
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
-        todo!()
-    }
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {}
 }
 
 pub fn into_node<'a, T: Widget<'a> + 'a>(widget: T) -> usize {
     if widget.is_container() {
-        return widget.node();
+        let node = widget.node();
+        let widget = unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
+        unsafe { TREE[node].widget = Some(widget) };
+        return node;
     }
 
     let style = widget.layout();
@@ -488,6 +530,24 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).wh(wh)
     }
+    fn wfit(self) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).wfit()
+    }
+    fn hfit(self) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).hfit()
+    }
+    fn fit(self) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).fit()
+    }
     fn wfill(self) -> GenericWidget<'a, Self>
     where
         Self: Sized,
@@ -500,11 +560,11 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).hfill()
     }
-    fn whfill(self) -> GenericWidget<'a, Self>
+    fn fill(self) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
-        GenericWidget::new(self).whfill()
+        GenericWidget::new(self).fill()
     }
     fn on_click<F>(self, button: crate::MouseButton, handler: F) -> GenericWidget<'a, Self>
     where
@@ -578,7 +638,7 @@ pub struct GenericWidget<'a, W: Widget<'a>> {
     pub layout: TaffyLayout,
     pub style: Style,
     pub node: Option<usize>,
-    pub handlers: Vec<(crate::MouseButton, crate::MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
+    pub handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
 }
 
 impl<'a, W: Widget<'a>> Debug for GenericWidget<'a, W> {
@@ -690,10 +750,19 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         self.layout.size.height = Dimension::percent(1.0);
         self
     }
-    pub fn whfill(mut self) -> Self {
+    pub fn fill(mut self) -> Self {
         self.layout.size.width = Dimension::percent(1.0);
         self.layout.size.height = Dimension::percent(1.0);
         self
+    }
+    pub fn wfit(mut self) -> Self {
+        todo!()
+    }
+    pub fn hfit(mut self) -> Self {
+        todo!()
+    }
+    pub fn fit(mut self) -> Self {
+        todo!()
     }
     pub fn padding(mut self, padding: impl IntoF32) -> Self {
         let v = padding.into_f32();

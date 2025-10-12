@@ -8,6 +8,8 @@ fn main() {
 
     let mut data = Cell::new(20);
 
+    let mut print = true;
+
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
@@ -55,20 +57,30 @@ fn main() {
         //     .yellow());
 
         //This is a wrapper not a node, wtf, what to do about root node and click stuff???
-        let mut root = h!(rect().wh(100), rect().wh(200))
-            .gap(20)
-            .on_click(Left, |_| println!("HI!!!!!!!"));
+        // let mut root = v!(
+
+        // );
+
+        let root = v!(rect().wh(100), rect().wh(200)).gap(20).on_click(Left, |_| println!("HI!!!!!!!"));
 
         unsafe {
             let node = root.node();
-            // debug_tree(&TREE, node.into());
+
+            //HACK: Currently the root node is not layed out correctly.
+            TREE[node].widget = Some(Box::new(root));
+
+            // if print {
+            //     debug_tree(&TREE, node.into());
+            // }
 
             taffy::compute_root_layout(&mut TREE, node.into(), window_size);
-            // taffy::print_tree(&TREE, node.into());
-            // return;
 
-            let mut idx = 0;
-            draw_tree(&mut ctx, &mut TREE, node, 0.0, 0.0, &mut idx);
+            if print {
+                taffy::print_tree(&TREE, node.into());
+                print = false;
+            }
+
+            draw_tree(&mut ctx, &mut TREE, node, 0.0, 0.0);
         }
 
         unsafe { TREE.clear() };
