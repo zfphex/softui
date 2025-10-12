@@ -1,16 +1,13 @@
+use crate::*;
 use std::{
     cell::UnsafeCell,
     fmt::Debug,
     ops::{Index, IndexMut},
 };
 use taffy::{
-    compute_cached_layout, compute_flexbox_layout, compute_hidden_layout, prelude::length, AvailableSpace, Cache,
-    CacheTree, Dimension, Display, FlexDirection, Layout, NodeId, PrintTree, Size, Style, TraversePartialTree,
+    compute_cached_layout, compute_flexbox_layout, compute_hidden_layout, prelude::length, AlignItems, AvailableSpace,
+    Cache, CacheTree, Dimension, Display, FlexDirection, Layout, NodeId, PrintTree, Size, TraversePartialTree,
 };
-use window::Rect;
-
-// use crate::{black, clicked, ctx, pressed, released, Command, IntoF32, MouseAction, Primative};
-use crate::*;
 
 pub static mut TREE: Tree = Tree::new();
 
@@ -25,7 +22,7 @@ pub enum NodeKind {
 
 #[derive(Default, Debug)]
 pub struct Node<'a> {
-    pub style: Style,
+    pub style: taffy::Style,
     pub cache: Cache,
     pub kind: NodeKind,
     // pub unrounded_layout: Layout,
@@ -36,20 +33,19 @@ pub struct Node<'a> {
 
 pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x: f32, offset_y: f32, idx: &mut usize) {
     let layout = tree[id].final_layout;
-    //Cleared every frame so this is fine.
-    let children = std::mem::take(&mut tree[id].children);
-
     let abs_x = offset_x + layout.location.x;
     let abs_y = offset_y + layout.location.y;
-
     let width = tree[id].final_layout.size.width;
     let height = tree[id].final_layout.size.height;
+
     if let Some(widget) = &mut tree[id].widget {
         let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
         widget.draw(&mut ctx.commands, area);
         widget.try_click(area);
     }
 
+    //TODO: Maybe do this better.
+    let children = std::mem::take(&mut tree[id].children);
     if !children.is_empty() {
         for child in children {
             draw_tree(ctx, tree, child, abs_x, abs_y, idx);
@@ -57,7 +53,7 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
     }
 }
 
-pub fn add_node(style: Style) -> usize {
+pub fn add_node(style: taffy::Style) -> usize {
     unsafe {
         TREE.alloc(Node {
             style,
@@ -175,7 +171,7 @@ impl<'a> taffy::LayoutPartialTree for Tree<'a> {
     type CustomIdent = String;
 
     type CoreContainerStyle<'b>
-        = &'b Style
+        = &'b taffy::Style
     where
         Self: 'b;
 
@@ -259,12 +255,12 @@ impl<'a> CacheTree for Tree<'a> {
 
 impl<'a> taffy::LayoutFlexboxContainer for Tree<'a> {
     type FlexboxContainerStyle<'b>
-        = &'b Style
+        = &'b taffy::Style
     where
         Self: 'b;
 
     type FlexboxItemStyle<'b>
-        = &'b Style
+        = &'b taffy::Style
     where
         Self: 'b;
 
@@ -300,26 +296,26 @@ impl<'a> taffy::PrintTree for Tree<'a> {
     }
 }
 
-pub fn vstyle() -> Style {
-    Style {
+pub fn vstyle() -> taffy::Style {
+    taffy::Style {
         size: Size {
             width: Dimension::percent(1.0),
             height: Dimension::percent(1.0),
         },
-        flex_direction: taffy::FlexDirection::Column,
-        align_items: Some(taffy::AlignItems::Start),
+        flex_direction: FlexDirection::Column,
+        align_items: Some(AlignItems::Start),
         ..Default::default()
     }
 }
 
-pub fn hstyle() -> Style {
-    Style {
+pub fn hstyle() -> taffy::Style {
+    taffy::Style {
         size: Size {
             width: Dimension::percent(1.0),
             height: Dimension::percent(1.0),
         },
-        flex_direction: taffy::FlexDirection::Row,
-        align_items: Some(taffy::AlignItems::Start),
+        flex_direction: FlexDirection::Row,
+        align_items: Some(AlignItems::Start),
         ..Default::default()
     }
 }
@@ -327,11 +323,11 @@ pub fn hstyle() -> Style {
 #[derive(Debug)]
 pub struct Container {
     pub node: usize,
-    pub style: Style,
+    pub style: taffy::Style,
 }
 
 impl Container {
-    pub fn new(style: Style) -> Self {
+    pub fn new(style: taffy::Style) -> Self {
         let node = unsafe {
             TREE.alloc(Node {
                 style: style.clone(),
@@ -362,7 +358,7 @@ impl Container {
 }
 
 impl<'a> Widget<'a> for Container {
-    fn style(&self) -> Style {
+    fn style(&self) -> taffy::Style {
         self.style.clone()
     }
     fn is_container(&self) -> bool {
@@ -420,85 +416,52 @@ macro_rules! v {
     }}
 }
 
-pub fn rect() -> Rectangle {
-    Rectangle {
-        style: Style {
-            size: Size {
-                width: length(20.0),
-                height: length(20.0),
-            },
-            ..Default::default()
-        },
-        radius: 0,
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Rectangle {
-    pub style: Style,
-    pub radius: usize,
-}
-
-impl<'a> Widget<'a> for Rectangle {
-    fn style(&self) -> Style {
-        self.style.clone()
-    }
-
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
-        //  let bg = style.unwrap_or(Style::new()).background_color.unwrap_or(white());
-        commands.push(Command {
-            area,
-            primative: Primative::Ellipse(self.radius, white()),
-        });
-    }
-}
-
 pub trait Widget<'a>: std::fmt::Debug {
     fn draw(&self, commands: &mut Vec<Command>, area: Rect);
-    fn style(&self) -> Style;
+    fn style(&self) -> taffy::Style;
     fn is_container(&self) -> bool {
         false
     }
     fn node(&self) -> usize {
         unreachable!()
     }
-    fn w(self, w: impl IntoTaffy) -> GenericWidget<'a, Self>
+    fn w(self, w: impl IntoDimension) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
         GenericWidget::new(self).w(w)
     }
-    fn h(self, h: impl IntoTaffy) -> GenericWidget<'a, Self>
+    fn h(self, h: impl IntoDimension) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
         GenericWidget::new(self).h(h)
     }
-    fn max_w(self, w: impl IntoTaffy) -> GenericWidget<'a, Self>
+    fn max_w(self, w: impl IntoDimension) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
         GenericWidget::new(self).max_w(w)
     }
-    fn min_w(self, w: impl IntoTaffy) -> GenericWidget<'a, Self>
+    fn min_w(self, w: impl IntoDimension) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
         GenericWidget::new(self).min_w(w)
     }
-    fn max_h(self, h: impl IntoTaffy) -> GenericWidget<'a, Self>
+    fn max_h(self, h: impl IntoDimension) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
         GenericWidget::new(self).max_h(h)
     }
-    fn min_h(self, h: impl IntoTaffy) -> GenericWidget<'a, Self>
+    fn min_h(self, h: impl IntoDimension) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
         GenericWidget::new(self).min_h(h)
     }
-    fn wh(self, wh: impl IntoTaffy) -> GenericWidget<'a, Self>
+    fn wh(self, wh: impl IntoDimension) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
@@ -546,7 +509,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn try_click(&mut self, area: Rect) {
         unreachable!()
     }
-    fn into_style(self) -> Style
+    fn into_style(self) -> taffy::Style
     where
         Self: Sized,
     {
@@ -554,20 +517,20 @@ pub trait Widget<'a>: std::fmt::Debug {
     }
 }
 
-pub trait IntoTaffy {
-    fn into_taffy(self) -> Dimension;
+pub trait IntoDimension {
+    fn into_dimension(self) -> Dimension;
 }
 
-impl<T: IntoF32> IntoTaffy for T {
+impl<T: IntoF32> IntoDimension for T {
     #[inline(always)]
-    fn into_taffy(self) -> Dimension {
+    fn into_dimension(self) -> Dimension {
         Dimension::length(self.into_f32())
     }
 }
 
-impl IntoTaffy for Dimension {
+impl IntoDimension for Dimension {
     #[inline(always)]
-    fn into_taffy(self) -> Dimension {
+    fn into_dimension(self) -> Dimension {
         self
     }
 }
@@ -591,7 +554,7 @@ impl<T: IntoF32> SimpleUnit for T {
 
 pub struct GenericWidget<'a, W: Widget<'a>> {
     pub widget: W,
-    pub style: Style,
+    pub style: taffy::Style,
     pub node: Option<usize>,
     pub handlers: Vec<(crate::MouseButton, crate::MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
 }
@@ -618,7 +581,7 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
 }
 
 impl<'a, W: Widget<'a>> Widget<'a> for GenericWidget<'a, W> {
-    fn style(&self) -> Style {
+    fn style(&self) -> taffy::Style {
         self.style.clone()
     }
 
@@ -651,32 +614,32 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
             add_node(self.style.clone())
         }
     }
-    pub fn w(mut self, w: impl IntoTaffy) -> Self {
-        self.style.size.width = w.into_taffy();
+    pub fn w(mut self, w: impl IntoDimension) -> Self {
+        self.style.size.width = w.into_dimension();
         self
     }
-    pub fn h(mut self, h: impl IntoTaffy) -> Self {
-        self.style.size.height = h.into_taffy();
+    pub fn h(mut self, h: impl IntoDimension) -> Self {
+        self.style.size.height = h.into_dimension();
         self
     }
-    pub fn max_w(mut self, w: impl IntoTaffy) -> Self {
-        self.style.max_size.width = w.into_taffy();
+    pub fn max_w(mut self, w: impl IntoDimension) -> Self {
+        self.style.max_size.width = w.into_dimension();
         self
     }
-    pub fn min_w(mut self, w: impl IntoTaffy) -> Self {
-        self.style.min_size.width = w.into_taffy();
+    pub fn min_w(mut self, w: impl IntoDimension) -> Self {
+        self.style.min_size.width = w.into_dimension();
         self
     }
-    pub fn max_h(mut self, h: impl IntoTaffy) -> Self {
-        self.style.max_size.height = h.into_taffy();
+    pub fn max_h(mut self, h: impl IntoDimension) -> Self {
+        self.style.max_size.height = h.into_dimension();
         self
     }
-    pub fn min_h(mut self, h: impl IntoTaffy) -> Self {
-        self.style.min_size.height = h.into_taffy();
+    pub fn min_h(mut self, h: impl IntoDimension) -> Self {
+        self.style.min_size.height = h.into_dimension();
         self
     }
-    pub fn wh(mut self, wh: impl IntoTaffy) -> Self {
-        let dim = wh.into_taffy();
+    pub fn wh(mut self, wh: impl IntoDimension) -> Self {
+        let dim = wh.into_dimension();
         self.style.size.width = dim;
         self.style.size.height = dim;
         self
@@ -733,7 +696,7 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
             .push((button, crate::MouseAction::Released, Box::new(handler)));
         self
     }
-    pub fn into_style(self) -> Style
+    pub fn into_style(self) -> taffy::Style
     where
         Self: Sized,
     {

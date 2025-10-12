@@ -7,28 +7,10 @@ use std::{any::Any, borrow::Cow, pin::Pin, sync::Arc};
 pub use core::ffi::c_void;
 
 pub mod atomic_float;
+pub use atomic_float::*;
 
-pub mod click;
-pub use click::*;
-
-// pub mod taffy;
 pub mod taffy_custom;
-
-pub mod tree;
-pub mod tree_simplier;
-#[cfg(test)]
-pub mod tree_tests;
-pub mod tree_widget;
-
-// pub mod flex;
-// pub use flex::*;
-// pub use flex::FlexDirection::*;
-
-pub mod arena;
-pub use arena::*;
-
-pub mod macros;
-pub use macros::*;
+pub use taffy_custom::*;
 
 pub mod widgets;
 pub use widgets::*;
@@ -153,7 +135,7 @@ impl std::fmt::Debug for Primative {
 
 pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
 
-pub unsafe fn extend_lifetime<'a, T>(t: &'a T) -> &'static T {
+pub const unsafe fn extend_lifetime<'a, T>(t: &'a T) -> &'static T {
     std::mem::transmute::<&'a T, &'static T>(t)
 }
 

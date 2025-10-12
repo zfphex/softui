@@ -1,12 +1,7 @@
 #![allow(unused, static_mut_refs)]
 
-use std::cell::Cell;
-
-use softui::taffy_custom::*;
-use softui::{create_ctx, h, v};
-use taffy::Style;
-use window::MouseButton::Left;
-use window::{Event, Key};
+use core::cell::Cell;
+use softui::*;
 
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };

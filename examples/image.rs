@@ -9,7 +9,7 @@ fn main() {
 
     let ctx = unsafe { create_ctx("Softui", 800, 600) };
     let png = image("img/fill.png");
-    let jpg = image("img/smol.jpg");
+    let _jpg = image("img/smol.jpg");
 
     loop {
         match ctx.event() {
