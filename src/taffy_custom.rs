@@ -3,10 +3,14 @@ use std::{
     fmt::Debug,
     ops::{Index, IndexMut},
 };
+use taffy::{
+    compute_cached_layout, compute_flexbox_layout, compute_hidden_layout, prelude::length, AvailableSpace, Cache,
+    CacheTree, Dimension, Display, FlexDirection, Layout, NodeId, PrintTree, Size, Style, TraversePartialTree,
+};
+use window::Rect;
 
-use taffy::{compute_cached_layout, compute_flexbox_layout, compute_hidden_layout, prelude::*, Cache, CacheTree};
-
-use crate::{clicked, ctx, pressed, released, IntoF32, MouseAction};
+// use crate::{black, clicked, ctx, pressed, released, Command, IntoF32, MouseAction, Primative};
+use crate::*;
 
 pub static mut TREE: Tree = Tree::new();
 
@@ -41,17 +45,12 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
     let width = tree[id].final_layout.size.width;
     let height = tree[id].final_layout.size.height;
     if let Some(widget) = &mut tree[id].widget {
-        widget.try_click(abs_x, abs_y, width, height);
+        let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
+        widget.draw(&mut ctx.commands, area);
+        widget.try_click(area);
     }
 
-    if children.is_empty() {
-        let x = abs_x as usize;
-        let y = abs_y as usize;
-        let width = layout.size.width as usize;
-        let height = layout.size.height as usize;
-        ctx.draw_rectangle(x, y, width, height, crate::fixed_random_color(*idx + 38));
-        *idx += 1;
-    } else {
+    if !children.is_empty() {
         for child in children {
             draw_tree(ctx, tree, child, abs_x, abs_y, idx);
         }
@@ -372,16 +371,20 @@ impl<'a> Widget<'a> for Container {
     fn node(&self) -> usize {
         self.node
     }
+
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
+        todo!()
+    }
 }
 
-//Not sure how to keep the <'a> lifetime?
-pub fn into_node<T: Widget<'static> + 'static>(widget: T) -> usize {
+pub fn into_node<'a, T: Widget<'a> + 'a>(widget: T) -> usize {
     if widget.is_container() {
         return widget.node();
     }
 
     let style = widget.style();
-    let widget = Box::new(widget);
+    //Safety: Oh yeah! Yeah you like that? 😳
+    let widget = unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
     unsafe {
         TREE.alloc(Node {
             style,
@@ -440,9 +443,18 @@ impl<'a> Widget<'a> for Rectangle {
     fn style(&self) -> Style {
         self.style.clone()
     }
+
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
+        //  let bg = style.unwrap_or(Style::new()).background_color.unwrap_or(white());
+        commands.push(Command {
+            area,
+            primative: Primative::Ellipse(self.radius, white()),
+        });
+    }
 }
 
 pub trait Widget<'a>: std::fmt::Debug {
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect);
     fn style(&self) -> Style;
     fn is_container(&self) -> bool {
         false
@@ -531,7 +543,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).on_release(button, handler)
     }
-    fn try_click(&mut self, x: f32, y: f32, width: f32, height: f32) {
+    fn try_click(&mut self, area: Rect) {
         unreachable!()
     }
     fn into_style(self) -> Style
@@ -609,9 +621,9 @@ impl<'a, W: Widget<'a>> Widget<'a> for GenericWidget<'a, W> {
     fn style(&self) -> Style {
         self.style.clone()
     }
-    fn try_click(&mut self, x: f32, y: f32, width: f32, height: f32) {
+
+    fn try_click(&mut self, area: Rect) {
         let ctx = unsafe { ctx() };
-        let area = crate::Rect::new(x as usize, y as usize, width as usize, height as usize);
         for (button, action, f) in &mut self.handlers {
             match *action {
                 MouseAction::Clicked if clicked(ctx, area, *button) => f(&mut self.widget),
@@ -620,6 +632,10 @@ impl<'a, W: Widget<'a>> Widget<'a> for GenericWidget<'a, W> {
                 _ => {}
             }
         }
+    }
+
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
+        self.widget.draw(commands, area);
     }
 }
 

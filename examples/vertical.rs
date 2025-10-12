@@ -6,11 +6,11 @@ use softui::*;
 fn main() {
     let ctx = unsafe { create_ctx("Softui", 800, 600) };
 
-    let mut r1 = rect().bg(red()).wh(50);
-    let mut r2 = rect().bg(lime()).wh(50);
-    let mut r3 = rect().bg(blue()).wh(50);
-    let mut r4 = rect().bg(rgb(35, 48, 151)).wh(60);
-    let mut texts = [text("test"), text("test2")];
+    // let mut r1 = rect().bg(red()).wh(50);
+    // let mut r2 = rect().bg(lime()).wh(50);
+    // let mut r3 = rect().bg(blue()).wh(50);
+    // let mut r4 = rect().bg(rgb(35, 48, 151)).wh(60);
+    // let mut texts = [text("test"), text("test2")];
 
     //Gap seems wrong between `texts`
     {

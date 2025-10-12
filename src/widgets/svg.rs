@@ -40,23 +40,23 @@ pub struct SvgRef<'a> {
     pub area: Rect,
 }
 
-impl<'a> Widget<'a> for SvgRef<'a> {
-    fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-        //TODO: Just assume the svg exists for now.
-        let pixmap = unsafe { std::mem::transmute::<&'a Pixmap, &'static Pixmap>(self.pixmap) };
-        commands.push(Command {
-            area: self.area,
-            primative: Primative::SVGUnsafe(pixmap),
-        });
-    }
+// impl<'a> Widget<'a> for SvgRef<'a> {
+//     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
+//         //TODO: Just assume the svg exists for now.
+//         let pixmap = unsafe { std::mem::transmute::<&'a Pixmap, &'static Pixmap>(self.pixmap) };
+//         commands.push(Command {
+//             area: self.area,
+//             primative: Primative::SVGUnsafe(pixmap),
+//         });
+//     }
 
-    fn position(&mut self, parent: Rect) {
-        todo!()
-    }
+//     fn position(&mut self, parent: Rect) {
+//         todo!()
+//     }
 
-    fn size_mut(&mut self) -> &mut Size {
-        todo!()
-    }
+//     fn size_mut(&mut self) -> &mut Size {
+//         todo!()
+//     }
 
-    fn size(&mut self, _: Rect) {}
-}
+//     fn size(&mut self, _: Rect) {}
+// }

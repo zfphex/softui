@@ -1,5 +1,7 @@
 #![allow(unused, static_mut_refs)]
 
+use std::cell::Cell;
+
 use softui::taffy_custom::*;
 use softui::{create_ctx, h, v};
 use taffy::Style;
@@ -8,6 +10,8 @@ use window::{Event, Key};
 
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
+
+    let mut data = Cell::new(20);
 
     loop {
         match ctx.event() {
@@ -45,7 +49,12 @@ fn main() {
         // .padding(10)
         // .gap(10);
 
-        let root = v!(rect().wh(100).on_click(Left, |_| println!("Clicked on v!")));
+        let root = v!(rect().wh(100).on_click(Left, |_| {
+            //
+            let data = data.get_mut();
+            *data += 10;
+            println!("Clicked on v! {}", data);
+        }));
 
         unsafe {
             // debug_tree(&TREE, root.node.into());

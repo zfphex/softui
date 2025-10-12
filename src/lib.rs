@@ -42,9 +42,6 @@ pub use scaling::*;
 pub use style::*;
 pub mod style;
 
-pub use unit::*;
-pub mod unit;
-
 pub use platform::MouseButton::*;
 
 pub trait IntoF32 {
@@ -218,6 +215,7 @@ pub unsafe fn create_ctx_ex(title: &str, window: Pin<Box<Window>>) -> &'static m
 pub struct Context {
     pub window: Pin<Box<Window>>,
     pub fill_color: Color,
+    pub commands: Vec<Command>,
 }
 
 impl Context {
@@ -227,7 +225,11 @@ impl Context {
 
         let fill_color = black();
         window.buffer.fill(fill_color.as_u32());
-        Self { window, fill_color }
+        Self {
+            window,
+            fill_color,
+            commands: Vec::new(),
+        }
     }
 
     // #[inline]
@@ -264,37 +266,40 @@ impl Context {
         //TODO: Currently if the area is (0, 0) the layout system will crash instead of rendering correctly the next frame.
         self.update_area();
 
-        while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
+        // while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
+        let commands = self.commands.as_ptr();
+        for i in 0..self.commands.len() {
+            let cmd = unsafe { (&*commands.add(i)) };
             let x = cmd.area.x;
             let y = cmd.area.y;
             let width = cmd.area.width;
             let height = cmd.area.height;
 
-            match cmd.primative {
+            match &cmd.primative {
                 //This should idealy have a z index/depth parameter.
                 // Command::Rectangle(x, y, width, height, color) => {
                 //     self.draw_rectangle(x, y, width, height, color);
                 // }
                 Primative::Ellipse(radius, color) => {
-                    if radius == 0 {
-                        self.draw_rectangle(x, y, width, height, color);
+                    if *radius == 0 {
+                        self.draw_rectangle(x, y, width, height, *color);
                     } else {
-                        self.draw_rectangle_rounded(x, y, width, height, color, radius);
+                        self.draw_rectangle_rounded(x, y, width, height, *color, *radius);
                     }
                 }
                 Primative::RectangleOutline(color) => {
-                    self.draw_rectangle_outline(x, y, width, height, color);
+                    self.draw_rectangle_outline(x, y, width, height, *color);
                 }
                 Primative::Text(text, font_size, color) => {
                     //TODO: Specify the font with a font database and font ID.
                     let font = default_font().unwrap();
-                    self.draw_text(&text, font, cmd.area.x, cmd.area.y, font_size, 0, color);
+                    self.draw_text(text, font, cmd.area.x, cmd.area.y, *font_size, 0, *color);
                 }
                 // Primative::CustomBoxed(f) => f(self),
                 // Primative::Custom(f, data) => f(self, data),
                 #[cfg(feature = "image")]
                 Primative::ImageUnsafe(bitmap, image_format) => {
-                    self.draw_image(x, y, width, height, bitmap, image_format);
+                    self.draw_image(x, y, width, height, bitmap, *image_format);
                 }
                 #[cfg(feature = "svg")]
                 Primative::SVGUnsafe(pixmap) => {
@@ -304,6 +309,9 @@ impl Context {
                 Primative::Custom(f) => f(self, cmd.area),
             }
         }
+
+        let _ = commands;
+        self.commands.clear();
 
         self.window.draw();
         //Draw the UI on top of the background not the other way round!
