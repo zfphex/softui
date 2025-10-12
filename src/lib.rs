@@ -241,6 +241,35 @@ impl Context {
         self.window.event_blocking()
     }
 
+    pub fn draw_layout(&mut self, print: &mut bool, root: Container<'static>) {
+        unsafe {
+            let node = root.node();
+
+            //HACK: Currently the root node is not layed out correctly.
+            TREE[node].widget = Some(Box::new(root));
+
+            // if print {
+            //     debug_tree(&TREE, node.into());
+            // }
+
+            let window_size = taffy::Size {
+                width: taffy::AvailableSpace::Definite(self.window.width() as f32),
+                height: taffy::AvailableSpace::Definite(self.window.height() as f32),
+            };
+
+            taffy::compute_root_layout(&mut TREE, node.into(), window_size);
+
+            if *print {
+                taffy::print_tree(&TREE, node.into());
+                *print = false;
+            }
+
+            draw_tree(self, &mut TREE, node, 0.0, 0.0);
+        }
+
+        unsafe { TREE.clear() };
+    }
+
     //TODO: There is no support for depth.
     pub fn draw_frame(&mut self) {
         profile!();

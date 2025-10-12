@@ -111,7 +111,6 @@ impl<'a> Tree<'a> {
     pub unsafe fn as_mut_slice(&self) -> &mut [Node<'a>] {
         unsafe { (&mut *self.items.get()).as_mut_slice() }
     }
-
     pub fn len(&self) -> usize {
         unsafe { (*self.items.get()).len() }
     }

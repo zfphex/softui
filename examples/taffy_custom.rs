@@ -5,9 +5,7 @@ use softui::*;
 
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
-
     let mut data = Cell::new(20);
-
     let mut print = true;
 
     loop {
@@ -15,11 +13,6 @@ fn main() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
-
-        let window_size = taffy::Size {
-            width: taffy::AvailableSpace::Definite(ctx.window.width() as f32),
-            height: taffy::AvailableSpace::Definite(ctx.window.height() as f32),
-        };
 
         // let root = rect().wh(100).add_node();
         // let root = Container::new(root, Default::default());
@@ -61,29 +54,11 @@ fn main() {
 
         // );
 
-        let root = v!(rect().wh(100), rect().wh(200)).gap(20).on_click(Left, |_| println!("HI!!!!!!!"));
+        let root = v!(rect().wh(100), rect().wh(200))
+            .gap(20)
+            .on_click(Left, |_| println!("HI!!!!!!!"));
 
-        unsafe {
-            let node = root.node();
-
-            //HACK: Currently the root node is not layed out correctly.
-            TREE[node].widget = Some(Box::new(root));
-
-            // if print {
-            //     debug_tree(&TREE, node.into());
-            // }
-
-            taffy::compute_root_layout(&mut TREE, node.into(), window_size);
-
-            if print {
-                taffy::print_tree(&TREE, node.into());
-                print = false;
-            }
-
-            draw_tree(&mut ctx, &mut TREE, node, 0.0, 0.0);
-        }
-
-        unsafe { TREE.clear() };
+        ctx.draw_layout(&mut print, root);
         ctx.draw_frame();
     }
 }
