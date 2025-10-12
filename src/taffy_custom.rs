@@ -357,15 +357,19 @@ impl Container {
 
         self
     }
+    //TODO: What do I do here :(
+    // pub fn on_click<'a, W: Widget<'a>>(mut self, button: crate::MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {}
 }
 
 impl<'a> Widget<'a> for Container {
     fn layout(&self) -> TaffyLayout {
         self.layout.clone()
     }
+
     fn is_container(&self) -> bool {
         true
     }
+
     fn node(&self) -> usize {
         self.node
     }
@@ -602,6 +606,10 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
 impl<'a, W: Widget<'a>> Widget<'a> for GenericWidget<'a, W> {
     fn layout(&self) -> TaffyLayout {
         self.layout.clone()
+    }
+
+    fn node(&self) -> usize {
+        self.widget.node()
     }
 
     fn style(&self) -> Option<Style> {

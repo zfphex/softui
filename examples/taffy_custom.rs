@@ -44,25 +44,31 @@ fn main() {
         // .padding(10)
         // .gap(10);
 
-        let root = v!(rect()
-            .wh(100)
-            .on_click(Left, |_| {
-                //
-                let data = data.get_mut();
-                *data += 10;
-                println!("Clicked on v! {}", data);
-            })
-            .yellow());
+        // let root = v!(rect()
+        //     .wh(100)
+        //     .on_click(Left, |_| {
+        //         //
+        //         let data = data.get_mut();
+        //         *data += 10;
+        //         println!("Clicked on v! {}", data);
+        //     })
+        //     .yellow());
+
+        //This is a wrapper not a node, wtf, what to do about root node and click stuff???
+        let mut root = h!(rect().wh(100), rect().wh(200))
+            .gap(20)
+            .on_click(Left, |_| println!("HI!!!!!!!"));
 
         unsafe {
-            // debug_tree(&TREE, root.node.into());
+            let node = root.node();
+            // debug_tree(&TREE, node.into());
 
-            taffy::compute_root_layout(&mut TREE, root.node.into(), window_size);
-            // taffy::print_tree(&TREE, root.node.into());
+            taffy::compute_root_layout(&mut TREE, node.into(), window_size);
+            // taffy::print_tree(&TREE, node.into());
             // return;
 
             let mut idx = 0;
-            draw_tree(&mut ctx, &mut TREE, root.node, 0.0, 0.0, &mut idx);
+            draw_tree(&mut ctx, &mut TREE, node, 0.0, 0.0, &mut idx);
         }
 
         unsafe { TREE.clear() };
