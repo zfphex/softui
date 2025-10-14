@@ -67,31 +67,29 @@ fn main() {
 
         let root = v!(
             // rect().w(width).h(rect_height),
-            v!(
-                //
-                text("High performance").w(width).on_click(Left, |_| {
-                    std::thread::spawn(|| high_performance());
-                    current_plan.set("High performance");
-                }),
-            )
-            .w(width)
-            .h(rect_height)
-            //Wrong z-order ???
-            .bg(accent),
-            text("Balanced")
-                .bg(bal)
-                .on_click(Left, |_| {
-                    std::thread::spawn(|| balanced());
-                    current_plan.set("Balanced");
-                })
-                .w(width),
-            text("Power saver")
-                .bg(pws)
-                .on_click(Left, |_| {
-                    std::thread::spawn(|| power_saver());
-                    current_plan.set("Power saver");
-                })
-                .w(width)
+            // v!(
+            //     //
+            //     text("High performance").w(width).on_click(Left, |_| {
+            //         std::thread::spawn(|| high_performance());
+            //         current_plan.set("High performance");
+            //     }),
+            // )
+            // .w(width)
+            // .h(rect_height)
+            // //Wrong z-order ???
+            // .bg(accent),
+            text("High performance").w(width).bg(hp).on_click(Left, |_| {
+                std::thread::spawn(|| high_performance());
+                current_plan.set("High performance");
+            }),
+            text("Balanced").w(width).bg(bal).on_click(Left, |_| {
+                std::thread::spawn(|| balanced());
+                current_plan.set("Balanced");
+            }),
+            text("Power saver").w(width).bg(pws).on_click(Left, |_| {
+                std::thread::spawn(|| power_saver());
+                current_plan.set("Power saver");
+            }),
         )
         // .pl(4)
         .gap(gap);
