@@ -248,7 +248,7 @@ impl Context {
             //HACK: Currently the root node is not layed out correctly.
             TREE[node].widget = Some(Box::new(root));
 
-            // if print {
+            // if *print {
             //     debug_tree(&TREE, node.into());
             // }
 
@@ -277,10 +277,13 @@ impl Context {
         //TODO: Currently if the area is (0, 0) the layout system will crash instead of rendering correctly the next frame.
         self.update_area();
 
-        // while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
-        let commands = self.commands.as_ptr();
-        for i in 0..self.commands.len() {
-            let cmd = unsafe { (&*commands.add(i)) };
+        //TODO: Get rid of all of this code and move onto a new system.
+        let commands = core::mem::take(&mut self.commands);
+        for cmd in commands {
+            unsafe { COMMAND_QUEUE.push(cmd) };
+        }
+
+        while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
             let x = cmd.area.x;
             let y = cmd.area.y;
             let width = cmd.area.width;
@@ -304,7 +307,7 @@ impl Context {
                 Primative::Text(text, font_size, color) => {
                     //TODO: Specify the font with a font database and font ID.
                     let font = default_font().unwrap();
-                    self.draw_text(text, font, cmd.area.x, cmd.area.y, *font_size, 0, *color);
+                    self.draw_text(&text, font, x, y, *font_size, 0, *color);
                 }
                 // Primative::CustomBoxed(f) => f(self),
                 // Primative::Custom(f, data) => f(self, data),
@@ -316,13 +319,12 @@ impl Context {
                 Primative::SVGUnsafe(pixmap) => {
                     self.draw_svg(x, y, pixmap, false);
                 }
-                Primative::CustomAny { data, f } => f(self, cmd.area, &*data),
+                Primative::CustomAny { data, f } => f(self, cmd.area, data),
                 Primative::Custom(f) => f(self, cmd.area),
             }
         }
 
-        let _ = commands;
-        self.commands.clear();
+        // self.commands.clear();
 
         self.window.draw();
         //Draw the UI on top of the background not the other way round!
@@ -723,7 +725,7 @@ impl Context {
         }
 
         let viewport_width = self.window.width();
-        let viewport_height = self.window.area.height;
+        let viewport_height = self.window.height();
 
         let x = scale(x, self.window.display_scale);
         let y = scale(y, self.window.display_scale);

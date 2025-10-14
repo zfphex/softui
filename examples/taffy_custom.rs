@@ -54,9 +54,12 @@ fn main() {
 
         // );
 
-        let root = v!(rect().wh(100), rect().wh(200))
-            .gap(20)
-            .on_click(Left, |_| println!("HI!!!!!!!"));
+        // let root = v!(rect().wh(100), rect().wh(200))
+        //     .gap(20)
+        //     .on_click(Left, |_| println!("HI!!!!!!!"));
+
+        //TODO: Container overrides are a total mess :(
+        let root = v!(v!().w(50).h(50).bg(red()));
 
         ctx.draw_layout(&mut print, root);
         ctx.draw_frame();

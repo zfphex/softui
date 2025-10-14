@@ -126,40 +126,39 @@ impl<'a> Text<'a> {
         self
     }
 }
+impl<'a> Widget<'a> for Text<'a> {
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+        let mut font_color = white();
 
-// impl<'a> Widget<'a> for Text<'a> {
-//     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-//         let mut font_color = white();
+        if let Some(style) = style {
+            if let Some(style_bg) = style.background_color {
+                commands.push(Command {
+                    area,
+                    primative: Primative::Ellipse(0, style_bg),
+                });
+            }
 
-//         if let Some(style) = style {
-//             if let Some(style_bg) = style.background_color {
-//                 commands.push(Command {
-//                     area: self.area,
-//                     primative: Primative::Ellipse(0, style_bg),
-//                 });
-//             }
+            if let Some(style_fg) = style.foreground_color {
+                font_color = style_fg;
+            }
+        }
 
-//             if let Some(style_fg) = style.foreground_color {
-//                 font_color = style_fg;
-//             }
-//         }
+        commands.push(Command {
+            area: area,
+            primative: Primative::Text(self.text.to_string(), self.font_size, font_color),
+        });
+    }
 
-//         commands.push(Command {
-//             area: self.area,
-//             primative: Primative::Text(self.text.to_string(), self.font_size, font_color),
-//         });
-//     }
-
-//     fn position(&mut self, parent: Rect) {
-//         todo!()
-//     }
-
-//     fn size_mut(&mut self) -> &mut Size {
-//         todo!()
-//     }
-
-//     fn size(&mut self, _: Rect) {}
-// }
+    fn layout(&self) -> TaffyLayout {
+        TaffyLayout {
+            size: taffy::Size {
+                width: taffy::Dimension::length(self.area.width as f32),
+                height: taffy::Dimension::length(self.area.height as f32),
+            },
+            ..Default::default()
+        }
+    }
+}
 
 pub struct Atlas {
     pub glyphs: [(fontdue::Metrics, Vec<u8>); 128],

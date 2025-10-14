@@ -42,7 +42,6 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
 
     if let Some(widget) = &mut tree[id].widget {
         let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
-        // println!("{:?}", area);
         widget.draw(&mut ctx.commands, area, widget.style());
         widget.try_click(ctx, area);
     }
@@ -361,13 +360,7 @@ impl<'a> Container<'a> {
 
         self
     }
-    pub fn padding(mut self, padding: impl IntoF32) -> Self {
-        let padding = length(padding.into_f32());
-        self.layout.padding = padding;
-        unsafe { TREE[self.node].layout.padding = padding };
 
-        self
-    }
     //TODO: This is pretty awful.
     pub fn on_click(mut self, button: crate::MouseButton, handler: impl FnMut(&mut Self) + 'a) -> Self {
         self.handlers
@@ -395,6 +388,37 @@ impl<'a> Container<'a> {
             }
         }
     }
+    pub fn pad(mut self, padding: impl IntoF32) -> Self {
+        let padding = length(padding.into_f32());
+        self.layout.padding = padding;
+        unsafe { TREE[self.node].layout.padding = padding };
+        self
+    }
+    //TODO: Cleanup and remove all of these.
+    pub fn pl(mut self, left: impl IntoF32) -> Self {
+        let padding = length(left.into_f32());
+        self.layout.padding.left = padding;
+        unsafe { TREE[self.node].layout.padding.left = padding };
+        self
+    }
+    pub fn pr(mut self, right: impl IntoF32) -> Self {
+        let padding = length(right.into_f32());
+        self.layout.padding.right = padding;
+        unsafe { TREE[self.node].layout.padding.right = padding };
+        self
+    }
+    pub fn pt(mut self, top: impl IntoF32) -> Self {
+        let padding = length(top.into_f32());
+        self.layout.padding.top = padding;
+        unsafe { TREE[self.node].layout.padding.top = padding };
+        self
+    }
+    pub fn pb(mut self, bottom: impl IntoF32) -> Self {
+        let padding = length(bottom.into_f32());
+        self.layout.padding.bottom = padding;
+        unsafe { TREE[self.node].layout.padding.bottom = padding };
+        self
+    }
 }
 
 impl<'a> Widget<'a> for Container<'a> {
@@ -414,7 +438,16 @@ impl<'a> Widget<'a> for Container<'a> {
         self.node
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {}
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+        if let Some(style) = style {
+            if let Some(background_color) = style.background_color {
+                commands.push(Command {
+                    area,
+                    primative: Primative::Ellipse(0, background_color),
+                });
+            }
+        }
+    }
 }
 
 pub fn into_node<'a, T: Widget<'a> + 'a>(widget: T) -> usize {
@@ -475,13 +508,13 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn node(&self) -> usize {
         unreachable!()
     }
-    fn fg(self, fg: Color) -> GenericWidget<'a, Self>
+    fn fg(self, fg: Option<Color>) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
         GenericWidget::new(self).fg(fg)
     }
-    fn bg(self, bg: Color) -> GenericWidget<'a, Self>
+    fn bg(self, bg: Option<Color>) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
@@ -565,6 +598,36 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).fill()
     }
+    fn pad(self, pad: impl IntoF32) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).pad(pad)
+    }
+    fn pl(self, left: impl IntoF32) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).pl(left)
+    }
+    fn pr(self, right: impl IntoF32) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).pr(right)
+    }
+    fn pt(self, top: impl IntoF32) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).pt(top)
+    }
+    fn pb(self, bottom: impl IntoF32) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).pb(bottom)
+    }
     fn on_click<F>(self, button: crate::MouseButton, handler: F) -> GenericWidget<'a, Self>
     where
         Self: Sized,
@@ -586,9 +649,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).on_release(button, handler)
     }
-    fn try_click(&mut self, ctx: &mut Context, area: Rect) {
-        unreachable!()
-    }
+    fn try_click(&mut self, ctx: &mut Context, area: Rect) {}
     fn into_layout(self) -> TaffyLayout
     where
         Self: Sized,
@@ -703,12 +764,12 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
             add_node(self.layout.clone())
         }
     }
-    pub fn fg(mut self, fg: Color) -> Self {
-        self.style.foreground_color = Some(fg);
+    pub fn fg(mut self, fg: impl IntoColor) -> Self {
+        self.style.foreground_color = fg.into_color();
         self
     }
-    pub fn bg(mut self, bg: Color) -> Self {
-        self.style.background_color = Some(bg);
+    pub fn bg(mut self, bg: impl IntoColor) -> Self {
+        self.style.background_color = bg.into_color();
         self
     }
     pub fn w(mut self, w: impl IntoDimension) -> Self {
@@ -763,7 +824,7 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
     pub fn fit(mut self) -> Self {
         todo!()
     }
-    pub fn padding(mut self, padding: impl IntoF32) -> Self {
+    pub fn pad(mut self, padding: impl IntoF32) -> Self {
         let v = padding.into_f32();
         self.layout.padding.left = length(v);
         self.layout.padding.right = length(v);

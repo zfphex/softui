@@ -41,60 +41,65 @@ fn main() {
         }
 
         //Great layout code right here.
-        let hp = Rect::new(0, 0, ctx.window.width(), rect_height);
-        let b = hp.y(font_size + gap);
-        let p = hp.y(2 * (font_size + gap));
+        // let hp = Rect::new(0, 0, ctx.window.width(), rect_height);
+        // let b = hp.y(font_size + gap);
+        // let p = hp.y(2 * (font_size + gap));
 
-        match current_plan.get() {
-            "High performance" => {
-                ctx.draw_rectangle(hp.x, hp.y, hp.width, hp.height, accent);
-            }
-            "Balanced" => {
-                ctx.draw_rectangle(b.x, b.y, b.width, b.height, accent);
-            }
-            "Power saver" => {
-                ctx.draw_rectangle(p.x, p.y, p.width, p.height, accent);
-            }
+        // match current_plan.get() {
+        //     "High performance" => {
+        //         ctx.draw_rectangle(hp.x, hp.y, hp.width, hp.height, accent);
+        //     }
+        //     "Balanced" => {
+        //         ctx.draw_rectangle(b.x, b.y, b.width, b.height, accent);
+        //     }
+        //     "Power saver" => {
+        //         ctx.draw_rectangle(p.x, p.y, p.width, p.height, accent);
+        //     }
+        //     _ => unreachable!(),
+        // }
+
+        let (hp, bal, pws) = match current_plan.get() {
+            "High performance" => (Some(accent), None, None),
+            "Balanced" => (None, Some(accent), None),
+            "Power saver" => (None, None, Some(accent)),
             _ => unreachable!(),
-        }
+        };
 
-        //TODO: I want the flex to fill the viewport 100%
-        //Then I want to fill the text 100% and change the background color.
-        //Currently basic things like this will not work.
-        // flex!(
-        //     text("High performance")
-        //         //TODO: Text padding and margin.
-        //         .w(p.width)
-        //         // .bg(accent)
-        //         //TODO: How to set rectangle border for this bad boy.
-        //         // .bg((current_plan.get() == "High performance")
-        //         //     .then_some(accent)
-        //         //     .unwrap_or_default())
-        //         .on_click(Left, |_| {
-        //             std::thread::spawn(|| high_performance());
-        //             current_plan.set("High performance");
-        //         }),
-        //     text("Balanced")
-        //         .on_click(Left, |_| {
-        //             std::thread::spawn(|| balanced());
-        //             current_plan.set("Balanced");
-        //         })
-        //         .w(p.width),
-        //     text("Power saver")
-        //         .on_click(Left, |_| {
-        //             std::thread::spawn(|| power_saver());
-        //             current_plan.set("Power saver");
-        //         })
-        //         .w(p.width)
-        // )
-        // .direction(FlexDirection::TopBottom)
-        // .gap(gap);
+        let root = v!(
+            // rect().w(width).h(rect_height),
+            v!(
+                //
+                text("High performance").w(width).on_click(Left, |_| {
+                    std::thread::spawn(|| high_performance());
+                    current_plan.set("High performance");
+                }),
+            )
+            .w(width)
+            .h(rect_height)
+            //Wrong z-order ???
+            .bg(accent),
+            text("Balanced")
+                .bg(bal)
+                .on_click(Left, |_| {
+                    std::thread::spawn(|| balanced());
+                    current_plan.set("Balanced");
+                })
+                .w(width),
+            text("Power saver")
+                .bg(pws)
+                .on_click(Left, |_| {
+                    std::thread::spawn(|| power_saver());
+                    current_plan.set("Power saver");
+                })
+                .w(width)
+        )
+        // .pl(4)
+        .gap(gap);
 
-        //TODO: Left pad
-        // .left_pad(4);
         //TODO: How would I add the selection highlight?
         //I need `text().selected(|| {})` and  `text.hover(|| {})` functions
 
+        ctx.draw_layout(&mut false, root);
         ctx.draw_frame();
     }
 }
