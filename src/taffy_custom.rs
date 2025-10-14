@@ -6,7 +6,8 @@ use std::{
 };
 use taffy::{
     compute_cached_layout, compute_flexbox_layout, compute_hidden_layout, prelude::length, AlignItems, AvailableSpace,
-    Cache, CacheTree, Dimension, Display, FlexDirection, Layout, NodeId, PrintTree, Size, TraversePartialTree,
+    BoxSizing, Cache, CacheTree, Dimension, Display, FlexDirection, Layout, NodeId, PrintTree, Size,
+    TraversePartialTree,
 };
 
 pub static mut TREE: Tree = Tree::new();
@@ -419,6 +420,15 @@ impl<'a> Container<'a> {
         unsafe { TREE[self.node].layout.padding.bottom = padding };
         self
     }
+    pub fn fit(mut self) -> Self {
+        self.layout.box_sizing = BoxSizing::ContentBox;
+        self.layout.size = Size {
+            width: Dimension::auto(),
+            height: Dimension::auto(),
+        };
+        unsafe { TREE[self.node].layout = self.layout.clone() };
+        self
+    }
 }
 
 impl<'a> Widget<'a> for Container<'a> {
@@ -561,18 +571,6 @@ pub trait Widget<'a>: std::fmt::Debug {
         Self: Sized,
     {
         GenericWidget::new(self).wh(wh)
-    }
-    fn wfit(self) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).wfit()
-    }
-    fn hfit(self) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).hfit()
     }
     fn fit(self) -> GenericWidget<'a, Self>
     where
@@ -845,14 +843,9 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         self.layout.size.height = Dimension::percent(1.0);
         self
     }
-    pub fn wfit(mut self) -> Self {
-        todo!()
-    }
-    pub fn hfit(mut self) -> Self {
-        todo!()
-    }
     pub fn fit(mut self) -> Self {
-        todo!()
+        self.layout.box_sizing = BoxSizing::ContentBox;
+        self
     }
     pub fn pad(mut self, padding: impl IntoF32) -> Self {
         let v = padding.into_f32();

@@ -59,7 +59,10 @@ fn main() {
         //     .on_click(Left, |_| println!("HI!!!!!!!"));
 
         //TODO: Container overrides are a total mess :(
-        let root = v!(v!().w(50).h(50).bg(red()));
+        // let root = v!(v!().w(50).h(50).bg(red()));
+
+        //TODO: Padding on text did not work?????
+        let root = h!(text("hi there").bg(red()).pad(20)).pad(20).fit();
 
         ctx.draw_layout(&mut print, root);
         ctx.draw_frame();
