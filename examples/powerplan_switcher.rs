@@ -11,16 +11,17 @@ fn main() {
     let width = 360;
     let height = 3 * (font_size as i32 + gap as i32);
 
-    let window = create_window(
-        "Power Plan Switcher",
-        1920 - width,
-        1080 - height,
-        width,
-        height,
-        WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
-    );
+    // let window = create_window(
+    //     "Power Plan Switcher",
+    //     1920 - width,
+    //     1080 - height,
+    //     width,
+    //     height,
+    //     WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
+    // );
+    // let ctx = unsafe { create_ctx_ex("Softui", window) };
 
-    let ctx = unsafe { create_ctx_ex("Softui", window) };
+    let mut ctx = unsafe { create_ctx("Softui", 500, 200) };
     let accent = accent_color();
     ctx.set_fill_color(0x202020.into());
 
@@ -28,6 +29,7 @@ fn main() {
 
     let current_plan = std::cell::Cell::new(current_plan());
 
+    let mut debug = true;
     loop {
         //TODO: If the user didn't click in the window, close the program.
         // match wait_for_global_events() {
@@ -65,39 +67,56 @@ fn main() {
             _ => unreachable!(),
         };
 
+        // let item = v!(rect().w(width).h(rect_height)).pt(12).pr(14);
+        // let list = v!(item).gap(10);
         let root = v!(
-            // rect().w(width).h(rect_height),
-            // v!(
-            //     //
-            //     text("High performance").w(width).on_click(Left, |_| {
-            //         std::thread::spawn(|| high_performance());
-            //         current_plan.set("High performance");
-            //     }),
-            // )
-            // .w(width)
-            // .h(rect_height)
-            // //Wrong z-order ???
-            // .bg(accent),
-            text("High performance").w(width).bg(hp).on_click(Left, |_| {
-                std::thread::spawn(|| high_performance());
-                current_plan.set("High performance");
-            }),
-            text("Balanced").w(width).bg(bal).on_click(Left, |_| {
-                std::thread::spawn(|| balanced());
-                current_plan.set("Balanced");
-            }),
-            text("Power saver").w(width).bg(pws).on_click(Left, |_| {
-                std::thread::spawn(|| power_saver());
-                current_plan.set("Power saver");
-            }),
+            //
+            v!(
+                //TODO: Does not work.
+                // v!(text("hi there")).h(20).w(100),
+                //TODO: Taking up too much space.
+                v!(text("hi there")),
+                rect().h(20).w(100),
+                rect().h(20).w(100),
+                rect().h(20).w(100)
+            )
+            .gap(10)
         )
-        // .pl(4)
-        .gap(gap);
+        .pad(10);
+
+        // let root = v!(
+        //     // rect().w(width).h(rect_height),
+        //     // v!(
+        //     //     //
+        //     //     text("High performance").w(width).on_click(Left, |_| {
+        //     //         std::thread::spawn(|| high_performance());
+        //     //         current_plan.set("High performance");
+        //     //     }),
+        //     // )
+        //     // .w(width)
+        //     // .h(rect_height)
+        //     // //Wrong z-order ???
+        //     // .bg(accent),
+        //     text("High performance").w(width).bg(hp).on_click(Left, |_| {
+        //         std::thread::spawn(|| high_performance());
+        //         current_plan.set("High performance");
+        //     }),
+        //     text("Balanced").w(width).bg(bal).on_click(Left, |_| {
+        //         std::thread::spawn(|| balanced());
+        //         current_plan.set("Balanced");
+        //     }),
+        //     text("Power saver").w(width).bg(pws).on_click(Left, |_| {
+        //         std::thread::spawn(|| power_saver());
+        //         current_plan.set("Power saver");
+        //     }),
+        // )
+        // // .pl(4)
+        // .gap(gap);
 
         //TODO: How would I add the selection highlight?
         //I need `text().selected(|| {})` and  `text.hover(|| {})` functions
 
-        ctx.draw_layout(&mut false, root);
+        ctx.draw_layout(&mut debug, root);
         ctx.draw_frame();
     }
 }

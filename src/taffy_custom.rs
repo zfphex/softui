@@ -508,13 +508,13 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn node(&self) -> usize {
         unreachable!()
     }
-    fn fg(self, fg: Option<Color>) -> GenericWidget<'a, Self>
+    fn fg(self, fg: impl IntoColor) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
         GenericWidget::new(self).fg(fg)
     }
-    fn bg(self, bg: Option<Color>) -> GenericWidget<'a, Self>
+    fn bg(self, bg: impl IntoColor) -> GenericWidget<'a, Self>
     where
         Self: Sized,
     {
@@ -627,6 +627,36 @@ pub trait Widget<'a>: std::fmt::Debug {
         Self: Sized,
     {
         GenericWidget::new(self).pb(bottom)
+    }
+    fn margin(self, margin: impl IntoF32) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).margin(margin)
+    }
+    fn ml(self, left: impl IntoF32) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).ml(left)
+    }
+    fn mr(self, right: impl IntoF32) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).mr(right)
+    }
+    fn mt(self, top: impl IntoF32) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).mt(top)
+    }
+    fn mb(self, bottom: impl IntoF32) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+    {
+        GenericWidget::new(self).mb(bottom)
     }
     fn on_click<F>(self, button: crate::MouseButton, handler: F) -> GenericWidget<'a, Self>
     where
@@ -826,10 +856,7 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
     }
     pub fn pad(mut self, padding: impl IntoF32) -> Self {
         let v = padding.into_f32();
-        self.layout.padding.left = length(v);
-        self.layout.padding.right = length(v);
-        self.layout.padding.top = length(v);
-        self.layout.padding.bottom = length(v);
+        self.layout.padding = length(v);
         self
     }
     pub fn pl(mut self, left: impl IntoF32) -> Self {
@@ -846,6 +873,27 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
     }
     pub fn pb(mut self, bottom: impl IntoF32) -> Self {
         self.layout.padding.bottom = length(bottom.into_f32());
+        self
+    }
+    pub fn margin(mut self, margin: impl IntoF32) -> Self {
+        let v = margin.into_f32();
+        self.layout.margin = length(v);
+        self
+    }
+    pub fn ml(mut self, left: impl IntoF32) -> Self {
+        self.layout.margin.left = length(left.into_f32());
+        self
+    }
+    pub fn mr(mut self, right: impl IntoF32) -> Self {
+        self.layout.margin.right = length(right.into_f32());
+        self
+    }
+    pub fn mt(mut self, top: impl IntoF32) -> Self {
+        self.layout.margin.top = length(top.into_f32());
+        self
+    }
+    pub fn mb(mut self, bottom: impl IntoF32) -> Self {
+        self.layout.margin.bottom = length(bottom.into_f32());
         self
     }
     pub fn on_click(mut self, button: crate::MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
