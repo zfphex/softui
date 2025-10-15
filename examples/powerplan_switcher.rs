@@ -19,7 +19,7 @@ fn main() {
     //     height,
     //     WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
     // );
-    // let ctx = unsafe { create_ctx_ex("Softui", window) };
+    // let mut ctx = unsafe{ create_ctx_ex("Softui", window) };
 
     let mut ctx = unsafe { create_ctx("Softui", 500, 200) };
     let accent = accent_color();

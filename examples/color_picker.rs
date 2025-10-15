@@ -75,7 +75,7 @@ fn main() {
         let thread = std::thread::spawn(|| capture_virtual_screen());
         let style = WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
         let window = create_window("Color Picker", 0, 0, WIDTH + 1, HEIGHT + 1, style);
-        let ctx = create_ctx_ex("Color Picker", window);
+        let mut ctx = Context::new("Color Picker", window);
 
         let mut zoom = 0;
         let mut zwin = create_window(

@@ -1,7 +1,7 @@
 use softui::*;
 
 fn main() {
-    let ctx = unsafe { create_ctx("Softui", 800, 600) };
+    let mut ctx = unsafe{ create_ctx("Softui", 800, 600) };
 
     loop {
         match ctx.event() {

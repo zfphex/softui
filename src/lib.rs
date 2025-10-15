@@ -139,10 +139,6 @@ pub const unsafe fn extend_lifetime<'a, T>(t: &'a T) -> &'static T {
     std::mem::transmute::<&'a T, &'static T>(t)
 }
 
-//TODO: Rework the global context.
-//Use atomics and support multiple windows.
-pub static mut CTX: Option<Context> = None;
-
 pub static mut WIDTH: AtomicUsize = AtomicUsize::new(0);
 pub static mut HEIGHT: AtomicUsize = AtomicUsize::new(0);
 
@@ -154,12 +150,7 @@ pub fn ctx_height() -> usize {
     unsafe { HEIGHT.load(Ordering::Relaxed) }
 }
 
-#[inline]
-pub unsafe fn ctx() -> &'static mut Context {
-    unsafe { CTX.as_mut().unwrap() }
-}
-
-pub unsafe fn create_ctx(title: &str, width: usize, height: usize) -> &'static mut Context {
+pub unsafe fn create_ctx(title: &str, width: usize, height: usize) -> Context {
     unsafe {
         #[cfg(target_os = "windows")]
         let window = create_window(title, 0, 0, width as i32, height as i32, WindowStyle::DEFAULT);
@@ -179,17 +170,7 @@ pub unsafe fn create_ctx(title: &str, width: usize, height: usize) -> &'static m
 
         //Update the atomics with the correct area.
         context.update_area();
-
-        CTX = Some(context);
-        CTX.as_mut().unwrap()
-    }
-}
-
-//TODO: Consolidate, can't be bothered fixing all the other functions that don't take style into account.
-pub unsafe fn create_ctx_ex(title: &str, window: Pin<Box<Window>>) -> &'static mut Context {
-    unsafe {
-        CTX = Some(Context::new(title, window));
-        CTX.as_mut().unwrap()
+        context
     }
 }
 
@@ -1057,7 +1038,7 @@ mod tests {
     #[test]
     #[cfg(not(target_os = "macos"))]
     fn rectangle() {
-        let ctx = unsafe { create_ctx("Softui", 800, 600) };
+        let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
 
         //Rectangle
         {
