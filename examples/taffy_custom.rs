@@ -7,7 +7,6 @@ fn main() {
     mini::defer_results!();
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
     let mut data = Cell::new(20);
-    let mut print = true;
     let current_plan = std::cell::Cell::new("Power saver");
 
     loop {
@@ -144,7 +143,7 @@ fn main() {
         //
         ;
 
-        ctx.draw_layout(&mut print, root);
+        ctx.draw_layout(root);
         ctx.draw_frame();
     }
 }

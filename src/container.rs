@@ -58,6 +58,11 @@ impl<'a> Container<'a> {
         self
     }
 
+    pub fn on_hover(mut self, func: impl FnMut(&mut Self) + 'a) -> Self {
+        self.handlers
+            .push((MouseButton::Left, MouseAction::Hover, Box::new(func)));
+        self
+    }
     //TODO: This is pretty awful.
     pub fn on_click(mut self, button: crate::MouseButton, handler: impl FnMut(&mut Self) + 'a) -> Self {
         self.handlers
@@ -81,6 +86,7 @@ impl<'a> Container<'a> {
                 MouseAction::Clicked if clicked(ctx, area, button) => f(self),
                 MouseAction::Pressed if pressed(ctx, area, button) => f(self),
                 MouseAction::Released if released(ctx, area, button) => f(self),
+                MouseAction::Hover if hover(ctx, area) => f(self),
                 _ => {}
             }
         }

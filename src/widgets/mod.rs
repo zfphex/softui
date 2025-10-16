@@ -28,7 +28,6 @@ pub use dwrite::*;
 pub mod generic;
 pub use generic::*;
 
-
 use crate::*;
 
 pub trait Widget<'a>: std::fmt::Debug {
@@ -181,26 +180,33 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).mb(bottom)
     }
-    fn on_click<F>(self, button: crate::MouseButton, handler: F) -> GenericWidget<'a, Self>
+    fn on_hover<F>(self, func: F) -> GenericWidget<'a, Self>
     where
         Self: Sized,
         F: FnMut(&mut Self) + 'a,
     {
-        GenericWidget::new(self).on_click(button, handler)
+        GenericWidget::new(self).on_hover(func)
     }
-    fn on_press<F>(self, button: crate::MouseButton, handler: F) -> GenericWidget<'a, Self>
+    fn on_click<F>(self, button: MouseButton, func: F) -> GenericWidget<'a, Self>
     where
         Self: Sized,
         F: FnMut(&mut Self) + 'a,
     {
-        GenericWidget::new(self).on_press(button, handler)
+        GenericWidget::new(self).on_click(button, func)
     }
-    fn on_release<F>(self, button: crate::MouseButton, handler: F) -> GenericWidget<'a, Self>
+    fn on_press<F>(self, button: MouseButton, func: F) -> GenericWidget<'a, Self>
     where
         Self: Sized,
         F: FnMut(&mut Self) + 'a,
     {
-        GenericWidget::new(self).on_release(button, handler)
+        GenericWidget::new(self).on_press(button, func)
+    }
+    fn on_release<F>(self, button: MouseButton, func: F) -> GenericWidget<'a, Self>
+    where
+        Self: Sized,
+        F: FnMut(&mut Self) + 'a,
+    {
+        GenericWidget::new(self).on_release(button, func)
     }
     fn try_click(&mut self, _: &mut Context, _: Rect) {}
     fn into_layout(self) -> TaffyLayout

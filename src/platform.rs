@@ -8,6 +8,7 @@ pub enum MouseAction {
     Pressed,
     Released,
     Clicked,
+    Hover,
 }
 
 pub fn convert_button_to_state<'a>(ctx: &'a mut Context, button: MouseButton) -> &'a mut MouseButtonState {
@@ -49,6 +50,14 @@ pub fn released(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
     }
 
     convert_button_to_state(ctx, button).is_released()
+}
+
+pub fn hover(ctx: &mut Context, area: Rect) -> bool {
+    if !ctx.window.mouse_position.intersects(area) {
+        return false;
+    }
+
+    true
 }
 
 #[cfg(target_os = "macos")]
@@ -135,6 +144,10 @@ pub mod macos {
         }
 
         pub fn vsync(&mut self) {}
+
+        pub const fn focused(&self) -> bool {
+            true
+        }
 
         #[inline(always)]
         pub fn width(&self) -> usize {

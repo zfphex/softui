@@ -45,26 +45,18 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
 
     if let Some(widget) = &mut tree[id].widget {
         let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
-        widget.draw(&mut ctx.commands, area, widget.style());
+        //Click before drawing, since the user may want to modify something about the widget.
         widget.try_click(ctx, area);
-    }
-
-    let children = std::mem::take(&mut tree[id].children);
-    if !children.is_empty() {
-        for child in children {
-            draw_tree(ctx, tree, child, abs_x, abs_y);
-        }
+        widget.draw(&mut ctx.commands, area, widget.style());
     }
 
     //TODO: Maybe do this better.
-
-    // let len = tree[id].children.len();
-    // let children = &mut tree[id].children.as_ptr();
-
-    // for i in 0..len {
-    //     let child = unsafe { children.add(i) };
-    //     draw_tree(ctx, tree, unsafe { *child }, abs_x, abs_y);
-    // }
+    let len = tree[id].children.len();
+    let children = &mut tree[id].children.as_ptr();
+    for i in 0..len {
+        let child = unsafe { children.add(i) };
+        draw_tree(ctx, tree, unsafe { *child }, abs_x, abs_y);
+    }
 }
 
 pub fn add_node(layout: TaffyLayout) -> usize {

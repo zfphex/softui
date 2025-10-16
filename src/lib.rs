@@ -151,9 +151,9 @@ pub unsafe fn create_ctx(title: &str, width: usize, height: usize) -> Context {
         let window = create_window(title, 0, 0, width as i32, height as i32, WindowStyle::DEFAULT);
 
         #[cfg(target_os = "macos")]
-        let window = Box::pin(Window::new(title, width, height));
+        let window = Box::pin(Window::new(width, height));
 
-        let mut context = Context::new(title, window);
+        let mut context = Context::new(window);
 
         #[cfg(target_os = "macos")]
         //HACK: Draw the frame twice to (prime it or something?)
@@ -174,10 +174,12 @@ pub struct Context {
     pub window: Pin<Box<Window>>,
     pub fill_color: Color,
     pub commands: Vec<Command>,
+    //Store the root node for debugging.
+    pub debug_node: Option<usize>,
 }
 
 impl Context {
-    pub fn new(title: &str, mut window: Pin<Box<Window>>) -> Self {
+    pub fn new(mut window: Pin<Box<Window>>) -> Self {
         //TODO: Remove me.
         load_default_font();
 
@@ -187,6 +189,9 @@ impl Context {
             window,
             fill_color,
             commands: Vec::new(),
+            //Set the node to a random number, then when it's None
+            //never read it again.
+            debug_node: Some(0),
         }
     }
 
@@ -217,16 +222,16 @@ impl Context {
         self.window.event_blocking()
     }
 
-    pub fn draw_layout(&mut self, print: &mut bool, root: Container<'static>) {
+    pub fn draw_layout(&mut self, root: Container<'static>) {
         unsafe {
             let node = root.node();
 
+            if self.debug_node.is_some() {
+                self.debug_node = Some(node);
+            }
+
             //HACK: Currently the root node is not layed out correctly.
             TREE[node].widget = Some(Box::new(root));
-
-            // if *print {
-            //     debug_tree(&TREE, node.into());
-            // }
 
             let window_size = taffy::Size {
                 width: taffy::AvailableSpace::Definite(self.window.width() as f32),
@@ -235,20 +240,24 @@ impl Context {
 
             taffy::compute_root_layout(&mut TREE, node.into(), window_size);
 
-            if *print {
-                taffy::print_tree(&TREE, node.into());
-                *print = false;
-            }
-
             draw_tree(self, &mut TREE, node, 0.0, 0.0);
         }
+    }
 
-        unsafe { TREE.clear() };
+    ///Call this after layout
+    pub fn debug_layout(&mut self) {
+        if let Some(node) = self.debug_node {
+            unsafe { taffy::print_tree(&TREE, node.into()) };
+            self.debug_node = None;
+        }
     }
 
     //TODO: There is no support for depth.
     pub fn draw_frame(&mut self) {
         profile!();
+
+        //Clear the tree here, instead of in draw layout, so that people can debug first.
+        unsafe { TREE.clear() };
 
         //TODO: Currently if the area is (0, 0) the layout system will crash instead of rendering correctly the next frame.
         self.update_area();
@@ -1023,6 +1032,10 @@ impl Context {
     #[inline]
     pub fn clicked_mouse5(&mut self, area: Rect) -> bool {
         self.window.mouse_5.clicked(area)
+    }
+
+    pub fn focused(&self) -> bool {
+        self.window.focused()
     }
 }
 

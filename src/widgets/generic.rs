@@ -53,6 +53,7 @@ impl<'a, W: Widget<'a>> Widget<'a> for GenericWidget<'a, W> {
                 MouseAction::Clicked if clicked(ctx, area, *button) => f(&mut self.widget),
                 MouseAction::Pressed if pressed(ctx, area, *button) => f(&mut self.widget),
                 MouseAction::Released if released(ctx, area, *button) => f(&mut self.widget),
+                MouseAction::Hover if hover(ctx, area) => f(&mut self.widget),
                 _ => {}
             }
         }
@@ -176,19 +177,21 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         self.layout.margin.bottom = length(bottom.into_f32());
         self
     }
-    pub fn on_click(mut self, button: crate::MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
+    pub fn on_hover(mut self, func: impl FnMut(&mut W) + 'a) -> Self {
         self.handlers
-            .push((button, crate::MouseAction::Clicked, Box::new(handler)));
+            .push((MouseButton::Left, MouseAction::Hover, Box::new(func)));
         self
     }
-    pub fn on_press(mut self, button: crate::MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers
-            .push((button, crate::MouseAction::Pressed, Box::new(handler)));
+    pub fn on_click(mut self, button: MouseButton, func: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, MouseAction::Clicked, Box::new(func)));
         self
     }
-    pub fn on_release(mut self, button: crate::MouseButton, handler: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers
-            .push((button, crate::MouseAction::Released, Box::new(handler)));
+    pub fn on_press(mut self, button: MouseButton, func: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, MouseAction::Pressed, Box::new(func)));
+        self
+    }
+    pub fn on_release(mut self, button: MouseButton, func: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, MouseAction::Released, Box::new(func)));
         self
     }
     pub fn into_layout(self) -> TaffyLayout

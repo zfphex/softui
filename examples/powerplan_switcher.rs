@@ -1,129 +1,88 @@
 #![allow(unused)]
 #[cfg(target_os = "windows")]
 fn main() {
+    use std::cell::Cell;
+
     use softui::*;
     use windows::*;
 
-    let gap = 10;
-    let font_size = 20;
-    let rect_height = 30;
+    const WIDTH: i32 = 360;
+    const HEIGHT: i32 = 141;
+    const TASK_BAR_HEIGHT: i32 = 40;
+    const HP: &str = "High performance";
+    const BL: &str = "Balanced";
+    const PS: &str = "Power saver";
+    const BACKGROUND: Color = hex("#1c1c1c");
+    const HOVER: Color = hex("#423c4a");
+    const PADDING: usize = 13;
 
-    let width = 360;
-    let height = 3 * (font_size as i32 + gap as i32);
+    let window = create_window(
+        "Power Plan Switcher",
+        1920 - WIDTH,
+        1080 - HEIGHT - TASK_BAR_HEIGHT,
+        WIDTH,
+        HEIGHT,
+        WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
+    );
 
-    // let window = create_window(
-    //     "Power Plan Switcher",
-    //     1920 - width,
-    //     1080 - height,
-    //     width,
-    //     height,
-    //     WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
-    // );
-    // let mut ctx = unsafe{ create_ctx_ex("Softui", window) };
-
-    let mut ctx = unsafe { create_ctx("Softui", 500, 200) };
-    let accent = accent_color();
+    let mut ctx = Context::new(window);
+    let accent = Color::from(accent_color());
     ctx.set_fill_color(0x202020.into());
+    set_default_font_size(16);
 
-    set_default_font_size(font_size);
+    //TODO: Close after a delay.
+    // let end = false;
+    let mode = Cell::new(current_plan());
 
-    let current_plan = std::cell::Cell::new(current_plan());
-
-    let mut debug = true;
     loop {
-        //TODO: If the user didn't click in the window, close the program.
-        // match wait_for_global_events() {
-        //     Some(Event::Input(Key::LeftMouseDown, _)) => {}
-        //     _ => {}
-        // }
+        //Close the program if the window loses focus.
+        if !ctx.focused() {
+            break;
+        }
 
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
 
-        //Great layout code right here.
-        // let hp = Rect::new(0, 0, ctx.window.width(), rect_height);
-        // let b = hp.y(font_size + gap);
-        // let p = hp.y(2 * (font_size + gap));
+        fn item<'a>(
+            plan: &'static str,
+            accent: Color,
+            mode: &'a Cell<&'static str>,
+            selected: bool,
+            change_plan: fn() -> (),
+        ) -> Container<'a> {
+            let m = mode;
+            let change_plan = change_plan;
+            fit!(text(plan).w(WIDTH))
+                .on_click(Left, move |_| {
+                    std::thread::spawn(change_plan);
+                    m.set(plan);
+                })
+                .on_hover(move |fit| {
+                    if !selected {
+                        fit.style.background_color = Some(HOVER);
+                    }
+                })
+                .bg(if selected { Some(accent) } else { None })
+                .pad(PADDING)
+        }
 
-        // match current_plan.get() {
-        //     "High performance" => {
-        //         ctx.draw_rectangle(hp.x, hp.y, hp.width, hp.height, accent);
-        //     }
-        //     "Balanced" => {
-        //         ctx.draw_rectangle(b.x, b.y, b.width, b.height, accent);
-        //     }
-        //     "Power saver" => {
-        //         ctx.draw_rectangle(p.x, p.y, p.width, p.height, accent);
-        //     }
-        //     _ => unreachable!(),
-        // }
-
-        let (hp, bal, pws) = match current_plan.get() {
-            "High performance" => (Some(accent), None, None),
-            "Balanced" => (None, Some(accent), None),
-            "Power saver" => (None, None, Some(accent)),
-            _ => unreachable!(),
-        };
-
-        // let item = v!(rect().w(width).h(rect_height)).pt(12).pr(14);
-        // let list = v!(item).gap(10);
         let root = v!(
-            //
-            v!(
-                //TODO: Does not work.
-                // v!(text("hi there")).h(20).w(100),
-                //TODO: Taking up too much space.
-                v!(text("hi there")),
-                rect().h(20).w(100),
-                rect().h(20).w(100),
-                rect().h(20).w(100)
-            )
-            .gap(10)
+            item(HP, accent, &mode, mode.get() == HP, high_performance),
+            item(BL, accent, &mode, mode.get() == BL, balanced),
+            item(PS, accent, &mode, mode.get() == PS, power_saver)
         )
-        .pad(10);
+        .bg(BACKGROUND);
 
-        // let root = v!(
-        //     // rect().w(width).h(rect_height),
-        //     // v!(
-        //     //     //
-        //     //     text("High performance").w(width).on_click(Left, |_| {
-        //     //         std::thread::spawn(|| high_performance());
-        //     //         current_plan.set("High performance");
-        //     //     }),
-        //     // )
-        //     // .w(width)
-        //     // .h(rect_height)
-        //     // //Wrong z-order ???
-        //     // .bg(accent),
-        //     text("High performance").w(width).bg(hp).on_click(Left, |_| {
-        //         std::thread::spawn(|| high_performance());
-        //         current_plan.set("High performance");
-        //     }),
-        //     text("Balanced").w(width).bg(bal).on_click(Left, |_| {
-        //         std::thread::spawn(|| balanced());
-        //         current_plan.set("Balanced");
-        //     }),
-        //     text("Power saver").w(width).bg(pws).on_click(Left, |_| {
-        //         std::thread::spawn(|| power_saver());
-        //         current_plan.set("Power saver");
-        //     }),
-        // )
-        // // .pl(4)
-        // .gap(gap);
-
-        //TODO: How would I add the selection highlight?
-        //I need `text().selected(|| {})` and  `text.hover(|| {})` functions
-
-        ctx.draw_layout(&mut debug, root);
+        ctx.draw_layout(root);
+        ctx.debug_layout();
         ctx.draw_frame();
     }
 }
 
 #[cfg(target_os = "windows")]
 mod windows {
-
     use softui::*;
 
     const GUID_MAX_POWER_SAVINGS: GUID = GUID::from_u128(0xa1841308_3541_4fab_bc81_f71556f20b4a);
@@ -134,8 +93,6 @@ mod windows {
     unsafe extern "system" {
         pub fn PowerSetActiveScheme(UserRootPowerKey: *mut c_void, SchemeGuid: *const GUID) -> u32;
         pub fn PowerGetActiveScheme(UserRootPowerKey: *mut c_void, ActivePolicyGuid: *mut *mut GUID) -> u32;
-        //TODO: Move into window, could be useful for users.
-        pub fn DwmGetColorizationColor(pcrColorization: *mut DWORD, pfOpaqueBlend: *mut BOOL) -> i32;
     }
 
     pub fn high_performance() {
@@ -161,18 +118,6 @@ mod windows {
                 GUID_TYPICAL_POWER_SAVINGS => "Balanced",
                 _ => unreachable!(),
             }
-        }
-    }
-
-    pub fn accent_color() -> Color {
-        unsafe {
-            let mut color = core::mem::zeroed();
-            let mut blend = core::mem::zeroed();
-            assert!(DwmGetColorizationColor(&mut color, &mut blend) == 0);
-            let r = (color & 0xFF) as u8;
-            let g = ((color >> 8) & 0xFF) as u8;
-            let b = ((color >> 16) & 0xFF) as u8;
-            Color::new(b, g, r)
         }
     }
 }

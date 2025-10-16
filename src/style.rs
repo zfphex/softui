@@ -74,8 +74,13 @@ impl<'a, W: Widget<'a>> StyleBuilder<'a> for GenericWidget<'a, W> {
 }
 
 #[inline(always)]
-pub fn hex(color: &str) -> Color {
-    Color::from(u32::from_str_radix(color.trim_start_matches("#"), 16).unwrap())
+pub const fn hex(color: &str) -> Color {
+    if let Ok(hex) = u32::from_str_radix(color.split_at(1).1, 16) {
+        Color::from(hex)
+    } else {
+        //TODO: Const panic here?
+        Color::default()
+    }
 }
 
 #[inline(always)]
