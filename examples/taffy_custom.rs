@@ -62,21 +62,38 @@ fn main() {
 
         //TODO: Padding on text did not work?????
         // let root = h!(text("example text").bg(red()).pad(20)).fit();
-        let size = 40;
 
-        let root = v!(
-            h!(rect().wh(size), rect().wh(size), rect().wh(size))
-                .gap(size)
-                .bg(green())
-                .fit()
-                .pad(20),
-            rect().wh(size),
-            rect().wh(size),
+        // let size = 40;
+        // let root = v!(
+        //     h!(rect().wh(size), rect().wh(size), rect().wh(size))
+        //         .gap(size)
+        //         .bg(green())
+        //         .fit()
+        //         .pad(20),
+        //     rect().wh(size),
+        //     rect().wh(size),
+        // )
+        // .bg(red())
+        // .gap(size)
+        // .fit()
+        // .pad(20);
+
+        // let root = fit!(text("example text").bg(red())).pad(10).bg(gray());
+
+        //Should have a height of 60.
+
+        let root = fit!(
+            //TODO: Text doesn't know anything about padding.
+            //When it's rendered it just draws the text.
+            //It really shouldn't have a bg function.
+            fit!(
+                //
+                text("Example text")
+            ).pad(20).bg(red())
         )
-        .bg(red())
-        .gap(size)
-        .fit()
-        .pad(20);
+        .pad(20)
+        .bg(gray());
+
 
         ctx.draw_layout(&mut print, root);
         ctx.draw_frame();
