@@ -41,13 +41,22 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
     let width = tree[id].final_layout.size.width;
     let height = tree[id].final_layout.size.height;
 
+    //TODO: Maybe do this better.
+
+    // let len = tree[id].children.len();
+    // let children = &mut tree[id].children.as_ptr();
+
+    // for i in 0..len {
+    //     let child = unsafe { children.add(i) };
+    //     draw_tree(ctx, tree, unsafe { *child }, abs_x, abs_y);
+    // }
+
     if let Some(widget) = &mut tree[id].widget {
         let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
         widget.draw(&mut ctx.commands, area, widget.style());
         widget.try_click(ctx, area);
     }
 
-    //TODO: Maybe do this better.
     let children = std::mem::take(&mut tree[id].children);
     if !children.is_empty() {
         for child in children {
@@ -213,8 +222,8 @@ impl<'a> taffy::LayoutPartialTree for Tree<'a> {
                             //     height: available_space.height.unwrap_or(0.0),
                             // }
                             Size {
-                                width: 100.0,
-                                height: 100.0,
+                                width: known_dimensions.width.unwrap_or(0.0),
+                                height: known_dimensions.height.unwrap_or(0.0),
                             }
                         };
                     taffy::compute_leaf_layout(inputs, style, |_, _| 0.0, measure_function)
@@ -325,6 +334,7 @@ pub fn hstyle() -> TaffyLayout {
 pub struct Container<'a> {
     pub node: usize,
     pub layout: TaffyLayout,
+    pub style: Style,
     pub handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut Self) + 'a>)>,
 }
 
@@ -351,9 +361,11 @@ impl<'a> Container<'a> {
         Self {
             node,
             layout: layout.clone(),
+            style: Style::new(),
             handlers: Vec::new(),
         }
     }
+
     pub fn gap(mut self, gap: impl IntoF32) -> Self {
         let gap = length(gap.into_f32());
         self.layout.gap = gap;
@@ -429,11 +441,23 @@ impl<'a> Container<'a> {
         unsafe { TREE[self.node].layout = self.layout.clone() };
         self
     }
+    pub fn fg(mut self, fg: impl IntoColor) -> Self {
+        self.style.foreground_color = fg.into_color();
+        self
+    }
+    pub fn bg(mut self, bg: impl IntoColor) -> Self {
+        self.style.background_color = bg.into_color();
+        self
+    }
 }
 
 impl<'a> Widget<'a> for Container<'a> {
     fn try_click(&mut self, ctx: &mut Context, area: Rect) {
         self.try_click(ctx, area);
+    }
+
+    fn style(&self) -> Option<Style> {
+        Some(self.style)
     }
 
     fn layout(&self) -> TaffyLayout {

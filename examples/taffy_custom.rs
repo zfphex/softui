@@ -36,7 +36,7 @@ fn main() {
         //     )
         //     .gap(5))
         // )
-        // .padding(10)
+        // // .padding(10)
         // .gap(10);
 
         // let root = v!(rect()
@@ -58,11 +58,25 @@ fn main() {
         //     .gap(20)
         //     .on_click(Left, |_| println!("HI!!!!!!!"));
 
-        //TODO: Container overrides are a total mess :(
         // let root = v!(v!().w(50).h(50).bg(red()));
 
         //TODO: Padding on text did not work?????
-        let root = h!(text("hi there").bg(red()).pad(20)).pad(20).fit();
+        // let root = h!(text("example text").bg(red()).pad(20)).fit();
+        let size = 40;
+
+        let root = v!(
+            h!(rect().wh(size), rect().wh(size), rect().wh(size))
+                .gap(size)
+                .bg(green())
+                .fit()
+                .pad(20),
+            rect().wh(size),
+            rect().wh(size),
+        )
+        .bg(red())
+        .gap(size)
+        .fit()
+        .pad(20);
 
         ctx.draw_layout(&mut print, root);
         ctx.draw_frame();
