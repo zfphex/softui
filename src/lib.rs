@@ -9,8 +9,14 @@ pub use core::ffi::c_void;
 pub mod atomic_float;
 pub use atomic_float::*;
 
-pub mod taffy_custom;
-pub use taffy_custom::*;
+pub mod container;
+pub use container::*;
+
+pub mod macros;
+pub use macros::*;
+
+pub mod tree;
+pub use tree::*;
 
 pub mod widgets;
 pub use widgets::*;
@@ -61,17 +67,6 @@ impl_intof32!(f32, usize, isize, i32, i64);
 pub struct Command {
     pub area: Rect,
     pub primative: Primative,
-}
-
-impl Command {
-    fn queue(self) {
-        unsafe {
-            COMMAND_QUEUE.push(Command {
-                area: self.area,
-                primative: self.primative,
-            })
-        }
-    }
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -361,8 +356,8 @@ impl Context {
         WIDTH: Into<GenericUnit>,
         HEIGHT: Into<GenericUnit>,
     {
-        let viewport_width = self.window.width();
-        let viewport_height = self.window.area.height;
+        // let viewport_width = self.window.width();
+        // let viewport_height = self.window.area.height;
         let scale = self.window.display_scale();
 
         let x = scale_temp(x.into(), self.window.area, scale);
@@ -705,8 +700,8 @@ impl Context {
             return;
         }
 
-        let viewport_width = self.window.width();
-        let viewport_height = self.window.height();
+        // let viewport_width = self.window.width();
+        // let viewport_height = self.window.height();
 
         let x = scale(x, self.window.display_scale);
         let y = scale(y, self.window.display_scale);

@@ -20,12 +20,19 @@ pub fn convert_button_to_state<'a>(ctx: &'a mut Context, button: MouseButton) ->
     }
 }
 
+//TODO: Add an option to configure this.
+//For trackpads and bad mice, we want to use act on press by default.
+//I think MacOS should probably have this default then.
 pub fn clicked(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
     if !ctx.window.mouse_position.intersects(area) {
         return false;
     }
 
-    convert_button_to_state(ctx, button).clicked(area)
+    #[cfg(target_os = "windows")]
+    return convert_button_to_state(ctx, button).clicked(area);
+
+    #[cfg(target_os = "macos")]
+    return convert_button_to_state(ctx, button).is_pressed();
 }
 
 pub fn pressed(ctx: &mut Context, area: Rect, button: MouseButton) -> bool {
@@ -49,9 +56,6 @@ pub use macos::*;
 
 #[cfg(target_os = "macos")]
 pub mod macos {
-    use super::*;
-    use std::pin::Pin;
-
     #[derive(Debug)]
     pub struct Window {
         pub buffer: Vec<u32>,
@@ -297,7 +301,7 @@ pub mod macos {
 
     impl Window {
         pub fn new(title: &str, width: usize, height: usize) -> Self {
-            let mut buffer = vec![0u32; width * height];
+            let buffer = vec![0u32; width * height];
 
             let mut window = minifb::Window::new(
                 title,
@@ -311,12 +315,10 @@ pub mod macos {
             )
             .expect("Unable to create the window");
 
-            //This should be refresh rate.
-            window.set_target_fps(60);
+            window.set_target_fps(0);
 
             //HACK: Update the buffer at least one time, in order for events to be processed.
             let (width, height) = window.get_size();
-            let area = Rect::new(0, 0, width, height);
             window.update_with_buffer(&buffer, width, height).unwrap();
 
             Self {
