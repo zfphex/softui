@@ -142,7 +142,9 @@ fn main() {
         .bg(gray())
         // .fit()
         // .pl(4)
-        .gap(10);
+        // .gap(10)
+        //
+        ;
 
         ctx.draw_layout(&mut print, root);
         ctx.draw_frame();

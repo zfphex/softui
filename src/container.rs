@@ -141,6 +141,7 @@ impl<'a> Container<'a> {
     pub fn center(mut self) -> Self {
         self.layout.justify_content = Some(AlignContent::Center);
         self.layout.align_items = Some(AlignItems::Center);
+        self.layout.align_content = Some(AlignContent::Center);
         unsafe { TREE[self.node].layout = self.layout.clone() };
         self
     }
