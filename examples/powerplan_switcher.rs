@@ -1,4 +1,6 @@
 #![allow(unused)]
+// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 #[cfg(target_os = "windows")]
 fn main() {
     use std::cell::Cell;
@@ -67,6 +69,8 @@ fn main() {
                     std::thread::spawn(change_plan);
                     m.set(plan);
                 })
+                //TODO: The cursors positions is not updated when leaving the window.
+                //This will cause items to be falsely hovered.
                 .on_hover(move |fit| {
                     if !selected {
                         fit.style.background_color = Some(hover);
