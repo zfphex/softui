@@ -1,7 +1,9 @@
 use crate::*;
 use std::fmt::Debug;
 use taffy::{
-    compute_cached_layout, compute_flexbox_layout, compute_hidden_layout, prelude::length, AlignContent, AlignItems, AvailableSpace, BoxSizing, Cache, CacheTree, Dimension, Display, Layout, NodeId, PrintTree, Size, TraversePartialTree
+    compute_cached_layout, compute_flexbox_layout, compute_hidden_layout, prelude::length, AlignContent, AlignItems,
+    AvailableSpace, BoxSizing, Cache, CacheTree, Dimension, Display, Layout, NodeId, PrintTree, Size,
+    TraversePartialTree,
 };
 
 pub struct Container<'a> {

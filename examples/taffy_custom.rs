@@ -81,9 +81,7 @@ fn main() {
         // .fit()
         // .pad(20);
 
-        // let root = fit!(text("example text").bg(red())).pad(10).bg(gray());
-
-        //Should have a height of 60.
+        // let root = fit!(text("example text").pad(20).bg(red())).pad(40).bg(gray());
 
         let root = fit!(
             //TODO: Text doesn't know anything about padding.
@@ -100,7 +98,7 @@ fn main() {
         .bg(gray());
 
         let width = 360;
-        let accent = green();
+        let accent = hex("#5856D7");
         let (hp, bal, pws) = match current_plan.get() {
             "High performance" => (Some(accent), None, None),
             "Balanced" => (None, Some(accent), None),
@@ -139,7 +137,7 @@ fn main() {
             .pad(pad),
         )
         .center()
-        .bg(gray())
+        .bg(hex("#121212"))
         // .fit()
         // .pl(4)
         // .gap(10)

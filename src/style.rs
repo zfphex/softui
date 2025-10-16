@@ -74,6 +74,12 @@ impl<'a, W: Widget<'a>> StyleBuilder<'a> for GenericWidget<'a, W> {
 }
 
 #[inline(always)]
+pub fn hex(color: &str) -> Color {
+    let hex = color.trim_start_matches("#");
+    Color::from(u32::from_str_radix(hex, 16).unwrap())
+}
+
+#[inline(always)]
 pub const fn rgb(r: u8, g: u8, b: u8) -> Color {
     Color::new(r, g, b)
 }
@@ -360,128 +366,3 @@ pub const fn olive() -> Color {
 pub const fn teal() -> Color {
     Color::new(0, 128, 128)
 }
-
-// #[inline]
-// pub const fn pink() -> Option<Color> {
-//     Some(Color::new(255, 192, 203))
-// }
-
-// #[inline]
-// pub const fn red() -> Option<Color> {
-//     Some(Color::new(255, 0, 0))
-// }
-
-// #[inline]
-// pub const fn orange() -> Option<Color> {
-//     Some(Color::new(255, 165, 0))
-// }
-
-// #[inline]
-// pub const fn yellow() -> Option<Color> {
-//     Some(Color::new(255, 255, 0))
-// }
-
-// #[inline]
-// pub const fn green() -> Option<Color> {
-//     Some(Color::new(0, 128, 0))
-// }
-
-// #[inline]
-// pub const fn lime() -> Option<Color> {
-//     Some(Color::new(0, 255, 0))
-// }
-
-// #[inline]
-// pub const fn blue() -> Option<Color> {
-//     Some(Color::new(0, 0, 255))
-// }
-
-// #[inline]
-// pub const fn cyan() -> Option<Color> {
-//     Some(Color::new(0, 255, 255))
-// }
-
-// #[inline]
-// pub const fn turquoise() -> Option<Color> {
-//     Some(Color::new(64, 224, 208))
-// }
-
-// #[inline]
-// pub const fn navy() -> Option<Color> {
-//     Some(Color::new(0, 0, 128))
-// }
-
-// #[inline]
-// pub const fn purple() -> Option<Color> {
-//     Some(Color::new(128, 0, 128))
-// }
-
-// #[inline]
-// pub const fn magenta() -> Option<Color> {
-//     Some(Color::new(255, 0, 255))
-// }
-
-// #[inline]
-// pub const fn violet() -> Option<Color> {
-//     Some(Color::new(238, 130, 238))
-// }
-
-// #[inline]
-// pub const fn brown() -> Option<Color> {
-//     Some(Color::new(165, 42, 42))
-// }
-
-// #[inline]
-// pub const fn tan() -> Option<Color> {
-//     Some(Color::new(210, 180, 140))
-// }
-
-// #[inline]
-// pub const fn black() -> Option<Color> {
-//     Some(Color::new(0, 0, 0))
-// }
-
-// #[inline]
-// pub const fn white() -> Option<Color> {
-//     Some(Color::new(255, 255, 255))
-// }
-
-// #[inline]
-// pub const fn gray() -> Option<Color> {
-//     Some(Color::new(128, 128, 128))
-// }
-
-// #[inline]
-// pub const fn silver() -> Option<Color> {
-//     Some(Color::new(192, 192, 192))
-// }
-
-// #[inline]
-// pub const fn gold() -> Option<Color> {
-//     Some(Color::new(255, 215, 0))
-// }
-
-// #[inline]
-// pub const fn indigo() -> Option<Color> {
-//     Some(Color::new(75, 0, 130))
-// }
-
-// #[inline]
-// pub const fn lavender() -> Option<Color> {
-//     Some(Color::new(230, 230, 250))
-// }
-
-// #[inline]
-// pub const fn coral() -> Option<Color> {
-//     Some(Color::new(255, 127, 80))
-// }
-
-// #[inline]
-// pub const fn olive() -> Option<Color> {
-//     Some(Color::new(128, 128, 0))
-// }
-
-// #[inline]
-// pub const fn teal() -> Option<Color> {
-//     Some(Color::new(0, 128, 128))
-// }
