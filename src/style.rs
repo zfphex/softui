@@ -75,8 +75,7 @@ impl<'a, W: Widget<'a>> StyleBuilder<'a> for GenericWidget<'a, W> {
 
 #[inline(always)]
 pub fn hex(color: &str) -> Color {
-    let hex = color.trim_start_matches("#");
-    Color::from(u32::from_str_radix(hex, 16).unwrap())
+    Color::from(u32::from_str_radix(color.trim_start_matches("#"), 16).unwrap())
 }
 
 #[inline(always)]
