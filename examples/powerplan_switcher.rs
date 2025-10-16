@@ -13,7 +13,7 @@ fn main() {
     const BL: &str = "Balanced";
     const PS: &str = "Power saver";
     const BACKGROUND: Color = hex("#1c1c1c");
-    const HOVER: Color = hex("#423c4a");
+    // const BACKGROUND: Color = Color::from(0x202020);
     const PADDING: usize = 13;
 
     let window = create_window(
@@ -26,9 +26,16 @@ fn main() {
     );
 
     let mut ctx = Context::new(window);
-    let accent = Color::from(accent_color());
-    ctx.set_fill_color(0x202020.into());
+    ctx.set_fill_color(BACKGROUND);
+
+    //TODO: What is this cringe.
     set_default_font_size(16);
+
+    let accent = Color::from(accent_color());
+
+    let hover = hex("#423c4a");
+    //TODO: This looks mid, older version looked better.
+    // let hover = accent.adjust(0.5);
 
     //TODO: Close after a delay.
     // let end = false;
@@ -48,6 +55,7 @@ fn main() {
         fn item<'a>(
             plan: &'static str,
             accent: Color,
+            hover: Color,
             mode: &'a Cell<&'static str>,
             selected: bool,
             change_plan: fn() -> (),
@@ -61,7 +69,7 @@ fn main() {
                 })
                 .on_hover(move |fit| {
                     if !selected {
-                        fit.style.background_color = Some(HOVER);
+                        fit.style.background_color = Some(hover);
                     }
                 })
                 .bg(if selected { Some(accent) } else { None })
@@ -69,9 +77,9 @@ fn main() {
         }
 
         let root = v!(
-            item(HP, accent, &mode, mode.get() == HP, high_performance),
-            item(BL, accent, &mode, mode.get() == BL, balanced),
-            item(PS, accent, &mode, mode.get() == PS, power_saver)
+            item(HP, accent, hover, &mode, mode.get() == HP, high_performance),
+            item(BL, accent, hover, &mode, mode.get() == BL, balanced),
+            item(PS, accent, hover, &mode, mode.get() == PS, power_saver)
         )
         .bg(BACKGROUND);
 

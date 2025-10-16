@@ -140,6 +140,18 @@ impl Color {
         Self::new(r, g, b)
     }
 
+    pub const fn adjust(self, scale: f32) -> Self {
+        let r = ((self.0 >> 16) & 0xFF) as f32;
+        let g = ((self.0 >> 8) & 0xFF) as f32;
+        let b = (self.0 & 0xFF) as f32;
+
+        let r = (r * scale).clamp(0.0, 255.0) as u8;
+        let g = (g * scale).clamp(0.0, 255.0) as u8;
+        let b = (b * scale).clamp(0.0, 255.0) as u8;
+
+        Self::new(r, g, b)
+    }
+
     //Based debug mode optimizer. Note, this does literally nothing.
 
     #[inline(always)]
