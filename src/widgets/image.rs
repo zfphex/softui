@@ -1,5 +1,6 @@
 use crate::*;
 use std::{ffi::OsStr, path::Path};
+use taffy::{prelude::length, AlignItems, BoxSizing};
 //TODO: Probably don't need the entire zune_image crate.
 use zune_image::codecs::{
     jpeg::JpegDecoder,
@@ -16,7 +17,13 @@ pub enum ImageFormat {
 pub fn image_ref<'a>(image: &'a Image) -> ImageRef<'a> {
     ImageRef {
         format: image.format,
-        // size: image.area.into(),
+        layout: TaffyLayout {
+            size: taffy::Size {
+                width: length(image.area.width as f32),
+                height: length(image.area.height as f32),
+            },
+            ..Default::default()
+        },
         bitmap: &image.bitmap,
     }
 }
@@ -71,8 +78,24 @@ pub struct Image {
 #[derive(Debug, Clone)]
 pub struct ImageRef<'a> {
     pub format: ImageFormat,
-    // pub size: Size,
+    pub layout: TaffyLayout,
     pub bitmap: &'a [u8],
+}
+
+impl<'a> Widget<'a> for ImageRef<'a> {
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+        //TODO: Just assume the image exists for now.
+        let bitmap = unsafe { std::mem::transmute::<&'a [u8], &'static [u8]>(self.bitmap) };
+
+        commands.push(Command {
+            area,
+            primative: Primative::ImageUnsafe(bitmap, self.format),
+        });
+    }
+
+    fn layout(&self) -> TaffyLayout {
+        self.layout.clone()
+    }
 }
 
 // impl<'a> Widget<'a> for ImageRef<'a> {
