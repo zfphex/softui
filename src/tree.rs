@@ -304,26 +304,6 @@ impl<'a> taffy::PrintTree for Tree<'a> {
     }
 }
 
-pub fn into_node<'a, T: Widget<'a> + 'a>(widget: T) -> usize {
-    if widget.is_container() {
-        let node = widget.node();
-        let widget = unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
-        unsafe { TREE[node].widget = Some(widget) };
-        return node;
-    }
-
-    let style = widget.layout();
-    //Safety: Oh yeah! Yeah you like that? 😳
-    let widget = unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
-    unsafe {
-        TREE.alloc(Node {
-            layout: style,
-            widget: Some(widget),
-            ..Default::default()
-        })
-    }
-}
-
 pub fn debug_tree(tree: &Tree, root: NodeId) {
     println!("TREE");
     print_node(tree, root, false, String::new());

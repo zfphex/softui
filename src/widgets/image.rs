@@ -14,7 +14,17 @@ pub enum ImageFormat {
     JPEG,
 }
 
-pub fn image_ref<'a>(image: &'a Image) -> ImageRef<'a> {
+#[macro_export]
+macro_rules! include_image {
+    ($image:expr) => {{
+        // let bytes = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $image));
+        let bytes = include_bytes!($image);
+        let ext = std::path::Path::new($image);
+        image_bytes(ext, bytes)
+    }};
+}
+
+pub fn image<'a>(image: &'a Image) -> ImageRef<'a> {
     ImageRef {
         format: image.format,
         layout: TaffyLayout {
@@ -28,43 +38,36 @@ pub fn image_ref<'a>(image: &'a Image) -> ImageRef<'a> {
     }
 }
 
-pub fn image(path: impl AsRef<Path>) -> Image {
-    let path = path.as_ref();
-    let file = std::fs::read(path).unwrap();
+pub fn image_bytes(ext: &Path, file: &[u8]) -> Image {
     let options = DecoderOptions::default()
         .png_set_strip_to_8bit(true)
         .png_set_add_alpha_channel(true);
 
-    match path.extension() {
-        Some(ext) => {
-            let ext = ext.to_string_lossy();
-            match &*ext {
-                "jpg" | "jpeg" => {
-                    let mut decoder = JpegDecoder::new_with_options(file, options);
-                    let bitmap = decoder.decode().unwrap();
-                    let (width, height) = decoder.dimensions().unwrap();
+    let ext = ext.extension().unwrap().to_string_lossy();
+    match &*ext {
+        "jpg" | "jpeg" => {
+            let mut decoder = JpegDecoder::new_with_options(file, options);
+            let bitmap = decoder.decode().unwrap();
+            let (width, height) = decoder.dimensions().unwrap();
 
-                    Image {
-                        format: ImageFormat::JPEG,
-                        area: Rect::new(0, 0, width, height),
-                        bitmap,
-                    }
-                }
-                "png" => {
-                    let mut decoder = PngDecoder::new_with_options(file, options);
-                    let bitmap = decoder.decode().unwrap();
-                    let (width, height) = decoder.dimensions().unwrap();
-
-                    Image {
-                        format: ImageFormat::PNG,
-                        area: Rect::new(0, 0, width, height),
-                        bitmap: bitmap.u8().unwrap(),
-                    }
-                }
-                _ => panic!("{} is not a supported image extension.", ext),
+            Image {
+                format: ImageFormat::JPEG,
+                area: Rect::new(0, 0, width, height),
+                bitmap,
             }
         }
-        None => panic!("File has no extension and cannot be a valid image."),
+        "png" => {
+            let mut decoder = PngDecoder::new_with_options(file, options);
+            let bitmap = decoder.decode().unwrap();
+            let (width, height) = decoder.dimensions().unwrap();
+
+            Image {
+                format: ImageFormat::PNG,
+                area: Rect::new(0, 0, width, height),
+                bitmap: bitmap.u8().unwrap(),
+            }
+        }
+        _ => panic!("{} is not a supported image extension.", ext),
     }
 }
 
@@ -97,25 +100,3 @@ impl<'a> Widget<'a> for ImageRef<'a> {
         self.layout.clone()
     }
 }
-
-// impl<'a> Widget<'a> for ImageRef<'a> {
-//     fn position(&mut self, parent: Rect) {
-//         self.size = parent.into();
-//     }
-
-//     fn draw(&self, commands: &mut Vec<Command>, style: Option<Style>) {
-//         //TODO: Just assume the image exists for now.
-//         let bitmap = unsafe { std::mem::transmute::<&'a [u8], &'static [u8]>(self.bitmap) };
-
-//         commands.push(Command {
-//             area: self.size.clone().into_rect(),
-//             primative: Primative::ImageUnsafe(bitmap, self.format),
-//         });
-//     }
-
-//     fn size_mut(&mut self) -> &mut Size {
-//         &mut self.size
-//     }
-
-//     fn size(&mut self, _: Rect) {}
-// }

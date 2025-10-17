@@ -3,7 +3,7 @@ use softui::*;
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
 
-    let image = image("img/ben.png");
+    let ben = include_image!("../img/ben.png");
 
     loop {
         match ctx.event() {
@@ -13,7 +13,7 @@ fn main() {
 
         let root = v!(
             //TODO: this should not neeed a container!
-            image_ref(&image),
+            image(&ben),
             fit!(text("no."), rect().wh(100)).pad(20).gap(20).bg(gray()),
             fit!(text("no."), rect().wh(100)).pad(20).gap(20).bg(gray()),
             fit!(text("no."), rect().wh(100)).pad(20).gap(20).bg(gray()),

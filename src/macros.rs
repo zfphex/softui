@@ -4,7 +4,27 @@ use taffy::{
     TraversePartialTree,
 };
 
-use crate::TaffyLayout;
+use crate::*;
+
+pub fn into_node<'a, T: Widget<'a> + 'a>(widget: T) -> usize {
+    if widget.is_container() {
+        let node = widget.node();
+        let widget = unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
+        unsafe { TREE[node].widget = Some(widget) };
+        return node;
+    }
+
+    let style = widget.layout();
+    //Safety: Yeah you like that? 😳
+    let widget = unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
+    unsafe {
+        TREE.alloc(Node {
+            layout: style,
+            widget: Some(widget),
+            ..Default::default()
+        })
+    }
+}
 
 pub fn vstyle() -> TaffyLayout {
     TaffyLayout {
