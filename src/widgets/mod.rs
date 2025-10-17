@@ -1,6 +1,9 @@
 pub mod rectangle;
 pub use rectangle::*;
 
+pub mod list;
+pub use list::*;
+
 #[cfg(feature = "svg")]
 pub mod svg;
 

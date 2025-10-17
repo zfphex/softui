@@ -210,9 +210,17 @@ impl<'a> taffy::LayoutPartialTree for Tree<'a> {
                 (_, false) => {
                     let style = &node.layout;
                     let measure_function =
-                        |known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>| Size {
-                            width: known_dimensions.width.unwrap_or(0.0),
-                            height: known_dimensions.height.unwrap_or(0.0),
+                        |known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>| {
+                            //
+                            // dbg!(known_dimensions, available_space);
+                            Size {
+                                width: known_dimensions.width.unwrap_or(0.0),
+                                height: known_dimensions.height.unwrap_or(0.0),
+                            }
+                            // Size {
+                            //     width: available_space.width.unwrap_or(0.0),
+                            //     height: available_space.height.unwrap_or(0.0),
+                            // }
                         };
                     taffy::compute_leaf_layout(inputs, style, |_, _| 0.0, measure_function)
                 }

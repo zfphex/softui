@@ -91,6 +91,12 @@ impl<'a> Container<'a> {
             }
         }
     }
+    pub fn wh(mut self, wh: impl IntoF32) -> Self {
+        let wh = length(wh.into_f32());
+        self.layout.size = Size { width: wh, height: wh };
+        unsafe { TREE[self.node].layout.size = self.layout.size };
+        self
+    }
     pub fn pad(mut self, padding: impl IntoF32) -> Self {
         let padding = length(padding.into_f32());
         self.layout.padding = padding;

@@ -19,6 +19,13 @@ pub struct Rectangle {
     pub radius: usize,
 }
 
+impl Rectangle {
+    pub fn radius(mut self, radius: usize) -> Self {
+        self.radius = radius;
+        self
+    }
+}
+
 impl<'a> Widget<'a> for Rectangle {
     fn layout(&self) -> taffy::Style {
         self.layout.clone()
