@@ -151,7 +151,7 @@ pub unsafe fn create_ctx(title: &str, width: usize, height: usize) -> Context {
         let window = create_window(title, 0, 0, width as i32, height as i32, WindowStyle::DEFAULT);
 
         #[cfg(target_os = "macos")]
-        let window = Box::pin(Window::new(width, height));
+        let window = Box::pin(Window::new(title, width, height));
 
         let mut context = Context::new(window);
 
