@@ -12,6 +12,7 @@ use taffy::{
 pub static mut TREE: Tree = Tree::new();
 
 pub type TaffyLayout = taffy::Style;
+pub type TaffyFinalLayout = taffy::Layout;
 
 pub use taffy::FlexDirection;
 
