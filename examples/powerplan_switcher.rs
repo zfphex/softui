@@ -18,7 +18,7 @@ fn main() {
     // const BACKGROUND: Color = Color::from(0x202020);
     const PADDING: usize = 13;
 
-    let window = create_window(
+    let mut window = create_window(
         "Power Plan Switcher",
         1920 - WIDTH,
         1080 - HEIGHT - TASK_BAR_HEIGHT,
@@ -26,6 +26,8 @@ fn main() {
         HEIGHT,
         WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
     );
+
+    windows::create_tray_icon(window.hwnd);
 
     let mut ctx = Context::new(window);
     ctx.set_fill_color(BACKGROUND);
@@ -43,11 +45,10 @@ fn main() {
     // let end = false;
     let mode = Cell::new(current_plan());
 
+    let mut draw = false;
+
     loop {
-        //Close the program if the window loses focus.
-        if !ctx.focused() {
-            break;
-        }
+        //TODO: Check if the user clicked outside of the window bounds and then hide the window.
 
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
@@ -80,16 +81,26 @@ fn main() {
                 .pad(PADDING)
         }
 
-        let root = v!(
-            item(HP, accent, hover, &mode, mode.get() == HP, high_performance),
-            item(BL, accent, hover, &mode, mode.get() == BL, balanced),
-            item(PS, accent, hover, &mode, mode.get() == PS, power_saver)
-        )
-        .bg(BACKGROUND);
+        if ctx.window.tray.is_pressed() {
+            draw = true;
+        }
 
-        ctx.draw_layout(root);
-        ctx.debug_layout();
-        ctx.draw_frame();
+        if draw {
+            let root = v!(
+                item(HP, accent, hover, &mode, mode.get() == HP, high_performance),
+                item(BL, accent, hover, &mode, mode.get() == BL, balanced),
+                item(PS, accent, hover, &mode, mode.get() == PS, power_saver)
+            )
+            .bg(BACKGROUND);
+            ctx.draw_layout(root);
+            ctx.debug_layout();
+            ctx.draw_frame();
+        } 
+        // else if !ctx.window.hidden {
+
+        //     ctx.window.hide();
+        // }
+
     }
 }
 
@@ -130,6 +141,13 @@ mod windows {
                 GUID_TYPICAL_POWER_SAVINGS => "Balanced",
                 _ => unreachable!(),
             }
+        }
+    }
+
+    pub fn create_tray_icon(hwnd: isize) {
+        unsafe {
+            let h_icon = LoadIconA(core::ptr::null_mut(), IDI_APPLICATION as *const i8);
+            window::create_tray_icon(hwnd, 1, h_icon, "Power Plan Switcher");
         }
     }
 }
