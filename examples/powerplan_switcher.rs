@@ -27,6 +27,16 @@ fn main() {
         WindowStyle::BORDERLESS.ex_style(WS_EX_TOPMOST | WS_EX_TOOLWINDOW),
     );
 
+    let rect = get_window_rect(window.hwnd);
+    let width = (rect.right - rect.left) as usize;
+    let height = (rect.bottom - rect.top) as usize;
+    let area = Rect {
+        x: rect.left as usize,
+        y: rect.top as usize,
+        width,
+        height,
+    };
+
     windows::create_tray_icon(window.hwnd);
 
     let mut ctx = Context::new(window);
@@ -47,9 +57,26 @@ fn main() {
 
     let mut draw = false;
 
-    loop {
-        //TODO: Check if the user clicked outside of the window bounds and then hide the window.
+    unsafe { watch_global_mouse_events() };
 
+    loop {
+        let lm = &mut global_state().left_mouse;
+
+        //TODO: This should not trigger if the tray icon was just pressed. Maybe add a small delay idk?
+        if ctx.window.tray.is_pressed() {
+            draw = true;
+        } else if lm.clicked() {
+            if let Some(pos) = &lm.release_position {
+                let pos = Rect::new(pos.get_x() as usize, pos.get_y() as usize, 1, 1);
+                //User clicked outside the window.
+                if !area.intersects(pos) {
+                    dbg!(pos);
+                    draw = false;
+                }
+            }
+        }
+
+        //TODO: Check if the user clicked outside of the window bounds and then hide the window.
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
@@ -81,10 +108,6 @@ fn main() {
                 .pad(PADDING)
         }
 
-        if ctx.window.tray.is_pressed() {
-            draw = true;
-        }
-
         if draw {
             let root = v!(
                 item(HP, accent, hover, &mode, mode.get() == HP, high_performance),
@@ -95,12 +118,13 @@ fn main() {
             ctx.draw_layout(root);
             ctx.debug_layout();
             ctx.draw_frame();
-        } 
+        } else {
+            ctx.draw_frame();
+        }
         // else if !ctx.window.hidden {
 
         //     ctx.window.hide();
         // }
-
     }
 }
 
