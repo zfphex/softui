@@ -312,6 +312,7 @@ impl Context {
         // self.commands.clear();
 
         self.window.draw();
+
         //Draw the UI on top of the background not the other way round!
         self.window.buffer.fill(self.fill_color.as_u32());
 
@@ -660,18 +661,16 @@ impl Context {
         }
     }
 
-    pub fn draw_triangle(&mut self, ax: usize, ay: usize, bx: usize, by: usize, cx: usize, cy: usize, color: Color) {
+    pub fn draw_triangle(&mut self, ax: f32, ay: f32, bx: f32, by: f32, cx: f32, cy: f32, color: Color) {
         #[inline]
         fn signed_triangle_area(ax: f32, ay: f32, bx: f32, by: f32, cx: f32, cy: f32) -> f32 {
             0.5 * ((by - ay) * (bx + ax) + (cy - by) * (cx + bx) + (ay - cy) * (ax + cx))
         }
 
-        let bbminx = ax.min(bx).min(cx);
-        let bbminy = ay.min(by).min(cy);
-        let bbmaxx = ax.max(bx).max(cx);
-        let bbmaxy = ay.max(by).max(cy);
-
-        let (ax, ay, bx, by, cx, cy) = (ax as f32, ay as f32, bx as f32, by as f32, cx as f32, cy as f32);
+        let bbminx = ax.min(bx).min(cx) as usize;
+        let bbminy = ay.min(by).min(cy) as usize;
+        let bbmaxx = ax.max(bx).max(cx) as usize;
+        let bbmaxy = ay.max(by).max(cy) as usize;
 
         let total_area = signed_triangle_area(ax, ay, bx, by, cx, cy);
 
