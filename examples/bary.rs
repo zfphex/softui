@@ -30,8 +30,8 @@ fn main() {
             _ => {}
         }
 
-        ctx.draw_rectangle(0, 0, ctx.window.width(), ctx.window.height(), ctx.fill_color);
-        ctx.draw_rectangle(bbminx, bbminy, bbmaxx - bbminx, bbmaxy - bbminy, green());
+        // ctx.draw_rectangle(0, 0, ctx.window.width(), ctx.window.height(), ctx.fill_color);
+        // ctx.draw_rectangle(bbminx, bbminy, bbmaxx - bbminx, bbmaxy - bbminy, green());
 
         ctx.draw_triangle(
             ax ,
@@ -42,6 +42,8 @@ fn main() {
             cy + 100.0,
             red(),
         );
+        ctx.draw_frame();
+        continue;
 
         for x in bbminx..=bbmaxx {
             for y in bbminy..=bbmaxy {

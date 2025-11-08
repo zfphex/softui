@@ -115,7 +115,11 @@ fn main() {
                 current_plan.set("High performance");
             })
             .bg(hp)
-            .on_hover(|s| s.style.background_color = Some(accent.adjust(0.6)))
+            .on_hover(|s| 
+                if hp.is_none() {
+                    s.style.background_color = Some(accent.adjust(0.6));
+                }
+            )
             .pad(pad),
             fit!(
                 //
@@ -125,7 +129,11 @@ fn main() {
                 current_plan.set("Balanced");
             })
             .bg(bal)
-            .on_hover(|s| s.style.background_color = Some(accent.adjust(0.6)))
+            .on_hover(|s| 
+                if bal.is_none() {
+                    s.style.background_color = Some(accent.adjust(0.6));
+                }
+            )
             .pad(pad),
             fit!(
                 //
@@ -135,7 +143,11 @@ fn main() {
                 current_plan.set("Power saver");
             })
             .bg(pws)
-            .on_hover(|s| s.style.background_color = Some(accent.adjust(0.6)))
+            .on_hover(|s| 
+                if pws.is_none() {
+                    s.style.background_color = Some(accent.adjust(0.6));
+                }
+            )
             .pad(pad),
         ).gap(20)
         .center()
