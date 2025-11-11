@@ -83,8 +83,8 @@ impl<'a> Container<'a> {
             }
         }
     }
-    pub fn wh(mut self, wh: impl IntoF32) -> Self {
-        let wh = length(wh.into_f32());
+    pub fn wh(mut self, wh: impl IntoDimension) -> Self {
+        let wh = wh.into_dimension();
         self.layout.size = Size { width: wh, height: wh };
         unsafe { TREE[self.node].layout.size = self.layout.size };
         self
@@ -167,7 +167,16 @@ impl<'a> Container<'a> {
     }
 
     pub fn vcenter(mut self) -> Self {
-        todo!()
+        match self.layout.flex_direction {
+            FlexDirection::Row | FlexDirection::RowReverse => {
+                self.layout.align_items = Some(AlignItems::Center);
+            }
+            FlexDirection::Column | FlexDirection::ColumnReverse => {
+                self.layout.justify_content = Some(JustifyContent::Center);
+            }
+        }
+        unsafe { TREE[self.node].layout = self.layout.clone() };
+        self
     }
 
     pub fn hcenter(mut self) -> Self {

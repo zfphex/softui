@@ -1046,6 +1046,15 @@ impl Context {
     pub fn focused(&self) -> bool {
         self.window.focused()
     }
+
+    /// Process events and quit when escape is pressed.
+    /// Helper function to simplify some of the examples.
+    pub fn debug_should_quit(&mut self) -> bool {
+        match self.event() {
+            Some(Event::Quit | Event::Input(Key::Escape, _)) => true,
+            _ => false,
+        }
+    }
 }
 
 #[cfg(test)]
