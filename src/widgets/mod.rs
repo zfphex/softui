@@ -31,9 +31,6 @@ pub use dwrite::*;
 pub mod generic;
 pub use generic::*;
 
-pub mod button;
-pub use button::*;
-
 use crate::*;
 
 pub trait Widget<'a>: std::fmt::Debug {

@@ -159,6 +159,14 @@ impl<'a> Container<'a> {
         unsafe { TREE[self.node].layout = self.layout.clone() };
         self
     }
+
+    pub fn v_center(mut self) -> Self {
+        todo!()
+    }
+
+    pub fn h_center(mut self) -> Self {
+        todo!()
+    }
 }
 
 impl<'a> Widget<'a> for Container<'a> {
