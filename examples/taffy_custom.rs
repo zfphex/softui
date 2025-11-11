@@ -4,8 +4,7 @@ use softui::*;
 fn button<'a>(plan: &'a str, current_plan: &'a Cell<&'a str>, accent: Color) -> impl Widget<'a> + 'a {
     let is_selected = current_plan.get() == plan;
 
-    //TODO: How can I center the text here??
-    fit!(text(plan).w(360))
+    fit!(text(plan))
         .bg(if is_selected { Some(accent) } else { None })
         .on_hover(move |s| {
             if !is_selected {
@@ -15,6 +14,8 @@ fn button<'a>(plan: &'a str, current_plan: &'a Cell<&'a str>, accent: Color) -> 
         .on_click(Left, move |_| {
             current_plan.set(plan);
         })
+        .w(360)
+        .hcenter()
         .pad(15)
 }
 
@@ -41,6 +42,7 @@ fn main() {
         .bg(background);
 
         ctx.draw_layout(root);
+        ctx.debug_layout();
         ctx.draw_frame();
     }
 }

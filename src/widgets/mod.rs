@@ -57,18 +57,29 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).bg(bg)
     }
-    fn w(self, w: impl IntoDimension) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).w(w)
-    }
-    fn h(self, h: impl IntoDimension) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).h(h)
-    }
+
+    // TODO: I don't think that width and height should necessarily be changed on some widgets.
+    // The width and height information for font is really important.
+    // Destroying it doesn't really make sense since you can just set constraints instead?
+    // idk. I had some issues with
+    // fit!(text(plan).w(20))
+    // vs.
+    // fit!(text(plan.w(20)))
+    // they have different behaviour and I don't like that 😡
+
+    // fn w(self, w: impl IntoDimension) -> GenericWidget<'a, Self>
+    // where
+    //     Self: Sized,
+    // {
+    //     GenericWidget::new(self).w(w)
+    // }
+    // fn h(self, h: impl IntoDimension) -> GenericWidget<'a, Self>
+    // where
+    //     Self: Sized,
+    // {
+    //     GenericWidget::new(self).h(h)
+    // }
+
     fn max_w(self, w: impl IntoDimension) -> GenericWidget<'a, Self>
     where
         Self: Sized,

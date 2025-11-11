@@ -84,14 +84,14 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         self.style.background_color = bg.into_color();
         self
     }
-    pub fn w(mut self, w: impl IntoDimension) -> Self {
-        self.layout.size.width = w.into_dimension();
-        self
-    }
-    pub fn h(mut self, h: impl IntoDimension) -> Self {
-        self.layout.size.height = h.into_dimension();
-        self
-    }
+    // pub fn w(mut self, w: impl IntoDimension) -> Self {
+    //     self.layout.size.width = w.into_dimension();
+    //     self
+    // }
+    // pub fn h(mut self, h: impl IntoDimension) -> Self {
+    //     self.layout.size.height = h.into_dimension();
+    //     self
+    // }
     pub fn max_w(mut self, w: impl IntoDimension) -> Self {
         self.layout.max_size.width = w.into_dimension();
         self

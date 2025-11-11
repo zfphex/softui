@@ -53,14 +53,18 @@ pub fn hstyle() -> TaffyLayout {
 pub fn fitstyle() -> TaffyLayout {
     TaffyLayout {
         box_sizing: BoxSizing::ContentBox,
+        size: Size {
+            width: Dimension::auto(),
+            height: Dimension::auto(),
+        },
         ..Default::default()
     }
 }
 
 #[macro_export]
 macro_rules! container {
-    ($style:expr, $($widget:expr),* $(,)?) => {{
-        let container = Container::new($style);
+    ($style:expr, $kind:expr, $($widget:expr),* $(,)?) => {{
+        let container = Container::new($style, $kind);
         $(
             //Containers will return their existing node.
             $crate::tree::add_child(container.node, into_node($widget));
@@ -72,20 +76,20 @@ macro_rules! container {
 #[macro_export]
 macro_rules! h {
     ($($widget:expr),* $(,)?) => {{
-        $crate::container!(hstyle(), $($widget),*)
+        $crate::container!($crate::hstyle(), $crate::NodeKind::Flex, $($widget),*)
     }}
 }
 
 #[macro_export]
 macro_rules! v {
     ($($widget:expr),* $(,)?) => {{
-        $crate::container!(vstyle(), $($widget),*)
+        $crate::container!($crate::vstyle(), $crate::NodeKind::Flex, $($widget),*)
     }}
 }
 
 #[macro_export]
 macro_rules! fit {
     ($($widget:expr),* $(,)?) => {{
-        $crate::container!(fitstyle(), $($widget),*)
+        $crate::container!($crate::fitstyle(), $crate::NodeKind::Fit, $($widget),*)
     }}
 }

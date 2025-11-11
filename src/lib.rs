@@ -249,6 +249,16 @@ impl Context {
         if let Some(node) = self.debug_node {
             unsafe { taffy::print_tree(&TREE, node.into()) };
             self.debug_node = None;
+
+            //Print the draw queue too.
+            for cmd in &self.commands {
+                println!("{:?}", cmd.primative);
+            }
+
+            // while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
+            //     println!("{:?}", cmd.primative);
+            //     unsafe { COMMAND_QUEUE.push(cmd) }
+            // }
         }
     }
 
