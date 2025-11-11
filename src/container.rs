@@ -6,6 +6,10 @@ use taffy::{
     TraversePartialTree,
 };
 
+pub fn div<'a>() -> Container<'a> {
+    Container::new(hstyle(), NodeKind::Flex)
+}
+
 pub struct Container<'a> {
     pub node: usize,
     pub layout: TaffyLayout,
@@ -40,6 +44,11 @@ impl<'a> Container<'a> {
             style: Style::new(),
             handlers: Vec::new(),
         }
+    }
+
+    pub fn child<T: Widget<'a> + 'a>(mut self, widget: T) -> Self {
+        tree::add_child(self.node, into_node(widget));
+        self
     }
 
     pub fn gap(mut self, gap: impl IntoF32) -> Self {
@@ -190,6 +199,14 @@ impl<'a> Container<'a> {
         }
         unsafe { TREE[self.node].layout = self.layout.clone() };
         self
+    }
+
+    pub fn horizontal(mut self) -> Self {
+        self.direction(FlexDirection::Row)
+    }
+
+    pub fn vertical(mut self) -> Self {
+        self.direction(FlexDirection::Column)
     }
 }
 
