@@ -92,7 +92,8 @@ fn main() {
         ) -> Container<'a> {
             let m = mode;
             let change_plan = change_plan;
-            fit!(text(plan).w(WIDTH))
+            fit!(text(plan))
+                .w(WIDTH)
                 .on_click(Left, move |_| {
                     std::thread::spawn(change_plan);
                     m.set(plan);
