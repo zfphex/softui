@@ -31,7 +31,7 @@ pub fn set_default_font_size(font_size: usize) {
 pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
     Text {
         text: text.into(),
-        font_size: default_font_size(),
+        size: default_font_size(),
         line_height: None,
         area: Rect::default(),
         drawn: false,
@@ -42,7 +42,7 @@ pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
 #[derive(Debug, Clone)]
 pub struct Text<'a> {
     pub text: Cow<'a, str>,
-    pub font_size: usize,
+    pub size: usize,
     pub line_height: Option<usize>,
     //Used with the builder pattern, x(), y(), width(), etc...
     pub area: Rect,
@@ -50,8 +50,8 @@ pub struct Text<'a> {
 }
 
 impl<'a> Text<'a> {
-    pub fn font_size(mut self, font_size: usize) -> Self {
-        self.font_size = font_size;
+    pub fn size(mut self, size: usize) -> Self {
+        self.size = size;
         self.calculate_area()
     }
     pub fn line_heigth(mut self, line_height: usize) -> Self {
@@ -78,7 +78,7 @@ impl<'a> Text<'a> {
             let mut glyph_x = x;
 
             'char: for char in line.chars() {
-                let (metrics, _) = font.rasterize(char, self.font_size as f32);
+                let (metrics, _) = font.rasterize(char, self.size as f32);
 
                 let glyph_y = y as f32 - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
 
@@ -86,7 +86,7 @@ impl<'a> Text<'a> {
                     for x in 0..metrics.width {
                         //Should the text really be offset by the font size?
                         //This allows the user to draw text at (0, 0).
-                        let offset = self.font_size as f32 + glyph_y + y as f32;
+                        let offset = self.size as f32 + glyph_y + y as f32;
 
                         //We can't render off of the screen, mkay?
                         if offset < 0.0 {
@@ -116,7 +116,7 @@ impl<'a> Text<'a> {
             //CSS is probably line height * font size.
             //1.2 is the default line height
             //I'm guessing 1.0 is probably just adding the font size.
-            y += self.font_size + line_height;
+            y += self.size + line_height;
         }
 
         area.height = (max_y + 1 - area.y);
@@ -146,7 +146,7 @@ impl<'a> Widget<'a> for Text<'a> {
 
         commands.push(Command {
             area: area,
-            primative: Primative::Text(self.text.to_string(), self.font_size, font_color),
+            primative: Primative::Text(self.text.to_string(), self.size, font_color),
         });
     }
 

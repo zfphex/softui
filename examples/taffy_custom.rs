@@ -1,18 +1,15 @@
 use core::cell::Cell;
 use softui::*;
 
+#[rustfmt::skip] 
 fn button<'a>(plan: &'a str, current_plan: &'a Cell<&'a str>, accent: Color) -> impl Widget<'a> + 'a {
-    let is_selected = current_plan.get() == plan;
+    let selected = current_plan.get() == plan;
 
     fit!(text(plan))
-        .bg(if is_selected { Some(accent) } else { None })
+        .bg(if selected { Some(accent) } else { None })
+        .on_click(Left, move |_| { current_plan.set(plan) })
         .on_hover(move |s| {
-            if !is_selected {
-                s.style.background_color = Some(accent.adjust(0.6));
-            }
-        })
-        .on_click(Left, move |_| {
-            current_plan.set(plan);
+            if !selected { s.style.background_color = Some(accent.adjust(0.6)) }
         })
         .w(360)
         .hcenter()

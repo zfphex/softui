@@ -31,7 +31,19 @@ pub use dwrite::*;
 pub mod generic;
 pub use generic::*;
 
+pub mod input;
+pub use input::*;
+
+pub mod button;
+pub use button::*;
+
 use crate::*;
+
+pub trait Sizing: Sized {
+    fn w(self, w: impl IntoDimension) -> Self;
+    fn h(self, h: impl IntoDimension) -> Self;
+    fn wh(self, wh: impl IntoDimension) -> Self;
+}
 
 pub trait Widget<'a>: std::fmt::Debug {
     fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>);
@@ -104,12 +116,12 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).min_h(h)
     }
-    fn wh(self, wh: impl IntoDimension) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).wh(wh)
-    }
+    // fn wh(self, wh: impl IntoDimension) -> GenericWidget<'a, Self>
+    // where
+    //     Self: Sized,
+    // {
+    //     GenericWidget::new(self).wh(wh)
+    // }
     fn fit(self) -> GenericWidget<'a, Self>
     where
         Self: Sized,
