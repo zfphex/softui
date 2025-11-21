@@ -62,34 +62,37 @@ pub fn fitstyle() -> TaffyLayout {
 }
 
 #[macro_export]
-macro_rules! container {
-    ($style:expr, $kind:expr, $($widget:expr),* $(,)?) => {{
-        let container = Container::new($style, $kind);
-        $(
-            //Containers will return their existing node.
-            $crate::tree::add_child(container.node, into_node($widget));
-        )*
-        container
-    }};
-}
-
-#[macro_export]
 macro_rules! h {
     ($($widget:expr),* $(,)?) => {{
-        $crate::container!($crate::hstyle(), $crate::NodeKind::Flex, $($widget),*)
+        let container = $crate::Container::new($crate::hstyle(), $crate::NodeKind::Flex);
+        $(
+            //Containers will return their existing node.
+            $crate::tree::add_child(container.node, $crate::into_node($widget));
+        )*
+        container
     }}
 }
 
 #[macro_export]
 macro_rules! v {
     ($($widget:expr),* $(,)?) => {{
-        $crate::container!($crate::vstyle(), $crate::NodeKind::Flex, $($widget),*)
+        let container = $crate::Container::new($crate::vstyle(), $crate::NodeKind::Flex);
+        $(
+            //Containers will return their existing node.
+            $crate::tree::add_child(container.node, $crate::into_node($widget));
+        )*
+        container
     }}
 }
 
 #[macro_export]
 macro_rules! fit {
     ($($widget:expr),* $(,)?) => {{
-        $crate::container!($crate::fitstyle(), $crate::NodeKind::Fit, $($widget),*)
+        let container = $crate::Container::new($crate::fitstyle(), $crate::NodeKind::Fit);
+        $(
+            //Containers will return their existing node.
+            $crate::tree::add_child(container.node, $crate::into_node($widget));
+        )*
+        container
     }}
 }
