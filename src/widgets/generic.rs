@@ -48,6 +48,8 @@ impl<'a, W: Widget<'a>> Widget<'a> for GenericWidget<'a, W> {
     }
 
     fn try_click(&mut self, ctx: &mut Context, area: Rect) {
+        self.widget.try_click(ctx, area);
+
         for (button, action, f) in &mut self.handlers {
             match *action {
                 MouseAction::Clicked if clicked(ctx, area, *button) => f(&mut self.widget),

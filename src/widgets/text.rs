@@ -135,7 +135,7 @@ impl<'a> Widget<'a> for Text<'a> {
             if let Some(style_bg) = style.background_color {
                 commands.push(Command {
                     area,
-                    primative: Primative::Ellipse(0, style_bg),
+                    primative: Primative::Ellipse(0, None, style_bg),
                 });
             }
 

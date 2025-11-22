@@ -161,6 +161,11 @@ impl<'a> Container<'a> {
         self
     }
 
+    pub fn border(mut self, border: impl IntoColor) -> Self {
+        self.style.border_color = border.into_color();
+        self
+    }
+
     pub fn direction(mut self, direction: FlexDirection) -> Self {
         self.layout.flex_direction = direction;
         unsafe { TREE[self.node].layout.flex_direction = direction };
@@ -232,11 +237,12 @@ impl<'a> Widget<'a> for Container<'a> {
     }
 
     fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+        dbg!(style);
         if let Some(style) = style {
             if let Some(background_color) = style.background_color {
                 commands.push(Command {
                     area,
-                    primative: Primative::Ellipse(0, background_color),
+                    primative: Primative::Ellipse(0, style.foreground_color, background_color),
                 });
             }
         }

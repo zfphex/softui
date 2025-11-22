@@ -10,6 +10,7 @@ pub fn style() -> Style {
 pub struct Style {
     pub background_color: Option<Color>,
     pub foreground_color: Option<Color>,
+    pub border_color: Option<Color>,
 }
 
 impl Style {
@@ -17,6 +18,7 @@ impl Style {
         Style {
             background_color: None,
             foreground_color: None,
+            border_color: None,
         }
     }
     pub const fn bg(mut self, color: Color) -> Self {

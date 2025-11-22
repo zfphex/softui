@@ -26,6 +26,11 @@ impl Rectangle {
         self.radius = radius;
         self
     }
+
+    pub fn outline(mut self) -> Self {
+        self.outline = true;
+        self
+    }
 }
 
 impl Sizing for Rectangle {
@@ -53,10 +58,14 @@ impl<'a> Widget<'a> for Rectangle {
     }
 
     fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
-        let bg = style.unwrap_or(Style::new()).background_color.unwrap_or(white());
+        let style = style.unwrap_or(Style::new());
         commands.push(Command {
             area,
-            primative: Primative::Ellipse(self.radius, bg),
+            primative: Primative::Ellipse(
+                self.radius,
+                style.border_color,
+                style.background_color.unwrap_or(white()),
+            ),
         });
     }
 }

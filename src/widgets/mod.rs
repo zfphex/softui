@@ -234,7 +234,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).on_release(button, func)
     }
-    fn try_click(&mut self, _: &mut Context, _: Rect) {}
+    fn try_click(&mut self, ctx: &mut Context, area: Rect) {}
     fn into_layout(self) -> TaffyLayout
     where
         Self: Sized,

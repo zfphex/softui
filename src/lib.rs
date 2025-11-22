@@ -80,9 +80,8 @@ pub enum Quadrant {
 
 #[derive(Clone)]
 pub enum Primative {
-    /// (radius, color)
-    Ellipse(usize, Color),
-    RectangleOutline(Color),
+    /// (radius: usize, border: Color, bg: color)
+    Ellipse(usize, Option<Color>, Color),
     /// (text, font_size, Color)
     /// This needs to include the desired font.
     /// Not sure how to do that yet.
@@ -111,8 +110,7 @@ pub enum Primative {
 impl std::fmt::Debug for Primative {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Ellipse(arg0, arg1) => f.debug_tuple("Ellipse").field(arg0).field(arg1).finish(),
-            Self::RectangleOutline(arg0) => f.debug_tuple("RectangleOutline").field(arg0).finish(),
+            Self::Ellipse(arg0, arg1, arg2) => f.debug_tuple("Ellipse").field(arg0).field(arg1).field(arg2).finish(),
             Self::Text(arg0, arg1, arg2) => f.debug_tuple("Text").field(arg0).field(arg1).field(arg2).finish(),
             // Self::CustomBoxed(arg0) => f.debug_tuple("CustomBoxed").finish(),
             // Self::CustomFn(arg0) => f.debug_tuple("CustomFn").field(arg0).finish(),
@@ -286,18 +284,17 @@ impl Context {
 
             match &cmd.primative {
                 //This should idealy have a z index/depth parameter.
-                // Command::Rectangle(x, y, width, height, color) => {
-                //     self.draw_rectangle(x, y, width, height, color);
-                // }
-                Primative::Ellipse(radius, color) => {
+                Primative::Ellipse(radius, border_color, color) => {
+                    //TODO: No support for outlined elipses.
+
                     if *radius == 0 {
                         self.draw_rectangle(x, y, width, height, *color);
+                        // if let Some(border) = border_color {
+                        //     self.draw_rectangle_outline(x, y, width, height, *border);
+                        // }
                     } else {
                         self.draw_rectangle_rounded(x, y, width, height, *color, *radius);
                     }
-                }
-                Primative::RectangleOutline(color) => {
-                    self.draw_rectangle_outline(x, y, width, height, *color);
                 }
                 Primative::Text(text, font_size, color) => {
                     //TODO: Specify the font with a font database and font ID.
