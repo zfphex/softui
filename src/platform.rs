@@ -114,8 +114,9 @@ pub mod macos {
                 self.right_mouse.released(self.mouse_position);
             }
 
+            //TODO: Modifiers don't work
             self.event_cache.extend(convert_minifb_key_to_softui(
-                &self.minifb.get_keys_pressed(KeyRepeat::No),
+                &self.minifb.get_keys_pressed(KeyRepeat::Yes),
             ));
 
             return self.event_cache.pop();

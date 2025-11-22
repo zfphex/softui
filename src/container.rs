@@ -51,6 +51,13 @@ impl<'a> Container<'a> {
         self
     }
 
+    pub fn children<T: Widget<'a> + 'a>(mut self, widgets: Vec<T>) -> Self {
+        for widget in widgets {
+            tree::add_child(self.node, into_node(widget));
+        }
+        self
+    }
+
     pub fn gap(mut self, gap: impl IntoF32) -> Self {
         let gap = length(gap.into_f32());
         self.layout.gap = gap;
@@ -213,6 +220,14 @@ impl<'a> Container<'a> {
     pub fn vertical(mut self) -> Self {
         self.direction(FlexDirection::Column)
     }
+
+    pub fn on_key_press(mut self, key: Key, f: impl FnMut(&mut Self) + 'a) -> Self {
+        todo!()
+    }
+
+    pub fn on_key_release(mut self, key: Key, f: impl FnMut(&mut Self) + 'a) -> Self {
+        todo!()
+    }
 }
 
 impl<'a> Widget<'a> for Container<'a> {
@@ -237,12 +252,11 @@ impl<'a> Widget<'a> for Container<'a> {
     }
 
     fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
-        dbg!(style);
         if let Some(style) = style {
             if let Some(background_color) = style.background_color {
                 commands.push(Command {
                     area,
-                    primative: Primative::Ellipse(0, style.foreground_color, background_color),
+                    primative: Primative::Ellipse(0, style.border_color, background_color),
                 });
             }
         }

@@ -289,9 +289,9 @@ impl Context {
 
                     if *radius == 0 {
                         self.draw_rectangle(x, y, width, height, *color);
-                        // if let Some(border) = border_color {
-                        //     self.draw_rectangle_outline(x, y, width, height, *border);
-                        // }
+                        if let Some(border) = border_color {
+                            self.draw_rectangle_outline(x, y, width, height, *border);
+                        }
                     } else {
                         self.draw_rectangle_rounded(x, y, width, height, *color, *radius);
                     }

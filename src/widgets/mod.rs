@@ -45,6 +45,18 @@ pub trait Sizing: Sized {
     fn wh(self, wh: impl IntoDimension) -> Self;
 }
 
+// impl<'a, T: Widget<'a>> Widget<'a> for Vec<T> {
+//     fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+//         for w in self {
+//             w.draw(commands, area, style);
+//         }
+//     }
+
+//     fn layout(&self) -> TaffyLayout {
+//         todo!()
+//     }
+// }
+
 pub trait Widget<'a>: std::fmt::Debug {
     fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>);
     fn layout(&self) -> TaffyLayout;
