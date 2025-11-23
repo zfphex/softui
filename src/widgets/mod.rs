@@ -40,9 +40,24 @@ pub use button::*;
 use crate::*;
 
 pub trait Sizing: Sized {
-    fn w(self, w: impl IntoDimension) -> Self;
-    fn h(self, h: impl IntoDimension) -> Self;
-    fn wh(self, wh: impl IntoDimension) -> Self;
+    fn layout(&mut self) -> &mut TaffyLayout;
+
+    fn w(mut self, w: impl IntoDimension) -> Self {
+        self.layout().size.width = w.into_dimension();
+        self
+    }
+
+    fn h(mut self, h: impl IntoDimension) -> Self {
+        self.layout().size.height = h.into_dimension();
+        self
+    }
+
+    fn wh(mut self, wh: impl IntoDimension) -> Self {
+        let wh = wh.into_dimension();
+        self.layout().size.width = wh;
+        self.layout().size.height = wh;
+        self
+    }
 }
 
 // impl<'a, T: Widget<'a>> Widget<'a> for Vec<T> {

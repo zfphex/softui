@@ -127,6 +127,12 @@ impl<'a> Text<'a> {
     }
 }
 
+// impl<'a> Sizing for Text<'a> {
+//     fn layout(&mut self) -> &mut TaffyLayout {
+//         &mut self.layout
+//     }
+// }
+
 impl<'a> Widget<'a> for Text<'a> {
     fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
         let mut font_color = white();

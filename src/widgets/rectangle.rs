@@ -34,21 +34,8 @@ impl Rectangle {
 }
 
 impl Sizing for Rectangle {
-    fn w(mut self, w: impl IntoDimension) -> Self {
-        self.layout.size.width = w.into_dimension();
-        self
-    }
-
-    fn h(mut self, h: impl IntoDimension) -> Self {
-        self.layout.size.height = h.into_dimension();
-        self
-    }
-
-    fn wh(mut self, wh: impl IntoDimension) -> Self {
-        let wh = wh.into_dimension();
-        self.layout.size.width = wh;
-        self.layout.size.height = wh;
-        self
+    fn layout(&mut self) -> &mut TaffyLayout {
+        &mut self.layout
     }
 }
 
