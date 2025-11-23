@@ -819,6 +819,78 @@ impl Context {
         //     Color::RED,
         // );
     }
+    pub fn draw_text_subpixel(
+        &mut self,
+        glyph_bitmap: &[u8], // The RGB bitmap from fontdue
+        metrics: &fontdue::Metrics,
+        pos_x: i32,
+        pos_y: i32,
+        text_color: [u8; 4], // R, G, B, A
+    ) {
+        let fb_width = self.window.width();
+        let fb_height = self.window.height();
+
+        let (r_txt, g_txt, b_txt, a_txt) = (
+            text_color[0] as f32,
+            text_color[1] as f32,
+            text_color[2] as f32,
+            text_color[3] as f32 / 255.0,
+        );
+
+        let framebuffer = &mut self.window.buffer;
+
+        for row in 0..metrics.height {
+            let y = pos_y + row as i32;
+            if y < 0 || y >= fb_height as i32 {
+                continue;
+            }
+
+            for col in 0..metrics.width {
+                let x = pos_x + col as i32;
+                if x < 0 || x >= fb_width as i32 {
+                    continue;
+                }
+
+                // Calculate index in the linear glyph bitmap (RGB)
+                let glyph_idx = (row * metrics.width + col) * 3;
+
+                // Read coverage (alpha) for each subpixel
+                // This replaces the texelFetch and mix() logic from the shader
+                let mask_r = glyph_bitmap[glyph_idx] as f32 / 255.0;
+                let mask_g = glyph_bitmap[glyph_idx + 1] as f32 / 255.0;
+                let mask_b = glyph_bitmap[glyph_idx + 2] as f32 / 255.0;
+
+                // Framebuffer index (Assuming RGBA or BGRA layout)
+                let fb_idx = ((y as usize * fb_width) + x as usize) * 4;
+
+                let bg_r = framebuffer[fb_idx] as f32;
+                let bg_g = framebuffer[fb_idx + 1] as f32;
+                let bg_b = framebuffer[fb_idx + 2] as f32;
+
+                // --- THE BLENDING MATH ---
+                // This is the CPU equivalent of:
+                // blend_weights = vec4(color.a * pixel_coverages, color.a);
+                // GL_ONE_MINUS_SRC1_COLOR
+
+                // 1. Calculate the alpha specific to each color channel
+                let alpha_r = mask_r * a_txt;
+                let alpha_g = mask_g * a_txt;
+                let alpha_b = mask_b * a_txt;
+
+                // 2. Blend
+                // Final = TextColor * Alpha + Background * (1 - Alpha)
+                let out_r = (r_txt * alpha_r) + (bg_r * (1.0 - alpha_r));
+                let out_g = (g_txt * alpha_g) + (bg_g * (1.0 - alpha_g));
+                let out_b = (b_txt * alpha_b) + (bg_b * (1.0 - alpha_b));
+
+                framebuffer[fb_idx] = out_r as u32;
+                framebuffer[fb_idx + 1] = out_g as u32;
+                framebuffer[fb_idx + 2] = out_b as u32;
+                // Alpha usually remains 255 for the window
+                framebuffer[fb_idx + 3] = 255;
+            }
+        }
+    }
 
     #[cfg(target_os = "windows")]
     #[cfg(feature = "dwrite")]

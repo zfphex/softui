@@ -1,6 +1,19 @@
 use softui::*;
+use State::*;
 
-fn input_box<'a>(label: &'a str, todos: &'a mut Vec<Item>, input: &'a mut Option<String>) -> impl Widget<'a> + 'a {
+#[derive(PartialEq)]
+pub enum State {
+    All,
+    Active,
+    Completed,
+}
+
+pub struct Item {
+    pub label: String,
+    pub done: bool,
+}
+
+fn input_box<'a>(label: &'a str, input: &'a mut Option<String>) -> impl Widget<'a> + 'a {
     let label = if let Some(input) = input { input.as_str() } else { label };
     v!(text(label).size(18))
         .w(50.percent())
@@ -18,26 +31,29 @@ fn input_box<'a>(label: &'a str, todos: &'a mut Vec<Item>, input: &'a mut Option
     // })
 }
 
-use State::*;
-
-#[derive(PartialEq)]
-pub enum State {
-    All,
-    Active,
-    Completed,
-}
-
-pub struct Item {
-    pub label: String,
-    pub done: bool,
+fn item<'a>(item: &'a mut Item) -> impl Widget<'a> + 'a {
+    //Okay the whole fit!, v!, h! thing is a mess.
+    fit!(
+        v!().border(if item.done { None } else { Some(white()) })
+            .wh(20)
+            .bg(if item.done { Some(white()) } else { Some(black()) })
+            //TODO: This does click repeats for some reason???
+            .on_click(Left, |_| item.done = !item.done),
+        //TODO: Spacers should work with bg(None)
+        // rect().w(10.percent()).bg(black()),
+        text(&item.label)
+    )
+    .gap(20)
+    .hcenter()
 }
 
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
-    let mut todos: Vec<Item> = Vec::new();
+    let mut todos: Vec<Item> = vec![Item {
+        label: "Test".into(),
+        done: false,
+    }];
     let mut input: Option<String> = None;
-
-    //0 = All, 1 = Active, 2 = Completed
     let mut state = All;
 
     loop {
@@ -76,29 +92,24 @@ fn main() {
             _ => {}
         }
 
-        let todo_list: Vec<Text<'_>> = todos.iter().map(|i| text(i.label.clone())).collect();
-
-        let list: Vec<Text<'_>> = match state {
-            All => todos.iter().map(|i| text(i.label.clone())).collect(),
-            Active => todos
-                .iter()
-                .filter(|i| !i.done)
-                .map(|i| text(i.label.clone()))
-                .collect(),
-            Completed => todos
-                .iter()
-                .filter(|i| i.done)
-                .map(|i| text(i.label.clone()))
-                .collect(),
-        };
+        let len = todos.len();
+        let list: Vec<_> = todos
+            .iter_mut()
+            .filter(|i| match state {
+                All => true,
+                Active => !i.done,
+                Completed => i.done,
+            })
+            .map(|i| item(i))
+            .collect();
 
         let root = v!(v!(
             //
             text("todos").size(22),
-            input_box("What needs to be done?", &mut todos, &mut input),
+            input_box("What needs to be done?", &mut input),
             //This is really bad, why does fit work but v! doesn't
             fit!(
-                v!(text(format!("{} task left", todo_list.len()))).w(50.percent()),
+                v!(text(format!("{} task left", len))).w(50.percent()),
                 //TODO: This sucks + the background doesn't cover the whole area unless in a fit! container wtf?
                 fit!(text("All"))
                     .bg(if state == All { Some(cyan()) } else { None })

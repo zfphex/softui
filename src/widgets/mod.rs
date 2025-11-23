@@ -96,6 +96,12 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         GenericWidget::new(self).bg(bg)
     }
+    // fn border(self, border: impl IntoColor) -> GenericWidget<'a, Self>
+    // where
+    //     Self: Sized,
+    // {
+    //     GenericWidget::new(self).border(border)
+    // }
 
     // TODO: I don't think that width and height should necessarily be changed on some widgets.
     // The width and height information for font is really important.
