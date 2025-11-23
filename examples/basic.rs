@@ -10,11 +10,14 @@ fn main() {
         }
 
         let root = v!(
-            fit!().wh(30).pad(30).bg(white()),
-            // rect().fit().wh(30).pad(30),
-            text("abc").fit().wh(30).pad(30),
+            text("todos").size(22).bg(red()),
+            text("Input box").size(22).bg(red()),
+            // v!().w(50.percent()).h(64).hcenter(),
+            text("more text"),
         )
-        .gap(20);
+        .gap(8)
+        .pad(8)
+        .hcenter();
 
         ctx.draw_layout(root);
         ctx.debug_layout();

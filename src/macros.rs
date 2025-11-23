@@ -33,7 +33,7 @@ pub fn vstyle() -> TaffyLayout {
             height: Dimension::percent(1.0),
         },
         flex_direction: FlexDirection::Column,
-        align_items: Some(AlignItems::Start),
+        align_items: Some(AlignItems::Stretch),
         ..Default::default()
     }
 }
@@ -45,7 +45,7 @@ pub fn hstyle() -> TaffyLayout {
             height: Dimension::percent(1.0),
         },
         flex_direction: FlexDirection::Row,
-        align_items: Some(AlignItems::Start),
+        align_items: Some(AlignItems::Stretch),
         ..Default::default()
     }
 }
