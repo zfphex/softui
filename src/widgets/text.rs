@@ -193,73 +193,33 @@ impl Atlas {
 
         Self { glyphs, font_size }
     }
-
-    //32 <-> 126
-    // [(_, _) ;95]
-    // #[inline]
-    // pub fn get_glyph(&self, char: char) -> (fontdue::Metrics, &[u8]) {
-    //     todo!();
-    //     let glyph = &self.glyphs[char as usize - 32];
-    //     (glyph.0, &glyph.1)
-    // }
 }
 
 //http://arkanis.de/weblog/2023-08-14-simple-good-quality-subpixel-text-rendering-in-opengl-with-stb-truetype-and-dual-source-blending
+// https://github.com/arkanis/gl-4.5-subpixel-text-rendering/blob/d770f0395f610d9fcc53319734069fe7fc4138b2/main.c#L626
 
 // [FT_LCD_FILTER_DEFAULT](https://freetype.org/freetype2/docs/reference/ft2-lcd_rendering.html)
 // This is a beveled, normalized, and color-balanced five-tap filter with weights of [0x08 0x4D 0x56 0x4D 0x08] in 1/256 units.
-const LCD_FILTER: [u8; 5] = [0x08, 0x4D, 0x56, 0x4D, 0x08];
+// const LCD_FILTER: [u8; 5] = [0x08, 0x4D, 0x56, 0x4D, 0x08];
 
-// What in the fuck?
-// https://github.com/arkanis/gl-4.5-subpixel-text-rendering/blob/d770f0395f610d9fcc53319734069fe7fc4138b2/main.c#L626
+pub fn apply_lcd_filter(bitmap: &[u8], width: usize, height: usize) -> Vec<u8> {
+    let stride = width * 3;
+    let mut output = vec![0u8; bitmap.len()];
 
-pub fn fontdue_subpixel(ctx: &mut Context, x: usize, y: usize) {
-    let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-    let (metrics, bitmap) = font.rasterize_subpixel('g', 200.0);
+    for row in 0..height {
+        let offset = row * stride;
+        for i in 0..stride {
+            // We only filter horizontally across R, G, B values
+            let idx = offset + i;
 
-    let start_x = x;
-    let start_y = y;
+            // Boundary checks for left/right neighbors
+            let left = if i == 0 { 0 } else { bitmap[idx - 1] as u16 };
+            let center = bitmap[idx] as u16;
+            let right = if i == stride - 1 { 0 } else { bitmap[idx + 1] as u16 };
 
-    for y in 0..metrics.height {
-        for x in 0..metrics.width {
-            let i = ((start_y + y) * ctx.window.width() + start_x + x);
-            let j = (y * metrics.width + x) * 3;
-
-            let r = bitmap[j];
-            let g = bitmap[j + 1];
-            let b = bitmap[j + 2];
-
-            ctx.window.buffer[i] = rgb(r, g, b).as_u32();
+            // [1, 2, 1] weighted average
+            output[idx] = ((left + center * 2 + right) / 4) as u8;
         }
     }
+    output
 }
-
-// #[cfg(test)]
-// mod tests {
-//     extern crate test;
-
-//     use super::*;
-//     use test::black_box;
-
-//     #[bench]
-//     fn atlas(b: &mut test::bench::Bencher) {
-//         let atlas = Atlas::new(32.0);
-//         b.iter(|| {
-//             for _ in 0..1000 {
-//                 let (metrics, bitmap) = &atlas.glyphs[black_box(b'a' as usize)];
-//                 assert_eq!(metrics.width, 15);
-//             }
-//         });
-//     }
-
-//     #[bench]
-//     fn rasterize(b: &mut test::bench::Bencher) {
-//         let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-//         b.iter(|| {
-//             for _ in 0..1000 {
-//                 let (metrics, bitmap) = font.rasterize(black_box('a'), 32.0);
-//                 assert_eq!(metrics.width, 15);
-//             }
-//         });
-//     }
-// }

@@ -810,219 +810,135 @@ impl Context {
         //Not sure why these are one off.
         area.height = max_y + 1 - area.y;
         area.width = max_x + 1 - area.x;
-
-        // self.draw_rectangle_outline(
-        //     area.x as usize,
-        //     area.y as usize,
-        //     area.width as usize,
-        //     area.height as usize,
-        //     Color::RED,
-        // );
-    }
-    pub fn draw_text_subpixel(
-        &mut self,
-        glyph_bitmap: &[u8], // The RGB bitmap from fontdue
-        metrics: &fontdue::Metrics,
-        pos_x: i32,
-        pos_y: i32,
-        text_color: [u8; 4], // R, G, B, A
-    ) {
-        let fb_width = self.window.width();
-        let fb_height = self.window.height();
-
-        let (r_txt, g_txt, b_txt, a_txt) = (
-            text_color[0] as f32,
-            text_color[1] as f32,
-            text_color[2] as f32,
-            text_color[3] as f32 / 255.0,
-        );
-
-        let framebuffer = &mut self.window.buffer;
-
-        for row in 0..metrics.height {
-            let y = pos_y + row as i32;
-            if y < 0 || y >= fb_height as i32 {
-                continue;
-            }
-
-            for col in 0..metrics.width {
-                let x = pos_x + col as i32;
-                if x < 0 || x >= fb_width as i32 {
-                    continue;
-                }
-
-                // Calculate index in the linear glyph bitmap (RGB)
-                let glyph_idx = (row * metrics.width + col) * 3;
-
-                // Read coverage (alpha) for each subpixel
-                // This replaces the texelFetch and mix() logic from the shader
-                let mask_r = glyph_bitmap[glyph_idx] as f32 / 255.0;
-                let mask_g = glyph_bitmap[glyph_idx + 1] as f32 / 255.0;
-                let mask_b = glyph_bitmap[glyph_idx + 2] as f32 / 255.0;
-
-                // Framebuffer index (Assuming RGBA or BGRA layout)
-                let fb_idx = ((y as usize * fb_width) + x as usize) * 4;
-
-                let bg_r = framebuffer[fb_idx] as f32;
-                let bg_g = framebuffer[fb_idx + 1] as f32;
-                let bg_b = framebuffer[fb_idx + 2] as f32;
-
-                // --- THE BLENDING MATH ---
-                // This is the CPU equivalent of:
-                // blend_weights = vec4(color.a * pixel_coverages, color.a);
-                // GL_ONE_MINUS_SRC1_COLOR
-
-                // 1. Calculate the alpha specific to each color channel
-                let alpha_r = mask_r * a_txt;
-                let alpha_g = mask_g * a_txt;
-                let alpha_b = mask_b * a_txt;
-
-                // 2. Blend
-                // Final = TextColor * Alpha + Background * (1 - Alpha)
-                let out_r = (r_txt * alpha_r) + (bg_r * (1.0 - alpha_r));
-                let out_g = (g_txt * alpha_g) + (bg_g * (1.0 - alpha_g));
-                let out_b = (b_txt * alpha_b) + (bg_b * (1.0 - alpha_b));
-
-                framebuffer[fb_idx] = out_r as u32;
-                framebuffer[fb_idx + 1] = out_g as u32;
-                framebuffer[fb_idx + 2] = out_b as u32;
-                // Alpha usually remains 255 for the window
-                framebuffer[fb_idx + 3] = 255;
-            }
-        }
     }
 
-    #[cfg(target_os = "windows")]
-    #[cfg(feature = "dwrite")]
     pub fn draw_text_subpixel(
         &mut self,
         text: &str,
-        dwrite: &DWrite,
+        font: &fontdue::Font,
         x: usize,
-        mut y: usize,
+        y: usize,
         font_size: usize,
         line_height: usize,
         color: Color,
     ) {
+        if text.is_empty() || font_size == 0 {
+            return;
+        }
+
+        let x_start = scale(x, self.window.display_scale);
+        let y_start = scale(y, self.window.display_scale);
+        let font_size = scale(font_size, self.window.display_scale);
+        let line_height = scale(line_height, self.window.display_scale);
+
+        let mut area = Rect::new(x_start, y_start, 0, 0);
+        let mut y_pos = area.y;
+        let x_pos = area.x;
+
         let mut max_x = 0;
         let mut max_y = 0;
-        let start_x = x;
-        let start_y = y;
 
-        let r = color.r();
-        let g = color.g();
-        let b = color.b();
-
-        let viewport_width = self.window.width();
+        // Pre-calculate linear text color (Gamma 2.2 approximation: x^2)
+        let txt_r_lin = (color.r() as f32 / 255.0).powi(2);
+        let txt_g_lin = (color.g() as f32 / 255.0).powi(2);
+        let txt_b_lin = (color.b() as f32 / 255.0).powi(2);
 
         'line: for line in text.lines() {
-            let mut glyph_x = x as f32;
+            let mut glyph_x = x_pos;
 
             'char: for char in line.chars() {
-                let (metrics, texture) = dwrite.glyph(char, font_size as f32);
-                let height = texture.height;
-                let width = texture.width;
-                let texture = &texture.data;
-                let x_draw = glyph_x.floor() as usize;
+                let (metrics, raw_bitmap) = font.rasterize_subpixel(char, font_size as f32);
 
-                let glyph_y =
-                    start_y as f32 + (metrics.vertical_origin_y - height as f32) - metrics.bottom_side_bearing;
+                // Apply LCD Filtering
+                let bitmap = apply_lcd_filter(&raw_bitmap, metrics.width, metrics.height);
 
-                'y: for y in 0..height {
-                    'x: for x in 0..width {
-                        //Text doesn't fit on the screen.
-                        if (x + x_draw as i32) >= viewport_width as i32 {
+                let glyph_y = y_pos as f32 - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
+
+                'y: for y in 0..metrics.height {
+                    let offset = font_size as f32 + glyph_y + y as f32;
+
+                    if offset < 0.0 {
+                        continue;
+                    }
+
+                    let screen_y = offset as usize;
+
+                    'x: for x in 0..metrics.width {
+                        let screen_x = x + glyph_x;
+
+                        if screen_x >= self.window.width() {
                             continue;
                         }
 
-                        let offset = glyph_y as usize + y as usize;
+                        // Subpixel Indexing, 3 bytes per pixel
+                        let glyph_idx = (y * metrics.width + x) * 3;
 
-                        if max_x < x as usize + x_draw {
-                            max_x = x as usize + x_draw;
+                        // Get the coverage masks for R, G, and B
+                        let mask_r = bitmap[glyph_idx] as f32 / 255.0;
+                        let mask_g = bitmap[glyph_idx + 1] as f32 / 255.0;
+                        let mask_b = bitmap[glyph_idx + 2] as f32 / 255.0;
+
+                        //  If fully transparent, skip
+                        if mask_r == 0.0 && mask_g == 0.0 && mask_b == 0.0 {
+                            continue;
                         }
 
-                        if max_y < offset {
-                            max_y = offset;
+                        // Update bounds
+                        if max_x < screen_x {
+                            max_x = screen_x;
+                        }
+                        if max_y < screen_y {
+                            max_y = screen_y;
                         }
 
-                        let i = x as usize + x_draw + self.window.width() * offset;
-                        let j = (y as usize * width as usize + x as usize) * 3;
+                        let i = screen_x + self.window.width() * screen_y;
 
                         if i >= self.window.buffer.len() {
                             break 'x;
                         }
 
-                        let c = Color::new(texture[j], texture[j + 1], texture[j + 2]);
+                        // Read Background & Convert to Linear Space
+                        let bg_u32 = self.window.buffer[i];
+                        // Unpacking: Assuming standard 0xAARRGGBB or similar.
+                        // Adjust bit shifts if your Color format is BGR.
+                        let bg_r = ((bg_u32 >> 16) & 0xFF) as f32 / 255.0;
+                        let bg_g = ((bg_u32 >> 8) & 0xFF) as f32 / 255.0;
+                        let bg_b = (bg_u32 & 0xFF) as f32 / 255.0;
+
+                        // Convert Background to Linear (approx pow 2.2 via squaring)
+                        let bg_r_lin = bg_r * bg_r;
+                        let bg_g_lin = bg_g * bg_g;
+                        let bg_b_lin = bg_b * bg_b;
+
+                        // Per-Channel Blending in Linear Space
+                        // Formula: out = (Text * Mask) + (BG * (1.0 - Mask))
+                        let out_r_lin = (txt_r_lin * mask_r) + (bg_r_lin * (1.0 - mask_r));
+                        let out_g_lin = (txt_g_lin * mask_g) + (bg_g_lin * (1.0 - mask_g));
+                        let out_b_lin = (txt_b_lin * mask_b) + (bg_b_lin * (1.0 - mask_b));
+
+                        // Convert back to sRGB (approx sqrt) and clamp
+                        let out_r = (out_r_lin.sqrt() * 255.0) as u8;
+                        let out_g = (out_g_lin.sqrt() * 255.0) as u8;
+                        let out_b = (out_b_lin.sqrt() * 255.0) as u8;
 
                         if let Some(px) = self.window.buffer.get_mut(i) {
-                            *px = c.as_u32();
+                            *px = rgb(out_r, out_g, out_b).as_u32();
                         }
                     }
                 }
 
-                glyph_x += metrics.advance_width;
+                glyph_x += metrics.advance_width as usize;
 
-                //Check if the glyph position is off the screen.
-                if glyph_x.floor() as usize >= self.window.width() {
+                if glyph_x >= self.window.width() {
                     break 'line;
                 }
             }
 
-            //CSS is probably line height * font size.
-            //1.2 is the default line height
-            //I'm guessing 1.0 is probably just adding the font size.
-            y += font_size + line_height;
+            y_pos += font_size + line_height;
         }
 
-        //Not sure why these are one off.
-        let area = Rect::new(x, y, max_x + 1 - start_x, max_y + 1 - start_y);
-
-        // let _ = self.draw_rectangle_outline(
-        //     area.x as usize,
-        //     area.y as usize,
-        //     area.width as usize,
-        //     area.height as usize,
-        //     Color::RED,
-        // );
-    }
-
-    #[cfg(target_os = "windows")]
-    #[cfg(feature = "dwrite")]
-    pub fn draw_glyph_subpixel(&mut self, char: char, point_size: f32) {
-        let start_x = 50;
-        let start_y = 50;
-        let color = black();
-        let dwrite = DWrite::new();
-
-        let (metrics, texture) = dwrite.glyph(char, point_size);
-
-        for y in 0..texture.height as usize {
-            for x in 0..texture.width as usize {
-                let i = ((start_y + y) * self.window.width() + start_x + x);
-                let j = (y * texture.width as usize + x) * 3;
-
-                let r = texture.data[j];
-                let g = texture.data[j + 1];
-                let b = texture.data[j + 2];
-
-                //TODO: Blend background, font color and rgb values together.
-                // let alpha = ((r as u32 + b as u32 + g as u32) / 3) as u8;
-                // let r = blend(r, 0, color.r(), 255);
-                // let g = blend(g, 0, color.g(), 255);
-                // let b = blend(b, 0, color.b(), 255);
-
-                // let bg = Color::new(self.window.buffer[i]);
-                // let r = blend(r, alpha, bg.r(), alpha);
-                // let g = blend(g, alpha, bg.g(), alpha);
-                // let b = blend(b, alpha, bg.b(), alpha);
-
-                //Black
-                self.window.buffer[i] = rgb(255 - r, 255 - g, 255 - b).as_u32();
-
-                //White
-                // self.window.buffer[i] = rgb(r, g, b);
-            }
-        }
+        area.height = max_y + 1 - area.y;
+        area.width = max_x + 1 - area.x;
     }
 
     #[cfg(feature = "image")]
