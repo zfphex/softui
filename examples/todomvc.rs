@@ -99,14 +99,14 @@ fn main() {
             //This is really bad, why does fit work but v! doesn't
             fit!(
                 v!(text(format!("{} task left", todo_list.len()))).w(50.percent()),
-                //TODO: This sucks + the background doesn't cover the whole area.
-                text("All")
+                //TODO: This sucks + the background doesn't cover the whole area unless in a fit! container wtf?
+                fit!(text("All"))
                     .bg(if state == All { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = All),
-                text("Active")
+                fit!(text("Active"))
                     .bg(if state == Active { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = Active),
-                text("Completed")
+                fit!(text("Completed"))
                     .bg(if state == Completed { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = Completed),
             )
