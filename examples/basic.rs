@@ -10,10 +10,8 @@ fn main() {
         }
 
         let root = v!(
-            text("todos").size(22).bg(red()),
-            text("Input box").size(22).bg(red()),
-            // v!().w(50.percent()).h(64).hcenter(),
-            text("more text"),
+            text("examlpe").size(22),
+            text_new("example")
         )
         .gap(8)
         .pad(8)

@@ -17,7 +17,7 @@ pub mod image;
 pub use image::*;
 
 pub mod text;
-use taffy::Dimension;
+use taffy::{AvailableSpace, Dimension, Size};
 pub use text::*;
 
 #[cfg(target_os = "windows")]
@@ -36,6 +36,9 @@ pub use input::*;
 
 pub mod button;
 pub use button::*;
+
+pub mod text_new;
+pub use text_new::*;
 
 use crate::*;
 
@@ -75,6 +78,10 @@ pub trait Sizing: Sized {
 pub trait Widget<'a>: std::fmt::Debug {
     fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>);
     fn layout(&self) -> TaffyLayout;
+
+    fn measure(&self, known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>) -> Size<f32> {
+        Size::ZERO
+    }
     fn style(&self) -> Option<Style> {
         None
     }
