@@ -58,7 +58,7 @@ impl<'a> Widget<'a> for TextNew<'a> {
 
     fn measure(&self, _known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>) -> Size<f32> {
         let canvas_width = ctx_width();
-        let font = default_font().unwrap();
+        let font = default_font();
 
         let mut y = 0.0;
         let x = 0.0;

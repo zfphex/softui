@@ -250,7 +250,7 @@ impl Context {
 
             //Print the draw queue too.
             for cmd in &self.commands {
-                println!("{:?}", cmd.primative);
+                println!("Width: {} Height: {} {:?}", cmd.area.width, cmd.area.height, cmd.primative);
             }
 
             // while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
@@ -298,7 +298,7 @@ impl Context {
                 }
                 Primative::Text(text, font_size, color) => {
                     //TODO: Specify the font with a font database and font ID.
-                    let font = default_font().unwrap();
+                    let font = default_font();
                     self.draw_text(&text, font, x, y, *font_size, 0, *color);
                 }
                 // Primative::CustomBoxed(f) => f(self),
@@ -822,6 +822,35 @@ impl Context {
         line_height: usize,
         color: Color,
     ) {
+        //http://arkanis.de/weblog/2023-08-14-simple-good-quality-subpixel-text-rendering-in-opengl-with-stb-truetype-and-dual-source-blending
+        // https://github.com/arkanis/gl-4.5-subpixel-text-rendering/blob/d770f0395f610d9fcc53319734069fe7fc4138b2/main.c#L626
+
+        // [FT_LCD_FILTER_DEFAULT](https://freetype.org/freetype2/docs/reference/ft2-lcd_rendering.html)
+        // This is a beveled, normalized, and color-balanced five-tap filter with weights of [0x08 0x4D 0x56 0x4D 0x08] in 1/256 units.
+        // const LCD_FILTER: [u8; 5] = [0x08, 0x4D, 0x56, 0x4D, 0x08];
+
+        pub fn apply_lcd_filter(bitmap: &[u8], width: usize, height: usize) -> Vec<u8> {
+            let stride = width * 3;
+            let mut output = vec![0u8; bitmap.len()];
+
+            for row in 0..height {
+                let offset = row * stride;
+                for i in 0..stride {
+                    // We only filter horizontally across R, G, B values
+                    let idx = offset + i;
+
+                    // Boundary checks for left/right neighbors
+                    let left = if i == 0 { 0 } else { bitmap[idx - 1] as u16 };
+                    let center = bitmap[idx] as u16;
+                    let right = if i == stride - 1 { 0 } else { bitmap[idx + 1] as u16 };
+
+                    // [1, 2, 1] weighted average
+                    output[idx] = ((left + center * 2 + right) / 4) as u8;
+                }
+            }
+            output
+        }
+
         if text.is_empty() || font_size == 0 {
             return;
         }

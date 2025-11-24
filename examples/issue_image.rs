@@ -14,10 +14,10 @@ fn main() {
         let root = v!(
             //TODO: this should not neeed a container!
             image(&ben),
-            fit!(text("no."), rect().wh(100)).pad(20).gap(20).bg(gray()),
-            fit!(text("no."), rect().wh(100)).pad(20).gap(20).bg(gray()),
-            fit!(text("no."), rect().wh(100)).pad(20).gap(20).bg(gray()),
-            fit!(text("no."), rect().wh(100)).pad(20).gap(20).bg(gray()),
+            fit!(text("no."), rect().wh(100)).p(20).gap(20).bg(gray()),
+            fit!(text("no."), rect().wh(100)).p(20).gap(20).bg(gray()),
+            fit!(text("no."), rect().wh(100)).p(20).gap(20).bg(gray()),
+            fit!(text("no."), rect().wh(100)).p(20).gap(20).bg(gray()),
         );
 
         ctx.draw_layout(root);

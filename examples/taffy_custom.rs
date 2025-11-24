@@ -13,7 +13,7 @@ fn button<'a>(plan: &'a str, current_plan: &'a Cell<&'a str>, accent: Color) -> 
         })
         .w(360)
         .hcenter()
-        .pad(15)
+        .p(15)
 }
 
 fn main() {

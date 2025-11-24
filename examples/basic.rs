@@ -2,6 +2,7 @@ use softui::*;
 
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
+    dbg!(text("example").measure_content());
 
     loop {
         match ctx.event() {
@@ -9,13 +10,7 @@ fn main() {
             _ => {}
         }
 
-        let root = v!(
-            text("examlpe").size(22),
-            text_new("example")
-        )
-        .gap(8)
-        .pad(8)
-        .hcenter();
+        let root = fit!(text("example")).bg(red());
 
         ctx.draw_layout(root);
         ctx.debug_layout();

@@ -134,7 +134,8 @@ impl<'a, W: Widget<'a>> GenericWidget<'a, W> {
         self
     }
     //TODO: This does not work on text?
-    pub fn pad(mut self, padding: impl IntoF32) -> Self {
+    ///Padding
+    pub fn p(mut self, padding: impl IntoF32) -> Self {
         let v = padding.into_f32();
         self.layout.padding.left = length(v);
         self.layout.padding.right = length(v);

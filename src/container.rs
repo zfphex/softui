@@ -27,6 +27,22 @@ impl<'a> Debug for Container<'a> {
     }
 }
 
+impl<'a> Styling for Container<'a> {
+    fn style_mut(&mut self) -> &mut Style {
+        &mut self.style
+    }
+
+    fn fg(mut self, fg: impl IntoColor) -> Self {
+        self.style.foreground_color = fg.into_color();
+        self
+    }
+
+    fn bg(mut self, bg: impl IntoColor) -> Self {
+        self.style.background_color = bg.into_color();
+        self
+    }
+}
+
 impl<'a> Container<'a> {
     pub fn new(layout: TaffyLayout, kind: NodeKind) -> Self {
         let node = unsafe {
@@ -105,7 +121,8 @@ impl<'a> Container<'a> {
         unsafe { TREE[self.node].layout.size = self.layout.size };
         self
     }
-    pub fn pad(mut self, padding: impl IntoF32) -> Self {
+
+    pub fn p(mut self, padding: impl IntoF32) -> Self {
         let padding = length(padding.into_f32());
         self.layout.padding = padding;
         unsafe { TREE[self.node].layout.padding = padding };
@@ -155,16 +172,6 @@ impl<'a> Container<'a> {
     pub fn h(mut self, height: impl IntoDimension) -> Self {
         self.layout.size.height = height.into_dimension();
         unsafe { TREE[self.node].layout.size.height = self.layout.size.height };
-        self
-    }
-
-    pub fn fg(mut self, fg: impl IntoColor) -> Self {
-        self.style.foreground_color = fg.into_color();
-        self
-    }
-
-    pub fn bg(mut self, bg: impl IntoColor) -> Self {
-        self.style.background_color = bg.into_color();
         self
     }
 

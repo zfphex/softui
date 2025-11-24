@@ -11,12 +11,14 @@ pub fn rect() -> Rectangle {
         },
         radius: 0,
         outline: false,
+        style: Style::new(),
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct Rectangle {
     pub layout: TaffyLayout,
+    pub style: Style,
     pub radius: usize,
     pub outline: bool,
 }
@@ -34,8 +36,14 @@ impl Rectangle {
 }
 
 impl Sizing for Rectangle {
-    fn layout(&mut self) -> &mut TaffyLayout {
+    fn layout_mut(&mut self) -> &mut TaffyLayout {
         &mut self.layout
+    }
+}
+
+impl Styling for Rectangle {
+    fn style_mut(&mut self) -> &mut Style {
+        &mut self.style
     }
 }
 
