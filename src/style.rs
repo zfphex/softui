@@ -62,19 +62,6 @@ pub trait StyleBuilder<'a>: Sized {
     fn teal(self) -> Self { self.bg(teal()) }
 }
 
-//TODO: IDK What to do here.
-// impl<'a, W: Widget<'a>> StyleBuilder<'a> for W {
-//     fn bg(self, color: Color) -> Self {
-//     }
-// }
-
-impl<'a, W: Widget<'a>> StyleBuilder<'a> for GenericWidget<'a, W> {
-    fn bg(mut self, color: Color) -> Self {
-        self.style.background_color = Some(color);
-        self
-    }
-}
-
 #[inline(always)]
 pub const fn hex(color: &str) -> Color {
     if let Ok(hex) = u32::from_str_radix(color.split_at(1).1, 16) {

@@ -17,7 +17,7 @@ pub mod image;
 pub use image::*;
 
 pub mod text;
-use taffy::{prelude::length, AvailableSpace, Dimension, Size};
+use taffy::{prelude::length, AvailableSpace, BoxSizing, Dimension, Size};
 pub use text::*;
 
 #[cfg(target_os = "windows")]
@@ -28,8 +28,8 @@ pub mod dwrite;
 #[cfg(feature = "dwrite")]
 pub use dwrite::*;
 
-pub mod generic;
-pub use generic::*;
+pub mod click;
+pub use click::*;
 
 pub mod input;
 pub use input::*;
@@ -57,6 +57,7 @@ pub trait Styling: Sized {
 }
 
 pub trait Sizing: Sized {
+    #[inline]
     fn layout_mut(&mut self) -> &mut TaffyLayout;
 
     fn w(mut self, w: impl IntoDimension) -> Self {
@@ -106,12 +107,46 @@ pub trait Sizing: Sized {
         self.layout_mut().padding.bottom = length(bottom.into_f32());
         self
     }
+
+    fn max_w(mut self, w: impl IntoDimension) -> Self {
+        self.layout_mut().max_size.width = w.into_dimension();
+        self
+    }
+    fn min_w(mut self, w: impl IntoDimension) -> Self {
+        self.layout_mut().min_size.width = w.into_dimension();
+        self
+    }
+    fn max_h(mut self, h: impl IntoDimension) -> Self {
+        self.layout_mut().max_size.height = h.into_dimension();
+        self
+    }
+    fn min_h(mut self, h: impl IntoDimension) -> Self {
+        self.layout_mut().min_size.height = h.into_dimension();
+        self
+    }
+    fn wfill(mut self) -> Self {
+        self.layout_mut().size.width = Dimension::percent(1.0);
+        self
+    }
+    fn hfill(mut self) -> Self {
+        self.layout_mut().size.height = Dimension::percent(1.0);
+        self
+    }
+    fn fill(mut self) -> Self {
+        self.layout_mut().size.width = Dimension::percent(1.0);
+        self.layout_mut().size.height = Dimension::percent(1.0);
+        self
+    }
+    fn fit(mut self) -> Self {
+        self.layout_mut().box_sizing = BoxSizing::ContentBox;
+        self
+    }
 }
 
 pub trait Widget<'a>: std::fmt::Debug {
     fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>);
     fn layout(&self) -> TaffyLayout;
-
+    fn try_click(&mut self, ctx: &mut Context, area: Rect) {}
     fn measure(&self, known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>) -> Size<f32> {
         Size::ZERO
     }
@@ -124,165 +159,37 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn node(&self) -> usize {
         unreachable!()
     }
-    // fn fg(self, fg: impl IntoColor) -> GenericWidget<'a, Self>
-    // where
-    //     Self: Sized,
-    // {
-    //     GenericWidget::new(self).fg(fg)
-    // }
-    // fn bg(self, bg: impl IntoColor) -> GenericWidget<'a, Self>
-    // where
-    //     Self: Sized,
-    // {
-    //     GenericWidget::new(self).bg(bg)
-    // }
-    // fn border(self, border: impl IntoColor) -> GenericWidget<'a, Self>
-    // where
-    //     Self: Sized,
-    // {
-    //     GenericWidget::new(self).border(border)
-    // }
 
-    // TODO: I don't think that width and height should necessarily be changed on some widgets.
-    // The width and height information for font is really important.
-    // Destroying it doesn't really make sense since you can just set constraints instead?
-    // idk. I had some issues with
-    // fit!(text(plan).w(20))
-    // vs.
-    // fit!(text(plan.w(20)))
-    // they have different behaviour and I don't like that 😡
+    fn on_click<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
+    where
+        Self: Sized,
+        F: FnMut(&mut Self) + 'a,
+    {
+        Click::new(self).on_click(button, func)
+    }
 
-    // fn w(self, w: impl IntoDimension) -> GenericWidget<'a, Self>
-    // where
-    //     Self: Sized,
-    // {
-    //     GenericWidget::new(self).w(w)
-    // }
-    // fn h(self, h: impl IntoDimension) -> GenericWidget<'a, Self>
-    // where
-    //     Self: Sized,
-    // {
-    //     GenericWidget::new(self).h(h)
-    // }
+    fn on_press<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
+    where
+        Self: Sized,
+        F: FnMut(&mut Self) + 'a,
+    {
+        Click::new(self).on_press(button, func)
+    }
 
-    fn max_w(self, w: impl IntoDimension) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).max_w(w)
-    }
-    fn min_w(self, w: impl IntoDimension) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).min_w(w)
-    }
-    fn max_h(self, h: impl IntoDimension) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).max_h(h)
-    }
-    fn min_h(self, h: impl IntoDimension) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).min_h(h)
-    }
-    // fn wh(self, wh: impl IntoDimension) -> GenericWidget<'a, Self>
-    // where
-    //     Self: Sized,
-    // {
-    //     GenericWidget::new(self).wh(wh)
-    // }
-    fn fit(self) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).fit()
-    }
-    fn wfill(self) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).wfill()
-    }
-    fn hfill(self) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).hfill()
-    }
-    fn fill(self) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).fill()
-    }
-    fn margin(self, margin: impl IntoF32) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).margin(margin)
-    }
-    fn ml(self, left: impl IntoF32) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).ml(left)
-    }
-    fn mr(self, right: impl IntoF32) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).mr(right)
-    }
-    fn mt(self, top: impl IntoF32) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).mt(top)
-    }
-    fn mb(self, bottom: impl IntoF32) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).mb(bottom)
-    }
-    fn on_hover<F>(self, func: F) -> GenericWidget<'a, Self>
+    fn on_release<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
     where
         Self: Sized,
         F: FnMut(&mut Self) + 'a,
     {
-        GenericWidget::new(self).on_hover(func)
+        Click::new(self).on_release(button, func)
     }
-    fn on_click<F>(self, button: MouseButton, func: F) -> GenericWidget<'a, Self>
+
+    fn on_hover<F>(self, func: F) -> Click<'a, Self>
     where
         Self: Sized,
         F: FnMut(&mut Self) + 'a,
     {
-        GenericWidget::new(self).on_click(button, func)
-    }
-    fn on_press<F>(self, button: MouseButton, func: F) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-        F: FnMut(&mut Self) + 'a,
-    {
-        GenericWidget::new(self).on_press(button, func)
-    }
-    fn on_release<F>(self, button: MouseButton, func: F) -> GenericWidget<'a, Self>
-    where
-        Self: Sized,
-        F: FnMut(&mut Self) + 'a,
-    {
-        GenericWidget::new(self).on_release(button, func)
-    }
-    fn try_click(&mut self, ctx: &mut Context, area: Rect) {}
-    fn into_layout(self) -> TaffyLayout
-    where
-        Self: Sized,
-    {
-        GenericWidget::new(self).into_layout()
+        Click::new(self).on_hover(func)
     }
 }
 
