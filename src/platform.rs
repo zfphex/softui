@@ -96,22 +96,32 @@ pub mod macos {
             let (x, y) = self.minifb.get_mouse_pos(MouseMode::Pass).unwrap();
             self.mouse_position = Rect::new(x as usize, y as usize, 1, 1);
 
-            if self.minifb.get_mouse_down(minifb::MouseButton::Left) {
+            let left_down = self.minifb.get_mouse_down(minifb::MouseButton::Left);
+            let middle_down = self.minifb.get_mouse_down(minifb::MouseButton::Middle);
+            let right_down = self.minifb.get_mouse_down(minifb::MouseButton::Right);
+
+            if left_down && !self.left_mouse.down {
                 self.left_mouse.pressed(self.mouse_position);
-            } else if self.left_mouse.pressed {
+                self.left_mouse.down = true;
+            } else if !left_down && self.left_mouse.down {
                 self.left_mouse.released(self.mouse_position);
+                self.left_mouse.down = false;
             }
 
-            if self.minifb.get_mouse_down(minifb::MouseButton::Middle) {
+            if middle_down && !self.middle_mouse.down {
                 self.middle_mouse.pressed(self.mouse_position);
-            } else if self.middle_mouse.pressed {
+                self.middle_mouse.down = true;
+            } else if !middle_down && self.middle_mouse.down {
                 self.middle_mouse.released(self.mouse_position);
+                self.middle_mouse.down = false;
             }
 
-            if self.minifb.get_mouse_down(minifb::MouseButton::Right) {
+            if right_down && !self.right_mouse.down {
                 self.right_mouse.pressed(self.mouse_position);
-            } else if self.right_mouse.pressed {
+                self.right_mouse.down = true;
+            } else if !right_down && self.right_mouse.down {
                 self.right_mouse.released(self.mouse_position);
+                self.right_mouse.down = false;
             }
 
             //TODO: Modifiers don't work
@@ -370,6 +380,7 @@ pub mod macos {
         pub released: bool,
         pub inital_position: Rect,
         pub release_position: Option<Rect>,
+        pub down: bool,
     }
 
     impl MouseButtonState {
@@ -379,6 +390,7 @@ pub mod macos {
                 released: false,
                 inital_position: Rect::new(0, 0, 0, 0),
                 release_position: None,
+                down: false,
             }
         }
         pub const fn is_pressed(&mut self) -> bool {

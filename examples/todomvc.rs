@@ -37,7 +37,6 @@ fn item<'a>(item: &'a mut Item) -> impl Widget<'a> + 'a {
         v!().border(if item.done { None } else { Some(white()) })
             .wh(20)
             .bg(if item.done { Some(white()) } else { Some(black()) })
-            //TODO: This does click repeats for some reason???
             .on_click(Left, |_| item.done = !item.done),
         //TODO: Spacers should work with bg(None)
         // rect().w(10.percent()).bg(black()),

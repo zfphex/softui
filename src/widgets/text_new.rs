@@ -5,6 +5,7 @@ use crate::*;
 pub fn text_new<'a>(text: impl Into<Cow<'a, str>>) -> TextNew<'a> {
     TextNew {
         text: text.into(),
+        line_height: 1.2,
         font_size: 22.0,
         style: Style::new(),
         layout: TaffyLayout {
@@ -22,6 +23,7 @@ pub fn text_new<'a>(text: impl Into<Cow<'a, str>>) -> TextNew<'a> {
 #[derive(Debug)]
 pub struct TextNew<'a> {
     pub text: Cow<'a, str>,
+    pub line_height: f32,
     pub font_size: f32,
     pub style: Style,
     pub layout: TaffyLayout,
@@ -54,53 +56,62 @@ impl<'a> Widget<'a> for TextNew<'a> {
         self.layout.clone()
     }
 
-fn measure(&self, _known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>) -> Size<f32> {
+    fn measure(&self, _known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>) -> Size<f32> {
+        let canvas_width = ctx_width();
         let font = default_font().unwrap();
 
-        // 1. Get correct vertical metrics from the font
-        // 'new_line_size' typically includes ascent + descent + line_gap
-        // If that feels too tall, use 'metrics.ascent - metrics.descent'
-        let metrics = font.horizontal_line_metrics(self.font_size);
-        // let line_height = metrics.new_line_size; 
-        let line_height = 1.2;
+        let mut y = 0.0;
+        let x = 0.0;
 
-        let max_width = match available_space.width {
-            AvailableSpace::Definite(px) => px,
-            AvailableSpace::MinContent => 0.0,
-            AvailableSpace::MaxContent => f32::MAX,
-        };
+        let mut max_x = 0.0;
+        let mut max_y = 0.0;
+        let mut width = 0.0;
+        let mut height = 0.0;
+        let line_height = self.line_height;
 
-        let mut width: f32 = 0.0;
-        let mut height: f32 = 0.0;
+        'line: for line in self.text.lines() {
+            let mut glyph_x = x;
 
-        let mut current_line_width: f32 = 0.0;
+            'char: for char in line.chars() {
+                let (metrics, _) = font.rasterize(char, self.font_size);
 
-        for line in self.text.lines() {
-            for ch in line.chars() {
-                let metrics = font.metrics(ch, self.font_size);
+                let glyph_y = y - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
 
-                if current_line_width + metrics.advance_width > max_width {
-                    width = width.max(current_line_width);
-                    current_line_width = 0.0;
-                    height += line_height;
+                for y in 0..metrics.height {
+                    for x in 0..metrics.width {
+                        let offset = self.font_size + glyph_y + y as f32;
+
+                        //We can't render off of the screen, mkay?
+                        if offset < 0.0 {
+                            continue;
+                        }
+
+                        if max_x < x as f32 + glyph_x {
+                            max_x = x as f32 + glyph_x;
+                        }
+
+                        if max_y < offset {
+                            max_y = offset;
+                        }
+                    }
                 }
 
-                current_line_width += metrics.advance_width;
+                glyph_x += metrics.advance_width;
+
+                if glyph_x >= canvas_width as f32 {
+                    break 'line;
+                }
             }
 
-            width = width.max(current_line_width);
-            current_line_width = 0.0;
-            height += line_height;
+            y += self.font_size + line_height;
         }
 
-        if height == 0.0 && !self.text.is_empty() {
-            height = line_height;
-        }
+        height = (max_y + 1.0 - y);
+        width = (max_x + 1.0 - x);
 
-        // 2. Round up to nearest pixel to prevent subpixel blur
-        Size { 
-            width: width.ceil(), 
-            height: height.ceil() 
+        Size {
+            width: width,
+            height: height,
         }
     }
 }

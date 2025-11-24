@@ -100,8 +100,6 @@ impl<'a> Text<'a> {
                         if max_y < offset as usize {
                             max_y = offset as usize;
                         }
-
-                        let i = x + glyph_x + canvas_width * offset as usize;
                     }
                 }
 
