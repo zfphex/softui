@@ -13,9 +13,14 @@ pub struct Item {
     pub done: bool,
 }
 
-fn input_box<'a>(label: &'a str, input: &'a mut Option<String>) -> impl Widget<'a> + 'a {
-    let label = if let Some(input) = input { input.as_str() } else { label };
-    v!(text(label).font_size(18))
+fn input_box<'a>(input: &'a mut Option<String>) -> impl Widget<'a> + 'a {
+    let label = if let Some(input) = input {
+        text(input.as_str())
+    } else {
+        text("What needs to be done?").fg(gray())
+    };
+
+    v!(label.font_size(18))
         .w(50.percent())
         .h(64)
         .bg(black())
@@ -103,11 +108,11 @@ fn main() {
         let root = v!(v!(
             //
             text("todos").font_size(22),
-            input_box("What needs to be done?", &mut input),
+            input_box(&mut input),
             //This is really bad, why does fit work but v! doesn't
             fit!(
                 v!(text(format!("{} task left", remaining))).w(50.percent()),
-                //TODO: Padding does not work on text?
+                //TODO: Yeah this is cooked and shouldn't need fit.
                 fit!(text("All"))
                     .bg(if state == All { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = All),
