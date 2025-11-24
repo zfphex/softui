@@ -38,12 +38,10 @@ fn item<'a>(item: &'a mut Item) -> impl Widget<'a> + 'a {
             .wh(20)
             .bg(if item.done { Some(white()) } else { Some(black()) })
             .on_click(Left, |_| item.done = !item.done),
-        //TODO: Spacers should work with bg(None)
-        // rect().w(10.percent()).bg(black()),
         text(&item.label)
     )
-    .gap(20)
-    .hcenter()
+    .vcenter()
+    .gap(10)
 }
 
 fn main() {
@@ -91,7 +89,7 @@ fn main() {
             _ => {}
         }
 
-        let len = todos.len();
+        let remaining = todos.iter().filter(|t| !t.done).count();
         let list: Vec<_> = todos
             .iter_mut()
             .filter(|i| match state {
@@ -108,21 +106,22 @@ fn main() {
             input_box("What needs to be done?", &mut input),
             //This is really bad, why does fit work but v! doesn't
             fit!(
-                v!(text(format!("{} task left", len))).w(50.percent()),
-                //TODO: This sucks + the background doesn't cover the whole area unless in a fit! container wtf?
-                fit!(text("All"))
+                v!(text(format!("{} task left", remaining))).w(50.percent()),
+                //TODO: Padding does not work on text?
+                text("All")
                     .bg(if state == All { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = All),
-                fit!(text("Active"))
+                text("Active")
                     .bg(if state == Active { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = Active),
-                fit!(text("Completed"))
+                text("Completed")
                     .bg(if state == Completed { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = Completed),
             )
-            .gap(20)
+            .gap(20),
+            v!().children(list).w(50.percent()).gap(8)
         )
-        .children(list)
+        // .children(list)
         .gap(8)
         .pad(8)
         .hcenter());

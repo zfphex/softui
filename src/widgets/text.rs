@@ -1,6 +1,7 @@
 use crate::*;
 use fontdue::*;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use taffy::{AvailableSpace, BoxSizing, Dimension, Size};
 
 pub const FONT: &[u8] = include_bytes!("../../fonts/JetBrainsMono.ttf");
 
@@ -29,14 +30,29 @@ pub fn set_default_font_size(font_size: usize) {
 }
 
 pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
-    Text {
+    let mut text = Text {
         text: text.into(),
         size: default_font_size(),
         line_height: None,
-        area: Rect::default(),
+        text_area: Rect::default(),
+        layout: TaffyLayout {
+            box_sizing: BoxSizing::ContentBox,
+            size: Size {
+                width: Dimension::auto(),
+                height: Dimension::auto(),
+            },
+            ..Default::default()
+        },
+        style: Style::new(),
         drawn: false,
-    }
-    .calculate_area()
+    };
+
+    text.text_area = text.calculate_area();
+    text.layout.size = Size {
+        width: taffy::Dimension::length(text.text_area.width as f32),
+        height: taffy::Dimension::length(text.text_area.height as f32),
+    };
+    text
 }
 
 #[derive(Debug, Clone)]
@@ -44,25 +60,40 @@ pub struct Text<'a> {
     pub text: Cow<'a, str>,
     pub size: usize,
     pub line_height: Option<usize>,
-    //Used with the builder pattern, x(), y(), width(), etc...
-    pub area: Rect,
+    pub text_area: Rect,
+    pub layout: TaffyLayout,
+    pub style: Style,
     pub drawn: bool,
 }
 
 impl<'a> Text<'a> {
+    pub fn bg(mut self, bg: impl IntoColor) -> Self {
+        self.style.background_color = bg.into_color();
+        self
+    }
     pub fn size(mut self, size: usize) -> Self {
         self.size = size;
-        self.calculate_area()
+        self.text_area = self.calculate_area();
+        self.layout.size = Size {
+            width: taffy::Dimension::length(self.text_area.width as f32),
+            height: taffy::Dimension::length(self.text_area.height as f32),
+        };
+        self
     }
     pub fn line_heigth(mut self, line_height: usize) -> Self {
         self.line_height = Some(line_height);
-        self.calculate_area()
+        self.text_area = self.calculate_area();
+        self.layout.size = Size {
+            width: taffy::Dimension::length(self.text_area.width as f32),
+            height: taffy::Dimension::length(self.text_area.height as f32),
+        };
+        self
     }
-    fn calculate_area(mut self) -> Self {
+    fn calculate_area(&self) -> Rect {
         // let canvas_width = ctx().window.width();
         let canvas_width = ctx_width();
         let font = default_font().unwrap();
-        let mut area = self.area;
+        let mut area = self.text_area;
 
         //TODO: Two text widgets with same y value have different heights.
         //Text needs to be aligned specifically over this y coordinate,
@@ -120,32 +151,37 @@ impl<'a> Text<'a> {
         area.height = (max_y + 1 - area.y);
         area.width = (max_x + 1 - area.x);
 
-        self.area = area;
-        self
+        // self.text_area = area;
+
+        area
     }
 }
 
-// impl<'a> Sizing for Text<'a> {
-//     fn layout(&mut self) -> &mut TaffyLayout {
-//         &mut self.layout
-//     }
-// }
+impl<'a> Sizing for Text<'a> {
+    fn layout(&mut self) -> &mut TaffyLayout {
+        &mut self.layout
+    }
+}
 
 impl<'a> Widget<'a> for Text<'a> {
     fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
         let mut font_color = white();
 
-        if let Some(style) = style {
-            if let Some(style_bg) = style.background_color {
-                commands.push(Command {
-                    area,
-                    primative: Primative::Ellipse(0, None, style_bg),
-                });
-            }
+        if let Some(bg) = self.style.background_color {
+            //TODO: Not sure why it needs to be done like this?
+            commands.push(Command {
+                area: Rect {
+                    x: area.x,
+                    y: area.y,
+                    width: self.text_area.width,
+                    height: self.text_area.height,
+                },
+                primative: Primative::Ellipse(0, None, bg),
+            });
+        }
 
-            if let Some(style_fg) = style.foreground_color {
-                font_color = style_fg;
-            }
+        if let Some(fg) = self.style.foreground_color {
+            font_color = fg;
         }
 
         commands.push(Command {
@@ -155,41 +191,23 @@ impl<'a> Widget<'a> for Text<'a> {
     }
 
     fn layout(&self) -> TaffyLayout {
-        TaffyLayout {
-            size: taffy::Size {
-                width: taffy::Dimension::length(self.area.width as f32),
-                height: taffy::Dimension::length(self.area.height as f32),
-            },
-            ..Default::default()
-        }
+        self.layout.clone()
+        // TaffyLayout {
+        //     size: taffy::Size {
+        //         width: taffy::Dimension::length(self.text_area.width as f32),
+        //         height: taffy::Dimension::length(self.text_area.height as f32),
+        //     },
+        //     ..Default::default()
+        // }
     }
-}
 
-pub struct Atlas {
-    pub glyphs: [(fontdue::Metrics, Vec<u8>); 128],
-    // pub glyphs: [MaybeUninit<(fontdue::Metrics, Vec<u8>)>; 128],
-    pub font_size: f32,
-}
+    fn measure(&self, _: Size<Option<f32>>, available_space: Size<AvailableSpace>) -> Size<f32> {
+        self.calculate_area();
 
-impl Atlas {
-    pub fn new(font_size: f32) -> Self {
-        let font = fontdue::Font::from_bytes(FONT, fontdue::FontSettings::default()).unwrap();
-        let mut glyphs: [(fontdue::Metrics, Vec<u8>); 128] =
-            core::array::from_fn(|_| (fontdue::Metrics::default(), Vec::new()));
-
-        // let mut glyphs: [MaybeUninit<(fontdue::Metrics, Vec<u8>)>; 128] =
-        //     core::array::from_fn(|_| MaybeUninit::uninit());
-
-        for char in 32..127u8 {
-            let (metrics, bitmap) = font.rasterize(char as char, font_size);
-            glyphs[char as usize] = (metrics, bitmap);
-            // glyphs[char as usize].write((metrics, bitmap));
+        Size {
+            width: self.text_area.width as f32,
+            height: self.text_area.height as f32,
         }
-
-        //This would leave some of the data uninitialised. Should probably just shrink the array down.
-        // let glyphs: [(fontdue::Metrics, Vec<u8>); 128] = unsafe { core::mem::transmute(glyphs) };
-
-        Self { glyphs, font_size }
     }
 }
 

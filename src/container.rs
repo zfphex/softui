@@ -228,6 +228,12 @@ impl<'a> Container<'a> {
     pub fn on_key_release(mut self, key: Key, f: impl FnMut(&mut Self) + 'a) -> Self {
         todo!()
     }
+
+    pub fn layout(mut self, f: impl FnOnce(&mut TaffyLayout)) -> Self {
+        f(&mut self.layout);
+        unsafe { TREE[self.node].layout = self.layout.clone() };
+        self
+    }
 }
 
 impl<'a> Widget<'a> for Container<'a> {
