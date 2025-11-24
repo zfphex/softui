@@ -8,7 +8,7 @@ pub fn button(label: &str) -> Button {
 pub struct Button {}
 
 impl<'a> Widget<'a> for Button {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
         todo!()
     }
 

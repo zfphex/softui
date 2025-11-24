@@ -38,12 +38,7 @@ impl<'a> TextNew<'a> {
 }
 
 impl<'a> Widget<'a> for TextNew<'a> {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
-        //HACK: Use the self defined self.bg instead.
-        if let Some(style) = style {
-            debug_assert!(style.background_color.is_none());
-        }
-
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
         if let Some(bg) = self.bg {
             commands.push(Command {
                 area,

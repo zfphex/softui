@@ -8,7 +8,7 @@ pub fn example(label: &str) -> Example {
 pub struct Example {}
 
 impl<'a> Widget<'a> for Example {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
         todo!()
     }
 

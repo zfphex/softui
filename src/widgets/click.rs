@@ -47,8 +47,8 @@ impl<'a, W: Widget<'a>> Widget<'a> for Click<'a, W> {
         }
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
-        self.widget.draw(commands, area, style);
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
+        self.widget.draw(commands, area);
     }
 }
 

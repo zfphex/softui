@@ -264,14 +264,12 @@ impl<'a> Widget<'a> for Container<'a> {
         self.node
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
-        if let Some(style) = style {
-            if let Some(background_color) = style.background_color {
-                commands.push(Command {
-                    area,
-                    primative: Primative::Ellipse(0, style.border_color, background_color),
-                });
-            }
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
+        if let Some(background_color) = self.style.background_color {
+            commands.push(Command {
+                area,
+                primative: Primative::Ellipse(0, self.style.border_color, background_color),
+            });
         }
     }
 }

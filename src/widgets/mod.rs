@@ -144,7 +144,7 @@ pub trait Sizing: Sized {
 }
 
 pub trait Widget<'a>: std::fmt::Debug {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>);
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect);
     fn layout(&self) -> TaffyLayout;
     fn try_click(&mut self, ctx: &mut Context, area: Rect) {}
     fn measure(&self, known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>) -> Size<f32> {

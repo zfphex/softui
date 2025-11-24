@@ -52,33 +52,34 @@ impl<'a> Text<'a> {
     }
 
     // TODO: The font rendering and layout measurements seem to be different.
-    /// Measures the raw text dimensions (without padding) using the font metrics.
-    pub fn measure_content(&self) -> Size<f32> {
-        let font = default_font();
-        let m = font.metrics('M', self.font_size as f32);
+    // Measures the raw text dimensions (without padding) using the font metrics.
+    // pub fn measure_content(&self) -> Size<f32> {
+    //     let font = default_font();
+    //     let m = font.metrics('M', self.font_size as f32);
 
-        let mut max_width: f32 = 0.0;
-        let mut total_height: f32 = (m.height as f32) / 2.0;
+    //     let mut max_width: f32 = 0.0;
+    //     let mut total_height: f32 = (m.height as f32) / 2.0;
+    //     // let mut total_height: f32 = 0.0;
 
-        for line in self.text.lines() {
-            let mut line_width = 0.0;
-            let mut max_line_height: f32 = 0.0;
+    //     for line in self.text.lines() {
+    //         let mut line_width = 0.0;
+    //         let mut max_line_height: f32 = 0.0;
 
-            for char in line.chars() {
-                let metrics = font.metrics(char, self.font_size as f32);
-                line_width += metrics.advance_width;
-                max_line_height = max_line_height.max(metrics.height as f32);
-            }
+    //         for char in line.chars() {
+    //             let metrics = font.metrics(char, self.font_size as f32);
+    //             line_width += metrics.advance_width;
+    //             max_line_height = max_line_height.max(metrics.height as f32);
+    //         }
 
-            max_width = max_width.max(line_width);
-            total_height += max_line_height;
-        }
+    //         max_width = max_width.max(line_width);
+    //         total_height += max_line_height;
+    //     }
 
-        Size {
-            width: max_width,
-            height: total_height,
-        }
-    }
+    //     Size {
+    //         width: max_width,
+    //         height: total_height,
+    //     }
+    // }
 }
 
 impl<'a> Styling for Text<'a> {
@@ -98,16 +99,28 @@ impl<'a> Widget<'a> for Text<'a> {
         self.layout.clone()
     }
 
-    fn measure(&self, _known: Size<Option<f32>>, _available: Size<AvailableSpace>) -> Size<f32> {
-        // 1. We measure the actual text content.
-        let content_size = self.measure_content();
-
-        // 2. Taffy will automatically add the padding defined in `self.layout`
-        // to this return value to determine the final node size.
-        content_size
+    fn measure(&self, known: Size<Option<f32>>, available: Size<AvailableSpace>) -> Size<f32> {
+        // dbg!(available);
+        let window = Rect::new(0, 0, 800, 600);
+        let area = font::draw_text(
+            &self.text,
+            default_font(),
+            0,
+            0,
+            self.font_size,
+            0,
+            1.0,
+            window,
+            &mut [],
+            white(),
+        );
+        Size {
+            width: area.width as f32,
+            height: area.height as f32,
+        }
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
         if let Some(bg) = self.style.background_color {
             commands.push(Command {
                 area,

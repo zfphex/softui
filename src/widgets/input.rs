@@ -8,7 +8,7 @@ pub fn input(label: &str) -> Input {
 pub struct Input {}
 
 impl<'a> Widget<'a> for Input {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
         todo!()
     }
 
@@ -26,7 +26,5 @@ impl<'a> Widget<'a> for Input {
     //     self
     // }
 
-    fn try_click(&mut self, ctx: &mut Context, area: Rect) {
-        
-    } 
+    fn try_click(&mut self, ctx: &mut Context, area: Rect) {}
 }

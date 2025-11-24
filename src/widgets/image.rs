@@ -86,7 +86,7 @@ pub struct ImageRef<'a> {
 }
 
 impl<'a> Widget<'a> for ImageRef<'a> {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
         //TODO: Just assume the image exists for now.
         let bitmap = unsafe { std::mem::transmute::<&'a [u8], &'static [u8]>(self.bitmap) };
 

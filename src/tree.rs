@@ -48,7 +48,7 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
         let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
         //Click before drawing, since the user may want to modify something about the widget.
         widget.try_click(ctx, area);
-        widget.draw(&mut ctx.commands, area, widget.style());
+        widget.draw(&mut ctx.commands, area);
     }
 
     //TODO: Maybe do this better.

@@ -25,7 +25,7 @@ pub struct List<'a, 'b> {
 }
 
 impl<'a, 'b> Widget<'a> for List<'a, 'b> {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
         //TODO: Only draw inside of window.
     }
 

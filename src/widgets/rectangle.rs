@@ -52,14 +52,13 @@ impl<'a> Widget<'a> for Rectangle {
         self.layout.clone()
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect, style: Option<Style>) {
-        let style = style.unwrap_or(Style::new());
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
         commands.push(Command {
             area,
             primative: Primative::Ellipse(
                 self.radius,
-                style.border_color,
-                style.background_color.unwrap_or(white()),
+                self.style.border_color,
+                self.style.background_color.unwrap_or(white()),
             ),
         });
     }

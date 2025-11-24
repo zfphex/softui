@@ -30,6 +30,9 @@ pub use scaling::*;
 pub use style::*;
 pub mod style;
 
+pub mod font;
+pub use font::*;
+
 pub use platform::MouseButton::*;
 
 pub trait IntoF32 {
