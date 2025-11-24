@@ -273,7 +273,7 @@ fn main() {
 
             //Color
             ctx.draw_rectangle_scaled(3, 3, COLOR_WIDTH + 1, COLOR_HEIGHT + 1, color, 1, BORDER, 0);
-            ctx.draw_text(&color.to_string(), default_font().unwrap(), 46, 10, 16, 0, white());
+            ctx.draw_text(&color.to_string(), default_font(), 46, 10, 16, 0, white());
 
             ctx.draw_frame();
         }

@@ -25,9 +25,11 @@ fn main() {
         {
             // ctx.draw_text_subpixel(text, &dwrite, 0, 0, 4, 0, white());
             // ctx.draw_text_subpixel(text, &dwrite, 0, 8, 8, 0, white());
-            ctx.draw_text_subpixel(text, &dwrite, 0, 20, 12, 0, white());
+            // ctx.draw_text_subpixel(text, &dwrite, 0, 20, 12, 0, white());
             // ctx.draw_text_subpixel(text, &dwrite, 0, 36, 16, 0, white());
-            // ctx.draw_text_subpixel(text, &dwrite, 0, 56, 20, 0, white());
+            ctx.draw_text_subpixel(text, &dwrite, 0, 56, 20, 0, white());
+            ctx.draw_text_subpixel_new(text, default_font(), 0, 76, 20, 0, white());
+
             // ctx.draw_text_subpixel(text, &dwrite, 0, 80, 24, 0, white());
             // ctx.draw_text_subpixel(text, &dwrite, 0, 108, 28, 0, white());
             // ctx.draw_text_subpixel(text, &dwrite, 0, 140, 32, 0, white());

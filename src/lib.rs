@@ -253,7 +253,10 @@ impl Context {
 
             //Print the draw queue too.
             for cmd in &self.commands {
-                println!("Width: {} Height: {} {:?}", cmd.area.width, cmd.area.height, cmd.primative);
+                println!(
+                    "Width: {} Height: {} {:?}",
+                    cmd.area.width, cmd.area.height, cmd.primative
+                );
             }
 
             // while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
@@ -815,7 +818,7 @@ impl Context {
         area.width = max_x + 1 - area.x;
     }
 
-    pub fn draw_text_subpixel(
+    pub fn draw_text_subpixel_new(
         &mut self,
         text: &str,
         font: &fontdue::Font,
@@ -973,6 +976,87 @@ impl Context {
         area.width = max_x + 1 - area.x;
     }
 
+    #[cfg(target_os = "windows")]
+    #[cfg(feature = "dwrite")]
+    #[deprecated]
+    pub fn draw_text_subpixel(
+        &mut self,
+        text: &str,
+        dwrite: &DWrite,
+        x: usize,
+        mut y: usize,
+        font_size: usize,
+        line_height: usize,
+        color: Color,
+    ) {
+        let mut max_x = 0;
+        let mut max_y = 0;
+        let start_x = x;
+        let start_y = y;
+
+        let r = color.r();
+        let g = color.g();
+        let b = color.b();
+
+        let viewport_width = self.window.width();
+
+        'line: for line in text.lines() {
+            let mut glyph_x = x as f32;
+
+            'char: for char in line.chars() {
+                let (metrics, texture) = dwrite.glyph(char, font_size as f32);
+                let height = texture.height;
+                let width = texture.width;
+                let texture = &texture.data;
+                let x_draw = glyph_x.floor() as usize;
+
+                let glyph_y =
+                    start_y as f32 + (metrics.vertical_origin_y - height as f32) - metrics.bottom_side_bearing;
+
+                'y: for y in 0..height {
+                    'x: for x in 0..width {
+                        if (x + x_draw as i32) >= viewport_width as i32 {
+                            continue;
+                        }
+
+                        let offset = glyph_y as usize + y as usize;
+
+                        if max_x < x as usize + x_draw {
+                            max_x = x as usize + x_draw;
+                        }
+
+                        if max_y < offset {
+                            max_y = offset;
+                        }
+
+                        let i = x as usize + x_draw + self.window.width() * offset;
+                        let j = (y as usize * width as usize + x as usize) * 3;
+
+                        if i >= self.window.buffer.len() {
+                            break 'x;
+                        }
+
+                        let c = Color::new(texture[j], texture[j + 1], texture[j + 2]);
+
+                        if let Some(px) = self.window.buffer.get_mut(i) {
+                            *px = c.as_u32();
+                        }
+                    }
+                }
+
+                glyph_x += metrics.advance_width;
+
+                if glyph_x.floor() as usize >= self.window.width() {
+                    break 'line;
+                }
+            }
+
+            y += font_size + line_height;
+        }
+
+        let area = Rect::new(x, y, max_x + 1 - start_x, max_y + 1 - start_y);
+    }
+
     #[cfg(feature = "image")]
     //TODO: Does not support up/downscaling images.
     //TODO: Swap from zune to image-rs.
@@ -1120,7 +1204,7 @@ mod tests {
 
         //Text
         {
-            ctx.draw_text("hi", default_font().unwrap(), 0, 0, 1000, 0, white());
+            ctx.draw_text("hi", default_font(), 0, 0, 1000, 0, white());
         }
 
         ctx.draw_frame();

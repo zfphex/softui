@@ -42,7 +42,7 @@ fn main() {
     let mut ctx = Context::new(window);
     ctx.set_fill_color(BACKGROUND);
 
-    //TODO: What is this cringe.
+    //TODO: Remove this
     set_default_font_size(16);
 
     let accent = Color::from(accent_color());
@@ -106,7 +106,7 @@ fn main() {
                     }
                 })
                 .bg(if selected { Some(accent) } else { None })
-                .pad(PADDING)
+                .p(PADDING)
         }
 
         if draw {

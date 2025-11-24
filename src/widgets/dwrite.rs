@@ -1,7 +1,7 @@
 //I don't like any of this code
 //We should probably cache n most recent glyphs accessed.
 //Do we ask dwrite to do layout too? I don't wanna.
-use super::FONT;
+use crate::FONT_DATA;
 use dwrote::*;
 use mini::profile;
 use std::{ptr::null, sync::Arc};
@@ -81,7 +81,7 @@ impl DWrite {
         (glyph.metrics, &glyph.texture)
     }
     pub fn new() -> Self {
-        let font_data = Arc::new(FONT);
+        let font_data = Arc::new(FONT_DATA);
         let font_file = FontFile::new_from_buffer(font_data.clone()).unwrap();
         let collection_loader = CustomFontCollectionLoaderImpl::new(&[font_file.clone()]);
         let collection = FontCollection::from_loader(collection_loader);

@@ -21,6 +21,10 @@ pub fn set_default_font(font: Font) {
     unsafe { DEFAULT_FONT = Some(font) };
 }
 
+pub fn set_default_font_size(size: usize){
+    unsafe { DEFAULT_FONT_SIZE.store(size, Ordering::Relaxed) }
+}
+
 pub fn default_font_size() -> usize {
     unsafe { DEFAULT_FONT_SIZE.load(Ordering::Relaxed) }
 }
