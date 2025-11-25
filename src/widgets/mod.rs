@@ -20,6 +20,8 @@ pub mod text;
 use taffy::{prelude::length, AvailableSpace, BoxSizing, Dimension, Size};
 pub use text::*;
 
+pub use taffy::AlignItems;
+
 #[cfg(target_os = "windows")]
 #[cfg(feature = "dwrite")]
 pub mod dwrite;
@@ -59,6 +61,11 @@ pub trait Styling: Sized {
 pub trait Sizing: Sized {
     #[inline]
     fn layout_mut(&mut self) -> &mut TaffyLayout;
+
+    fn set_layout(mut self, f: impl FnOnce(&mut TaffyLayout)) -> Self {
+        f(self.layout_mut());
+        self
+    }
 
     fn w(mut self, w: impl IntoDimension) -> Self {
         self.layout_mut().size.width = w.into_dimension();

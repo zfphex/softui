@@ -16,13 +16,11 @@ pub fn draw_text(
     window: Rect,
     buffer: &mut [u32],
     color: Color,
+    skip_draw: bool,
 ) -> Rect {
     if text.is_empty() || font_size == 0 {
         return Rect::new(0, 0, 0, 0);
     }
-
-    // let viewport_width = self.window.width();
-    // let viewport_height = self.window.height();
 
     let x = scale(x, display_scale);
     let y = scale(y, display_scale);
@@ -48,6 +46,7 @@ pub fn draw_text(
 
             let glyph_y = y as f32 - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
 
+            // if draw {
             'y: for y in 0..metrics.height {
                 'x: for x in 0..metrics.width {
                     //Text doesn't fit on the screen.
@@ -79,6 +78,10 @@ pub fn draw_text(
                         max_y = offset as usize;
                     }
 
+                    if skip_draw {
+                        continue;
+                    }
+
                     let i = x + glyph_x + window.width * offset as usize;
 
                     if i >= buffer.len() {
@@ -94,8 +97,6 @@ pub fn draw_text(
                     if let Some(px) = buffer.get_mut(i) {
                         *px = rgb(r, g, b).as_u32();
                     }
-
-                    // self.window.buffer[i] = rgb(r, g, b).as_u32();
                 }
             }
 

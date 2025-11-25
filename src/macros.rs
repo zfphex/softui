@@ -26,6 +26,7 @@ pub fn into_node<'a, T: Widget<'a> + 'a>(widget: T) -> usize {
     }
 }
 
+//Should we have align grow or align start by default?
 pub fn vstyle() -> TaffyLayout {
     TaffyLayout {
         size: Size {
@@ -33,7 +34,7 @@ pub fn vstyle() -> TaffyLayout {
             height: Dimension::percent(1.0),
         },
         flex_direction: FlexDirection::Column,
-        align_items: Some(AlignItems::Stretch),
+        align_items: Some(AlignItems::Start),
         ..Default::default()
     }
 }
@@ -45,7 +46,7 @@ pub fn hstyle() -> TaffyLayout {
             height: Dimension::percent(1.0),
         },
         flex_direction: FlexDirection::Row,
-        align_items: Some(AlignItems::Stretch),
+        align_items: Some(AlignItems::Start),
         ..Default::default()
     }
 }

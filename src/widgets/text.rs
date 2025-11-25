@@ -21,7 +21,7 @@ pub fn set_default_font(font: Font) {
     unsafe { DEFAULT_FONT = Some(font) };
 }
 
-pub fn set_default_font_size(size: usize){
+pub fn set_default_font_size(size: usize) {
     unsafe { DEFAULT_FONT_SIZE.store(size, Ordering::Relaxed) }
 }
 
@@ -104,8 +104,19 @@ impl<'a> Widget<'a> for Text<'a> {
     }
 
     fn measure(&self, known: Size<Option<f32>>, available: Size<AvailableSpace>) -> Size<f32> {
-        // dbg!(available);
-        let window = Rect::new(0, 0, 800, 600);
+        //TOOD: This is likely incorrect.
+        let width = match available.width {
+            AvailableSpace::Definite(px) => px as usize,
+            AvailableSpace::MinContent => ctx_width(),
+            AvailableSpace::MaxContent => ctx_width(),
+        };
+
+        let height = match available.height {
+            AvailableSpace::Definite(px) => px as usize,
+            AvailableSpace::MinContent => ctx_height(),
+            AvailableSpace::MaxContent => ctx_height(),
+        };
+
         let area = font::draw_text(
             &self.text,
             default_font(),
@@ -113,11 +124,13 @@ impl<'a> Widget<'a> for Text<'a> {
             0,
             self.font_size,
             0,
-            1.0,
-            window,
+            1.0, //TODO: display scale
+            Rect::new(0, 0, width, height),
             &mut [],
             white(),
+            true,
         );
+
         Size {
             width: area.width as f32,
             height: area.height as f32,

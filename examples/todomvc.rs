@@ -37,7 +37,6 @@ fn input_box<'a>(input: &'a mut Option<String>) -> impl Widget<'a> + 'a {
 }
 
 fn item<'a>(item: &'a mut Item) -> impl Widget<'a> + 'a {
-    //Okay the whole fit!, v!, h! thing is a mess.
     fit!(
         v!().border(if item.done { None } else { Some(white()) })
             .wh(20)
@@ -106,13 +105,10 @@ fn main() {
             .collect();
 
         let root = v!(v!(
-            //
             text("todos").font_size(22),
             input_box(&mut input),
-            //This is really bad, why does fit work but v! doesn't
             fit!(
                 v!(text(format!("{} task left", remaining))).w(50.percent()),
-                //TODO: Yeah this is cooked and shouldn't need fit.
                 fit!(text("All"))
                     .bg(if state == All { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = All),
@@ -126,7 +122,6 @@ fn main() {
             .gap(20),
             v!().children(list).w(50.percent()).gap(8)
         )
-        // .children(list)
         .gap(8)
         .p(8)
         .hcenter());

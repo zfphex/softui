@@ -220,6 +220,12 @@ impl<'a> Container<'a> {
         self
     }
 
+    pub fn align(mut self, align: AlignItems) -> Self {
+        self.layout.align_items = Some(align);
+        unsafe { TREE[self.node].layout = self.layout.clone() };
+        self
+    }
+
     pub fn horizontal(mut self) -> Self {
         self.direction(FlexDirection::Row)
     }

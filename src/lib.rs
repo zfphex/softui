@@ -196,16 +196,6 @@ impl Context {
         }
     }
 
-    // #[inline]
-    // pub const fn width(&self) -> ScaledUnit {
-    //     ScaledUnit::ViewportWidth(0)
-    // }
-
-    // #[inline]
-    // pub const fn height(&self) -> ScaledUnit {
-    //     ScaledUnit::ViewportHeight(0)
-    // }
-
     pub fn update_area(&self) {
         unsafe {
             WIDTH.store(self.window.width(), Ordering::Relaxed);

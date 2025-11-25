@@ -1,3 +1,4 @@
+#![allow(unused)]
 use softui::*;
 
 use State::*;
@@ -14,16 +15,17 @@ fn main() {
     // dbg!(text("example").measure_content());
 
     let mut state = All;
+
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             _ => {}
         }
 
-        let root = v!(
+        let root = h!(
             text("Example text").bg(red()),
-            text("Example text").bg(red()),
-            text("Example text").bg(red()),
+            text("Example text").bg(green()),
+            text("Example text").bg(blue()),
             //
         );
 
