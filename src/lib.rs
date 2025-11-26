@@ -118,6 +118,11 @@ impl std::fmt::Debug for Primative {
             // Self::CustomBoxed(arg0) => f.debug_tuple("CustomBoxed").finish(),
             // Self::CustomFn(arg0) => f.debug_tuple("CustomFn").field(arg0).finish(),
             // Self::CustomAreaFn(arg0) => f.debug_tuple("CustomAreaFn").field(arg0).finish(),
+            #[cfg(feature = "svg")]
+            Self::SVGUnsafe(_) => f
+                .debug_tuple("SvgUnsafe")
+                // .field(arg0)
+                .finish(),
             #[cfg(feature = "image")]
             Self::ImageUnsafe(arg0, arg1) => f
                 .debug_tuple("ImageUnsafe")

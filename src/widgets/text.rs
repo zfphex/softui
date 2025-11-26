@@ -54,36 +54,6 @@ impl<'a> Text<'a> {
         self.font_size = size;
         self
     }
-
-    // TODO: The font rendering and layout measurements seem to be different.
-    // Measures the raw text dimensions (without padding) using the font metrics.
-    // pub fn measure_content(&self) -> Size<f32> {
-    //     let font = default_font();
-    //     let m = font.metrics('M', self.font_size as f32);
-
-    //     let mut max_width: f32 = 0.0;
-    //     let mut total_height: f32 = (m.height as f32) / 2.0;
-    //     // let mut total_height: f32 = 0.0;
-
-    //     for line in self.text.lines() {
-    //         let mut line_width = 0.0;
-    //         let mut max_line_height: f32 = 0.0;
-
-    //         for char in line.chars() {
-    //             let metrics = font.metrics(char, self.font_size as f32);
-    //             line_width += metrics.advance_width;
-    //             max_line_height = max_line_height.max(metrics.height as f32);
-    //         }
-
-    //         max_width = max_width.max(line_width);
-    //         total_height += max_line_height;
-    //     }
-
-    //     Size {
-    //         width: max_width,
-    //         height: total_height,
-    //     }
-    // }
 }
 
 impl<'a> Styling for Text<'a> {

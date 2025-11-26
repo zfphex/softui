@@ -16,6 +16,9 @@ fn main() {
 
     let mut state = All;
 
+    let img = include_image!("../img/smol.png");
+    let svg = svg("img/ferris.svg", 800, 600, 0.2);
+
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
@@ -23,9 +26,12 @@ fn main() {
         }
 
         let root = v!(
+            //
             "Example 1.".bg(red()),
             "Example 2.",
             "Example 3.",
+            image(&img),
+            svg_ref(&svg),
         );
 
         // let root = v!(v!(
