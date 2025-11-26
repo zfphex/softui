@@ -22,8 +22,7 @@ pub enum NodeKind {
     Flex,
     Fit,
     Grid,
-    // Text,
-    // Image,
+    Text,
 }
 
 #[derive(Default, Debug)]
@@ -186,8 +185,6 @@ impl<'a> taffy::LayoutPartialTree for Tree<'a> {
     }
 
     fn set_unrounded_layout(&mut self, node_id: NodeId, layout: &Layout) {
-        //TODO: IDK about this rounding stuff...
-        // self[node_id.into()].unrounded_layout = *layout;
         self[node_id.into()].final_layout = *layout;
     }
 
@@ -295,8 +292,7 @@ impl<'a> taffy::PrintTree for Tree<'a> {
                 FlexDirection::Column | FlexDirection::ColumnReverse => "V_FLEX",
             },
             (_, NodeKind::Grid) => "GRID",
-            // (_, NodeKind::Text) => "TEXT",
-            // (_, NodeKind::Image) => "IMAGE",
+            (_, NodeKind::Text) => "TEXT",
         }
     }
 

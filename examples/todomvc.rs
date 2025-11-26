@@ -26,6 +26,9 @@ fn input_box<'a>(input: &'a mut Option<String>) -> impl Widget<'a> + 'a {
         .bg(black())
         .border(white())
         .center()
+        //TODO: When the user clicks off of the box, it should lose focus.
+        // .on_focus()
+        // .on_lose_focus()
         .on_click(Left, |_| {
             *input = Some(String::new());
             //On click focus the input box and allow the user to type.
@@ -108,14 +111,14 @@ fn main() {
             text("todos").font_size(22),
             input_box(&mut input),
             fit!(
-                v!(text(format!("{} task left", remaining))).w(50.percent()),
-                fit!(text("All"))
+                text(format!("{} task left", remaining)),
+                text("All")
                     .bg(if state == All { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = All),
-                fit!(text("Active"))
+                text("Active")
                     .bg(if state == Active { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = Active),
-                fit!(text("Completed"))
+                text("Completed")
                     .bg(if state == Completed { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = Completed),
             )

@@ -33,6 +33,13 @@ impl<'a, W: Widget<'a>> Widget<'a> for Click<'a, W> {
         self.widget.node()
     }
 
+    fn measure(
+        &self,
+        known_dimensions: taffy::Size<Option<f32>>,
+        available_space: taffy::Size<taffy::AvailableSpace>,
+    ) -> taffy::Size<f32> {
+        self.widget.measure(known_dimensions, available_space)
+    }
     fn try_click(&mut self, ctx: &mut Context, area: Rect) {
         self.widget.try_click(ctx, area);
 
@@ -65,17 +72,6 @@ impl<'a, W: Widget<'a> + Sizing> Sizing for Click<'a, W> {
 }
 
 impl<'a, W: Widget<'a>> Click<'a, W> {
-    pub fn with_node(mut self, node: usize) -> Self {
-        self.node = Some(node);
-        self
-    }
-    pub fn add_node(&self) -> usize {
-        if let Some(node) = self.node {
-            node
-        } else {
-            add_node(self.widget.layout().clone())
-        }
-    }
     pub fn on_click(mut self, button: MouseButton, func: impl FnMut(&mut W) + 'a) -> Self {
         self.handlers.push((button, MouseAction::Clicked, Box::new(func)));
         self

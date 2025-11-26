@@ -62,6 +62,10 @@ pub trait Sizing: Sized {
     #[inline]
     fn layout_mut(&mut self) -> &mut TaffyLayout;
 
+    // fn node_kind(&self) -> Option<NodeKind> {
+    //     None
+    // }
+
     fn set_layout(mut self, f: impl FnOnce(&mut TaffyLayout)) -> Self {
         f(self.layout_mut());
         self
