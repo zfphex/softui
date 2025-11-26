@@ -235,7 +235,7 @@ impl Context {
         }
     }
 
-    ///Call this after layout
+    ///Call this after drawing layout and before drawing the frame.
     pub fn debug_layout(&mut self) {
         if let Some(node) = self.debug_node {
             unsafe { taffy::print_tree(&TREE, node.into()) };
@@ -243,10 +243,7 @@ impl Context {
 
             //Print the draw queue too.
             for cmd in &self.commands {
-                println!(
-                    "Width: {} Height: {} {:?}",
-                    cmd.area.width, cmd.area.height, cmd.primative
-                );
+                println!("{:?}", cmd.primative);
             }
 
             // while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
