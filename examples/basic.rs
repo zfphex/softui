@@ -1,5 +1,5 @@
 #![allow(unused)]
-use softui::*;
+use softui::{str::StylingNew, *};
 
 use State::*;
 
@@ -22,31 +22,31 @@ fn main() {
             _ => {}
         }
 
-        // let root = v!(
-        //     text("Example text").bg(red()),
-        //     text("Example text").bg(green()),
-        //     text("Example text").bg(blue()),
-        // );
+        let root = v!(
+            "Example 1.".bg(red()),
+            "Example 2.",
+            "Example 3.",
+        );
 
-        let root = v!(v!(
-            text("todos").font_size(22),
-            h!(
-                text(format!("{} task left", 1)),
-                text("All")
-                    .bg(if state == All { Some(cyan()) } else { None })
-                    .on_click(Left, |_| state = All),
-                text("Active")
-                    .bg(if state == Active { Some(cyan()) } else { None })
-                    .on_click(Left, |_| state = Active),
-                text("Completed")
-                    .bg(if state == Completed { Some(cyan()) } else { None })
-                    .on_click(Left, |_| state = Completed),
-            )
-            .gap(20),
-        )
-        .gap(8)
-        .p(8)
-        .hcenter());
+        // let root = v!(v!(
+        //     text("todos").font_size(22),
+        //     h!(
+        //         text(format!("{} task left", 1)),
+        //         text("All")
+        //             .bg(if state == All { Some(cyan()) } else { None })
+        //             .on_click(Left, |_| state = All),
+        //         text("Active")
+        //             .bg(if state == Active { Some(cyan()) } else { None })
+        //             .on_click(Left, |_| state = Active),
+        //         text("Completed")
+        //             .bg(if state == Completed { Some(cyan()) } else { None })
+        //             .on_click(Left, |_| state = Completed),
+        //     )
+        //     .gap(20),
+        // )
+        // .gap(8)
+        // .p(8)
+        // .hcenter());
 
         ctx.draw_layout(root);
         ctx.debug_layout();

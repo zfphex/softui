@@ -9,25 +9,38 @@ use crate::*;
 //TODO: IntoNode trait
 //then "text".into_node() can create a new text widget.
 
+pub trait IntoNode {
+    fn into_node(self) -> usize;
+}
 
-pub fn into_node<'a, T: Widget<'a> + 'a>(widget: T) -> usize {
-    if widget.is_container() {
-        let node = widget.node();
+
+impl<'a, T: Widget<'a>> IntoNode for T {
+    fn into_node(self) -> usize {
+        let widget = self;
+        if widget.is_container() {
+            let node = widget.node();
+            let widget =
+                unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
+            unsafe { TREE[node].widget = Some(widget) };
+            return node;
+        }
+
+        let style = widget.layout();
+        //Safety: Yeah you like that? 😳
         let widget = unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
-        unsafe { TREE[node].widget = Some(widget) };
-        return node;
+        unsafe {
+            TREE.alloc(Node {
+                layout: style,
+                widget: Some(widget),
+                ..Default::default()
+            })
+        }
     }
+}
 
-    let style = widget.layout();
-    //Safety: Yeah you like that? 😳
-    let widget = unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
-    unsafe {
-        TREE.alloc(Node {
-            layout: style,
-            widget: Some(widget),
-            ..Default::default()
-        })
-    }
+#[inline]
+pub fn into_node<T: IntoNode>(t: T) -> usize {
+    t.into_node()
 }
 
 //Should we have align grow or align start by default?

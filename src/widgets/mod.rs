@@ -39,6 +39,8 @@ pub use input::*;
 pub mod button;
 pub use button::*;
 
+pub mod str;
+
 use crate::*;
 
 pub trait Styling: Sized {
