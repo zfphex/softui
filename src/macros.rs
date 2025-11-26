@@ -6,6 +6,10 @@ use taffy::{
 
 use crate::*;
 
+//TODO: IntoNode trait
+//then "text".into_node() can create a new text widget.
+
+
 pub fn into_node<'a, T: Widget<'a> + 'a>(widget: T) -> usize {
     if widget.is_container() {
         let node = widget.node();

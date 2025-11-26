@@ -40,6 +40,7 @@ impl<'a, W: Widget<'a>> Widget<'a> for Click<'a, W> {
     ) -> taffy::Size<f32> {
         self.widget.measure(known_dimensions, available_space)
     }
+
     fn try_click(&mut self, ctx: &mut Context, area: Rect) {
         self.widget.try_click(ctx, area);
 
