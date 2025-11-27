@@ -129,8 +129,7 @@ fn main() {
         .p(8)
         .hcenter());
 
-        ctx.draw_layout(root);
-        ctx.debug_layout();
+        ctx.draw_layout(root, true);
         ctx.draw_frame();
     }
 }

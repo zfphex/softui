@@ -11,7 +11,7 @@ CSS is the most powerful styling specification ever built, despite this it has h
 
    You should be able to chain any method together in any order.
 
-   ```
+   ```rs
    rect().radius(5).w(5).gap(5).pad(5)
    //eqiv
    rect().pad(5).w(5).radius(5).gap(5)

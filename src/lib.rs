@@ -92,12 +92,6 @@ pub enum Primative {
     //TODO: Could change text to Cow<'_, str>
     Text(String, usize, Color),
 
-    // TODO: Now idea how to allow this properly.
-    // CustomBoxed(Box<dyn FnOnce(&mut Context) -> ()>),
-    // Custom(&'static dyn Fn(&mut Context) -> ()),
-    // CustomFn(fn(&mut Context) -> ()),
-    // Custom(fn(&mut Context, Box<dyn std::any::Any>) -> (), Box<dyn DynClone>),
-    ///(bitmap, x, y, width, height, format)
     #[cfg(feature = "image")]
     ImageUnsafe(&'static [u8], ImageFormat),
 
@@ -115,20 +109,10 @@ impl std::fmt::Debug for Primative {
         match self {
             Self::Ellipse(arg0, arg1, arg2) => f.debug_tuple("Ellipse").field(arg0).field(arg1).field(arg2).finish(),
             Self::Text(arg0, arg1, arg2) => f.debug_tuple("Text").field(arg0).field(arg1).field(arg2).finish(),
-            // Self::CustomBoxed(arg0) => f.debug_tuple("CustomBoxed").finish(),
-            // Self::CustomFn(arg0) => f.debug_tuple("CustomFn").field(arg0).finish(),
-            // Self::CustomAreaFn(arg0) => f.debug_tuple("CustomAreaFn").field(arg0).finish(),
             #[cfg(feature = "svg")]
-            Self::SVGUnsafe(_) => f
-                .debug_tuple("SvgUnsafe")
-                // .field(arg0)
-                .finish(),
+            Self::SVGUnsafe(_) => f.debug_tuple("SvgUnsafe").finish(),
             #[cfg(feature = "image")]
-            Self::ImageUnsafe(arg0, arg1) => f
-                .debug_tuple("ImageUnsafe")
-                // .field(arg0)
-                .field(arg1)
-                .finish(),
+            Self::ImageUnsafe(arg0, arg1) => f.debug_tuple("ImageUnsafe").field(arg1).finish(),
             _ => f.debug_tuple("Unknown").finish(),
         }
     }
@@ -181,7 +165,7 @@ pub struct Context {
     pub fill_color: Color,
     pub commands: Vec<Command>,
     //Store the root node for debugging.
-    pub debug_node: Option<usize>,
+    pub debug: bool,
 }
 
 impl Context {
@@ -197,7 +181,7 @@ impl Context {
             commands: Vec::new(),
             //Set the node to a random number, then when it's None
             //never read it again.
-            debug_node: Some(0),
+            debug: true,
         }
     }
 
@@ -218,13 +202,9 @@ impl Context {
         self.window.event_blocking()
     }
 
-    pub fn draw_layout(&mut self, root: Container<'static>) {
+    pub fn draw_layout(&mut self, root: Container<'static>, debug: bool) {
         unsafe {
             let node = root.node();
-
-            if self.debug_node.is_some() {
-                self.debug_node = Some(node);
-            }
 
             //HACK: Currently the root node is not layed out correctly.
             TREE[node].widget = Some(Box::new(root));
@@ -237,24 +217,22 @@ impl Context {
             taffy::compute_root_layout(&mut TREE, node.into(), window_size);
 
             draw_tree(self, &mut TREE, node, 0.0, 0.0);
-        }
-    }
 
-    ///Call this after drawing layout and before drawing the frame.
-    pub fn debug_layout(&mut self) {
-        if let Some(node) = self.debug_node {
-            unsafe { taffy::print_tree(&TREE, node.into()) };
-            self.debug_node = None;
+            if debug && self.debug {
+                //Only print debug info for the first frame.
+                self.debug = false;
+                taffy::print_tree(&TREE, node.into());
 
-            //Print the draw queue too.
-            for cmd in &self.commands {
-                println!("{:?}", cmd.primative);
+                //Print the draw queue too.
+                for cmd in &self.commands {
+                    println!("{:?}", cmd.primative);
+                }
+
+                // while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
+                //     println!("{:?}", cmd.primative);
+                //     unsafe { COMMAND_QUEUE.push(cmd) }
+                // }
             }
-
-            // while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
-            //     println!("{:?}", cmd.primative);
-            //     unsafe { COMMAND_QUEUE.push(cmd) }
-            // }
         }
     }
 
