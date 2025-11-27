@@ -20,8 +20,7 @@ fn main() {
             fit!(text("no."), rect().wh(100)).p(20).gap(20).bg(gray()),
         );
 
-        ctx.draw_layout(root);
-        ctx.debug_layout();
+        ctx.draw_layout(root, true);
         ctx.draw_frame();
     }
 }

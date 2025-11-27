@@ -5,7 +5,7 @@ use taffy::{prelude::length, BoxSizing, Dimension};
 pub struct Click<'a, W: Widget<'a>> {
     pub widget: W,
     pub node: Option<usize>,
-    pub handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut W) + 'a>)>,
+    pub handlers: Vec<(MouseButton, Action, Box<dyn FnMut(&mut W) + 'a>)>,
 }
 
 impl<'a, W: Widget<'a>> Debug for Click<'a, W> {
@@ -46,10 +46,11 @@ impl<'a, W: Widget<'a>> Widget<'a> for Click<'a, W> {
 
         for (button, action, f) in &mut self.handlers {
             match *action {
-                MouseAction::Clicked if clicked(ctx, area, *button) => f(&mut self.widget),
-                MouseAction::Pressed if pressed(ctx, area, *button) => f(&mut self.widget),
-                MouseAction::Released if released(ctx, area, *button) => f(&mut self.widget),
-                MouseAction::Hover if hover(ctx, area) => f(&mut self.widget),
+                Action::Clicked if clicked(ctx, area, *button) => f(&mut self.widget),
+                Action::Pressed if pressed(ctx, area, *button) => f(&mut self.widget),
+                Action::Released if released(ctx, area, *button) => f(&mut self.widget),
+                Action::Hover if hover(ctx, area) => f(&mut self.widget),
+                Action::LostFocus if lost_focus(ctx, area) => f(&mut self.widget),
                 _ => {}
             }
         }
@@ -74,20 +75,19 @@ impl<'a, W: Widget<'a> + Sizing> Sizing for Click<'a, W> {
 
 impl<'a, W: Widget<'a>> Click<'a, W> {
     pub fn on_click(mut self, button: MouseButton, func: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers.push((button, MouseAction::Clicked, Box::new(func)));
+        self.handlers.push((button, Action::Clicked, Box::new(func)));
         self
     }
     pub fn on_press(mut self, button: MouseButton, func: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers.push((button, MouseAction::Pressed, Box::new(func)));
+        self.handlers.push((button, Action::Pressed, Box::new(func)));
         self
     }
     pub fn on_release(mut self, button: MouseButton, func: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers.push((button, MouseAction::Released, Box::new(func)));
+        self.handlers.push((button, Action::Released, Box::new(func)));
         self
     }
     pub fn on_hover(mut self, func: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers
-            .push((MouseButton::Left, MouseAction::Hover, Box::new(func)));
+        self.handlers.push((MouseButton::Left, Action::Hover, Box::new(func)));
         self
     }
 }

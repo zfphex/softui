@@ -4,11 +4,12 @@ use crate::Context;
 pub use window::*;
 
 #[derive(Debug, Clone)]
-pub enum MouseAction {
+pub enum Action {
     Pressed,
     Released,
     Clicked,
     Hover,
+    LostFocus,
 }
 
 pub fn convert_button_to_state<'a>(ctx: &'a mut Context, button: MouseButton) -> &'a mut MouseButtonState {
@@ -58,6 +59,18 @@ pub fn hover(ctx: &mut Context, area: Rect) -> bool {
     }
 
     true
+}
+
+pub fn lost_focus(ctx: &mut Context, area: Rect) -> bool {
+    use MouseButton::*;
+
+    if !ctx.window.mouse_position.intersects(area) {
+        //TODO: What should count as "losing focus" ?
+        ctx.window.left_mouse.pressed
+        || ctx.window.right_mouse.pressed
+    } else {
+        false
+    }
 }
 
 #[cfg(target_os = "macos")]

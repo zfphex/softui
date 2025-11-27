@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use softui::*;
 use State::*;
 
@@ -13,8 +15,8 @@ pub struct Item {
     pub done: bool,
 }
 
-fn input_box<'a>(input: &'a mut Option<String>) -> impl Widget<'a> + 'a {
-    let label = if let Some(input) = input {
+fn input_box<'a>(input: &'a mut Cell<Option<String>>) -> impl Widget<'a> + 'a {
+    let label = if let Some(input) = input.get_mut() {
         text(input.as_str())
     } else {
         text("What needs to be done?").fg(gray())
@@ -26,13 +28,8 @@ fn input_box<'a>(input: &'a mut Option<String>) -> impl Widget<'a> + 'a {
         .bg(black())
         .border(white())
         .center()
-        //TODO: When the user clicks off of the box, it should lose focus.
-        // .on_focus()
-        // .on_lose_focus()
-        .on_click(Left, |_| {
-            *input = Some(String::new());
-            //On click focus the input box and allow the user to type.
-        })
+        .on_lose_focus(|_| input.set(None))
+        .on_click(Left, |_| input.set(Some(String::new())))
     //Push the todo that user typed.
     // .on_key_press(Key::Enter, |_| {
     //     todos.push("test");
@@ -57,14 +54,14 @@ fn main() {
         label: "Test".into(),
         done: false,
     }];
-    let mut input: Option<String> = None;
+    let mut input: Cell<Option<String>> = Cell::new(None);
     let mut state = All;
 
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
             Some(Event::Input(Key::Backspace, m)) => {
-                if let Some(ref mut input) = input {
+                if let Some(input) = input.get_mut() {
                     if !input.trim().is_empty() {
                         //Modifiers don't work on macos.
                         if m.control {
@@ -76,7 +73,7 @@ fn main() {
                 }
             }
             Some(Event::Input(Key::Enter, _)) => {
-                if input.is_some() {
+                if input.get_mut().is_some() {
                     todos.push(Item {
                         label: input.take().unwrap(),
                         done: false,
@@ -84,12 +81,12 @@ fn main() {
                 }
             }
             Some(Event::Input(Key::Space, _)) => {
-                if let Some(ref mut input) = input {
+                if let Some(input) = input.get_mut() {
                     input.push(' ');
                 }
             }
             Some(Event::Input(Key::Char(ch), _)) => {
-                if let Some(ref mut input) = input {
+                if let Some(input) = input.get_mut() {
                     input.push(ch);
                 }
             }

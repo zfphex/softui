@@ -15,8 +15,7 @@ fn main() {
             fit!(text("Centered")).wh(33.percent()).center().bg(turquoise()),
         );
 
-        ctx.draw_layout(root);
-        ctx.debug_layout();
+        ctx.draw_layout(root, true);
         ctx.draw_frame();
     }
 }

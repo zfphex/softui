@@ -14,7 +14,7 @@ pub struct Container<'a> {
     pub node: usize,
     pub layout: TaffyLayout,
     pub style: Style,
-    pub handlers: Vec<(MouseButton, MouseAction, Box<dyn FnMut(&mut Self) + 'a>)>,
+    pub handlers: Vec<(MouseButton, Action, Box<dyn FnMut(&mut Self) + 'a>)>,
 }
 
 impl<'a> Debug for Container<'a> {
@@ -83,34 +83,35 @@ impl<'a> Container<'a> {
     }
 
     pub fn on_hover(mut self, func: impl FnMut(&mut Self) + 'a) -> Self {
-        self.handlers
-            .push((MouseButton::Left, MouseAction::Hover, Box::new(func)));
+        self.handlers.push((MouseButton::Left, Action::Hover, Box::new(func)));
         self
     }
     //TODO: This is pretty awful.
-    pub fn on_click(mut self, button: crate::MouseButton, handler: impl FnMut(&mut Self) + 'a) -> Self {
-        self.handlers
-            .push((button, crate::MouseAction::Clicked, Box::new(handler)));
+    pub fn on_click(mut self, button: MouseButton, f: impl FnMut(&mut Self) + 'a) -> Self {
+        self.handlers.push((button, Action::Clicked, Box::new(f)));
         self
     }
-    pub fn on_press(mut self, button: crate::MouseButton, handler: impl FnMut(&mut Self) + 'a) -> Self {
-        self.handlers
-            .push((button, crate::MouseAction::Pressed, Box::new(handler)));
+    pub fn on_press(mut self, button: MouseButton, f: impl FnMut(&mut Self) + 'a) -> Self {
+        self.handlers.push((button, Action::Pressed, Box::new(f)));
         self
     }
-    pub fn on_release(mut self, button: crate::MouseButton, handler: impl FnMut(&mut Self) + 'a) -> Self {
-        self.handlers
-            .push((button, crate::MouseAction::Released, Box::new(handler)));
+    pub fn on_release(mut self, button: MouseButton, f: impl FnMut(&mut Self) + 'a) -> Self {
+        self.handlers.push((button, Action::Released, Box::new(f)));
+        self
+    }
+    pub fn on_lose_focus(mut self, f: impl FnMut(&mut Self) + 'a) -> Self {
+        self.handlers.push((Left, Action::LostFocus, Box::new(f)));
         self
     }
     fn try_click(&mut self, ctx: &mut Context, area: Rect) {
         let handlers = core::mem::take(&mut self.handlers);
         for (button, action, mut f) in handlers {
             match action {
-                MouseAction::Clicked if clicked(ctx, area, button) => f(self),
-                MouseAction::Pressed if pressed(ctx, area, button) => f(self),
-                MouseAction::Released if released(ctx, area, button) => f(self),
-                MouseAction::Hover if hover(ctx, area) => f(self),
+                Action::Clicked if clicked(ctx, area, button) => f(self),
+                Action::Pressed if pressed(ctx, area, button) => f(self),
+                Action::Released if released(ctx, area, button) => f(self),
+                Action::Hover if hover(ctx, area) => f(self),
+                Action::LostFocus if lost_focus(ctx, area) => f(self),
                 _ => {}
             }
         }
