@@ -1,5 +1,6 @@
 #![allow(unused, static_mut_refs, incomplete_features)]
 #![feature(associated_type_defaults, specialization)]
+use core::mem::transmute;
 use mini::{error, info, profile, warn};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{any::Any, borrow::Cow, pin::Pin, sync::Arc};
@@ -84,7 +85,7 @@ pub enum Quadrant {
 #[derive(Clone)]
 pub enum Primative {
     /// (radius: usize, border: Color, bg: color)
-    Ellipse(usize, Option<Color>, Color),
+    Ellipse(usize, Option<Color>, Option<Color>),
     /// (text, font_size, Color)
     /// This needs to include the desired font.
     /// Not sure how to do that yet.
@@ -96,7 +97,8 @@ pub enum Primative {
     ImageUnsafe(&'static [u8], ImageFormat),
 
     #[cfg(feature = "svg")]
-    SVGUnsafe(&'static resvg::tiny_skia::Pixmap),
+    ///Bitmap, Invert
+    SVGUnsafe(&'static resvg::tiny_skia::Pixmap, bool),
     Custom(fn(&mut Context, Rect) -> ()),
     CustomAny {
         data: Arc<dyn Any + Send + Sync>,
@@ -110,7 +112,7 @@ impl std::fmt::Debug for Primative {
             Self::Ellipse(arg0, arg1, arg2) => f.debug_tuple("Ellipse").field(arg0).field(arg1).field(arg2).finish(),
             Self::Text(arg0, arg1, arg2) => f.debug_tuple("Text").field(arg0).field(arg1).field(arg2).finish(),
             #[cfg(feature = "svg")]
-            Self::SVGUnsafe(_) => f.debug_tuple("SvgUnsafe").finish(),
+            Self::SVGUnsafe(_, _) => f.debug_tuple("SvgUnsafe").finish(),
             #[cfg(feature = "image")]
             Self::ImageUnsafe(arg0, arg1) => f.debug_tuple("ImageUnsafe").field(arg1).finish(),
             _ => f.debug_tuple("Unknown").finish(),
@@ -263,13 +265,15 @@ impl Context {
                 Primative::Ellipse(radius, border_color, color) => {
                     //TODO: No support for outlined elipses.
 
-                    if *radius == 0 {
-                        self.draw_rectangle(x, y, width, height, *color);
-                        if let Some(border) = border_color {
-                            self.draw_rectangle_outline(x, y, width, height, *border);
+                    if let Some(color) = color {
+                        if *radius == 0 {
+                            self.draw_rectangle(x, y, width, height, *color);
+                            if let Some(border) = border_color {
+                                self.draw_rectangle_outline(x, y, width, height, *border);
+                            }
+                        } else {
+                            self.draw_rectangle_rounded(x, y, width, height, *color, *radius);
                         }
-                    } else {
-                        self.draw_rectangle_rounded(x, y, width, height, *color, *radius);
                     }
                 }
                 Primative::Text(text, font_size, color) => {
@@ -284,8 +288,8 @@ impl Context {
                     self.draw_image(x, y, width, height, bitmap, *image_format);
                 }
                 #[cfg(feature = "svg")]
-                Primative::SVGUnsafe(pixmap) => {
-                    self.draw_svg(x, y, pixmap, false);
+                Primative::SVGUnsafe(pixmap, invert) => {
+                    self.draw_svg(x, y, pixmap, *invert);
                 }
                 Primative::CustomAny { data, f } => f(self, cmd.area, data),
                 Primative::Custom(f) => f(self, cmd.area),
@@ -762,7 +766,7 @@ impl Context {
                         let b = blend(b, alpha, bg.b(), 255 - alpha);
 
                         if let Some(px) = self.window.buffer.get_mut(i) {
-                            *px = rgb(r, g, b).as_u32();
+                            *px = rgb(r, g, b);
                         }
 
                         // self.window.buffer[i] = rgb(r, g, b).as_u32();
@@ -927,7 +931,7 @@ impl Context {
                         let out_b = (out_b_lin.sqrt() * 255.0) as u8;
 
                         if let Some(px) = self.window.buffer.get_mut(i) {
-                            *px = rgb(out_r, out_g, out_b).as_u32();
+                            *px = rgb(out_r, out_g, out_b);
                         }
                     }
                 }
@@ -1056,7 +1060,7 @@ impl Context {
             // let a = pixel[3];
             let color = rgb(r, g, b);
 
-            buffer[pos] = color.as_u32();
+            buffer[pos] = color;
 
             x += 1;
             if x >= width {
@@ -1068,22 +1072,99 @@ impl Context {
     }
 
     //TODO: Scale down image to fit inside width and height parameters.
+    // #[cfg(feature = "svg")]
+    // pub fn draw_svg(&mut self, x: usize, y: usize, pixmap: &resvg::tiny_skia::Pixmap, debug: bool) {
+    //     let (width, height) = (pixmap.width() as usize, pixmap.height() as usize);
+    //     let pixels = pixmap.pixels();
+
+    //     for sy in 0..height {
+    //         for sx in 0..width {
+    //             let pos = sx + width * sy;
+    //             let pixel = pixels[pos];
+    //             let color = Color::new(pixel.red(), pixel.green(), pixel.blue());
+    //             if pixel.alpha() > 0 {
+    //                 self.try_draw_pixel(sx + x, sy + y, color);
+    //             }
+    //         }
+    //     }
+    // }
+
     #[cfg(feature = "svg")]
-    pub fn draw_svg(&mut self, x: usize, y: usize, pixmap: &resvg::tiny_skia::Pixmap, debug: bool) {
-        let (width, height) = (pixmap.width() as usize, pixmap.height() as usize);
+    pub fn draw_svg(&mut self, x: usize, y: usize, pixmap: &resvg::tiny_skia::Pixmap, invert: bool) {
+        use resvg::tiny_skia::PremultipliedColorU8;
+
+        let width = pixmap.width() as usize;
+        let height = pixmap.height() as usize;
         let pixels = pixmap.pixels();
 
-        for sy in 0..height {
-            for sx in 0..width {
-                let pos = sx + width * sy;
-                let pixel = pixels[pos];
-                let color = Color::new(pixel.red(), pixel.green(), pixel.blue());
+        let viewport_width = self.window.width();
+        let viewport_height = self.window.area.height;
 
-                if color.as_u32() == 0 && debug {
-                    self.try_draw_pixel(sx + x, sy + y, red());
+        // If the SVG starts off-screen or is completely outside, return early.
+        if x >= viewport_width || y >= viewport_height {
+            return;
+        }
+
+        // Calculate the actual width/height to draw (clipping to viewport)
+        let draw_width = if x + width > viewport_width {
+            viewport_width.saturating_sub(x)
+        } else {
+            width
+        };
+
+        let draw_height = if y + height > viewport_height {
+            viewport_height.saturating_sub(y)
+        } else {
+            height
+        };
+
+        for sy in 0..draw_height {
+            let src_row_idx = sy * width;
+            let dst_row_idx = (sy + y) * viewport_width;
+
+            for sx in 0..draw_width {
+                let pixel = pixels[src_row_idx + sx];
+                let alpha = pixel.alpha();
+
+                if alpha == 0 {
+                    continue;
+                }
+
+                let (r, g, b) = if invert {
+                    (
+                        alpha.saturating_sub(pixel.red()),
+                        alpha.saturating_sub(pixel.green()),
+                        alpha.saturating_sub(pixel.blue()),
+                    )
                 } else {
-                    self.try_draw_pixel(sx + x, sy + y, color);
-                    // self.draw_pixel(sx + x, sy + y, color);
+                    (pixel.red(), pixel.green(), pixel.blue())
+                };
+
+                let dst_idx = dst_row_idx + (sx + x);
+
+                // Fully opaque pixels overwrite the background completely
+                // Since it's Premultiplied, alpha 255 means RGB are already at full strength.
+                if alpha == 255 {
+                    if let Some(bg) = self.window.buffer.get_mut(dst_idx) {
+                        *bg = rgb(r, g, b)
+                    }
+                    continue;
+                }
+
+                // Alpha Blending (Source Over)
+                // tiny_skia uses Premultiplied Alpha.
+                // Formula: Result = Src + (Dst * (255 - Alpha) / 255)
+                if let Some(bg_ptr) = self.window.buffer.get_mut(dst_idx) {
+                    let bg_color = Color(*bg_ptr); // Read background
+                    let inv_alpha = 255 - alpha;
+
+                    // Calculate blended channels.
+                    // We cast to u32 to prevent overflow during multiplication.
+                    // (x * 255) / 255 is roughly x.
+                    let r = r as u32 + ((bg_color.r() as u32 * inv_alpha as u32) / 255);
+                    let g = g as u32 + ((bg_color.g() as u32 * inv_alpha as u32) / 255);
+                    let b = b as u32 + ((bg_color.b() as u32 * inv_alpha as u32) / 255);
+                    *bg_ptr = rgb(r as u8, g as u8, b as u8);
                 }
             }
         }

@@ -272,11 +272,9 @@ impl<'a> Widget<'a> for Container<'a> {
     }
 
     fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
-        if let Some(background_color) = self.style.background_color {
-            commands.push(Command {
-                area,
-                primative: Primative::Ellipse(0, self.style.border_color, background_color),
-            });
-        }
+        commands.push(Command {
+            area,
+            primative: Primative::Ellipse(0, self.style.border_color, self.style.background_color),
+        });
     }
 }

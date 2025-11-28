@@ -37,15 +37,16 @@ fn input_box<'a>(input: &'a mut Cell<Option<String>>) -> impl Widget<'a> + 'a {
     // })
 }
 
-fn item<'a>(item: &'a mut Item) -> impl Widget<'a> + 'a {
+fn item<'a>(item: &'a mut Item, pencil: &Svg) -> impl Widget<'a> + 'a {
     fit!(
         v!().border(if item.done { None } else { Some(white()) })
             .wh(20)
             .bg(if item.done { Some(white()) } else { Some(black()) })
             .on_click(Left, |_| item.done = !item.done),
-        text(&item.label)
+        text(&item.label),
+        // rect().w(100).bg(None),
+        svg_ref(&pencil).on_click(Left, |_| {println!("Edit")}),
     )
-    .vcenter()
     .gap(10)
 }
 
@@ -57,6 +58,8 @@ fn main() {
     }];
     let mut input: Cell<Option<String>> = Cell::new(None);
     let mut state = All;
+
+    let pencil = svg("img/pencil.svg", 0.8, true);
 
     loop {
         match ctx.event() {
@@ -102,8 +105,10 @@ fn main() {
                 Active => !i.done,
                 Completed => i.done,
             })
-            .map(|i| item(i))
+            .map(|i| item(i, &pencil))
             .collect();
+
+        // ctx.draw_svg(0, 0, &svg.pixmap, true);
 
         let root = v!(v!(
             text("todos").font_size(22),

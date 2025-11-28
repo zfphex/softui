@@ -108,12 +108,10 @@ impl<'a> Widget<'a> for Text<'a> {
     }
 
     fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
-        if let Some(bg) = self.style.background_color {
-            commands.push(Command {
-                area,
-                primative: Primative::Ellipse(0, None, bg),
-            });
-        }
+        commands.push(Command {
+            area,
+            primative: Primative::Ellipse(0, None, self.style.background_color),
+        });
 
         if let Some(fg) = self.style.foreground_color {
             let pad_left = self.layout.padding.left.into_raw().value();

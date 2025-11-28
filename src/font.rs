@@ -95,7 +95,7 @@ pub fn draw_text(
                     let b = blend(b, alpha, bg.b(), 255 - alpha);
 
                     if let Some(px) = buffer.get_mut(i) {
-                        *px = rgb(r, g, b).as_u32();
+                        *px = rgb(r, g, b);
                     }
                 }
             }

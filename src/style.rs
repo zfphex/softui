@@ -34,7 +34,7 @@ impl Style {
 #[rustfmt::skip]
 pub trait StyleBuilder<'a>: Sized {
     fn bg(self, color: Color) -> Self;
-    fn rgb(self, r: u8, g: u8, b: u8) -> Self { self.bg(rgb(r, g, b)) }
+    fn rgb(self, r: u8, g: u8, b: u8) -> Self { self.bg(Color(rgb(r, g, b))) }
     fn pink(self) -> Self { self.bg(pink()) }
     fn red(self) -> Self { self.bg(red()) }
     fn orange(self) -> Self { self.bg(orange()) }
@@ -73,8 +73,8 @@ pub const fn hex(color: &str) -> Color {
 }
 
 #[inline(always)]
-pub const fn rgb(r: u8, g: u8, b: u8) -> Color {
-    Color::new(r, g, b)
+pub const fn rgb(r: u8, g: u8, b: u8) -> u32 {
+    (r as u32) << 16 | (g as u32) << 8 | (b as u32)
 }
 
 //TODO: Is this RGB or BGR I forget?
