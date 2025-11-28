@@ -116,8 +116,7 @@ fn main() {
                 item(PS, accent, hover, &mode, mode.get() == PS, power_saver)
             )
             .bg(BACKGROUND);
-            ctx.draw_layout(root);
-            ctx.debug_layout();
+            ctx.draw_layout(root, true);
             ctx.draw_frame();
         } else {
             ctx.draw_frame();
