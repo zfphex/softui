@@ -30,6 +30,7 @@ fn input_box<'a>(input: &'a mut Cell<Option<String>>) -> impl Widget<'a> + 'a {
         .center()
         .on_lose_focus(|_| input.set(None))
         .on_click(Left, |_| input.set(Some(String::new())))
+
     //Push the todo that user typed.
     // .on_key_press(Key::Enter, |_| {
     //     todos.push("test");
