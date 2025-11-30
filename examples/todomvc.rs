@@ -45,7 +45,7 @@ fn item<'a>(item: &'a mut Item, pencil: &Svg) -> impl Widget<'a> + 'a {
             .on_click(Left, |_| item.done = !item.done),
         text(&item.label),
         // rect().w(100).bg(None),
-        svg_ref(&pencil).on_click(Left, |_| {println!("Edit")}),
+        svg_ref(&pencil).on_click(Left, |_| { println!("Edit") }),
     )
     .gap(10)
 }

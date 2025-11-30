@@ -10,8 +10,8 @@ use std::ffi::c_void;
 
 use softui::*;
 
-const BORDER: Color = rgb(89, 87, 91);
-const BACKGROUND: Color = rgb(32, 32, 32);
+const BORDER: Color = Color(rgb(89, 87, 91));
+const BACKGROUND: Color = Color(rgb(32, 32, 32));
 
 // These numbers work well with 1.25, 1.5 and 1.75 scaling.
 // const PICKER_WIDTH: usize = 120;
@@ -44,8 +44,8 @@ const OVERFLOW_Y_OFFSET: i32 = 1;
 const DEFAULT_X_OFFSET: i32 = 6;
 const DEFAULT_Y_OFFSET: i32 = 10;
 
-const ZOOM_OUTER_BORDER: Color = rgb(66, 66, 66); //1px
-const ZOOM_INNER_BORDER: Color = rgb(39, 39, 39); //3px
+const ZOOM_OUTER_BORDER: Color = Color(rgb(66, 66, 66)); //1px
+const ZOOM_INNER_BORDER: Color = Color(rgb(39, 39, 39)); //3px
 
 const ZOOM_50: i32 = 50; //50x50 square
 const ZOOM_100: i32 = 100; //100x100 square
