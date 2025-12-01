@@ -279,7 +279,7 @@ impl Context {
                 Primative::Text(text, font_size, color) => {
                     //TODO: Specify the font with a font database and font ID.
                     let font = default_font();
-                    // self.draw_text(&text, font, x, y, *font_size, 0, *color);
+                    self.draw_text(&text, font, x, y, *font_size, 0, *color);
                     // self.draw_text_subpixel_new(&text, font, x, y, *font_size, 0, *color);
                 }
                 // Primative::CustomBoxed(f) => f(self),
