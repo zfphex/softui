@@ -5,42 +5,44 @@ use resvg::{
 };
 use taffy::prelude::length;
 
-pub fn svg<P: AsRef<std::path::Path>>(path: P, width: usize, height: usize, scale: f32) -> Svg {
-    Svg::new(path, width, height, scale)
+pub fn svg<P: AsRef<std::path::Path>>(path: P, scale: f32, invert: bool) -> Svg {
+    let tree = Tree::from_data(&std::fs::read(path).unwrap(), &Options::default()).unwrap();
+    let width = tree.size().width() * scale;
+    let height = tree.size().height() * scale;
+
+    let mut pixmap = Pixmap::new(width.ceil() as u32, height.ceil() as u32).unwrap();
+    resvg::render(&tree, Transform::from_scale(scale, scale), &mut pixmap.as_mut());
+
+    Svg {
+        layout: TaffyLayout {
+            size: taffy::Size {
+                width: length(width),
+                height: length(height),
+            },
+            ..Default::default()
+        },
+        pixmap,
+        width,
+        height,
+        invert,
+    }
 }
 
 #[derive(Debug)]
 pub struct Svg {
     pub pixmap: Pixmap,
-    pub area: Rect,
     pub layout: TaffyLayout,
-}
-
-impl Svg {
-    pub fn new<P: AsRef<std::path::Path>>(path: P, width: usize, height: usize, scale: f32) -> Self {
-        let tree = Tree::from_data(&std::fs::read(path).unwrap(), &Options::default()).unwrap();
-        let mut pixmap = Pixmap::new(width as u32, height as u32).unwrap();
-        resvg::render(&tree, Transform::from_scale(scale, scale), &mut pixmap.as_mut());
-
-        Self {
-            area: Rect::new(0, 0, pixmap.width() as usize, pixmap.height() as usize),
-            layout: TaffyLayout {
-                size: taffy::Size {
-                    width: length(width as f32),
-                    height: length(height as f32),
-                },
-                ..Default::default()
-            },
-            pixmap,
-        }
-    }
+    pub width: f32,
+    pub height: f32,
+    pub invert: bool,
 }
 
 pub fn svg_ref<'a>(svg: &'a Svg) -> SvgRef<'a> {
     SvgRef {
         pixmap: &svg.pixmap,
-        area: svg.area,
+        area: Rect::new(0, 0, svg.width.ceil() as usize, svg.height.ceil() as usize),
         layout: svg.layout.clone(),
+        invert: svg.invert,
     }
 }
 
@@ -49,6 +51,7 @@ pub struct SvgRef<'a> {
     pub pixmap: &'a Pixmap,
     pub area: Rect,
     pub layout: TaffyLayout,
+    pub invert: bool,
 }
 
 impl<'a> Widget<'a> for SvgRef<'a> {
@@ -57,7 +60,7 @@ impl<'a> Widget<'a> for SvgRef<'a> {
         let pixmap = unsafe { std::mem::transmute::<&'a Pixmap, &'static Pixmap>(self.pixmap) };
         commands.push(Command {
             area,
-            primative: Primative::SVGUnsafe(pixmap),
+            primative: Primative::SVGUnsafe(pixmap, self.invert),
         });
     }
 

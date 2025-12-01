@@ -17,7 +17,7 @@ fn main() {
     let mut state = All;
 
     let img = include_image!("../img/smol.png");
-    let svg = svg("img/ferris.svg", 800, 600, 0.2);
+    let svg = svg("img/ferris.svg", 1.0, true);
 
     loop {
         match ctx.event() {

@@ -8,9 +8,9 @@ fn main() {
 #[cfg(feature = "svg")]
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
+    ctx.set_fill_color(black());
 
-    //TODO: The parameters are a total pain to use, the image should automatically be scaled based on width and height.
-    let ferris = Svg::new("img/ferris.svg", 240, 170, 0.2);
+    let svg = svg("img/pencil.svg", 1.0, true);
 
     loop {
         match ctx.event() {
@@ -18,7 +18,7 @@ fn main() {
             _ => {}
         }
 
-        ctx.draw_svg(100, 100, &ferris.pixmap, true);
+        ctx.draw_svg(100, 100, &svg.pixmap, true);
         ctx.draw_frame();
     }
 }

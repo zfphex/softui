@@ -11,7 +11,7 @@ pub fn rect() -> Rectangle {
         },
         radius: 0,
         outline: false,
-        style: Style::new(),
+        style: Style::new().bg(white()),
     }
 }
 
@@ -58,7 +58,7 @@ impl<'a> Widget<'a> for Rectangle {
             primative: Primative::Ellipse(
                 self.radius,
                 self.style.border_color,
-                self.style.background_color.unwrap_or(white()),
+                self.style.background_color,
             ),
         });
     }
