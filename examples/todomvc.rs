@@ -52,10 +52,21 @@ fn item<'a>(item: &'a mut Item, pencil: &Svg) -> impl Widget<'a> + 'a {
 
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
-    let mut todos: Vec<Item> = vec![Item {
-        label: "Test".into(),
-        done: false,
-    }];
+    let mut todos: Vec<Item> = vec![
+        //
+        Item {
+            label: "Do the shopping.".into(),
+            done: false,
+        },
+        Item {
+            label: "Walk the dog.".into(),
+            done: false,
+        },
+        Item {
+            label: "Ponder existence...".into(),
+            done: false,
+        },
+    ];
     let mut input: Cell<Option<String>> = Cell::new(None);
     let mut state = All;
 

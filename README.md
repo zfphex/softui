@@ -4,6 +4,10 @@
 > This library is currently under development and is not ready for use.
 > It's designed to test Rust and its ability to express user-interface concepts; many of the systems rely on hacks and/or are duct-taped together.
 
+![todomvc](img/todomvc.png)
+
+This library provides tools for creating user-interfaces, it handles font-rendering, image/svg rendering, layout, input and window management.
+
 Goals
 
 - <50ms startup time
