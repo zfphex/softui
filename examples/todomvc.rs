@@ -10,9 +10,11 @@ pub enum State {
     Completed,
 }
 
+#[derive(Debug)]
 pub struct Item {
     pub label: String,
     pub done: bool,
+    pub editing: bool,
 }
 
 fn input_box<'a>(input: &'a mut Cell<Option<String>>) -> impl Widget<'a> + 'a {
@@ -45,7 +47,9 @@ fn item<'a>(item: &'a mut Item, pencil: &Svg) -> impl Widget<'a> + 'a {
             .on_click(Left, |_| item.done = !item.done),
         text(&item.label),
         // rect().w(100).bg(None),
-        svg_ref(&pencil).on_click(Left, |_| { println!("Edit") }),
+        svg_ref(&pencil)
+            // .on_lose_focus(|_| item.editing = false),
+            .on_click(Left, |_| item.editing = true)
     )
     .gap(10)
 }
@@ -57,20 +61,22 @@ fn main() {
         Item {
             label: "Do the shopping.".into(),
             done: false,
+            editing: false,
         },
         Item {
             label: "Walk the dog.".into(),
             done: false,
+            editing: false,
         },
         Item {
             label: "Ponder existence...".into(),
             done: false,
+            editing: false,
         },
     ];
+    let pencil = svg("img/pencil.svg", 0.8, true);
     let mut input: Cell<Option<String>> = Cell::new(None);
     let mut state = All;
-
-    let pencil = svg("img/pencil.svg", 0.8, true);
 
     loop {
         match ctx.event() {
@@ -92,6 +98,7 @@ fn main() {
                     todos.push(Item {
                         label: input.take().unwrap(),
                         done: false,
+                        editing: false,
                     });
                 }
             }
@@ -118,8 +125,6 @@ fn main() {
             })
             .map(|i| item(i, &pencil))
             .collect();
-
-        // ctx.draw_svg(0, 0, &svg.pixmap, true);
 
         let root = v!(v!(
             text("todos").font_size(22),

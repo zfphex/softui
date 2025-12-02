@@ -74,20 +74,24 @@ impl<'a, W: Widget<'a> + Sizing> Sizing for Click<'a, W> {
 }
 
 impl<'a, W: Widget<'a>> Click<'a, W> {
-    pub fn on_click(mut self, button: MouseButton, func: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers.push((button, Action::Clicked, Box::new(func)));
+    pub fn on_click(mut self, button: MouseButton, f: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, Action::Clicked, Box::new(f)));
         self
     }
-    pub fn on_press(mut self, button: MouseButton, func: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers.push((button, Action::Pressed, Box::new(func)));
+    pub fn on_press(mut self, button: MouseButton, f: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, Action::Pressed, Box::new(f)));
         self
     }
-    pub fn on_release(mut self, button: MouseButton, func: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers.push((button, Action::Released, Box::new(func)));
+    pub fn on_release(mut self, button: MouseButton, f: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((button, Action::Released, Box::new(f)));
         self
     }
-    pub fn on_hover(mut self, func: impl FnMut(&mut W) + 'a) -> Self {
-        self.handlers.push((MouseButton::Left, Action::Hover, Box::new(func)));
+    pub fn on_hover(mut self, f: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((MouseButton::Left, Action::Hover, Box::new(f)));
+        self
+    }
+    pub fn on_lose_focus(mut self, f: impl FnMut(&mut W) + 'a) -> Self {
+        self.handlers.push((Left, Action::LostFocus, Box::new(f)));
         self
     }
 }
