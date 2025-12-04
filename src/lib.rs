@@ -888,7 +888,7 @@ impl Context {
                         let mask_g = bitmap[glyph_idx + 1] as f32 / 255.0;
                         let mask_b = bitmap[glyph_idx + 2] as f32 / 255.0;
 
-                        //  If fully transparent, skip
+                        // If fully transparent, skip
                         if mask_r == 0.0 && mask_g == 0.0 && mask_b == 0.0 {
                             continue;
                         }
@@ -897,6 +897,7 @@ impl Context {
                         if max_x < screen_x {
                             max_x = screen_x;
                         }
+
                         if max_y < screen_y {
                             max_y = screen_y;
                         }
@@ -907,32 +908,22 @@ impl Context {
                             break 'x;
                         }
 
-                        // Read Background & Convert to Linear Space
-                        let bg_u32 = self.window.buffer[i];
-                        // Unpacking: Assuming standard 0xAARRGGBB or similar.
-                        // Adjust bit shifts if your Color format is BGR.
-                        let bg_r = ((bg_u32 >> 16) & 0xFF) as f32 / 255.0;
-                        let bg_g = ((bg_u32 >> 8) & 0xFF) as f32 / 255.0;
-                        let bg_b = (bg_u32 & 0xFF) as f32 / 255.0;
+                        if let Some(bg) = self.window.buffer.get_mut(i) {
+                            let bg_r = (((*bg >> 16) & 0xFF) as f32 / 255.0).powi(2);
+                            let bg_g = (((*bg >> 8) & 0xFF) as f32 / 255.0).powi(2);
+                            let bg_b = ((*bg & 0xFF) as f32 / 255.0).powi(2);
 
-                        // Convert Background to Linear (approx pow 2.2 via squaring)
-                        let bg_r_lin = bg_r * bg_r;
-                        let bg_g_lin = bg_g * bg_g;
-                        let bg_b_lin = bg_b * bg_b;
+                            // Per-Channel Blending in Linear Space
+                            let out_r_lin = (txt_r_lin * mask_r) + (bg_r * (1.0 - mask_r));
+                            let out_g_lin = (txt_g_lin * mask_g) + (bg_g * (1.0 - mask_g));
+                            let out_b_lin = (txt_b_lin * mask_b) + (bg_b * (1.0 - mask_b));
 
-                        // Per-Channel Blending in Linear Space
-                        // Formula: out = (Text * Mask) + (BG * (1.0 - Mask))
-                        let out_r_lin = (txt_r_lin * mask_r) + (bg_r_lin * (1.0 - mask_r));
-                        let out_g_lin = (txt_g_lin * mask_g) + (bg_g_lin * (1.0 - mask_g));
-                        let out_b_lin = (txt_b_lin * mask_b) + (bg_b_lin * (1.0 - mask_b));
+                            // Convert back to sRGB (approx sqrt) and clamp
+                            let r = (out_r_lin.sqrt() * 255.0) as u8;
+                            let g = (out_g_lin.sqrt() * 255.0) as u8;
+                            let b = (out_b_lin.sqrt() * 255.0) as u8;
 
-                        // Convert back to sRGB (approx sqrt) and clamp
-                        let out_r = (out_r_lin.sqrt() * 255.0) as u8;
-                        let out_g = (out_g_lin.sqrt() * 255.0) as u8;
-                        let out_b = (out_b_lin.sqrt() * 255.0) as u8;
-
-                        if let Some(px) = self.window.buffer.get_mut(i) {
-                            *px = rgb(out_r, out_g, out_b);
+                            *bg = rgb(r, g, b);
                         }
                     }
                 }
