@@ -1,6 +1,9 @@
-use std::cell::Cell;
-
+//! Notes
+//! - Poor input management
+//! - Confusing layout rules
+//! - Lifetime and borrowing issues using closures
 use softui::*;
+use std::cell::Cell;
 use State::*;
 
 #[derive(PartialEq)]
@@ -31,6 +34,11 @@ fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
         .border(white())
         .center()
         .on_lose_focus(|_| input.set(None))
+        // .on_key_press(|key, _| {
+        //     if let Some(input) = unsafe { &mut *input.as_ptr() } {
+        //         input.push_str(key.as_str());
+        //     }
+        // })
         .on_click(Left, |_| input.set(Some(String::new())))
 
     //Push the todo that user typed.

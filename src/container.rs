@@ -235,11 +235,11 @@ impl<'a> Container<'a> {
         self.direction(FlexDirection::Column)
     }
 
-    pub fn on_key_press(mut self, key: Key, f: impl FnMut(&mut Self) + 'a) -> Self {
+    pub fn on_key_press(mut self, f: impl FnMut(Key, &mut Self) + 'a) -> Self {
         todo!()
     }
 
-    pub fn on_key_release(mut self, key: Key, f: impl FnMut(&mut Self) + 'a) -> Self {
+    pub fn on_key_release(mut self, f: impl FnMut(Key, &mut Self) + 'a) -> Self {
         todo!()
     }
 
