@@ -1092,12 +1092,10 @@ impl Context {
         let viewport_width = self.window.width();
         let viewport_height = self.window.area.height;
 
-        // If the SVG starts off-screen or is completely outside, return early.
         if x >= viewport_width || y >= viewport_height {
             return;
         }
 
-        // Calculate the actual width/height to draw (clipping to viewport)
         let draw_width = if x + width > viewport_width {
             viewport_width.saturating_sub(x)
         } else {
@@ -1122,41 +1120,24 @@ impl Context {
                     continue;
                 }
 
+                let (r, g, b) = (pixel.red(), pixel.green(), pixel.blue());
                 let (r, g, b) = if invert {
-                    (
-                        alpha.saturating_sub(pixel.red()),
-                        alpha.saturating_sub(pixel.green()),
-                        alpha.saturating_sub(pixel.blue()),
-                    )
+                    (alpha - r, alpha - g, alpha - b)
                 } else {
-                    (pixel.red(), pixel.green(), pixel.blue())
+                    (r, g, b)
                 };
 
                 let dst_idx = dst_row_idx + (sx + x);
 
-                // Fully opaque pixels overwrite the background completely
-                // Since it's Premultiplied, alpha 255 means RGB are already at full strength.
-                if alpha == 255 {
-                    if let Some(bg) = self.window.buffer.get_mut(dst_idx) {
-                        *bg = rgb(r, g, b)
-                    }
-                    continue;
-                }
-
-                // Alpha Blending (Source Over)
-                // tiny_skia uses Premultiplied Alpha.
-                // Formula: Result = Src + (Dst * (255 - Alpha) / 255)
-                if let Some(bg_ptr) = self.window.buffer.get_mut(dst_idx) {
-                    let bg_color = Color(*bg_ptr); // Read background
-                    let inv_alpha = 255 - alpha;
+                if let Some(bg) = self.window.buffer.get_mut(dst_idx) {
+                    let bgc = Color(*bg);
+                    let alpha = (255 - alpha) as u32;
 
                     // Calculate blended channels.
-                    // We cast to u32 to prevent overflow during multiplication.
-                    // (x * 255) / 255 is roughly x.
-                    let r = r as u32 + ((bg_color.r() as u32 * inv_alpha as u32) / 255);
-                    let g = g as u32 + ((bg_color.g() as u32 * inv_alpha as u32) / 255);
-                    let b = b as u32 + ((bg_color.b() as u32 * inv_alpha as u32) / 255);
-                    *bg_ptr = rgb(r as u8, g as u8, b as u8);
+                    let r = r as u32 + ((bgc.r() as u32 * alpha) / 255);
+                    let g = g as u32 + ((bgc.g() as u32 * alpha) / 255);
+                    let b = b as u32 + ((bgc.b() as u32 * alpha) / 255);
+                    *bg = rgb(r as u8, g as u8, b as u8);
                 }
             }
         }

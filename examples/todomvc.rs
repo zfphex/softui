@@ -74,6 +74,10 @@ fn main() {
             editing: false,
         },
     ];
+
+    // ctx.set_fill_color(white());
+    // let pencil = svg("img/pencil.svg", 0.8, false);
+
     let pencil = svg("img/pencil.svg", 0.8, true);
     let mut input: Cell<Option<String>> = Cell::new(None);
     let mut state = All;
