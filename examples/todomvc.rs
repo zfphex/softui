@@ -1,4 +1,8 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+//! Notes
+//! - Poor input management
+//! - Confusing layout rules
+//! - Lifetime and borrowing issues using closures
 use softui::*;
 use std::cell::Cell;
 use State::*;
@@ -10,13 +14,15 @@ pub enum State {
     Completed,
 }
 
+#[derive(Debug)]
 pub struct Item {
     pub label: String,
     pub done: bool,
+    pub editing: bool,
 }
 
-fn input_box<'a>(input: &'a mut Cell<Option<String>>) -> impl Widget<'a> + 'a {
-    let label = if let Some(input) = input.get_mut() {
+fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
+    let label = if let Some(input) = unsafe { &*input.as_ptr() } {
         text(input.as_str())
     } else {
         text("What needs to be done?").fg(gray())
@@ -29,6 +35,11 @@ fn input_box<'a>(input: &'a mut Cell<Option<String>>) -> impl Widget<'a> + 'a {
         .border(white())
         .center()
         .on_lose_focus(|_| input.set(None))
+        // .on_key_press(|key, _| {
+        //     if let Some(input) = unsafe { &mut *input.as_ptr() } {
+        //         input.push_str(key.as_str());
+        //     }
+        // })
         .on_click(Left, |_| input.set(Some(String::new())))
 
     //Push the todo that user typed.
@@ -37,40 +48,61 @@ fn input_box<'a>(input: &'a mut Cell<Option<String>>) -> impl Widget<'a> + 'a {
     // })
 }
 
-fn item<'a>(item: &'a mut Item, pencil: &Svg) -> impl Widget<'a> + 'a {
-    fit!(
-        v!().border(if item.done { None } else { Some(white()) })
-            .wh(20)
-            .bg(if item.done { Some(white()) } else { Some(black()) })
-            .on_click(Left, |_| item.done = !item.done),
-        text(&item.label),
-        // rect().w(100).bg(None),
-        svg_ref(&pencil).on_click(Left, |_| { println!("Edit") }),
-    )
-    .gap(10)
+fn item<'a>(item: &'a mut Item, input: &'a Cell<Option<String>>, pencil: &Svg) -> impl Widget<'a> + 'a {
+    if item.editing {
+        fit!(
+            v!().wh(20),
+            text("_"),
+            svg_ref(&pencil).on_click(Left, |_| item.editing = true)
+        )
+        .gap(10)
+    } else {
+        fit!(
+            v!().border(if item.done { None } else { Some(white()) })
+                .wh(20)
+                .bg(if item.done { Some(white()) } else { Some(black()) })
+                .on_click(Left, |_| item.done = !item.done),
+            text(&item.label),
+            // rect().w(100).bg(None),
+            svg_ref(&pencil)
+                // .on_lose_focus(|_| item.editing = false),
+                .on_click(Left, |_| {
+                    item.editing = true;
+                    input.replace(Some(String::new()));
+                })
+        )
+        .gap(10)
+    }
 }
 
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
     let mut todos: Vec<Item> = vec![
-        //
         Item {
             label: "Do the shopping.".into(),
             done: false,
+            editing: false,
         },
         Item {
             label: "Walk the dog.".into(),
             done: false,
+            editing: false,
         },
         Item {
             label: "Ponder existence...".into(),
             done: false,
+            editing: false,
         },
     ];
-    let mut input: Cell<Option<String>> = Cell::new(None);
-    let mut state = All;
+
+    // ctx.set_fill_color(white());
+    // let pencil = svg("img/pencil.svg", 0.8, false);
 
     let pencil = svg(include_bytes!("../img/pencil.svg"), 0.8, true);
+    // let pencil = svg("img/pencil.svg", 0.8, true);
+    //The ergonomics of input here are impossible to use.
+    let mut input: Cell<Option<String>> = Cell::new(None);
+    let mut state = All;
 
     loop {
         match ctx.event() {
@@ -92,6 +124,7 @@ fn main() {
                     todos.push(Item {
                         label: input.take().unwrap(),
                         done: false,
+                        editing: false,
                     });
                 }
             }
@@ -109,6 +142,7 @@ fn main() {
         }
 
         let remaining = todos.iter().filter(|t| !t.done).count();
+
         let list: Vec<_> = todos
             .iter_mut()
             .filter(|i| match state {
@@ -116,14 +150,12 @@ fn main() {
                 Active => !i.done,
                 Completed => i.done,
             })
-            .map(|i| item(i, &pencil))
+            .map(|i| item(i, &input, &pencil))
             .collect();
-
-        // ctx.draw_svg(0, 0, &svg.pixmap, true);
 
         let root = v!(v!(
             text("todos").font_size(22),
-            input_box(&mut input),
+            input_box(&input),
             fit!(
                 text(format!("{} task left", remaining)),
                 text("All")

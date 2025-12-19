@@ -888,7 +888,7 @@ impl Context {
                         let mask_g = bitmap[glyph_idx + 1] as f32 / 255.0;
                         let mask_b = bitmap[glyph_idx + 2] as f32 / 255.0;
 
-                        //  If fully transparent, skip
+                        // If fully transparent, skip
                         if mask_r == 0.0 && mask_g == 0.0 && mask_b == 0.0 {
                             continue;
                         }
@@ -897,6 +897,7 @@ impl Context {
                         if max_x < screen_x {
                             max_x = screen_x;
                         }
+
                         if max_y < screen_y {
                             max_y = screen_y;
                         }
@@ -907,32 +908,22 @@ impl Context {
                             break 'x;
                         }
 
-                        // Read Background & Convert to Linear Space
-                        let bg_u32 = self.window.buffer[i];
-                        // Unpacking: Assuming standard 0xAARRGGBB or similar.
-                        // Adjust bit shifts if your Color format is BGR.
-                        let bg_r = ((bg_u32 >> 16) & 0xFF) as f32 / 255.0;
-                        let bg_g = ((bg_u32 >> 8) & 0xFF) as f32 / 255.0;
-                        let bg_b = (bg_u32 & 0xFF) as f32 / 255.0;
+                        if let Some(bg) = self.window.buffer.get_mut(i) {
+                            let bg_r = (((*bg >> 16) & 0xFF) as f32 / 255.0).powi(2);
+                            let bg_g = (((*bg >> 8) & 0xFF) as f32 / 255.0).powi(2);
+                            let bg_b = ((*bg & 0xFF) as f32 / 255.0).powi(2);
 
-                        // Convert Background to Linear (approx pow 2.2 via squaring)
-                        let bg_r_lin = bg_r * bg_r;
-                        let bg_g_lin = bg_g * bg_g;
-                        let bg_b_lin = bg_b * bg_b;
+                            // Per-Channel Blending in Linear Space
+                            let out_r_lin = (txt_r_lin * mask_r) + (bg_r * (1.0 - mask_r));
+                            let out_g_lin = (txt_g_lin * mask_g) + (bg_g * (1.0 - mask_g));
+                            let out_b_lin = (txt_b_lin * mask_b) + (bg_b * (1.0 - mask_b));
 
-                        // Per-Channel Blending in Linear Space
-                        // Formula: out = (Text * Mask) + (BG * (1.0 - Mask))
-                        let out_r_lin = (txt_r_lin * mask_r) + (bg_r_lin * (1.0 - mask_r));
-                        let out_g_lin = (txt_g_lin * mask_g) + (bg_g_lin * (1.0 - mask_g));
-                        let out_b_lin = (txt_b_lin * mask_b) + (bg_b_lin * (1.0 - mask_b));
+                            // Convert back to sRGB (approx sqrt) and clamp
+                            let r = (out_r_lin.sqrt() * 255.0) as u8;
+                            let g = (out_g_lin.sqrt() * 255.0) as u8;
+                            let b = (out_b_lin.sqrt() * 255.0) as u8;
 
-                        // Convert back to sRGB (approx sqrt) and clamp
-                        let out_r = (out_r_lin.sqrt() * 255.0) as u8;
-                        let out_g = (out_g_lin.sqrt() * 255.0) as u8;
-                        let out_b = (out_b_lin.sqrt() * 255.0) as u8;
-
-                        if let Some(px) = self.window.buffer.get_mut(i) {
-                            *px = rgb(out_r, out_g, out_b);
+                            *bg = rgb(r, g, b);
                         }
                     }
                 }
@@ -1101,12 +1092,10 @@ impl Context {
         let viewport_width = self.window.width();
         let viewport_height = self.window.area.height;
 
-        // If the SVG starts off-screen or is completely outside, return early.
         if x >= viewport_width || y >= viewport_height {
             return;
         }
 
-        // Calculate the actual width/height to draw (clipping to viewport)
         let draw_width = if x + width > viewport_width {
             viewport_width.saturating_sub(x)
         } else {
@@ -1131,41 +1120,24 @@ impl Context {
                     continue;
                 }
 
+                let (r, g, b) = (pixel.red(), pixel.green(), pixel.blue());
                 let (r, g, b) = if invert {
-                    (
-                        alpha.saturating_sub(pixel.red()),
-                        alpha.saturating_sub(pixel.green()),
-                        alpha.saturating_sub(pixel.blue()),
-                    )
+                    (alpha - r, alpha - g, alpha - b)
                 } else {
-                    (pixel.red(), pixel.green(), pixel.blue())
+                    (r, g, b)
                 };
 
                 let dst_idx = dst_row_idx + (sx + x);
 
-                // Fully opaque pixels overwrite the background completely
-                // Since it's Premultiplied, alpha 255 means RGB are already at full strength.
-                if alpha == 255 {
-                    if let Some(bg) = self.window.buffer.get_mut(dst_idx) {
-                        *bg = rgb(r, g, b)
-                    }
-                    continue;
-                }
-
-                // Alpha Blending (Source Over)
-                // tiny_skia uses Premultiplied Alpha.
-                // Formula: Result = Src + (Dst * (255 - Alpha) / 255)
-                if let Some(bg_ptr) = self.window.buffer.get_mut(dst_idx) {
-                    let bg_color = Color(*bg_ptr); // Read background
-                    let inv_alpha = 255 - alpha;
+                if let Some(bg) = self.window.buffer.get_mut(dst_idx) {
+                    let bgc = Color(*bg);
+                    let alpha = (255 - alpha) as u32;
 
                     // Calculate blended channels.
-                    // We cast to u32 to prevent overflow during multiplication.
-                    // (x * 255) / 255 is roughly x.
-                    let r = r as u32 + ((bg_color.r() as u32 * inv_alpha as u32) / 255);
-                    let g = g as u32 + ((bg_color.g() as u32 * inv_alpha as u32) / 255);
-                    let b = b as u32 + ((bg_color.b() as u32 * inv_alpha as u32) / 255);
-                    *bg_ptr = rgb(r as u8, g as u8, b as u8);
+                    let r = r as u32 + ((bgc.r() as u32 * alpha) / 255);
+                    let g = g as u32 + ((bgc.g() as u32 * alpha) / 255);
+                    let b = b as u32 + ((bgc.b() as u32 * alpha) / 255);
+                    *bg = rgb(r as u8, g as u8, b as u8);
                 }
             }
         }

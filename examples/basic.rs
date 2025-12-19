@@ -18,6 +18,7 @@ fn main() {
 
     let img = include_image!("../img/smol.png");
     let svg = svg(include_bytes!("../img/ferris.svg"), 1.0, true);
+    // let svg = svg("img/ferris.svg", 1.0, false);
 
     loop {
         match ctx.event() {
