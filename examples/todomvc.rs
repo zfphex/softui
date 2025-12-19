@@ -1,6 +1,6 @@
-use std::cell::Cell;
-
+// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use softui::*;
+use std::cell::Cell;
 use State::*;
 
 #[derive(PartialEq)]
@@ -70,7 +70,7 @@ fn main() {
     let mut input: Cell<Option<String>> = Cell::new(None);
     let mut state = All;
 
-    let pencil = svg("img/pencil.svg", 0.8, true);
+    let pencil = svg(include_bytes!("../img/pencil.svg"), 0.8, true);
 
     loop {
         match ctx.event() {

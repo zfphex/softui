@@ -10,7 +10,7 @@ fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
     ctx.set_fill_color(black());
 
-    let svg = svg("img/pencil.svg", 1.0, true);
+    let svg = svg(include_bytes!("../img/pencil.svg"), 1.0, true);
 
     loop {
         match ctx.event() {

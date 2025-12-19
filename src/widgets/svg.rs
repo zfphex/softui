@@ -5,8 +5,12 @@ use resvg::{
 };
 use taffy::prelude::length;
 
-pub fn svg<P: AsRef<std::path::Path>>(path: P, scale: f32, invert: bool) -> Svg {
-    let tree = Tree::from_data(&std::fs::read(path).unwrap(), &Options::default()).unwrap();
+pub fn svg_path<P: AsRef<std::path::Path>>(path: P, scale: f32, invert: bool) -> Svg {
+    svg(&std::fs::read(path).unwrap(), scale, invert)
+}
+
+pub fn svg(data: &[u8], scale: f32, invert: bool) -> Svg {
+    let tree = Tree::from_data(data, &Options::default()).unwrap();
     let width = tree.size().width() * scale;
     let height = tree.size().height() * scale;
 

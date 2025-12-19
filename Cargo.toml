@@ -6,6 +6,11 @@ resolver = "2"
 
 [profile.release]
 # debug = 1
+# opt-level = "z"
+# lto = true
+# codegen-units = 1
+# panic = "abort"
+# strip = true
 
 [features]
 # default = ["image"]
@@ -29,7 +34,7 @@ minifb = "0.27.0"
 [dependencies]
 mini = { version = "0.1.0", git = "https://github.com/zx3no/mini" }
 # mini = { version = "0.1.0", path = "../mini" }
-crossbeam-queue = "0.3.11"
+crossbeam-queue = "0.3.12"
 fontdue = { version = "0.9.3" }
 resvg = { version = "0.42.0", optional = true }
 zune-image = { version = "0.4.15", optional = true, default-features = false, features = [
@@ -39,7 +44,7 @@ zune-image = { version = "0.4.15", optional = true, default-features = false, fe
     # "simd",
     # "all"
 ] }
-taffy = { version = "0.9.1", default-features = false, features = ["flexbox", "taffy_tree", "std"] }
+taffy = { version = "0.9.2", default-features = false, features = ["flexbox", "taffy_tree", "std"] }
 # windows = { version = "0.59.0", features = ["Win32_System_Services", "Win32_System_SystemServices"] }
 # lay_out = { version = "0.1.0", path = "../lay_out" }
 # lay_out = { git = "https://github.com/zX3no/lay_out", version = "0.1.0" }
