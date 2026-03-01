@@ -204,11 +204,13 @@ impl Context {
         self.window.event_blocking()
     }
 
-    pub fn draw_layout(&mut self, root: Container<'static>, debug: bool) {
+    pub fn draw_layout<'a>(&mut self, root: Container<'a>, debug: bool) {
         unsafe {
             let node = root.node();
 
             //HACK: Currently the root node is not layed out correctly.
+            //Also wild upcast here.
+            let root = std::mem::transmute::<Container<'a>, Container<'static>>(root);
             TREE[node].widget = Some(Box::new(root));
 
             let window_size = taffy::Size {
