@@ -2,14 +2,8 @@ use softui::*;
 
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
-    let items: Vec<Box<dyn Widget<'_>>> = (0..100)
-        .into_iter()
-        .map(|i| {
-            let widget = text(format!("Item {i}"));
-            let widget: Box<dyn Widget<'_>> = Box::new(widget);
-            widget
-        })
-        .collect();
+    // let items: Vec<Text<'_>> = (0..100).into_iter().map(|i| text(format!("Item {i}"))).collect();
+    let items: [&dyn Widget; 3] = [&text("1"), &text("2"), &text("3")];
 
     loop {
         match ctx.event() {
@@ -17,7 +11,7 @@ fn main() {
             _ => {}
         }
 
-        let root = fit!(list(&items));
+        let root = v!(list(items.as_slice()));
 
         ctx.draw_layout(root, true);
         ctx.draw_frame();
