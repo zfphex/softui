@@ -13,7 +13,6 @@ pub trait IntoNode {
     fn into_node(self) -> usize;
 }
 
-
 impl<'a, T: Widget<'a>> IntoNode for T {
     fn into_node(self) -> usize {
         let widget = self;

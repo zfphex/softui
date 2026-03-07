@@ -203,6 +203,36 @@ pub trait Widget<'a>: std::fmt::Debug {
     }
 }
 
+impl<'a> Widget<'a> for &'a dyn Widget<'a> {
+    fn is_container(&self) -> bool {
+        (**self).is_container()
+    }
+
+    fn node(&self) -> usize {
+        (**self).node()
+    }
+
+    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
+        (**self).draw(commands, area)
+    }
+
+    fn layout(&self) -> TaffyLayout {
+        (**self).layout()
+    }
+
+    fn try_click(&mut self, ctx: &mut Context, area: Rect) {
+        //TODO: Since it's behind an immutable reference does this mean try_click will never work?
+    }
+
+    fn measure(&self, known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>) -> Size<f32> {
+        (**self).measure(known_dimensions, available_space)
+    }
+
+    fn style(&self) -> Option<Style> {
+        (**self).style()
+    }
+}
+
 pub trait IntoDimension {
     fn into_dimension(self) -> Dimension;
 }

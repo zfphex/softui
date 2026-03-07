@@ -15,6 +15,7 @@ pub struct Container<'a> {
     pub layout: TaffyLayout,
     pub style: Style,
     pub handlers: Vec<(MouseButton, Action, Box<dyn FnMut(&mut Self) + 'a>)>,
+    pub list_view: Option<&'a [&'a dyn Widget<'a>]>,
 }
 
 impl<'a> Debug for Container<'a> {
@@ -59,6 +60,7 @@ impl<'a> Container<'a> {
             layout: layout.clone(),
             style: Style::new(),
             handlers: Vec::new(),
+            list_view: None,
         }
     }
 
@@ -241,12 +243,6 @@ impl<'a> Container<'a> {
 
     pub fn on_key_release(mut self, f: impl FnMut(Key, &mut Self) + 'a) -> Self {
         todo!()
-    }
-
-    pub fn layout(mut self, f: impl FnOnce(&mut TaffyLayout)) -> Self {
-        f(&mut self.layout);
-        unsafe { TREE[self.node].layout = self.layout.clone() };
-        self
     }
 }
 

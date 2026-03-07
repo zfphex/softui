@@ -11,7 +11,10 @@ fn main() {
             _ => {}
         }
 
-        let root = v!(list(items.as_slice()));
+        //TODO: Should probably just add support for containers in standard v! and h! macros.
+        //Users will want this anyway, then we can just add windows to the exhisting container type.
+        //It's pretty awful, but I mean what corners haven't been cut already??
+        let root = list(items.as_slice());
 
         ctx.draw_layout(root, true);
         ctx.draw_frame();
