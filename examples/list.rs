@@ -11,8 +11,8 @@ fn main() {
             _ => {}
         }
 
-        //TODO: Should probably just add support for containers in standard v! and h! macros.
-        //Users will want this anyway, then we can just add windows to the exhisting container type.
+        //TODO: Should probably just add support for vec and slices in standard v! and h! macros.
+        //Users will want this anyway, then we can just add windows to the existing container type.
         //It's pretty awful, but I mean what corners haven't been cut already??
         let root = list(items.as_slice());
 
