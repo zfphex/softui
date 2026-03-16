@@ -9,6 +9,7 @@ use taffy::{
     Layout, NodeId, PrintTree, Size, TraversePartialTree,
 };
 
+//TODO: Change the visablity of this, should be private.
 pub static mut TREE: Tree = Tree::new();
 
 pub type TaffyLayout = taffy::Style;

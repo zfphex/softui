@@ -120,8 +120,6 @@ impl std::fmt::Debug for Primative {
     }
 }
 
-pub static mut COMMAND_QUEUE: crossbeam_queue::SegQueue<Command> = crossbeam_queue::SegQueue::new();
-
 pub const unsafe fn extend_lifetime<'a, T>(t: &'a T) -> &'static T {
     std::mem::transmute::<&'a T, &'static T>(t)
 }
@@ -231,11 +229,6 @@ impl Context {
                 for cmd in &self.commands {
                     println!("{:?}", cmd.primative);
                 }
-
-                // while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
-                //     println!("{:?}", cmd.primative);
-                //     unsafe { COMMAND_QUEUE.push(cmd) }
-                // }
             }
         }
     }
@@ -250,13 +243,7 @@ impl Context {
         //TODO: Currently if the area is (0, 0) the layout system will crash instead of rendering correctly the next frame.
         self.update_area();
 
-        //TODO: Get rid of all of this code and move onto a new system.
-        let commands = core::mem::take(&mut self.commands);
-        for cmd in commands {
-            unsafe { COMMAND_QUEUE.push(cmd) };
-        }
-
-        while let Some(cmd) = unsafe { COMMAND_QUEUE.pop() } {
+        for cmd in core::mem::take(&mut self.commands) {
             let x = cmd.area.x;
             let y = cmd.area.y;
             let width = cmd.area.width;
