@@ -25,4 +25,13 @@
   - Can only be 4 types of node, Flex, Fit, Grid, Text. Each node type is rendered differently during layout.
     - There is a weird disconnect between nodes and widgets that's not easy to conceptualise.
 - `draw_tree`
+  - Recursive over each of the nodes
 - `compute_child_layout`
+  - calls a taffy function `compute_child_layout` which takes in a user defined closure
+  - gets the node from the tree and computes either a flexbox, no layout (hidden) or leaf node (no children).
+  - It's unclear what exactly taffy does here but it's not really important.
+  - I tried to write a layout engine and all the tests in the world couldn't save me from the conceptual nightmare of that problem.
+
+### Widget Trait
+
+- 
