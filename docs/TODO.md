@@ -1,0 +1,3 @@
+- [ ] Working TodoMVC Example
+- [ ] Improve the input management so that it can be used easily with widget closures
+- [ ] Improve the way SVGs and images are used
