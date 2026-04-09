@@ -11,12 +11,12 @@ fn main() {
         let root = div()
             .horizontal()
             .child(text("test"))
-            .child(rect().wh(100).bg(green()))
-            .child(rect().wh(100).bg(green()))
-            .child(rect().wh(100).bg(green()))
-            .child(rect().wh(100).bg(green()))
+            .child(rect().wh(100).bg(Some(green())))
+            .child(rect().wh(100).bg(Some(green())))
+            .child(rect().wh(100).bg(Some(green())))
+            .child(rect().wh(100).bg(Some(green())))
             .gap(30)
-            .bg(gray());
+            .bg(Some(gray()));
 
         ctx.draw_layout(root, true);
         ctx.draw_frame();

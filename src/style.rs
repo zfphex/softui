@@ -8,9 +8,9 @@ pub fn style() -> Style {
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Style {
-    pub background_color: Option<Color>,
-    pub foreground_color: Option<Color>,
-    pub border_color: Option<Color>,
+    pub background_color: Option<u32>,
+    pub foreground_color: Option<u32>,
+    pub border_color: Option<u32>,
 }
 
 impl Style {
@@ -21,11 +21,11 @@ impl Style {
             border_color: None,
         }
     }
-    pub const fn bg(mut self, color: Color) -> Self {
+    pub const fn bg(mut self, color: u32) -> Self {
         self.background_color = Some(color);
         self
     }
-    pub const fn fg(mut self, color: Color) -> Self {
+    pub const fn fg(mut self, color: u32) -> Self {
         self.foreground_color = Some(color);
         self
     }
@@ -33,8 +33,8 @@ impl Style {
 
 #[rustfmt::skip]
 pub trait StyleBuilder<'a>: Sized {
-    fn bg(self, color: Color) -> Self;
-    fn rgb(self, r: u8, g: u8, b: u8) -> Self { self.bg(Color(rgb(r, g, b))) }
+    fn bg(self, color: u32) -> Self;
+    fn rgb(self, r: u8, g: u8, b: u8) -> Self { self.bg(rgb(r, g, b)) }
     fn pink(self) -> Self { self.bg(pink()) }
     fn red(self) -> Self { self.bg(red()) }
     fn orange(self) -> Self { self.bg(orange()) }
@@ -63,12 +63,11 @@ pub trait StyleBuilder<'a>: Sized {
 }
 
 #[inline(always)]
-pub const fn hex(color: &str) -> Color {
+pub const fn hex(color: &str) -> u32 {
     if let Ok(hex) = u32::from_str_radix(color.split_at(1).1, 16) {
-        Color::from(hex)
+        hex
     } else {
-        //TODO: Const panic here?
-        Color::default()
+        panic!("Invalid hex color")
     }
 }
 
@@ -77,122 +76,9 @@ pub const fn rgb(r: u8, g: u8, b: u8) -> u32 {
     (r as u32) << 16 | (g as u32) << 8 | (b as u32)
 }
 
-//TODO: Is this RGB or BGR I forget?
-#[repr(transparent)]
-#[derive(Copy, Clone, PartialEq, Eq, Default)]
-pub struct Color(pub u32);
-
-impl std::fmt::Debug for Color {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Color {{ hex: #{:06X}, rgb: ({}, {}, {}) }}",
-            self.0 & 0xFFFFFF,
-            self.r(),
-            self.g(),
-            self.b(),
-        )
-    }
-}
-
-impl Color {
-    #[inline]
-    pub const fn new(r: u8, g: u8, b: u8) -> Self {
-        Self((r as u32) << 16 | (g as u32) << 8 | (b as u32))
-    }
-
-    #[inline]
-    pub const fn default() -> Self {
-        Self(0)
-    }
-
-    #[inline]
-    pub const fn r(self) -> u8 {
-        (self.0 >> 16 & 0xFF) as u8
-    }
-
-    #[inline]
-    pub const fn g(self) -> u8 {
-        (self.0 >> 8 & 0xFF) as u8
-    }
-
-    #[inline]
-    pub const fn b(self) -> u8 {
-        (self.0 & 0xFF) as u8
-    }
-
-    pub fn lerp(self, other: Self, t: f32) -> Self {
-        let r = lerp(self.r() as f32, other.r() as f32, t) as u8;
-        let g = lerp(self.g() as f32, other.g() as f32, t) as u8;
-        let b = lerp(self.b() as f32, other.b() as f32, t) as u8;
-        // let a = lerp(self.a() as f32, other.a() as f32, t) as u8;
-        Self::new(r, g, b)
-    }
-
-    pub const fn adjust(self, scale: f32) -> Self {
-        let r = ((self.0 >> 16) & 0xFF) as f32;
-        let g = ((self.0 >> 8) & 0xFF) as f32;
-        let b = (self.0 & 0xFF) as f32;
-
-        let r = (r * scale).clamp(0.0, 255.0) as u8;
-        let g = (g * scale).clamp(0.0, 255.0) as u8;
-        let b = (b * scale).clamp(0.0, 255.0) as u8;
-
-        Self::new(r, g, b)
-    }
-
-    //Based debug mode optimizer. Note, this does literally nothing.
-
-    #[inline(always)]
-    pub const fn as_u32(self) -> u32 {
-        self.0
-    }
-
-    #[inline(always)]
-    //Takes in a hex color.
-    pub const fn from(color: u32) -> Self {
-        Self(color)
-    }
-}
-
-impl std::fmt::Display for Color {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:0>6x}", self.0)
-    }
-}
-
-impl From<u32> for Color {
-    fn from(val: u32) -> Self {
-        Color(val)
-    }
-}
-
-//Brainrot trait.
-pub trait IntoColor {
-    fn into_color(self) -> Option<Color>;
-}
-
-impl IntoColor for Color {
-    fn into_color(self) -> Option<Color> {
-        Some(self)
-    }
-}
-
-impl IntoColor for Option<Color> {
-    fn into_color(self) -> Option<Color> {
-        self
-    }
-}
-
-#[inline]
-///Blend the background and the text color.
-pub fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
-    ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32) / 255.0).round() as u8
-}
-
-#[inline]
-pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
-    (a * (1.0 - t)) + (b * t)
+#[inline(always)]
+pub const fn split(color: u32) -> (u8, u8, u8) {
+    (r(color), g(color), b(color))
 }
 
 #[inline]
@@ -210,7 +96,39 @@ pub const fn b(color: u32) -> u8 {
     (color & 0xFF) as u8
 }
 
-pub fn random_color() -> Color {
+#[inline]
+pub fn lerp_f32(a: f32, b: f32, t: f32) -> f32 {
+    (a * (1.0 - t)) + (b * t)
+}
+
+pub fn lerp(color: u32, other: u32, t: f32) -> u32 {
+    let (r1, g1, b1) = split(color);
+    let (r2, g2, b2) = split(other);
+    let r = lerp_f32(r1 as f32, r2 as f32, t) as u8;
+    let g = lerp_f32(g1 as f32, g2 as f32, t) as u8;
+    let b = lerp_f32(b1 as f32, b2 as f32, t) as u8;
+    rgb(r, g, b)
+}
+
+pub const fn adjust(c: u32, scale: f32) -> u32 {
+    let r = ((c >> 16) & 0xFF) as f32;
+    let g = ((c >> 8) & 0xFF) as f32;
+    let b = (c & 0xFF) as f32;
+
+    let r = (r * scale).clamp(0.0, 255.0) as u8;
+    let g = (g * scale).clamp(0.0, 255.0) as u8;
+    let b = (b * scale).clamp(0.0, 255.0) as u8;
+
+    rgb(r, g, b)
+}
+
+#[inline]
+///Blend the background and the text color.
+pub fn blend(color: u8, alpha: u8, bg_color: u8, bg_alpha: u8) -> u8 {
+    ((color as f32 * alpha as f32 + bg_color as f32 * bg_alpha as f32) / 255.0).round() as u8
+}
+
+pub fn random_color() -> u32 {
     // Get current time in nanoseconds (u64)
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -231,10 +149,10 @@ pub fn random_color() -> Color {
     x ^= x << 5;
 
     // Return only the lower 24 bits (0x00RRGGBB format)
-    Color::from(x & 0xFFFFFF)
+    x & 0xFFFFFF
 }
 
-pub fn fixed_random_color(index: usize) -> Color {
+pub fn fixed_random_color(index: usize) -> u32 {
     // Simple integer hash function (Thomas Wang's 32-bit mix)
     let mut x = index;
     x ^= x >> 16;
@@ -244,130 +162,130 @@ pub fn fixed_random_color(index: usize) -> Color {
     x ^= x >> 16;
 
     // Take only lower 24 bits (RRGGBB) and ensure valid color range
-    Color::from((x & 0xFFFFFF) as u32)
+    (x & 0xFFFFFF) as u32
 }
 
 #[inline]
-pub const fn pink() -> Color {
-    Color::new(255, 192, 203)
+pub const fn pink() -> u32 {
+    rgb(255, 192, 203)
 }
 
 #[inline]
-pub const fn red() -> Color {
-    Color::new(255, 0, 0)
+pub const fn red() -> u32 {
+    rgb(255, 0, 0)
 }
 
 #[inline]
-pub const fn orange() -> Color {
-    Color::new(255, 165, 0)
+pub const fn orange() -> u32 {
+    rgb(255, 165, 0)
 }
 
 #[inline]
-pub const fn yellow() -> Color {
-    Color::new(255, 255, 0)
+pub const fn yellow() -> u32 {
+    rgb(255, 255, 0)
 }
 
 #[inline]
-pub const fn green() -> Color {
-    Color::new(0, 128, 0)
+pub const fn green() -> u32 {
+    rgb(0, 128, 0)
 }
 
 #[inline]
-pub const fn lime() -> Color {
-    Color::new(0, 255, 0)
+pub const fn lime() -> u32 {
+    rgb(0, 255, 0)
 }
 
 #[inline]
-pub const fn blue() -> Color {
-    Color::new(0, 0, 255)
+pub const fn blue() -> u32 {
+    rgb(0, 0, 255)
 }
 
 #[inline]
-pub const fn cyan() -> Color {
-    Color::new(0, 255, 255)
+pub const fn cyan() -> u32 {
+    rgb(0, 255, 255)
 }
 
 #[inline]
-pub const fn turquoise() -> Color {
-    Color::new(64, 224, 208)
+pub const fn turquoise() -> u32 {
+    rgb(64, 224, 208)
 }
 
 #[inline]
-pub const fn navy() -> Color {
-    Color::new(0, 0, 128)
+pub const fn navy() -> u32 {
+    rgb(0, 0, 128)
 }
 
 #[inline]
-pub const fn purple() -> Color {
-    Color::new(128, 0, 128)
+pub const fn purple() -> u32 {
+    rgb(128, 0, 128)
 }
 
 #[inline]
-pub const fn magenta() -> Color {
-    Color::new(255, 0, 255)
+pub const fn magenta() -> u32 {
+    rgb(255, 0, 255)
 }
 
 #[inline]
-pub const fn violet() -> Color {
-    Color::new(238, 130, 238)
+pub const fn violet() -> u32 {
+    rgb(238, 130, 238)
 }
 
 #[inline]
-pub const fn brown() -> Color {
-    Color::new(165, 42, 42)
+pub const fn brown() -> u32 {
+    rgb(165, 42, 42)
 }
 
 #[inline]
-pub const fn tan() -> Color {
-    Color::new(210, 180, 140)
+pub const fn tan() -> u32 {
+    rgb(210, 180, 140)
 }
 
 #[inline]
-pub const fn black() -> Color {
-    Color::new(0, 0, 0)
+pub const fn black() -> u32 {
+    rgb(0, 0, 0)
 }
 
 #[inline]
-pub const fn white() -> Color {
-    Color::new(255, 255, 255)
+pub const fn white() -> u32 {
+    rgb(255, 255, 255)
 }
 
 #[inline]
-pub const fn gray() -> Color {
-    Color::new(128, 128, 128)
+pub const fn gray() -> u32 {
+    rgb(128, 128, 128)
 }
 
 #[inline]
-pub const fn silver() -> Color {
-    Color::new(192, 192, 192)
+pub const fn silver() -> u32 {
+    rgb(192, 192, 192)
 }
 
 #[inline]
-pub const fn gold() -> Color {
-    Color::new(255, 215, 0)
+pub const fn gold() -> u32 {
+    rgb(255, 215, 0)
 }
 
 #[inline]
-pub const fn indigo() -> Color {
-    Color::new(75, 0, 130)
+pub const fn indigo() -> u32 {
+    rgb(75, 0, 130)
 }
 
 #[inline]
-pub const fn lavender() -> Color {
-    Color::new(230, 230, 250)
+pub const fn lavender() -> u32 {
+    rgb(230, 230, 250)
 }
 
 #[inline]
-pub const fn coral() -> Color {
-    Color::new(255, 127, 80)
+pub const fn coral() -> u32 {
+    rgb(255, 127, 80)
 }
 
 #[inline]
-pub const fn olive() -> Color {
-    Color::new(128, 128, 0)
+pub const fn olive() -> u32 {
+    rgb(128, 128, 0)
 }
 
 #[inline]
-pub const fn teal() -> Color {
-    Color::new(0, 128, 128)
+pub const fn teal() -> u32 {
+    rgb(0, 128, 128)
 }

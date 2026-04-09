@@ -9,7 +9,9 @@ fn main() {
             _ => {}
         }
 
-        {}
+        let root = v!(text("this is some text").fg(Some(white())).bg(Some(cyan())));
+        ctx.draw_layout(root, true);
+        // ctx.draw_text_subpixel_new("Test", default_font(), 0, 0, 48, 0, white());
 
         ctx.draw_frame();
     }

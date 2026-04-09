@@ -2,14 +2,14 @@ use core::cell::Cell;
 use softui::*;
 
 #[rustfmt::skip] 
-fn button<'a>(plan: &'a str, current_plan: &'a Cell<&'a str>, accent: Color) -> impl Widget<'a> + 'a {
+fn button<'a>(plan: &'a str, current_plan: &'a Cell<&'a str>, accent: u32) -> impl Widget<'a> + 'a {
     let selected = current_plan.get() == plan;
 
     fit!(text(plan))
-        .bg(if selected { Some(accent) } else { None })
+        .bg(if selected { Some(accent) } else { None})
         .on_click(Left, move |_| { current_plan.set(plan) })
         .on_hover(move |s| {
-            if !selected { s.style.background_color = Some(accent.adjust(0.6)) }
+            if !selected { s.style.background_color = Some(adjust(accent, 0.6)) }
         })
         .w(360)
         .hcenter()
@@ -36,7 +36,7 @@ fn main() {
         )
         .gap(20)
         .center()
-        .bg(background);
+        .bg(Some(background));
 
         ctx.draw_layout(root, true);
         ctx.draw_frame();

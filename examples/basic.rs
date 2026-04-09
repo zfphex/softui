@@ -28,7 +28,7 @@ fn main() {
 
         let root = v!(
             //
-            "Example 1.".bg(red()),
+            "Example 1.".bg(Some(red())),
             "Example 2.",
             "Example 3.",
             image(&img),

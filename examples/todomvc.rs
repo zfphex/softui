@@ -25,14 +25,14 @@ fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
     let label = if let Some(input) = unsafe { &*input.as_ptr() } {
         text(input.as_str())
     } else {
-        text("What needs to be done?").fg(gray())
+        text("What needs to be done?").fg(Some(gray()))
     };
 
     v!(label.font_size(18))
         .w(50.percent())
         .h(64)
-        .bg(black())
-        .border(white())
+        .bg(Some(black()))
+        .border(Some(white()))
         .center()
         .on_lose_focus(|_| input.set(None))
         // .on_key_press(|key, _| {
@@ -159,6 +159,7 @@ fn main() {
             fit!(
                 text(format!("{} task left", remaining)),
                 text("All")
+                    //TODO: I broke something when reworking color and this text is yelllow now??
                     .bg(if state == All { Some(cyan()) } else { None })
                     .on_click(Left, |_| state = All),
                 text("Active")

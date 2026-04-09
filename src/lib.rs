@@ -85,13 +85,13 @@ pub enum Quadrant {
 #[derive(Clone)]
 pub enum Primative {
     /// (radius: usize, border: Color, bg: color)
-    Ellipse(usize, Option<Color>, Option<Color>),
+    Ellipse(usize, Option<u32>, Option<u32>),
     /// (text, font_size, Color)
     /// This needs to include the desired font.
     /// Not sure how to do that yet.
     //TODO: Should font size be f32?
     //TODO: Could change text to Cow<'_, str>
-    Text(String, usize, Color),
+    Text(String, usize, u32),
 
     #[cfg(feature = "image")]
     ImageUnsafe(&'static [u8], ImageFormat),
@@ -162,7 +162,7 @@ pub unsafe fn create_ctx(title: &str, width: usize, height: usize) -> Context {
 #[derive(Debug)]
 pub struct Context {
     pub window: Pin<Box<Window>>,
-    pub fill_color: Color,
+    pub fill_color: u32,
     pub commands: Vec<Command>,
     //Store the root node for debugging.
     pub debug: bool,
@@ -174,7 +174,7 @@ impl Context {
         load_default_font();
 
         let fill_color = black();
-        window.buffer.fill(fill_color.as_u32());
+        window.buffer.fill(fill_color);
         Self {
             window,
             fill_color,
@@ -289,7 +289,7 @@ impl Context {
         self.window.draw();
 
         //The reason that will clear the screen after the frame is because the user can call draw functions.
-        self.window.buffer.fill(self.fill_color.as_u32());
+        self.window.buffer.fill(self.fill_color);
 
         //Limit the framerate to the primary monitors refresh rate.
         //TODO: Wait timers are likely better for all refresh rates.
@@ -305,23 +305,23 @@ impl Context {
         self.window.buffer.get_mut(pos)
     }
 
-    pub fn set_fill_color(&mut self, color: Color) {
+    pub fn set_fill_color(&mut self, color: u32) {
         self.fill_color = color;
-        self.window.buffer.fill(self.fill_color.as_u32());
+        self.window.buffer.fill(self.fill_color);
     }
 
     #[inline]
     #[track_caller]
-    pub fn draw_pixel(&mut self, x: usize, y: usize, color: Color) {
+    pub fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
         let width = self.window.width();
-        self.window.buffer[y * width + x] = color.as_u32();
+        self.window.buffer[y * width + x] = color;
     }
 
     #[inline]
-    pub fn try_draw_pixel(&mut self, x: usize, y: usize, color: Color) {
+    pub fn try_draw_pixel(&mut self, x: usize, y: usize, color: u32) {
         let width = self.window.width();
         if let Some(px) = self.window.buffer.get_mut(y * width + x) {
-            *px = color.as_u32();
+            *px = color;
         }
     }
 
@@ -331,9 +331,9 @@ impl Context {
         y: Y,
         width: WIDTH,
         height: HEIGHT,
-        color: Color,
+        color: u32,
         border: usize,
-        border_color: Color,
+        border_color: u32,
         radius: usize,
     ) where
         X: Into<GenericUnit>,
@@ -375,7 +375,7 @@ impl Context {
     }
 
     ///If the user draws an invalid rectangle outside the bounds it will be clipped without error.
-    pub fn draw_rectangle(&mut self, x: usize, y: usize, mut width: usize, mut height: usize, color: Color) {
+    pub fn draw_rectangle(&mut self, x: usize, y: usize, mut width: usize, mut height: usize, color: u32) {
         let viewport_width = self.window.width();
         let viewport_height = self.window.area.height;
 
@@ -398,17 +398,17 @@ impl Context {
         for i in y..y + height {
             let pos = x + self.window.width() * i;
             if let Some(buffer) = self.window.buffer.get_mut(pos..pos + width) {
-                buffer.fill(color.as_u32());
+                buffer.fill(color);
             }
         }
     }
 
     /// Draw a rectangle with a single pixel outline.
     /// TODO: Allow for variable length outlines.
-    pub fn draw_rectangle_outline(&mut self, x: usize, y: usize, width: usize, height: usize, color: Color) {
+    pub fn draw_rectangle_outline(&mut self, x: usize, y: usize, width: usize, height: usize, color: u32) {
         let viewport_width = self.window.width();
         let viewport_height = self.window.area.height;
-        let color = color.as_u32();
+        let color = color;
 
         //Draw the first line
         let pos = x + viewport_width * y;
@@ -445,7 +445,7 @@ impl Context {
         y: usize,
         width: usize,
         height: usize,
-        color: Color,
+        color: u32,
         radius: usize,
     ) {
         let viewport_width = self.window.width();
@@ -464,14 +464,14 @@ impl Context {
             if y <= radius || y >= height - radius {
                 let pos = x + radius + viewport_width * i;
                 for px in &mut self.window.buffer[pos..pos + width - radius - radius] {
-                    *px = color.as_u32();
+                    *px = color;
                 }
                 continue;
             }
 
             let pos = x + viewport_width * i;
             for px in &mut self.window.buffer[pos..pos + width] {
-                *px = color.as_u32();
+                *px = color;
             }
         }
 
@@ -498,8 +498,8 @@ impl Context {
         y: usize,
         mut width: usize,
         mut height: usize,
-        color1: Color,
-        color2: Color,
+        color1: u32,
+        color2: u32,
     ) {
         let viewport_width = self.window.width();
         let viewport_height = self.window.area.height;
@@ -522,14 +522,14 @@ impl Context {
 
             for (x, px) in self.window.buffer[start..end].iter_mut().enumerate() {
                 let t = (x as f32) / (end as f32 - start as f32);
-                *px = color1.lerp(color2, t).as_u32();
+                *px = lerp(color1, color2, t);
             }
         }
     }
 
     //This could be smarter by checking what radius is visable and clipping to only render the visable part.
     //This is not aliased and looks like shit so probably not worth it.
-    pub fn draw_circle(&mut self, cx: usize, cy: usize, radius: usize, color: Color) {
+    pub fn draw_circle(&mut self, cx: usize, cy: usize, radius: usize, color: u32) {
         let (x1, y1) = (cx - radius, cy - radius);
         let (x2, y2) = (cx + radius, cy + radius);
 
@@ -549,7 +549,7 @@ impl Context {
     //https://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm
     //Is it worth having a 2D projection matrix to convert top left orgin
     //into a center origin cartesian plane
-    pub fn draw_circle_outline(&mut self, x: usize, y: usize, mut radius: usize, color: Color) {
+    pub fn draw_circle_outline(&mut self, x: usize, y: usize, mut radius: usize, color: u32) {
         if radius > x || radius > y {
             radius = x.min(y);
         }
@@ -583,7 +583,7 @@ impl Context {
     }
 
     ///Radius must *not* be larger than `cx` or `cy`.
-    pub fn draw_arc(&mut self, cx: usize, cy: usize, mut radius: usize, color: Color, quadrant: Quadrant) {
+    pub fn draw_arc(&mut self, cx: usize, cy: usize, mut radius: usize, color: u32, quadrant: Quadrant) {
         //Can't see it, don't draw it.
         if cx > self.window.width() || cy > self.window.area.height {
             return;
@@ -614,7 +614,7 @@ impl Context {
         }
     }
 
-    pub fn draw_line<T: IntoF32>(&mut self, x0: T, y0: T, x1: T, y1: T, color: Color) {
+    pub fn draw_line<T: IntoF32>(&mut self, x0: T, y0: T, x1: T, y1: T, color: u32) {
         let mut x0 = x0.into_f32().round() as isize;
         let mut y0 = y0.into_f32().round() as isize;
         let x1 = x1.into_f32().round() as isize;
@@ -652,7 +652,7 @@ impl Context {
         }
     }
 
-    pub fn draw_triangle(&mut self, ax: f32, ay: f32, bx: f32, by: f32, cx: f32, cy: f32, color: Color) {
+    pub fn draw_triangle(&mut self, ax: f32, ay: f32, bx: f32, by: f32, cx: f32, cy: f32, color: u32) {
         #[inline]
         fn signed_triangle_area(ax: f32, ay: f32, bx: f32, by: f32, cx: f32, cy: f32) -> f32 {
             0.5 * ((by - ay) * (bx + ax) + (cy - by) * (cx + bx) + (ay - cy) * (ax + cx))
@@ -693,7 +693,7 @@ impl Context {
         font_size: usize,
         //Zero is fine
         line_height: usize,
-        color: Color,
+        color: u32,
     ) {
         if text.is_empty() || font_size == 0 {
             return;
@@ -714,9 +714,7 @@ impl Context {
         let mut max_x = 0;
         let mut max_y = 0;
 
-        let r = color.r();
-        let g = color.g();
-        let b = color.b();
+        let (r1, g1, b1) = split(color);
 
         'line: for line in text.lines() {
             let mut glyph_x = x;
@@ -763,17 +761,15 @@ impl Context {
                             break 'x;
                         }
 
-                        let bg = Color(self.window.buffer[i]);
+                        let (r2, g2, b2) = split(self.window.buffer[i]);
 
-                        let r = blend(r, alpha, bg.r(), 255 - alpha);
-                        let g = blend(g, alpha, bg.g(), 255 - alpha);
-                        let b = blend(b, alpha, bg.b(), 255 - alpha);
+                        let r = blend(r1, alpha, r2, 255 - alpha);
+                        let g = blend(g1, alpha, g2, 255 - alpha);
+                        let b = blend(b1, alpha, b2, 255 - alpha);
 
                         if let Some(px) = self.window.buffer.get_mut(i) {
                             *px = rgb(r, g, b);
                         }
-
-                        // self.window.buffer[i] = rgb(r, g, b).as_u32();
                     }
                 }
 
@@ -804,7 +800,7 @@ impl Context {
         y: usize,
         font_size: usize,
         line_height: usize,
-        color: Color,
+        color: u32,
     ) {
         //http://arkanis.de/weblog/2023-08-14-simple-good-quality-subpixel-text-rendering-in-opengl-with-stb-truetype-and-dual-source-blending
         // https://github.com/arkanis/gl-4.5-subpixel-text-rendering/blob/d770f0395f610d9fcc53319734069fe7fc4138b2/main.c#L626
@@ -851,10 +847,12 @@ impl Context {
         let mut max_x = 0;
         let mut max_y = 0;
 
+        let (r, g, b) = split(color);
+
         // Pre-calculate linear text color (Gamma 2.2 approximation: x^2)
-        let txt_r_lin = (color.r() as f32 / 255.0).powi(2);
-        let txt_g_lin = (color.g() as f32 / 255.0).powi(2);
-        let txt_b_lin = (color.b() as f32 / 255.0).powi(2);
+        let txt_r_lin = (r as f32 / 255.0).powi(2);
+        let txt_g_lin = (g as f32 / 255.0).powi(2);
+        let txt_b_lin = (b as f32 / 255.0).powi(2);
 
         'line: for line in text.lines() {
             let mut glyph_x = x_pos;
@@ -956,7 +954,7 @@ impl Context {
         mut y: usize,
         font_size: usize,
         line_height: usize,
-        color: Color,
+        color: u32,
     ) {
         let mut max_x = 0;
         let mut max_y = 0;
@@ -1008,7 +1006,7 @@ impl Context {
                         let c = Color::new(texture[j], texture[j + 1], texture[j + 2]);
 
                         if let Some(px) = self.window.buffer.get_mut(i) {
-                            *px = c.as_u32();
+                            *px = c;
                         }
                     }
                 }
@@ -1133,13 +1131,13 @@ impl Context {
                 let dst_idx = dst_row_idx + (sx + x);
 
                 if let Some(bg) = self.window.buffer.get_mut(dst_idx) {
-                    let bgc = Color(*bg);
+                    let bgc = *bg;
                     let alpha = (255 - alpha) as u32;
 
                     // Calculate blended channels.
-                    let r = r as u32 + ((bgc.r() as u32 * alpha) / 255);
-                    let g = g as u32 + ((bgc.g() as u32 * alpha) / 255);
-                    let b = b as u32 + ((bgc.b() as u32 * alpha) / 255);
+                    let r = r as u32 + ((style::r(bgc) as u32 * alpha) / 255);
+                    let g = g as u32 + ((style::g(bgc) as u32 * alpha) / 255);
+                    let b = b as u32 + ((style::b(bgc) as u32 * alpha) / 255);
                     *bg = rgb(r as u8, g as u8, b as u8);
                 }
             }
@@ -1147,7 +1145,7 @@ impl Context {
     }
 
     /// Draws a quadratic Bézier curve using 3 control points (Start, Control, End).
-    pub fn draw_quadratic_bezier<T: IntoF32>(&mut self, x0: T, y0: T, x1: T, y1: T, x2: T, y2: T, color: Color) {
+    pub fn draw_quadratic_bezier<T: IntoF32>(&mut self, x0: T, y0: T, x1: T, y1: T, x2: T, y2: T, color: u32) {
         let fx0 = x0.into_f32();
         let fy0 = y0.into_f32();
         let fx1 = x1.into_f32();
@@ -1200,7 +1198,7 @@ impl Context {
         y2: T,
         x3: T,
         y3: T,
-        color: Color,
+        color: u32,
     ) {
         let fx0 = x0.into_f32();
         let fy0 = y0.into_f32();

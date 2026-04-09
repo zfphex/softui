@@ -15,7 +15,7 @@ pub fn draw_text(
     display_scale: f32,
     window: Rect,
     buffer: &mut [u32],
-    color: Color,
+    color: u32,
     skip_draw: bool,
 ) -> Rect {
     if text.is_empty() || font_size == 0 {
@@ -34,9 +34,9 @@ pub fn draw_text(
     let mut max_x = 0;
     let mut max_y = 0;
 
-    let r = color.r();
-    let g = color.g();
-    let b = color.b();
+    let r = r(color);
+    let g = g(color);
+    let b = b(color);
 
     'line: for line in text.lines() {
         let mut glyph_x = x;
@@ -88,11 +88,11 @@ pub fn draw_text(
                         break 'x;
                     }
 
-                    let bg = Color(buffer[i]);
+                    let (r, g, b) = split(buffer[i]);
 
-                    let r = blend(r, alpha, bg.r(), 255 - alpha);
-                    let g = blend(g, alpha, bg.g(), 255 - alpha);
-                    let b = blend(b, alpha, bg.b(), 255 - alpha);
+                    let r = blend(r, alpha, r, 255 - alpha);
+                    let g = blend(g, alpha, g, 255 - alpha);
+                    let b = blend(b, alpha, b, 255 - alpha);
 
                     if let Some(px) = buffer.get_mut(i) {
                         *px = rgb(r, g, b);

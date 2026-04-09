@@ -46,13 +46,13 @@ use crate::*;
 pub trait Styling: Sized {
     fn style_mut(&mut self) -> &mut Style;
 
-    fn bg(mut self, bg: impl IntoColor) -> Self {
-        self.style_mut().background_color = bg.into_color();
+    fn bg(mut self, bg: Option<u32>) -> Self {
+        self.style_mut().background_color = bg;
         self
     }
 
-    fn fg(mut self, fg: impl IntoColor) -> Self {
-        self.style_mut().foreground_color = fg.into_color();
+    fn fg(mut self, fg: Option<u32>) -> Self {
+        self.style_mut().foreground_color = fg;
         self
     }
 }
