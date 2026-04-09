@@ -243,7 +243,6 @@ impl Context {
         //TODO: Currently if the area is (0, 0) the layout system will crash instead of rendering correctly the next frame.
         self.update_area();
 
-
         for cmd in core::mem::take(&mut self.commands) {
             let x = cmd.area.x;
             let y = cmd.area.y;
@@ -1257,14 +1256,7 @@ impl Context {
 
         let width = self.window.width();
         let height = self.window.height();
-
-        let buffer: &[u8] = unsafe {
-            std::slice::from_raw_parts(
-                self.window.buffer.as_ptr() as *const u8,
-                self.window.buffer.len() * std::mem::size_of::<u32>(),
-            )
-        };
-
+        let buffer = unsafe { self.window.buffer.as_slice().align_to::<u8>().1 };
         let img = Image::from_u8(buffer, width, height, zune_core::colorspace::ColorSpace::BGRA);
 
         if let Err(e) = img.save(filepath) {
