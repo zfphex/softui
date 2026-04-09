@@ -28,7 +28,7 @@ fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
         text("What needs to be done?").fg(Some(gray()))
     };
 
-    v!(label.font_size(18))
+    v!(label.size(18))
         .w(50.percent())
         .h(64)
         .bg(Some(black()))
@@ -154,7 +154,7 @@ fn main() {
             .collect();
 
         let root = v!(v!(
-            text("todos").font_size(22),
+            text("todos").size(22),
             input_box(&input),
             fit!(
                 text(format!("{} task left", remaining)),

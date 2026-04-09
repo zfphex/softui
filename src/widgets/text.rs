@@ -50,7 +50,7 @@ pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
 }
 
 impl<'a> Text<'a> {
-    pub fn font_size(mut self, size: usize) -> Self {
+    pub fn size(mut self, size: usize) -> Self {
         self.font_size = size;
         self
     }
