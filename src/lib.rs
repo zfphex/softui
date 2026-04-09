@@ -243,6 +243,7 @@ impl Context {
         //TODO: Currently if the area is (0, 0) the layout system will crash instead of rendering correctly the next frame.
         self.update_area();
 
+
         for cmd in core::mem::take(&mut self.commands) {
             let x = cmd.area.x;
             let y = cmd.area.y;
@@ -286,11 +287,9 @@ impl Context {
             }
         }
 
-        // self.commands.clear();
-
         self.window.draw();
 
-        //Draw the UI on top of the background not the other way round!
+        //The reason that will clear the screen after the frame is because the user can call draw functions.
         self.window.buffer.fill(self.fill_color.as_u32());
 
         //Limit the framerate to the primary monitors refresh rate.
@@ -616,24 +615,40 @@ impl Context {
         }
     }
 
-    //https://github.com/ssloy/tinyrenderer/wiki/Lesson-1:-Bresenham%E2%80%99s-Line-Drawing-Algorithm
-    //TODO: Only works when the slope is >= 0 & <=1
-    pub fn draw_line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, color: Color) {
-        let mut error = 0.0;
-        let dx = x1 as f32 - x0 as f32;
-        let dy = y1 as f32 - y0 as f32;
-        let m = dy / dx;
+    pub fn draw_line<T: IntoF32>(&mut self, x0: T, y0: T, x1: T, y1: T, color: Color) {
+        let mut x0 = x0.into_f32().round() as isize;
+        let mut y0 = y0.into_f32().round() as isize;
+        let x1 = x1.into_f32().round() as isize;
+        let y1 = y1.into_f32().round() as isize;
 
-        let mut x = x0;
-        let mut y = y0;
+        let dx = (x1 - x0).abs();
+        let sx = if x0 < x1 { 1 } else { -1 };
+        let dy = -(y1 - y0).abs();
+        let sy = if y0 < y1 { 1 } else { -1 };
+        let mut err = dx + dy;
 
-        while x < x1 {
-            self.try_draw_pixel(x, y, color);
-            x += 1;
-            error += m;
-            if error > 0.5 {
-                y += 1;
-                error -= 1.0;
+        let width = self.window.width() as isize;
+
+        loop {
+            // Guard against negative coordinates and screen-wrapping.
+            if x0 >= 0 && y0 >= 0 && x0 < width {
+                self.try_draw_pixel(x0 as usize, y0 as usize, color);
+            }
+
+            if x0 == x1 && y0 == y1 {
+                break;
+            }
+
+            let e2 = 2 * err;
+
+            if e2 >= dy {
+                err += dy;
+                x0 += sx;
+            }
+
+            if e2 <= dx {
+                err += dx;
+                y0 += sy;
             }
         }
     }
@@ -1129,6 +1144,131 @@ impl Context {
                     *bg = rgb(r as u8, g as u8, b as u8);
                 }
             }
+        }
+    }
+
+    /// Draws a quadratic Bézier curve using 3 control points (Start, Control, End).
+    pub fn draw_quadratic_bezier<T: IntoF32>(&mut self, x0: T, y0: T, x1: T, y1: T, x2: T, y2: T, color: Color) {
+        let fx0 = x0.into_f32();
+        let fy0 = y0.into_f32();
+        let fx1 = x1.into_f32();
+        let fy1 = y1.into_f32();
+        let fx2 = x2.into_f32();
+        let fy2 = y2.into_f32();
+
+        let dist = |ax: f32, ay: f32, bx: f32, by: f32| ((bx - ax) * (bx - ax) + (by - ay) * (by - ay)).sqrt();
+
+        // Estimate arc length by summing the lengths of the control polygon segments
+        let est_length = dist(fx0, fy0, fx1, fy1) + dist(fx1, fy1, fx2, fy2);
+        let width = self.window.width() as f32;
+
+        if est_length <= 1.0 {
+            if fx0 >= 0.0 && fy0 >= 0.0 && fx0 < width {
+                self.try_draw_pixel(fx0 as usize, fy0 as usize, color);
+            }
+            return;
+        }
+
+        // Multiply by a factor (1.5) to ensure dense enough stepping so there are no visual gaps
+        let steps = (est_length * 1.5).ceil() as usize;
+
+        for i in 0..=steps {
+            let t = i as f32 / steps as f32;
+            let u = 1.0 - t;
+
+            let px = u * u * fx0 + 2.0 * u * t * fx1 + t * t * fx2;
+
+            let py = u * u * fy0 + 2.0 * u * t * fy1 + t * t * fy2;
+
+            let rx = px.round();
+            let ry = py.round();
+
+            // Guard against negative saturating casts and screen-wrapping
+            if rx >= 0.0 && ry >= 0.0 && rx < width {
+                self.try_draw_pixel(rx as usize, ry as usize, color);
+            }
+        }
+    }
+
+    /// Draws a cubic Bézier curve using 4 control points (Start, Control 1, Control 2, End).
+    pub fn draw_cubic_bezier<T: IntoF32>(
+        &mut self,
+        x0: T,
+        y0: T,
+        x1: T,
+        y1: T,
+        x2: T,
+        y2: T,
+        x3: T,
+        y3: T,
+        color: Color,
+    ) {
+        let fx0 = x0.into_f32();
+        let fy0 = y0.into_f32();
+        let fx1 = x1.into_f32();
+        let fy1 = y1.into_f32();
+        let fx2 = x2.into_f32();
+        let fy2 = y2.into_f32();
+        let fx3 = x3.into_f32();
+        let fy3 = y3.into_f32();
+
+        let dist = |ax: f32, ay: f32, bx: f32, by: f32| ((bx - ax) * (bx - ax) + (by - ay) * (by - ay)).sqrt();
+
+        // Estimate arc length via the control polygon
+        let est_length = dist(fx0, fy0, fx1, fy1) + dist(fx1, fy1, fx2, fy2) + dist(fx2, fy2, fx3, fy3);
+
+        let width = self.window.width() as f32;
+
+        if est_length <= 1.0 {
+            if fx0 >= 0.0 && fy0 >= 0.0 && fx0 < width {
+                self.try_draw_pixel(fx0 as usize, fy0 as usize, color);
+            }
+            return;
+        }
+
+        let steps = (est_length * 1.5).ceil() as usize;
+
+        for i in 0..=steps {
+            let t = i as f32 / steps as f32;
+            let u = 1.0 - t;
+
+            let tt = t * t;
+            let uu = u * u;
+            let uuu = uu * u;
+            let ttt = tt * t;
+
+            let px = uuu * fx0 + 3.0 * uu * t * fx1 + 3.0 * u * tt * fx2 + ttt * fx3;
+
+            let py = uuu * fy0 + 3.0 * uu * t * fy1 + 3.0 * u * tt * fy2 + ttt * fy3;
+
+            let rx = px.round();
+            let ry = py.round();
+
+            // Guard against negative saturating casts and screen-wrapping
+            if rx >= 0.0 && ry >= 0.0 && rx < width {
+                self.try_draw_pixel(rx as usize, ry as usize, color);
+            }
+        }
+    }
+
+    #[cfg(feature = "image")]
+    pub fn save_frame(&self, filepath: &str) {
+        use zune_image::{codecs::png::zune_core, image::Image};
+
+        let width = self.window.width();
+        let height = self.window.height();
+
+        let buffer: &[u8] = unsafe {
+            std::slice::from_raw_parts(
+                self.window.buffer.as_ptr() as *const u8,
+                self.window.buffer.len() * std::mem::size_of::<u32>(),
+            )
+        };
+
+        let img = Image::from_u8(buffer, width, height, zune_core::colorspace::ColorSpace::BGRA);
+
+        if let Err(e) = img.save(filepath) {
+            panic!("Failed to save frame: {:?}", e);
         }
     }
 
