@@ -1,5 +1,13 @@
 use softui::*;
 
+#[derive(PartialEq)]
+enum State {
+    Stopped,
+    Forward,
+    Back,
+    Play,
+}
+
 fn factorial(n: usize) -> f32 {
     (1..=n).map(|v| v as f32).product()
 }
@@ -7,10 +15,27 @@ fn factorial(n: usize) -> f32 {
 fn main() {
     let mut ctx = unsafe { create_ctx("Maclaurin Series", 800, 600) };
     let mut degree_timer: f32 = 0.0;
+    let mut state = State::Stopped;
+    let mut target: f32 = 0.0;
+    let speed = 0.02;
 
     loop {
         match ctx.event() {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
+            Some(Event::Input(Key::Right, _)) => {
+                state = State::Forward;
+                //idk i really want the opposite of rounding?
+                target = target.round() + 1.0;
+            }
+            Some(Event::Input(Key::Space, _)) => {
+                state = State::Play;
+            }
+            Some(Event::Input(Key::Left, _)) => {
+                state = State::Back;
+                //If the playback is running forward and you trigger a reverse at
+                //for example target = 3.9, then 3.9 - 1.0 = 2.9 which is not what the user wanted.
+                target = target.ceil() - 1.0;
+            }
             _ => {}
         }
 
@@ -106,9 +131,24 @@ fn main() {
         .p(20)
         .gap(10);
 
-        degree_timer += 0.002;
-        if degree_timer > 7.0 {
-            degree_timer = 0.0;
+        match state {
+            State::Forward if target > degree_timer => degree_timer += speed,
+            State::Forward => {
+                state = State::Stopped;
+                degree_timer = target
+            }
+            State::Back if target < degree_timer => degree_timer -= speed,
+            State::Back => {
+                state = State::Stopped;
+                degree_timer = target
+            }
+            State::Stopped => {}
+            State::Play => {
+                if degree_timer < 7.0 {
+                    degree_timer += speed * 0.5;
+                    target = degree_timer
+                }
+            }
         }
 
         ctx.draw_layout(root, false);
