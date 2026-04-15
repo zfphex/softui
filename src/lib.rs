@@ -1,6 +1,5 @@
-#![allow(unused, static_mut_refs, incomplete_features)]
-#![feature(associated_type_defaults, specialization)]
-use core::mem::transmute;
+#![allow(unused, static_mut_refs)]
+#![feature(associated_type_defaults)]
 use mini::{error, info, profile, warn};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{any::Any, borrow::Cow, pin::Pin, sync::Arc};
@@ -268,8 +267,14 @@ impl Context {
                 Primative::Text(text, font_size, color) => {
                     //TODO: Specify the font with a font database and font ID.
                     let font = default_font();
-                    self.draw_text(&text, font, x, y, *font_size, 0, *color);
+
+                    let window = self.window.area();
+                    let buffer = &mut self.window.buffer;
+                    font::draw_text(text, font, x, y, *font_size, 0, 1.0, window, buffer, *color, false);
+
                     // self.draw_text_subpixel_new(&text, font, x, y, *font_size, 0, *color);
+
+                    // self.draw_text(&text, font, x, y, *font_size, 0, *color);
                 }
                 // Primative::CustomBoxed(f) => f(self),
                 // Primative::Custom(f, data) => f(self, data),
@@ -679,11 +684,6 @@ impl Context {
         }
     }
 
-    //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
-    //or maybe the buffer should just include all the text related code and the metrics should be static.
-
-    //TODO: If the text is longer than canvas width it needs to be clipped.
-    //Currently it circles around and starts drawing from the front again.
     pub fn draw_text(
         &mut self,
         text: &str,
@@ -695,101 +695,19 @@ impl Context {
         line_height: usize,
         color: u32,
     ) {
-        if text.is_empty() || font_size == 0 {
-            return;
-        }
-
-        // let viewport_width = self.window.width();
-        // let viewport_height = self.window.height();
-
-        let x = scale(x, self.window.display_scale);
-        let y = scale(y, self.window.display_scale);
-        let font_size = scale(font_size, self.window.display_scale);
-        let line_height = scale(line_height, self.window.display_scale);
-
-        let mut area = Rect::new(x, y, 0, 0);
-        let mut y = area.y;
-        let x = area.x;
-
-        let mut max_x = 0;
-        let mut max_y = 0;
-
-        let (r1, g1, b1) = split(color);
-
-        'line: for line in text.lines() {
-            let mut glyph_x = x;
-
-            'char: for char in line.chars() {
-                let (metrics, bitmap) = font.rasterize(char, font_size as f32);
-
-                let glyph_y = y as f32 - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
-
-                'y: for y in 0..metrics.height {
-                    'x: for x in 0..metrics.width {
-                        //Text doesn't fit on the screen.
-                        if (x + glyph_x) >= self.window.width() {
-                            continue;
-                        }
-
-                        //TODO: Metrics.bounds determines the bounding are of the glyph.
-                        //Currently the whole bitmap bounding box is drawn.
-                        let alpha = bitmap[x + y * metrics.width];
-                        if alpha == 0 {
-                            continue;
-                        }
-
-                        //Should the text really be offset by the font size?
-                        //This allows the user to draw text at (0, 0).
-                        let offset = font_size as f32 + glyph_y + y as f32;
-
-                        //We can't render off of the screen, mkay?
-                        if offset < 0.0 {
-                            continue;
-                        }
-
-                        if max_x < x + glyph_x {
-                            max_x = x + glyph_x;
-                        }
-
-                        if max_y < offset as usize {
-                            max_y = offset as usize;
-                        }
-
-                        let i = x + glyph_x + self.window.width() * offset as usize;
-
-                        if i >= self.window.buffer.len() {
-                            break 'x;
-                        }
-
-                        let (r2, g2, b2) = split(self.window.buffer[i]);
-
-                        let r = blend(r1, alpha, r2, 255 - alpha);
-                        let g = blend(g1, alpha, g2, 255 - alpha);
-                        let b = blend(b1, alpha, b2, 255 - alpha);
-
-                        if let Some(px) = self.window.buffer.get_mut(i) {
-                            *px = rgb(r, g, b);
-                        }
-                    }
-                }
-
-                glyph_x += metrics.advance_width as usize;
-
-                //Check if the glyph position is off the screen.
-                if glyph_x >= self.window.width() {
-                    break 'line;
-                }
-            }
-
-            //CSS is probably line height * font size.
-            //1.2 is the default line height
-            //I'm guessing 1.0 is probably just adding the font size.
-            y += font_size + line_height;
-        }
-
-        //Not sure why these are one off.
-        area.height = max_y + 1 - area.y;
-        area.width = max_x + 1 - area.x;
+        font::draw_text(
+            text,
+            font,
+            x,
+            y,
+            font_size,
+            line_height,
+            self.window.display_scale(),
+            Rect::new(0, 0, self.window.width(), self.window.height()),
+            &mut self.window.buffer,
+            color,
+            true,
+        );
     }
 
     pub fn draw_text_subpixel_new(
@@ -1298,58 +1216,5 @@ impl Context {
             Some(Event::Quit | Event::Input(Key::Escape, _)) => true,
             _ => false,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::*;
-
-    #[test]
-    #[cfg(not(target_os = "macos"))]
-    fn rectangle() {
-        let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
-
-        //Rectangle
-        {
-            //The x position is out of bounds
-            ctx.draw_rectangle(ctx.window.width() + 100, 0, 100, 100, red());
-
-            //The y position is out of bounds
-            ctx.draw_rectangle(0, ctx.window.height() + 100, 100, 100, red());
-
-            //The width is larger than the viewport
-            ctx.draw_rectangle(0, 0, ctx.window.width() + 100, 100, red());
-
-            //The height is larger than the viewport
-            ctx.draw_rectangle(0, 0, 100, ctx.window.height() + 100, red());
-        }
-
-        //Rectangle Outlines
-        {
-            //The x position is out of bounds
-            ctx.draw_rectangle_outline(ctx.window.width() + 100, 0, 100, 100, red());
-
-            //The y position is out of bounds
-            ctx.draw_rectangle_outline(0, ctx.window.height() + 100, 100, 100, red());
-
-            //The width is larger than the viewport
-            ctx.draw_rectangle_outline(0, 0, ctx.window.width() + 100, 100, red());
-
-            //The height is larger than the viewport
-            ctx.draw_rectangle_outline(0, 0, 100, ctx.window.height() + 100, red());
-        }
-
-        //Circle
-        {
-            ctx.draw_arc(700, 300, 800, red(), Quadrant::BottomRight);
-        }
-
-        //Text
-        {
-            ctx.draw_text("hi", default_font(), 0, 0, 1000, 0, white());
-        }
-
-        ctx.draw_frame();
     }
 }

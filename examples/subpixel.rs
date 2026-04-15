@@ -14,6 +14,7 @@ fn main() {
         // ctx.draw_text_subpixel(&smooth_bitmap, &metrics, 0, 0, [255, 255, 255, 255]);
         // ctx.draw_rectangle(0, 0, 200, 200, green());
         ctx.draw_text_subpixel_new("Test", default_font(), 0, 0, 48, 0, white());
+        // ctx.draw_text("Example", default_font(), 0, 0, 48, 1, white());
         ctx.draw_frame();
     }
 }

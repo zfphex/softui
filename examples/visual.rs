@@ -51,8 +51,8 @@ fn main() {
         let sum_text = format!("S_{} = {:.5}", terms, sum);
         ctx.draw_text(&sum_text, default_font(), 20, 90, 20, 0, white());
 
-        let path = format!("target/frames/frame_{:04}.png", frame_count);
-        ctx.save_frame(&path);
+        // let path = format!("target/frames/frame_{:04}.png", frame_count);
+        // ctx.save_frame(&path);
         ctx.draw_frame();
 
         frame_count += 1;
@@ -60,7 +60,7 @@ fn main() {
         t += 1.0;
         if t > 30.0 {
             // t = 1.0;
-            break;
+            // break;
         }
     }
 }

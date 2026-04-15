@@ -4,6 +4,12 @@ use crate::*;
 
 pub fn calculate_font_area() {}
 
+//TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
+//or maybe the buffer should just include all the text related code and the metrics should be static.
+
+//TODO: If the text is longer than canvas width it needs to be clipped.
+//Currently it circles around and starts drawing from the front again.
+
 pub fn draw_text(
     text: &str,
     font: &fontdue::Font,
@@ -34,9 +40,7 @@ pub fn draw_text(
     let mut max_x = 0;
     let mut max_y = 0;
 
-    let r = r(color);
-    let g = g(color);
-    let b = b(color);
+    let (r1, g1, b1) = split(color);
 
     'line: for line in text.lines() {
         let mut glyph_x = x;
@@ -46,7 +50,6 @@ pub fn draw_text(
 
             let glyph_y = y as f32 - (metrics.height as f32 - metrics.advance_height) - metrics.ymin as f32;
 
-            // if draw {
             'y: for y in 0..metrics.height {
                 'x: for x in 0..metrics.width {
                     //Text doesn't fit on the screen.
@@ -78,21 +81,17 @@ pub fn draw_text(
                         max_y = offset as usize;
                     }
 
-                    if skip_draw {
-                        continue;
-                    }
-
                     let i = x + glyph_x + window.width * offset as usize;
 
                     if i >= buffer.len() {
                         break 'x;
                     }
 
-                    let (r, g, b) = split(buffer[i]);
+                    let (r2, g2, b2) = split(buffer[i]);
 
-                    let r = blend(r, alpha, r, 255 - alpha);
-                    let g = blend(g, alpha, g, 255 - alpha);
-                    let b = blend(b, alpha, b, 255 - alpha);
+                    let r = blend(r1, alpha, r2, 255 - alpha);
+                    let g = blend(g1, alpha, g2, 255 - alpha);
+                    let b = blend(b1, alpha, b2, 255 - alpha);
 
                     if let Some(px) = buffer.get_mut(i) {
                         *px = rgb(r, g, b);
@@ -117,6 +116,5 @@ pub fn draw_text(
     //Not sure why these are one off.
     area.height = max_y + 1 - area.y;
     area.width = max_x + 1 - area.x;
-
     area
 }
