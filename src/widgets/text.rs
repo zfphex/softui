@@ -110,7 +110,7 @@ impl<'a> Widget<'a> for Text<'a> {
     fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
         commands.push(Command {
             area,
-            primative: Primative::Ellipse(0, None, self.style.background_color),
+            primative: Primative::Ellipse(self.style.radius, None, self.style.background_color),
         });
 
         if let Some(fg) = self.style.foreground_color {

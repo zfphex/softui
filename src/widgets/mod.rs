@@ -46,15 +46,21 @@ use crate::*;
 pub trait Styling: Sized {
     fn style_mut(&mut self) -> &mut Style;
 
-    fn bg(mut self, bg: Option<u32>) -> Self {
-        self.style_mut().background_color = bg;
+    fn bg(mut self, bg: impl IntoColor) -> Self {
+        self.style_mut().background_color = bg.into_color();
         self
     }
 
-    fn fg(mut self, fg: Option<u32>) -> Self {
-        self.style_mut().foreground_color = fg;
+    fn fg(mut self, fg: impl IntoColor) -> Self {
+        self.style_mut().foreground_color = fg.into_color();
         self
     }
+
+    fn radius(mut self, radius: usize) -> Self {
+        self.style_mut().radius = radius;
+        self
+    }
+    
 }
 
 pub trait Sizing: Sized {

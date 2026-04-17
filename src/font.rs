@@ -81,6 +81,10 @@ pub fn draw_text(
                         max_y = offset as usize;
                     }
 
+                    if skip_draw {
+                        continue;
+                    }
+
                     let i = x + glyph_x + window.width * offset as usize;
 
                     if i >= buffer.len() {

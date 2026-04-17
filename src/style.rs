@@ -11,6 +11,7 @@ pub struct Style {
     pub background_color: Option<u32>,
     pub foreground_color: Option<u32>,
     pub border_color: Option<u32>,
+    pub radius: usize,
 }
 
 impl Style {
@@ -19,14 +20,38 @@ impl Style {
             background_color: None,
             foreground_color: None,
             border_color: None,
+            radius: 0,
         }
     }
-    pub const fn bg(mut self, color: u32) -> Self {
-        self.background_color = Some(color);
+    pub fn bg(mut self, color: impl IntoColor) -> Self {
+        self.background_color = color.into_color();
         self
     }
-    pub const fn fg(mut self, color: u32) -> Self {
-        self.foreground_color = Some(color);
+    pub fn fg(mut self, color: impl IntoColor) -> Self {
+        self.foreground_color = color.into_color();
+        self
+    }
+
+    pub fn radius(mut self, radius: usize) -> Self {
+        self.radius = radius;
+        self
+    }
+}
+
+/// Literally just convert u32 into Some(u32)
+/// This is nice because you don't always want to wrap colors with Some()
+pub trait IntoColor {
+    fn into_color(self) -> Option<u32>;
+}
+
+impl IntoColor for u32 {
+    fn into_color(self) -> Option<u32> {
+        Some(self)
+    }
+}
+
+impl IntoColor for Option<u32> {
+    fn into_color(self) -> Option<u32> {
         self
     }
 }

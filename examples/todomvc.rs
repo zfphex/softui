@@ -7,7 +7,7 @@ use softui::*;
 use std::cell::Cell;
 use State::*;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum State {
     All,
     Active,
@@ -95,14 +95,11 @@ fn main() {
         },
     ];
 
-    // ctx.set_fill_color(white());
-    // let pencil = svg("img/pencil.svg", 0.8, false);
-
     let pencil = svg(include_bytes!("../img/pencil.svg"), 0.8, true);
-    // let pencil = svg("img/pencil.svg", 0.8, true);
+
     //The ergonomics of input here are impossible to use.
     let mut input: Cell<Option<String>> = Cell::new(None);
-    let mut state = All;
+    let state: Cell<State> = Cell::new(All);
 
     loop {
         match ctx.event() {
@@ -145,7 +142,7 @@ fn main() {
 
         let list: Vec<_> = todos
             .iter_mut()
-            .filter(|i| match state {
+            .filter(|i| match state.get() {
                 All => true,
                 Active => !i.done,
                 Completed => i.done,
@@ -153,28 +150,33 @@ fn main() {
             .map(|i| item(i, &input, &pencil))
             .collect();
 
-        let root = v!(v!(
-            text("todos").size(22),
+        let s = state.get();
+        let sr = &state;
+        let tab = |label: &'static str, target: State| {
+            text(label)
+                .bg(if s == target { Some(hex("3232B0")) } else { None })
+                .p(2)
+                .radius(6)
+                .on_click(Left, move |_| sr.set(target))
+        };
+
+        let root = v!(
+            text("todos").size(48).pb(12),
             input_box(&input),
             fit!(
                 text(format!("{} task left", remaining)),
-                text("All")
-                    //TODO: I broke something when reworking color and this text is yelllow now??
-                    .bg(if state == All { Some(cyan()) } else { None })
-                    .on_click(Left, |_| state = All),
-                text("Active")
-                    .bg(if state == Active { Some(cyan()) } else { None })
-                    .on_click(Left, |_| state = Active),
-                text("Completed")
-                    .bg(if state == Completed { Some(cyan()) } else { None })
-                    .on_click(Left, |_| state = Completed),
+                tab("All", All),
+                tab("Active", Active),
+                tab("Completed", Completed)
             )
             .gap(20),
+            //Note: this fills the horizontal space (is this something we want?)
             v!().children(list).w(50.percent()).gap(8)
         )
-        .gap(8)
         .p(8)
-        .hcenter());
+        .gap(8)
+        // .vcenter()
+        .hcenter();
 
         ctx.draw_layout(root, true);
         ctx.draw_frame();

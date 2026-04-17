@@ -46,8 +46,8 @@ fn main() {
         let scale = 80.0;
 
         // Draw Axes
-        ctx.draw_line(0., oy, vw as f32, oy, rgb(50, 50, 50).into());
-        ctx.draw_line(ox, 0., ox, vh as f32, rgb(50, 50, 50).into());
+        ctx.draw_line(0., oy, vw as f32, oy, rgb(50, 50, 50));
+        ctx.draw_line(ox, 0., ox, vh as f32, rgb(50, 50, 50));
 
         // Draw Reference Sine Wave
         let mut prev_ref = None;
@@ -55,7 +55,7 @@ fn main() {
             let x = (sx as f32 - ox) / scale;
             let sy = oy - (x.sin() * scale);
             if let Some((px, py)) = prev_ref {
-                ctx.draw_line(px, py, sx as f32, sy, rgb(60, 60, 60).into());
+                ctx.draw_line(px, py, sx as f32, sy, rgb(60, 60, 60));
             }
             prev_ref = Some((sx as f32, sy));
         }
@@ -80,7 +80,7 @@ fn main() {
             if sy > -1000.0 && sy < 1600.0 {
                 if let Some((px, py)) = prev_target {
                     // Faint blue-ish color for the target
-                    ctx.draw_line(px, py, sx as f32, sy, rgb(80, 120, 200).into());
+                    ctx.draw_line(px, py, sx as f32, sy, rgb(80, 120, 200));
                 }
             }
             prev_target = Some((sx as f32, sy));
@@ -108,7 +108,7 @@ fn main() {
             let sy = oy - (approx * scale);
             if sy > -1000.0 && sy < 1600.0 {
                 if let Some((px, py)) = prev_mac {
-                    ctx.draw_line(px, py, sx as f32, sy, rgb(255, 180, 0).into());
+                    ctx.draw_line(px, py, sx as f32, sy, rgb(255, 180, 0));
                 }
             }
             prev_mac = Some((sx as f32, sy));
@@ -116,16 +116,14 @@ fn main() {
 
         let root = v!(
             text("Maclaurin Interpolation").size(28),
-            text("f(x) = sin(x)").size(20).fg(gray().into()),
+            text("f(x) = sin(x)").size(20).fg(gray()),
             fit!(
-                text("Target:").size(20).fg(rgb(80, 120, 200).into()),
-                text(format!(" P_{}(x)", 2 * target_terms - 1))
-                    .size(20)
-                    .fg(white().into())
+                text("Target:").size(20).fg(rgb(80, 120, 200)),
+                text(format!(" P_{}(x)", 2 * target_terms - 1)).size(20).fg(white())
             ),
             fit!(
-                text("Interpolating:").size(20).fg(rgb(255, 180, 0).into()),
-                text(format!(" {:.2} terms", degree_timer)).size(20).fg(white().into())
+                text("Interpolating:").size(20).fg(rgb(255, 180, 0)),
+                text(format!(" {:.2} terms", degree_timer)).size(20).fg(white())
             )
         )
         .p(20)

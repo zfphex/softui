@@ -33,13 +33,13 @@ impl<'a> Styling for Container<'a> {
         &mut self.style
     }
 
-    fn fg(mut self, fg: Option<u32>) -> Self {
-        self.style.foreground_color = fg;
+    fn fg(mut self, fg: impl IntoColor) -> Self {
+        self.style.foreground_color = fg.into_color();
         self
     }
 
-    fn bg(mut self, bg: Option<u32>) -> Self {
-        self.style.background_color = bg;
+    fn bg(mut self, bg: impl IntoColor) -> Self {
+        self.style.background_color = bg.into_color();
         self
     }
 }
@@ -178,8 +178,8 @@ impl<'a> Container<'a> {
         self
     }
 
-    pub fn border(mut self, border: Option<u32>) -> Self {
-        self.style.border_color = border;
+    pub fn border(mut self, border: impl IntoColor) -> Self {
+        self.style.border_color = border.into_color();
         self
     }
 
