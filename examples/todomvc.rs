@@ -48,7 +48,14 @@ fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
     // })
 }
 
+//80% Item Name, 20% Edit Icon
 fn item<'a>(item: &'a mut Item, input: &'a Cell<Option<String>>, pencil: &Svg) -> impl Widget<'a> + 'a {
+    let checkbox = v!()
+        .border(if item.done { None } else { Some(white()) })
+        .wh(20)
+        .bg(if item.done { Some(white()) } else { Some(black()) })
+        .on_click(Left, |_| item.done = !item.done);
+
     if item.editing {
         fit!(
             v!().wh(20),
@@ -57,21 +64,14 @@ fn item<'a>(item: &'a mut Item, input: &'a Cell<Option<String>>, pencil: &Svg) -
         )
         .gap(10)
     } else {
-        fit!(
-            v!().border(if item.done { None } else { Some(white()) })
-                .wh(20)
-                .bg(if item.done { Some(white()) } else { Some(black()) })
-                .on_click(Left, |_| item.done = !item.done),
-            text(&item.label),
-            // rect().w(100).bg(None),
-            svg_ref(&pencil)
-                // .on_lose_focus(|_| item.editing = false),
-                .on_click(Left, |_| {
-                    item.editing = true;
-                    input.replace(Some(String::new()));
-                })
-        )
-        .gap(10)
+        let pen = svg_ref(&pencil)
+            // .on_lose_focus(|_| item.editing = false),
+            .on_click(Left, |_| {
+                item.editing = true;
+                input.replace(Some(String::new()));
+            });
+
+        fit!(checkbox, text(&item.label), pen).gap(10)
     }
 }
 
@@ -94,6 +94,7 @@ fn main() {
             editing: false,
         },
     ];
+    // let mut todos: Vec<Item> = Vec::new();
 
     let pencil = svg(include_bytes!("../img/pencil.svg"), 0.8, true);
 
@@ -170,8 +171,17 @@ fn main() {
                 tab("Completed", Completed)
             )
             .gap(20),
-            //Note: this fills the horizontal space (is this something we want?)
-            v!().children(list).w(50.percent()).gap(8)
+            if list.is_empty() {
+                v!(text("You have not created a task yet...").fg(gray()))
+                    .h(25.percent())
+                    .vcenter()
+                    .hcenter()
+                //TODO: Percentage padding does not work yet.
+                // .p(20.percent())
+            } else {
+                //Note: this fills the horizontal space (is this something we want?)
+                v!().children(list).w(50.percent()).gap(8)
+            }
         )
         .p(8)
         .gap(8)
