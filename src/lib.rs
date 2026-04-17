@@ -706,7 +706,7 @@ impl Context {
             Rect::new(0, 0, self.window.width(), self.window.height()),
             &mut self.window.buffer,
             color,
-            true,
+            false,
         );
     }
 
@@ -1169,15 +1169,11 @@ impl Context {
     #[cfg(feature = "image")]
     pub fn save_frame(&self, filepath: &str) {
         use zune_image::{codecs::png::zune_core, image::Image};
-
         let width = self.window.width();
         let height = self.window.height();
         let buffer = unsafe { self.window.buffer.as_slice().align_to::<u8>().1 };
         let img = Image::from_u8(buffer, width, height, zune_core::colorspace::ColorSpace::BGRA);
-
-        if let Err(e) = img.save(filepath) {
-            panic!("Failed to save frame: {:?}", e);
-        }
+        img.save(filepath).unwrap()
     }
 
     #[inline]

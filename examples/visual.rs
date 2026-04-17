@@ -37,6 +37,7 @@ fn main() {
             prev_y = y;
         }
 
+
         ctx.draw_text("Alternating Harmonic Series", default_font(), 20, 20, 28, 0, white());
         ctx.draw_text(
             "Sum approaches ln(2)",
@@ -45,7 +46,7 @@ fn main() {
             60,
             20,
             0,
-            rgb(100, 200, 100).into(),
+            rgb(100, 200, 100),
         );
 
         let sum_text = format!("S_{} = {:.5}", terms, sum);
@@ -53,13 +54,14 @@ fn main() {
 
         // let path = format!("target/frames/frame_{:04}.png", frame_count);
         // ctx.save_frame(&path);
+
         ctx.draw_frame();
 
         frame_count += 1;
 
         t += 1.0;
         if t > 30.0 {
-            // t = 1.0;
+            t = 1.0;
             // break;
         }
     }
