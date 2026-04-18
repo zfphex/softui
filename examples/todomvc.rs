@@ -48,7 +48,6 @@ fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
     // })
 }
 
-//80% Item Name, 20% Edit Icon
 fn item<'a>(item: &'a mut Item, input: &'a Cell<Option<String>>, pencil: &Svg) -> impl Widget<'a> + 'a {
     let checkbox = v!()
         .border(if item.done { None } else { Some(white()) })
@@ -100,39 +99,42 @@ fn main() {
 
     loop {
         match ctx.event() {
-            Some(Event::Quit | Event::Input(Key::Escape, _)) => break,
-            Some(Event::Input(Key::Backspace, m)) => {
-                if let Some(input) = input.get_mut() {
-                    if !input.trim().is_empty() {
-                        //Modifiers don't work on macos.
-                        if m.control {
-                            input.clear();
-                        } else {
-                            input.pop();
-                        };
+            Some(event) => match event {
+                Event::Quit | Event::Input(Key::Escape, _) => break,
+                Event::Input(Key::Backspace, m) => {
+                    if let Some(input) = input.get_mut() {
+                        if !input.trim().is_empty() {
+                            //Modifiers don't work on macos.
+                            if m.control {
+                                input.clear();
+                            } else {
+                                input.pop();
+                            };
+                        }
                     }
                 }
-            }
-            Some(Event::Input(Key::Enter, _)) => {
-                if input.get_mut().is_some() {
-                    todos.push(Item {
-                        label: input.take().unwrap(),
-                        done: false,
-                        editing: false,
-                    });
+                Event::Input(Key::Enter, _) => {
+                    if input.get_mut().is_some() {
+                        todos.push(Item {
+                            label: input.take().unwrap(),
+                            done: false,
+                            editing: false,
+                        });
+                    }
                 }
-            }
-            Some(Event::Input(Key::Space, _)) => {
-                if let Some(input) = input.get_mut() {
-                    input.push(' ');
+                Event::Input(Key::Space, _) => {
+                    if let Some(input) = input.get_mut() {
+                        input.push(' ');
+                    }
                 }
-            }
-            Some(Event::Input(Key::Char(ch), _)) => {
-                if let Some(input) = input.get_mut() {
-                    input.push(ch);
+                Event::Input(Key::Char(ch), _) => {
+                    if let Some(input) = input.get_mut() {
+                        input.push(ch);
+                    }
                 }
-            }
-            _ => {}
+                _ => {}
+            },
+            None => {}
         }
 
         let remaining = todos.iter().filter(|t| !t.done).count();

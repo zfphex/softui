@@ -164,9 +164,8 @@ pub mod macos {
             }
 
             //TODO: Modifiers don't work
-            self.event_cache.extend(convert_minifb_key_to_softui(
-                &self.minifb.get_keys_pressed(KeyRepeat::Yes),
-            ));
+            self.event_cache
+                .extend(convert_minifb_key(&self.minifb.get_keys_pressed(KeyRepeat::Yes)));
 
             return self.event_cache.pop();
         }
@@ -214,7 +213,7 @@ pub mod macos {
         }
     }
 
-    pub fn convert_minifb_key_to_softui(keys: &[minifb::Key]) -> Vec<Event> {
+    pub fn convert_minifb_key(keys: &[minifb::Key]) -> Vec<Event> {
         let mut events = Vec::new();
         for key in keys {
             let key = match key {
