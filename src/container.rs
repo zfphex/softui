@@ -179,15 +179,19 @@ impl<'a> Container<'a> {
         self
     }
 
-    pub fn r#box(mut self) -> Self {
-        self.layout.box_sizing = BoxSizing::ContentBox;
-        self.layout.size = Size {
-            width: Dimension::auto(),
-            height: Dimension::auto(),
-        };
-        unsafe { TREE[self.node].layout = self.layout.clone() };
-        self
-    }
+    //This is really bad maybe remove?
+    // pub fn cbox(mut self) -> Self {
+    //     self.layout.box_sizing = BoxSizing::ContentBox;
+    //     self.layout.size = Size {
+    //         width: Dimension::auto(),
+    //         height: Dimension::auto(),
+    //     };
+    //     //TODO: Why does this change things????
+    //     self.layout.align_items = None;
+    //     unsafe { TREE[self.node].kind = NodeKind::Fit };
+    //     unsafe { TREE[self.node].layout = self.layout.clone() };
+    //     self
+    // }
 
     pub fn grow(mut self, amount: f32) -> Self {
         self.layout.flex_grow = amount;

@@ -152,7 +152,7 @@ pub trait Sizing: Sized {
         self.layout_mut().size.height = Dimension::percent(1.0);
         self
     }
-    fn r#box(mut self) -> Self {
+    fn cbox(mut self) -> Self {
         self.layout_mut().box_sizing = BoxSizing::ContentBox;
         self
     }

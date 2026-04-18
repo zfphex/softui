@@ -25,15 +25,15 @@ fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
     let label = if let Some(input) = unsafe { &*input.as_ptr() } {
         text(input.as_str())
     } else {
-        text("What needs to be done?").fg(Some(gray()))
+        text("What needs to be done?").fg(gray())
     };
 
-    v!(label.size(18))
-        .w(50.percent())
+    fit!(label.size(18).p(32))
         .h(64)
-        .bg(Some(black()))
-        .border(Some(white()))
+        .bg(black())
+        .border(white())
         .center()
+        .w(50.percent())
         .on_lose_focus(|_| input.set(None))
         // .on_key_press(|key, _| {
         //     if let Some(input) = unsafe { &mut *input.as_ptr() } {
@@ -57,17 +57,13 @@ fn item<'a>(item: &'a mut Item, input: &'a Cell<Option<String>>, pencil: &Svg) -
         .on_click(Left, |_| item.done = !item.done);
 
     if item.editing {
-        fit!(
-            v!().wh(20),
-            text("_"),
-            svg_ref(&pencil).on_click(Left, |_| item.editing = true)
-        )
-        .gap(10)
+        let pen = svg_ref(&pencil).on_click(Left, |_| item.editing = !item.editing);
+        h!(checkbox, text(&item.label).grow(1.0).fg(None), pen).vfit().gap(10)
     } else {
         let pen = svg_ref(&pencil)
             // .on_lose_focus(|_| item.editing = false),
             .on_click(Left, |_| {
-                item.editing = true;
+                item.editing = !item.editing;
                 input.replace(Some(String::new()));
             });
 
@@ -161,6 +157,9 @@ fn main() {
                 .on_click(Left, move |_| sr.set(target))
         };
 
+        //TODO: Percentage padding does not work yet.
+        // .p(20.percent())
+
         let root = v!(
             text("todos").size(48).pb(12),
             input_box(&input),
@@ -173,19 +172,14 @@ fn main() {
             .gap(20),
             if list.is_empty() {
                 v!(text("You have not created a task yet...").fg(gray()))
-                    .h(25.percent())
-                    .vcenter()
+                    .pt(48)
                     .hcenter()
-                //TODO: Percentage padding does not work yet.
-                // .p(20.percent())
             } else {
-                //Note: this fills the horizontal space (is this something we want?)
                 v!().children(list).w(50.percent()).gap(8)
             }
         )
         .p(8)
         .gap(8)
-        // .vcenter()
         .hcenter();
 
         ctx.draw_layout(root, true);
