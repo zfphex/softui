@@ -48,13 +48,18 @@ fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
     // })
 }
 
-fn item<'a>(item: &'a mut Item, input: &'a Cell<Option<String>>, pencil: &Svg) -> impl Widget<'a> + 'a {
+fn item<'a>(
+    item: &'a mut Item,
+    i: usize,
+    input: &'a Cell<Option<String>>,
+    edit_index: &'a Cell<Option<usize>>,
+    pencil: &Svg,
+) -> impl Widget<'a> + 'a {
     let checkbox = v!()
         .border(if item.done { None } else { Some(white()) })
         .wh(20)
         .bg(if item.done { Some(white()) } else { Some(black()) })
         .on_click(Left, |_| item.done = !item.done);
-
     if item.editing {
         let pen = svg_ref(&pencil).on_click(Left, |_| item.editing = !item.editing);
         h!(checkbox, text(&item.label).grow(1.0).fg(None), pen).vfit().gap(10)
@@ -63,7 +68,10 @@ fn item<'a>(item: &'a mut Item, input: &'a Cell<Option<String>>, pencil: &Svg) -
             // .on_lose_focus(|_| item.editing = false),
             .on_click(Left, |_| {
                 item.editing = !item.editing;
-                input.replace(Some(String::new()));
+                //IDK, I feel like it's impossible to work the the closure lifetimes.
+                //You are constantly fighting a conceptual uphill battle.
+                // item.label = String::new();
+                edit_index.replace(Some(i));
             });
 
         h!(checkbox, text(&item.label).grow(1.0), pen).vfit().gap(10)
@@ -96,6 +104,7 @@ fn main() {
     //The ergonomics of input here are impossible to use.
     let mut input: Cell<Option<String>> = Cell::new(None);
     let state: Cell<State> = Cell::new(All);
+    let mut edit_index: Cell<Option<usize>> = Cell::new(None);
 
     loop {
         match ctx.event() {
@@ -146,7 +155,8 @@ fn main() {
                 Active => !i.done,
                 Completed => i.done,
             })
-            .map(|i| item(i, &input, &pencil))
+            .enumerate()
+            .map(|(i, it)| item(it, i, &input, &edit_index, &pencil))
             .collect();
 
         let s = state.get();
