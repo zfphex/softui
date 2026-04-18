@@ -71,7 +71,7 @@ fn item<'a>(item: &'a mut Item, input: &'a Cell<Option<String>>, pencil: &Svg) -
                 input.replace(Some(String::new()));
             });
 
-        fit!(checkbox, text(&item.label), pen).gap(10)
+        h!(checkbox, text(&item.label).grow(1.0), pen).vfit().gap(10)
     }
 }
 

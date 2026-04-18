@@ -60,7 +60,6 @@ pub trait Styling: Sized {
         self.style_mut().radius = radius;
         self
     }
-    
 }
 
 pub trait Sizing: Sized {
@@ -153,8 +152,12 @@ pub trait Sizing: Sized {
         self.layout_mut().size.height = Dimension::percent(1.0);
         self
     }
-    fn fit(mut self) -> Self {
+    fn r#box(mut self) -> Self {
         self.layout_mut().box_sizing = BoxSizing::ContentBox;
+        self
+    }
+    fn grow(mut self, amount: f32) -> Self {
+        self.layout_mut().flex_grow = amount;
         self
     }
 }

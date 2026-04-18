@@ -88,23 +88,28 @@ impl<'a> Container<'a> {
         self.handlers.push((MouseButton::Left, Action::Hover, Box::new(func)));
         self
     }
+
     //TODO: This is pretty awful.
     pub fn on_click(mut self, button: MouseButton, f: impl FnMut(&mut Self) + 'a) -> Self {
         self.handlers.push((button, Action::Clicked, Box::new(f)));
         self
     }
+
     pub fn on_press(mut self, button: MouseButton, f: impl FnMut(&mut Self) + 'a) -> Self {
         self.handlers.push((button, Action::Pressed, Box::new(f)));
         self
     }
+
     pub fn on_release(mut self, button: MouseButton, f: impl FnMut(&mut Self) + 'a) -> Self {
         self.handlers.push((button, Action::Released, Box::new(f)));
         self
     }
+
     pub fn on_lose_focus(mut self, f: impl FnMut(&mut Self) + 'a) -> Self {
         self.handlers.push((Left, Action::LostFocus, Box::new(f)));
         self
     }
+
     fn try_click(&mut self, ctx: &mut Context, area: Rect) {
         let handlers = core::mem::take(&mut self.handlers);
         for (button, action, mut f) in handlers {
@@ -118,6 +123,7 @@ impl<'a> Container<'a> {
             }
         }
     }
+
     pub fn wh(mut self, wh: impl IntoDimension) -> Self {
         let wh = wh.into_dimension();
         self.layout.size = Size { width: wh, height: wh };
@@ -131,6 +137,7 @@ impl<'a> Container<'a> {
         unsafe { TREE[self.node].layout.padding = padding };
         self
     }
+
     //TODO: Cleanup and remove all of these.
     pub fn pl(mut self, left: impl IntoF32) -> Self {
         let padding = length(left.into_f32());
@@ -138,30 +145,52 @@ impl<'a> Container<'a> {
         unsafe { TREE[self.node].layout.padding.left = padding };
         self
     }
+
     pub fn pr(mut self, right: impl IntoF32) -> Self {
         let padding = length(right.into_f32());
         self.layout.padding.right = padding;
         unsafe { TREE[self.node].layout.padding.right = padding };
         self
     }
+
     pub fn pt(mut self, top: impl IntoF32) -> Self {
         let padding = length(top.into_f32());
         self.layout.padding.top = padding;
         unsafe { TREE[self.node].layout.padding.top = padding };
         self
     }
+
     pub fn pb(mut self, bottom: impl IntoF32) -> Self {
         let padding = length(bottom.into_f32());
         self.layout.padding.bottom = padding;
         unsafe { TREE[self.node].layout.padding.bottom = padding };
         self
     }
-    pub fn fit(mut self) -> Self {
+
+    pub fn hfit(mut self) -> Self {
+        self.layout.size.width = Dimension::auto();
+        unsafe { TREE[self.node].layout = self.layout.clone() };
+        self
+    }
+
+    pub fn vfit(mut self) -> Self {
+        self.layout.size.height = Dimension::auto();
+        unsafe { TREE[self.node].layout = self.layout.clone() };
+        self
+    }
+
+    pub fn r#box(mut self) -> Self {
         self.layout.box_sizing = BoxSizing::ContentBox;
         self.layout.size = Size {
             width: Dimension::auto(),
             height: Dimension::auto(),
         };
+        unsafe { TREE[self.node].layout = self.layout.clone() };
+        self
+    }
+
+    pub fn grow(mut self, amount: f32) -> Self {
+        self.layout.flex_grow = amount;
         unsafe { TREE[self.node].layout = self.layout.clone() };
         self
     }
@@ -243,6 +272,12 @@ impl<'a> Container<'a> {
 
     pub fn on_key_release(mut self, f: impl FnMut(Key, &mut Self) + 'a) -> Self {
         todo!()
+    }
+
+    pub fn set_layout(mut self, f: impl FnOnce(&mut TaffyLayout)) -> Self {
+        f(&mut self.layout);
+        unsafe { TREE[self.node].layout = self.layout.clone() };
+        self
     }
 }
 
