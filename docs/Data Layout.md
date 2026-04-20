@@ -10,9 +10,8 @@
     - In `Vec<Box<dyn T>>` `Box` appears redundant since `Vec` is already heap allocated.
 
 - Widget rules need to be better defined
-    - Each widget is created and destoryed each frame.
+    - Each widget is created and destroyed each frame.
     - Each widget click handler is executed after sizing and positioning.
-        - This way the user can introspect on the state of the widget inside of a closure.
         - There should be a second (non-closure) what to handle click (more akin to typical immediate mode)
     - Widgets should not store large amounts of information (i.e. images, audio, etc.)
         - Instead a widget should refer back to this information.
