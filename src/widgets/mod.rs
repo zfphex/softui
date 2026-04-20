@@ -172,11 +172,48 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn style(&self) -> Option<Style> {
         None
     }
-    fn is_container(&self) -> bool {
-        false
+    fn node(&self) -> Option<usize> {
+        None
     }
-    fn node(&self) -> usize {
-        unreachable!()
+
+    fn clicked(&self, button: MouseButton) -> bool {
+        match (self.node(), ctx()) {
+            (Some(id), Some(ctx)) => match unsafe { TREE.prev_area(id) } {
+                Some(area) => clicked(ctx, area, button),
+                None => false,
+            },
+            _ => false,
+        }
+    }
+
+    fn pressed(&self, button: MouseButton) -> bool {
+        match (self.node(), ctx()) {
+            (Some(id), Some(ctx)) => match unsafe { TREE.prev_area(id) } {
+                Some(area) => pressed(ctx, area, button),
+                None => false,
+            },
+            _ => false,
+        }
+    }
+
+    fn released(&self, button: MouseButton) -> bool {
+        match (self.node(), ctx()) {
+            (Some(id), Some(ctx)) => match unsafe { TREE.prev_area(id) } {
+                Some(area) => released(ctx, area, button),
+                None => false,
+            },
+            _ => false,
+        }
+    }
+
+    fn hovered(&self) -> bool {
+        match (self.node(), ctx()) {
+            (Some(id), Some(ctx)) => match unsafe { TREE.prev_area(id) } {
+                Some(area) => hover(ctx, area),
+                None => false,
+            },
+            _ => false,
+        }
     }
 
     fn on_click<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
@@ -212,12 +249,13 @@ pub trait Widget<'a>: std::fmt::Debug {
     }
 }
 
-impl<'a> Widget<'a> for &'a dyn Widget<'a> {
-    fn is_container(&self) -> bool {
-        (**self).is_container()
-    }
+#[inline]
+fn ctx() -> Option<&'static mut Context> {
+    unsafe { if CTX.is_null() { None } else { Some(&mut *CTX) } }
+}
 
-    fn node(&self) -> usize {
+impl<'a> Widget<'a> for &'a dyn Widget<'a> {
+    fn node(&self) -> Option<usize> {
         (**self).node()
     }
 

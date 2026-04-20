@@ -29,7 +29,7 @@ impl<'a, W: Widget<'a>> Widget<'a> for Click<'a, W> {
         self.widget.layout()
     }
 
-    fn node(&self) -> usize {
+    fn node(&self) -> Option<usize> {
         self.widget.node()
     }
 

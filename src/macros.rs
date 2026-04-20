@@ -16,11 +16,15 @@ pub trait IntoNode {
 impl<'a, T: Widget<'a>> IntoNode for T {
     fn into_node(self) -> usize {
         let widget = self;
-        if widget.is_container() {
-            let node = widget.node();
+
+        if let Some(node) = widget.node() {
+            let layout = widget.layout();
             let widget =
                 unsafe { core::mem::transmute::<Box<dyn Widget<'a>>, Box<dyn Widget<'static>>>(Box::new(widget)) };
-            unsafe { TREE[node].widget = Some(widget) };
+            unsafe {
+                TREE[node].layout = layout;
+                TREE[node].widget = Some(widget);
+            }
             return node;
         }
 

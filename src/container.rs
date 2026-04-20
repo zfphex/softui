@@ -298,12 +298,8 @@ impl<'a> Widget<'a> for Container<'a> {
         self.layout.clone()
     }
 
-    fn is_container(&self) -> bool {
-        true
-    }
-
-    fn node(&self) -> usize {
-        self.node
+    fn node(&self) -> Option<usize> {
+        Some(self.node)
     }
 
     fn draw(&self, commands: &mut Vec<Command>, area: Rect) {

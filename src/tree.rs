@@ -33,6 +33,7 @@ pub struct Node<'a> {
     pub kind: NodeKind,
     // pub unrounded_layout: Layout,
     pub final_layout: Layout,
+    pub area: Rect,
     pub widget: Option<Box<dyn Widget<'a> + 'a>>,
     pub children: Vec<usize>,
 }
@@ -44,9 +45,10 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
     let width = tree[id].final_layout.size.width;
     let height = tree[id].final_layout.size.height;
 
+    let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
+    tree[id].area = area;
+
     if let Some(widget) = &mut tree[id].widget {
-        let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
-        //Click before drawing, since the user may want to modify something about the widget.
         widget.try_click(ctx, area);
         widget.draw(&mut ctx.commands, area);
     }
@@ -80,12 +82,14 @@ pub fn add_child(parent: usize, child: usize) {
 
 pub struct Tree<'a> {
     pub items: UnsafeCell<Vec<Node<'a>>>,
+    pub prev_layouts: UnsafeCell<Vec<Rect>>,
 }
 
 impl<'a> Tree<'a> {
     pub const fn new() -> Self {
         Self {
             items: UnsafeCell::new(Vec::new()),
+            prev_layouts: UnsafeCell::new(Vec::new()),
         }
     }
     pub fn alloc(&self, item: Node<'a>) -> usize {
@@ -96,7 +100,20 @@ impl<'a> Tree<'a> {
     }
     pub fn clear(&self) {
         let items = unsafe { &mut *self.items.get() };
+        let prev = unsafe { &mut *self.prev_layouts.get() };
+
+        prev.clear();
+        prev.resize(items.len(), Rect::default());
+        for (i, node) in items.iter().enumerate() {
+            prev[i] = node.area;
+        }
+
         items.clear();
+    }
+    #[inline]
+    pub fn prev_area(&self, node_id: usize) -> Option<Rect> {
+        let prev = unsafe { &*self.prev_layouts.get() };
+        prev.get(node_id).copied()
     }
     pub fn iter(&self) -> core::slice::Iter<'_, Node<'a>> {
         let items = unsafe { &*self.items.get() };
