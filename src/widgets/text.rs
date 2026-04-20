@@ -29,7 +29,7 @@ pub fn default_font_size() -> usize {
     unsafe { DEFAULT_FONT_SIZE.load(Ordering::Relaxed) }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Text<'a> {
     pub text: Cow<'a, str>,
     pub font_size: usize,
@@ -44,6 +44,7 @@ pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
         ..Default::default()
     };
 
+    //TODO: This upfront node allocation means that widgets cannot be cloned, since this would clone their widget id.
     let node = unsafe {
         TREE.alloc(Node {
             layout: layout.clone(),
