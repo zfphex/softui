@@ -193,10 +193,6 @@ impl Context {
         }
     }
 
-    /// Install this context as the global `CURRENT_CTX`. Called implicitly by
-    /// [`Self::event`], [`Self::event_blocking`] and [`Self::draw_layout`] so
-    /// that widgets constructed after them can hit-test using
-    /// [`Widget::clicked`] and friends.
     #[inline]
     pub fn bind(&mut self) {
         unsafe { CTX = self as *mut Context };
