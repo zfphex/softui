@@ -14,7 +14,7 @@ fn main() {
     const HP: &str = "High performance";
     const BL: &str = "Balanced";
     const PS: &str = "Power saver";
-    const BACKGROUND: Color = hex("#1c1c1c");
+    const BACKGROUND: u32 = hex("#1c1c1c");
     // const BACKGROUND: Color = Color::from(0x202020);
     const PADDING: usize = 13;
 
@@ -45,7 +45,7 @@ fn main() {
     //TODO: Remove this
     set_default_font_size(16);
 
-    let accent = Color::from(accent_color());
+    let accent = accent_color();
 
     let hover = hex("#423c4a");
     //TODO: This looks mid, older version looked better.
@@ -84,8 +84,8 @@ fn main() {
 
         fn item<'a>(
             plan: &'static str,
-            accent: Color,
-            hover: Color,
+            accent: u32,
+            hover: u32,
             mode: &'a Cell<&'static str>,
             selected: bool,
             change_plan: fn() -> (),

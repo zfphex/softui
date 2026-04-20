@@ -96,7 +96,7 @@ fn main() {
         assert!(!dc.is_null());
 
         let mut last_printed = 0;
-        let mut color = Color::default();
+        let mut color = 0;
 
         let (mut prev_x, mut prev_y) = (0, 0);
 
@@ -191,8 +191,8 @@ fn main() {
             //     _ => {}
             // }
 
-            if global_state().left_mouse.clicked() && last_printed != color.as_u32() {
-                last_printed = color.as_u32();
+            if global_state().left_mouse.clicked() && last_printed != color {
+                last_printed = color;
                 copy_to_clipboard(&color.to_string());
             }
 
@@ -238,7 +238,7 @@ fn main() {
                     let r = (pixel >> 16 & 0xFF) as u8;
                     let g = (pixel >> 8 & 0xFF) as u8;
                     let b = (pixel & 0xFF) as u8;
-                    color = Color::new(r, g, b);
+                    color = rgb(r, g, b);
 
                     prev_x = x;
                     prev_y = y;
@@ -252,7 +252,7 @@ fn main() {
                     let g = (pixel >> 8 & 0xFF) as u8;
                     let b = (pixel & 0xFF) as u8;
                     // Convert from BGR to RGB.
-                    color = Color::new(b, g, r);
+                    color = rgb(b, g, r);
 
                     prev_x = x;
                     prev_y = y;

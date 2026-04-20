@@ -268,7 +268,7 @@ impl Context {
                     //TODO: Specify the font with a font database and font ID.
                     let font = default_font();
 
-                    let window = self.window.area();
+                    let window = self.window.area;
                     let buffer = &mut self.window.buffer;
                     font::draw_text(text, font, x, y, *font_size, 0, 1.0, window, buffer, *color, false);
 
@@ -879,9 +879,7 @@ impl Context {
         let start_x = x;
         let start_y = y;
 
-        let r = color.r();
-        let g = color.g();
-        let b = color.b();
+        let (r, g, b) = split(color);
 
         let viewport_width = self.window.width();
 
@@ -921,7 +919,7 @@ impl Context {
                             break 'x;
                         }
 
-                        let c = Color::new(texture[j], texture[j + 1], texture[j + 2]);
+                        let c = rgb(texture[j], texture[j + 1], texture[j + 2]);
 
                         if let Some(px) = self.window.buffer.get_mut(i) {
                             *px = c;
