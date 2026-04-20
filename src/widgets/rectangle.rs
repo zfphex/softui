@@ -4,8 +4,8 @@ pub fn rect() -> Rectangle {
     Rectangle {
         layout: TaffyLayout {
             size: taffy::Size {
-                width: taffy::style_helpers::length(20.0),
-                height: taffy::style_helpers::length(20.0),
+                width: taffy::style_helpers::length(20.0_f32),
+                height: taffy::style_helpers::length(20.0_f32),
             },
             ..Default::default()
         },

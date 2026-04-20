@@ -120,7 +120,7 @@ impl std::fmt::Debug for Primative {
 }
 
 pub const unsafe fn extend_lifetime<'a, T>(t: &'a T) -> &'static T {
-    std::mem::transmute::<&'a T, &'static T>(t)
+    unsafe { std::mem::transmute::<&'a T, &'static T>(t) }
 }
 
 pub static mut WIDTH: AtomicUsize = AtomicUsize::new(0);
