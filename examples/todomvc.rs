@@ -3,9 +3,9 @@
 //! - Poor input management
 //! - Confusing layout rules
 //! - Lifetime and borrowing issues using closures
+use State::*;
 use softui::*;
 use std::cell::Cell;
-use State::*;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum State {

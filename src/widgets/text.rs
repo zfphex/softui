@@ -1,7 +1,7 @@
 use crate::*;
 use fontdue::{Font, FontSettings};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use taffy::{prelude::length, AvailableSpace, BoxSizing, Dimension, Size};
+use taffy::{AvailableSpace, BoxSizing, Dimension, Size, prelude::length};
 
 pub const FONT_DATA: &[u8] = include_bytes!("../../fonts/JetBrainsMono.ttf");
 

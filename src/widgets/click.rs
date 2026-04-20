@@ -1,6 +1,6 @@
 use crate::*;
 use std::fmt::Debug;
-use taffy::{prelude::length, BoxSizing, Dimension};
+use taffy::{BoxSizing, Dimension, prelude::length};
 
 pub struct Click<'a, W: Widget<'a>> {
     pub widget: W,

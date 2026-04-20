@@ -1,10 +1,10 @@
 use crate::*;
 use std::{ffi::OsStr, path::Path};
-use taffy::{prelude::length, AlignItems, BoxSizing};
+use taffy::{AlignItems, BoxSizing, prelude::length};
 //TODO: Probably don't need the entire zune_image crate.
 use zune_image::codecs::{
     jpeg::JpegDecoder,
-    png::{zune_core::options::DecoderOptions, PngDecoder},
+    png::{PngDecoder, zune_core::options::DecoderOptions},
 };
 use zune_image::traits::DecoderTrait;
 

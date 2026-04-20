@@ -55,11 +55,7 @@ impl<'a> Widget<'a> for Rectangle {
     fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
         commands.push(Command {
             area,
-            primative: Primative::Ellipse(
-                self.radius,
-                self.style.border_color,
-                self.style.background_color,
-            ),
+            primative: Primative::Ellipse(self.radius, self.style.border_color, self.style.background_color),
         });
     }
 }

@@ -372,11 +372,7 @@ pub mod macos {
         ];
 
         let val = c as usize;
-        if val < 128 {
-            CACHE[val]
-        } else {
-            unreachable!()
-        }
+        if val < 128 { CACHE[val] } else { unreachable!() }
     }
 
     impl Key {

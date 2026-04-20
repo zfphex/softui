@@ -17,7 +17,7 @@ pub mod image;
 pub use image::*;
 
 pub mod text;
-use taffy::{prelude::length, AvailableSpace, BoxSizing, Dimension, Size};
+use taffy::{AvailableSpace, BoxSizing, Dimension, Size, prelude::length};
 pub use text::*;
 
 pub use taffy::AlignItems;
