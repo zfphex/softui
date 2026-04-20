@@ -182,7 +182,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn on_click<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
     where
         Self: Sized,
-        F: FnMut(&mut Self) + 'a,
+        F: FnMut() + 'a,
     {
         Click::new(self).on_click(button, func)
     }
@@ -190,7 +190,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn on_press<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
     where
         Self: Sized,
-        F: FnMut(&mut Self) + 'a,
+        F: FnMut() + 'a,
     {
         Click::new(self).on_press(button, func)
     }
@@ -198,7 +198,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn on_release<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
     where
         Self: Sized,
-        F: FnMut(&mut Self) + 'a,
+        F: FnMut() + 'a,
     {
         Click::new(self).on_release(button, func)
     }
@@ -206,7 +206,7 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn on_hover<F>(self, func: F) -> Click<'a, Self>
     where
         Self: Sized,
-        F: FnMut(&mut Self) + 'a,
+        F: FnMut() + 'a,
     {
         Click::new(self).on_hover(func)
     }

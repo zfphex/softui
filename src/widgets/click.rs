@@ -5,7 +5,7 @@ use taffy::{prelude::length, BoxSizing, Dimension};
 pub struct Click<'a, W: Widget<'a>> {
     pub widget: W,
     pub node: Option<usize>,
-    pub handlers: Vec<(MouseButton, Action, Box<dyn FnMut(&mut W) + 'a>)>,
+    pub handlers: Vec<(MouseButton, Action, Box<dyn FnMut() + 'a>)>,
 }
 
 impl<'a, W: Widget<'a>> Debug for Click<'a, W> {
@@ -46,11 +46,11 @@ impl<'a, W: Widget<'a>> Widget<'a> for Click<'a, W> {
 
         for (button, action, f) in &mut self.handlers {
             match *action {
-                Action::Clicked if clicked(ctx, area, *button) => f(&mut self.widget),
-                Action::Pressed if pressed(ctx, area, *button) => f(&mut self.widget),
-                Action::Released if released(ctx, area, *button) => f(&mut self.widget),
-                Action::Hover if hover(ctx, area) => f(&mut self.widget),
-                Action::LostFocus if lost_focus(ctx, area) => f(&mut self.widget),
+                Action::Clicked if clicked(ctx, area, *button) => f(),
+                Action::Pressed if pressed(ctx, area, *button) => f(),
+                Action::Released if released(ctx, area, *button) => f(),
+                Action::Hover if hover(ctx, area) => f(),
+                Action::LostFocus if lost_focus(ctx, area) => f(),
                 _ => {}
             }
         }
@@ -74,23 +74,23 @@ impl<'a, W: Widget<'a> + Sizing> Sizing for Click<'a, W> {
 }
 
 impl<'a, W: Widget<'a>> Click<'a, W> {
-    pub fn on_click(mut self, button: MouseButton, f: impl FnMut(&mut W) + 'a) -> Self {
+    pub fn on_click(mut self, button: MouseButton, f: impl FnMut() + 'a) -> Self {
         self.handlers.push((button, Action::Clicked, Box::new(f)));
         self
     }
-    pub fn on_press(mut self, button: MouseButton, f: impl FnMut(&mut W) + 'a) -> Self {
+    pub fn on_press(mut self, button: MouseButton, f: impl FnMut() + 'a) -> Self {
         self.handlers.push((button, Action::Pressed, Box::new(f)));
         self
     }
-    pub fn on_release(mut self, button: MouseButton, f: impl FnMut(&mut W) + 'a) -> Self {
+    pub fn on_release(mut self, button: MouseButton, f: impl FnMut() + 'a) -> Self {
         self.handlers.push((button, Action::Released, Box::new(f)));
         self
     }
-    pub fn on_hover(mut self, f: impl FnMut(&mut W) + 'a) -> Self {
+    pub fn on_hover(mut self, f: impl FnMut() + 'a) -> Self {
         self.handlers.push((MouseButton::Left, Action::Hover, Box::new(f)));
         self
     }
-    pub fn on_lose_focus(mut self, f: impl FnMut(&mut W) + 'a) -> Self {
+    pub fn on_lose_focus(mut self, f: impl FnMut() + 'a) -> Self {
         self.handlers.push((Left, Action::LostFocus, Box::new(f)));
         self
     }

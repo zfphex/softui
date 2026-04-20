@@ -61,12 +61,12 @@ fn item<'a>(
         .bg(if item.done { Some(white()) } else { Some(black()) })
         .on_click(Left, |_| item.done = !item.done);
     if item.editing {
-        let pen = svg_ref(&pencil).on_click(Left, |_| item.editing = !item.editing);
+        let pen = svg_ref(&pencil).on_click(Left, || item.editing = !item.editing);
         h!(checkbox, text(&item.label).grow(1.0).fg(None), pen).vfit().gap(10)
     } else {
         let pen = svg_ref(&pencil)
             // .on_lose_focus(|_| item.editing = false),
-            .on_click(Left, |_| {
+            .on_click(Left, || {
                 item.editing = !item.editing;
                 //IDK, I feel like it's impossible to work the the closure lifetimes.
                 //You are constantly fighting a conceptual uphill battle.
@@ -166,7 +166,7 @@ fn main() {
                 .bg(if s == target { Some(hex("3232B0")) } else { None })
                 .p(2)
                 .radius(6)
-                .on_click(Left, move |_| sr.set(target))
+                .on_click(Left, move || sr.set(target))
         };
 
         //TODO: Percentage padding does not work yet.
