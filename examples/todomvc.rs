@@ -51,7 +51,7 @@ fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
 fn item<'a>(
     item: &'a mut Item,
     i: usize,
-    input: &'a Cell<Option<String>>,
+    _input: &'a Cell<Option<String>>,
     edit_index: &'a Cell<Option<usize>>,
     pencil: &Svg,
 ) -> impl Widget<'a> + 'a {
@@ -104,7 +104,7 @@ fn main() {
     //The ergonomics of input here are impossible to use.
     let mut input: Cell<Option<String>> = Cell::new(None);
     let state: Cell<State> = Cell::new(All);
-    let mut edit_index: Cell<Option<usize>> = Cell::new(None);
+    let edit_index: Cell<Option<usize>> = Cell::new(None);
 
     loop {
         match ctx.event() {

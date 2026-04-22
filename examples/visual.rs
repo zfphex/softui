@@ -4,7 +4,7 @@ use std::f32::consts::LN_2;
 fn main() {
     let mut ctx = unsafe { create_ctx("Convergence Export", 800, 600) };
     let mut t: f32 = 1.0;
-    let mut frame_count = 0;
+    let mut _frame_count = 0;
 
     let _ = std::fs::create_dir("target/frames");
 
@@ -51,11 +51,11 @@ fn main() {
         let sum_text = format!("S_{} = {:.5}", terms, sum);
         ctx.draw_text(&sum_text, default_font(), 20, 90, 20, 0, white());
 
-        // let path = format!("target/frames/frame_{:04}.png", frame_count);
+        // let path = format!("target/frames/frame_{:04}.png", _frame_count);
         // ctx.save_frame(&path);
         ctx.draw_frame();
 
-        frame_count += 1;
+        _frame_count += 1;
 
         t += 0.02;
         if t > 30.0 {
