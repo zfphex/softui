@@ -3,6 +3,7 @@
 //! - Poor input management
 //! - Confusing layout rules
 //! - Lifetime and borrowing issues using closures
+//! - The upcast to static means that items that don't live long enough just die inside closures...
 use State::*;
 use softui::*;
 use std::cell::Cell;
@@ -65,8 +66,7 @@ fn item<'a>(
         let pen = svg_ref(&pencil).on_click(Left, || item.editing = !item.editing);
 
         h!(checkbox, text(unsafe { &*edit_label.as_ptr() }).grow(1.0), pen)
-            // .bg(gray())
-            .border(white())
+        //TODO: The border doesn't work here??
             .vfit()
             .gap(10)
     } else {
@@ -75,6 +75,8 @@ fn item<'a>(
             .on_click(Left, || {
                 item.editing = !item.editing;
                 edit_label.replace(String::new());
+
+                //Something is wrong with the lifetime here idk?
                 edit_index.replace(Some(i));
             });
 
