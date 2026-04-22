@@ -65,6 +65,8 @@ fn item<'a>(
         let pen = svg_ref(&pencil).on_click(Left, || item.editing = !item.editing);
 
         h!(checkbox, text(unsafe { &*edit_label.as_ptr() }).grow(1.0), pen)
+            // .bg(gray())
+            .border(white())
             .vfit()
             .gap(10)
     } else {
@@ -93,11 +95,11 @@ fn main() {
             done: false,
             editing: false,
         },
-        Item {
-            label: "Ponder existence...".into(),
-            done: false,
-            editing: false,
-        },
+        // Item {
+        //     label: "Ponder existence...".into(),
+        //     done: false,
+        //     editing: false,
+        // },
     ];
     // let mut todos: Vec<Item> = Vec::new();
 
@@ -124,6 +126,12 @@ fn main() {
                             };
                         }
                     }
+
+                    if edit_index.get().is_some() {
+                        let mut l = edit_label.take();
+                        l.pop();
+                        edit_label.set(l);
+                    }
                 }
                 Event::Input(Key::Enter, _) => {
                     if input.get_mut().is_some() {
@@ -142,6 +150,12 @@ fn main() {
                 Event::Input(Key::Space, _) => {
                     if let Some(input) = input.get_mut() {
                         input.push(' ');
+                    }
+
+                    if edit_index.get().is_some() {
+                        let mut l = edit_label.take();
+                        l.push(' ');
+                        edit_label.set(l);
                     }
                 }
                 Event::Input(Key::Char(ch), _) => {
