@@ -29,7 +29,7 @@ fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
     };
 
     fit!(label.size(18).p(32))
-        .h(64)
+        .h(52)
         .bg(black())
         .border(white())
         .center()
@@ -51,7 +51,7 @@ fn input_box<'a>(input: &'a Cell<Option<String>>) -> impl Widget<'a> + 'a {
 fn item<'a>(
     item: &'a mut Item,
     i: usize,
-    _input: &'a Cell<Option<String>>,
+    edit_label: &'a Cell<String>,
     edit_index: &'a Cell<Option<usize>>,
     pencil: &Svg,
 ) -> impl Widget<'a> + 'a {
@@ -60,17 +60,19 @@ fn item<'a>(
         .wh(20)
         .bg(if item.done { Some(white()) } else { Some(black()) })
         .on_click(Left, |_| item.done = !item.done);
+
     if item.editing {
         let pen = svg_ref(&pencil).on_click(Left, || item.editing = !item.editing);
-        h!(checkbox, text(&item.label).grow(1.0).fg(None), pen).vfit().gap(10)
+
+        h!(checkbox, text(unsafe { &*edit_label.as_ptr() }).grow(1.0), pen)
+            .vfit()
+            .gap(10)
     } else {
         let pen = svg_ref(&pencil)
             // .on_lose_focus(|_| item.editing = false),
             .on_click(Left, || {
                 item.editing = !item.editing;
-                //IDK, I feel like it's impossible to work the the closure lifetimes.
-                //You are constantly fighting a conceptual uphill battle.
-                // item.label = String::new();
+                edit_label.replace(String::new());
                 edit_index.replace(Some(i));
             });
 
@@ -105,6 +107,7 @@ fn main() {
     let mut input: Cell<Option<String>> = Cell::new(None);
     let state: Cell<State> = Cell::new(All);
     let edit_index: Cell<Option<usize>> = Cell::new(None);
+    let edit_label: Cell<String> = Cell::new(String::new());
 
     loop {
         match ctx.event() {
@@ -130,6 +133,11 @@ fn main() {
                             editing: false,
                         });
                     }
+
+                    if let Some(index) = edit_index.take() {
+                        todos[index].label = edit_label.take();
+                        todos[index].editing = false;
+                    }
                 }
                 Event::Input(Key::Space, _) => {
                     if let Some(input) = input.get_mut() {
@@ -139,6 +147,12 @@ fn main() {
                 Event::Input(Key::Char(ch), _) => {
                     if let Some(input) = input.get_mut() {
                         input.push(ch);
+                    }
+
+                    if edit_index.get().is_some() {
+                        let mut l = edit_label.take();
+                        l.push(ch);
+                        edit_label.set(l);
                     }
                 }
                 _ => {}
@@ -156,7 +170,7 @@ fn main() {
                 Completed => i.done,
             })
             .enumerate()
-            .map(|(i, it)| item(it, i, &input, &edit_index, &pencil))
+            .map(|(i, it)| item(it, i, &edit_label, &edit_index, &pencil))
             .collect();
 
         let s = state.get();
