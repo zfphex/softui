@@ -35,31 +35,17 @@ pub struct Text<'a> {
     pub font_size: usize,
     pub layout: TaffyLayout,
     pub style: Style,
-    pub node: usize,
 }
 
 pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
-    let layout = TaffyLayout {
-        box_sizing: BoxSizing::ContentBox,
-        ..Default::default()
-    };
-
-    //TODO: This upfront node allocation means that widgets cannot be cloned, since this would clone their widget id.
-    let node = unsafe {
-        TREE.alloc(Node {
-            layout: layout.clone(),
-            widget: None,
-            kind: NodeKind::Text,
-            ..Default::default()
-        })
-    };
-
     Text {
         text: text.into(),
         font_size: default_font_size(),
-        layout,
+        layout: TaffyLayout {
+            box_sizing: BoxSizing::ContentBox,
+            ..Default::default()
+        },
         style: Style::new().fg(white()),
-        node,
     }
 }
 
@@ -85,10 +71,6 @@ impl<'a> Sizing for Text<'a> {
 impl<'a> Widget<'a> for Text<'a> {
     fn layout(&self) -> TaffyLayout {
         self.layout.clone()
-    }
-
-    fn node(&self) -> Option<usize> {
-        Some(self.node)
     }
 
     fn measure(&self, known: Size<Option<f32>>, available: Size<AvailableSpace>) -> Size<f32> {

@@ -126,8 +126,6 @@ pub const unsafe fn extend_lifetime<'a, T>(t: &'a T) -> &'static T {
 pub static mut WIDTH: AtomicUsize = AtomicUsize::new(0);
 pub static mut HEIGHT: AtomicUsize = AtomicUsize::new(0);
 
-pub static mut CTX: *mut Context = core::ptr::null_mut();
-
 pub fn ctx_width() -> usize {
     unsafe { WIDTH.load(Ordering::Relaxed) }
 }
@@ -194,24 +192,16 @@ impl Context {
     }
 
     #[inline]
-    pub fn bind(&mut self) {
-        unsafe { CTX = self as *mut Context };
-    }
-
-    #[inline]
     pub fn event(&mut self) -> Option<Event> {
-        self.bind();
         self.window.event()
     }
 
     #[inline]
     pub fn event_blocking(&mut self) -> Option<Event> {
-        self.bind();
         self.window.event_blocking()
     }
 
     pub fn draw_layout<'a>(&mut self, root: Container<'a>, debug: bool) {
-        self.bind();
         unsafe {
             // The root must be a Container, which always has a pre-allocated node.
             let node: usize = root.node;

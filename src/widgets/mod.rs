@@ -175,47 +175,6 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn node(&self) -> Option<usize> {
         None
     }
-
-    fn clicked(&self, button: MouseButton) -> bool {
-        match (self.node(), ctx()) {
-            (Some(id), Some(ctx)) => match unsafe { TREE.prev_area(id) } {
-                Some(area) => clicked(ctx, area, button),
-                None => false,
-            },
-            _ => false,
-        }
-    }
-
-    fn pressed(&self, button: MouseButton) -> bool {
-        match (self.node(), ctx()) {
-            (Some(id), Some(ctx)) => match unsafe { TREE.prev_area(id) } {
-                Some(area) => pressed(ctx, area, button),
-                None => false,
-            },
-            _ => false,
-        }
-    }
-
-    fn released(&self, button: MouseButton) -> bool {
-        match (self.node(), ctx()) {
-            (Some(id), Some(ctx)) => match unsafe { TREE.prev_area(id) } {
-                Some(area) => released(ctx, area, button),
-                None => false,
-            },
-            _ => false,
-        }
-    }
-
-    fn hovered(&self) -> bool {
-        match (self.node(), ctx()) {
-            (Some(id), Some(ctx)) => match unsafe { TREE.prev_area(id) } {
-                Some(area) => hover(ctx, area),
-                None => false,
-            },
-            _ => false,
-        }
-    }
-
     fn on_click<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
     where
         Self: Sized,
@@ -247,11 +206,6 @@ pub trait Widget<'a>: std::fmt::Debug {
     {
         Click::new(self).on_hover(func)
     }
-}
-
-#[inline]
-fn ctx() -> Option<&'static mut Context> {
-    unsafe { if CTX.is_null() { None } else { Some(&mut *CTX) } }
 }
 
 impl<'a> Widget<'a> for &'a dyn Widget<'a> {

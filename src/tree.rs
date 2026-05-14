@@ -82,14 +82,12 @@ pub fn add_child(parent: usize, child: usize) {
 
 pub struct Tree<'a> {
     pub items: UnsafeCell<Vec<Node<'a>>>,
-    pub prev_layouts: UnsafeCell<Vec<Rect>>,
 }
 
 impl<'a> Tree<'a> {
     pub const fn new() -> Self {
         Self {
             items: UnsafeCell::new(Vec::new()),
-            prev_layouts: UnsafeCell::new(Vec::new()),
         }
     }
     pub fn alloc(&self, item: Node<'a>) -> usize {
@@ -100,20 +98,7 @@ impl<'a> Tree<'a> {
     }
     pub fn clear(&self) {
         let items = unsafe { &mut *self.items.get() };
-        let prev = unsafe { &mut *self.prev_layouts.get() };
-
-        prev.clear();
-        prev.resize(items.len(), Rect::default());
-        for (i, node) in items.iter().enumerate() {
-            prev[i] = node.area;
-        }
-
         items.clear();
-    }
-    #[inline]
-    pub fn prev_area(&self, node_id: usize) -> Option<Rect> {
-        let prev = unsafe { &*self.prev_layouts.get() };
-        prev.get(node_id).copied()
     }
     pub fn iter(&self) -> core::slice::Iter<'_, Node<'a>> {
         let items = unsafe { &*self.items.get() };
