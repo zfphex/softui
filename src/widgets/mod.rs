@@ -172,10 +172,13 @@ pub trait Widget<'a>: std::fmt::Debug {
         None
     }
     //New retained layout
-    fn primitive(&self) -> Primative {
-        Primative::default()
+    fn primitive(&self) -> Option<Primative> {
+        None
     }
     fn area_cell(&'a self) -> Option<&'a std::cell::Cell<Rect>> {
+        None
+    }
+    fn draw_area(&'a self) -> Option<Rect> {
         None
     }
     fn on_click<F>(self, button: MouseButton, func: F) -> Click<'a, Self>

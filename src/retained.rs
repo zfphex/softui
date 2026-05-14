@@ -37,6 +37,7 @@ pub fn as_node<'a, T: Widget<'a>>(widget: &'a T, node: usize) -> usize {
         layout: widget.layout(),
         primitive: widget.primitive(),
         area: widget.area_cell(),
+        draw_area: widget.draw_area(),
         ..Default::default()
     })
 }
@@ -45,6 +46,17 @@ pub fn as_node<'a, T: Widget<'a>>(widget: &'a T, node: usize) -> usize {
 macro_rules! reth {
     ($($widget:expr),* $(,)?) => {{
         let container = $crate::Container::new($crate::hstyle(), $crate::NodeKind::Flex);
+        $(
+            $crate::tree::add_child(container.node, $crate::as_node(&$widget, container.node));
+        )*
+        container
+    }}
+}
+
+#[macro_export]
+macro_rules! retv {
+    ($($widget:expr),* $(,)?) => {{
+        let container = $crate::Container::new($crate::vstyle(), $crate::NodeKind::Flex);
         $(
             $crate::tree::add_child(container.node, $crate::as_node(&$widget, container.node));
         )*

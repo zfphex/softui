@@ -39,8 +39,9 @@ pub struct Node<'a> {
     pub widget: Option<Box<dyn Widget<'a> + 'a>>,
 
     //new retained areas.
-    pub primitive: Primative,
+    pub primitive: Option<Primative>,
     pub area: Option<&'a std::cell::Cell<Rect>>,
+    pub draw_area: Option<Rect>,
     // pub area_ptr: *mut Rect,
 }
 
@@ -70,10 +71,15 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
         cell.set(area);
     }
 
-    if tree[id].primitive != Primative::default() {
+    if let Some(primitive) = &tree[id].primitive {
+        let mut area = area;
+        if let Some(da) = tree[id].draw_area {
+            area += da;
+        }
+
         ctx.commands.push(Command {
             area,
-            primative: tree[id].primitive.clone(),
+            primative: primitive.clone(),
         })
     }
 

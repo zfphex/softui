@@ -73,6 +73,28 @@ impl<'a> Widget<'a> for Text<'a> {
         self.layout.clone()
     }
 
+    fn primitive(&self) -> Option<Primative> {
+        if let Some(fg) = self.style.foreground_color {
+            Some(Primative::Text(self.text.to_string(), self.font_size, fg))
+        } else {
+            None
+        }
+    }
+
+    fn draw_area(&self) -> Option<Rect> {
+        let pad_left = self.layout.padding.left.into_raw().value();
+        let pad_top = self.layout.padding.top.into_raw().value();
+        let pad_right = self.layout.padding.right.into_raw().value();
+        let pad_bottom = self.layout.padding.bottom.into_raw().value();
+
+        Some(Rect {
+            x: pad_left as usize,
+            y: pad_top as usize,
+            width: pad_right as usize,
+            height: pad_bottom as usize,
+        })
+    }
+
     fn measure(&self, known: Size<Option<f32>>, available: Size<AvailableSpace>) -> Size<f32> {
         //TOOD: This is likely incorrect.
         let width = match available.width {

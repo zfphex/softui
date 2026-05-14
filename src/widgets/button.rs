@@ -60,9 +60,9 @@ impl<'a> Widget<'a> for Button<'a> {
         self.widget.layout.clone()
     }
 
-    fn primitive(&self) -> Primative {
+    fn primitive(&self) -> Option<Primative> {
         let style = self.widget.style;
-        Primative::Ellipse(self.radius, style.border_color, style.background_color)
+        Some(Primative::Ellipse(self.radius, style.border_color, style.background_color))
     }
 
     fn area_cell(&'a self) -> Option<&'a std::cell::Cell<Rect>> {
