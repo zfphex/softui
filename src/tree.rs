@@ -33,9 +33,15 @@ pub struct Node<'a> {
     pub kind: NodeKind,
     // pub unrounded_layout: Layout,
     pub final_layout: Layout,
-    pub area: Rect,
-    pub widget: Option<Box<dyn Widget<'a> + 'a>>,
     pub children: Vec<usize>,
+
+    //legacy approach
+    pub widget: Option<Box<dyn Widget<'a> + 'a>>,
+
+    //new retained areas.
+    pub primitive: Primative,
+    pub area: Option<&'a std::cell::Cell<Rect>>,
+    // pub area_ptr: *mut Rect,
 }
 
 pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x: f32, offset_y: f32) {
@@ -46,11 +52,29 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
     let height = tree[id].final_layout.size.height;
 
     let area = Rect::new(abs_x as usize, abs_y as usize, width as usize, height as usize);
-    tree[id].area = area;
 
+    //legacy way of drawing widget and handling click.
     if let Some(widget) = &mut tree[id].widget {
         widget.try_click(ctx, area);
         widget.draw(&mut ctx.commands, area);
+    }
+
+    //new retained area update
+    //safety here is bad, but can be fixed
+    // let ptr = tree[id].area_ptr;
+    // if !ptr.is_null() {
+    //     unsafe { (*ptr) = area };
+    // }
+
+    if let Some(cell) = tree[id].area {
+        cell.set(area);
+    }
+
+    if tree[id].primitive != Primative::default() {
+        ctx.commands.push(Command {
+            area,
+            primative: tree[id].primitive.clone(),
+        })
     }
 
     //TODO: Maybe do this better.

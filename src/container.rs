@@ -64,12 +64,12 @@ impl<'a> Container<'a> {
         }
     }
 
-    pub fn child<T: IntoNode>(mut self, widget: T) -> Self {
+    pub fn add_child<T: IntoNode>(mut self, widget: T) -> Self {
         tree::add_child(self.node, widget.into_node());
         self
     }
 
-    pub fn children<T: Widget<'a> + 'a>(mut self, widgets: Vec<T>) -> Self {
+    pub fn add_children<T: Widget<'a> + 'a>(mut self, widgets: Vec<T>) -> Self {
         for widget in widgets {
             tree::add_child(self.node, widget.into_node());
         }

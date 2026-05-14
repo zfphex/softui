@@ -66,7 +66,7 @@ fn item<'a>(
         let pen = svg_ref(&pencil).on_click(Left, || item.editing = !item.editing);
 
         h!(checkbox, text(unsafe { &*edit_label.as_ptr() }).grow(1.0), pen)
-        //TODO: The border doesn't work here??
+            //TODO: The border doesn't work here??
             .vfit()
             .gap(10)
     } else {
@@ -217,7 +217,7 @@ fn main() {
                     .pt(48)
                     .hcenter()
             } else {
-                v!().children(list).w(50.percent()).gap(8)
+                v!().add_children(list).w(50.percent()).gap(8)
             }
         )
         .p(8)

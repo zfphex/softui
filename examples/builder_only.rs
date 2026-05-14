@@ -10,11 +10,11 @@ fn main() {
 
         let root = div()
             .horizontal()
-            .child(text("test"))
-            .child(rect().wh(100).bg(Some(green())))
-            .child(rect().wh(100).bg(Some(green())))
-            .child(rect().wh(100).bg(Some(green())))
-            .child(rect().wh(100).bg(Some(green())))
+            .add_child(text("test"))
+            .add_child(rect().wh(100).bg(Some(green())))
+            .add_child(rect().wh(100).bg(Some(green())))
+            .add_child(rect().wh(100).bg(Some(green())))
+            .add_child(rect().wh(100).bg(Some(green())))
             .gap(30)
             .bg(Some(gray()));
 

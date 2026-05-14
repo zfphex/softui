@@ -66,10 +66,6 @@ pub trait Sizing: Sized {
     #[inline]
     fn layout_mut(&mut self) -> &mut TaffyLayout;
 
-    // fn node_kind(&self) -> Option<NodeKind> {
-    //     None
-    // }
-
     fn set_layout(mut self, f: impl FnOnce(&mut TaffyLayout)) -> Self {
         f(self.layout_mut());
         self
@@ -175,6 +171,13 @@ pub trait Widget<'a>: std::fmt::Debug {
     fn node(&self) -> Option<usize> {
         None
     }
+    //New retained layout
+    fn primitive(&self) -> Primative {
+        Primative::default()
+    }
+    fn area_cell(&'a self) -> Option<&'a std::cell::Cell<Rect>> {
+        None
+    }
     fn on_click<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
     where
         Self: Sized,
@@ -267,4 +270,11 @@ impl<T: IntoF32> SimpleUnit for T {
     fn percent(self) -> Dimension {
         Dimension::percent(self.into_f32() / 100.0)
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct WidgetData {
+    pub area: std::cell::Cell<Rect>,
+    pub layout: TaffyLayout,
+    pub style: Style,
 }

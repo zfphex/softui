@@ -33,6 +33,9 @@ pub mod style;
 pub mod font;
 pub use font::*;
 
+pub mod retained;
+pub use retained::*;
+
 pub use platform::MouseButton::*;
 
 pub trait IntoF32 {
@@ -71,7 +74,6 @@ pub struct Command {
     pub area: Rect,
     pub primative: Primative,
 }
-
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum Quadrant {
     #[default]
@@ -81,7 +83,7 @@ pub enum Quadrant {
     BottomRight,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Primative {
     /// (radius: usize, border: Color, bg: color)
     Ellipse(usize, Option<u32>, Option<u32>),
@@ -98,11 +100,12 @@ pub enum Primative {
     #[cfg(feature = "svg")]
     ///Bitmap, Invert
     SVGUnsafe(&'static resvg::tiny_skia::Pixmap, bool),
-    Custom(fn(&mut Context, Rect) -> ()),
-    CustomAny {
-        data: Arc<dyn Any + Send + Sync>,
-        f: fn(&mut Context, Rect, &dyn Any),
-    },
+}
+
+impl Default for Primative {
+    fn default() -> Self {
+        Primative::Ellipse(0, None, None)
+    }
 }
 
 impl std::fmt::Debug for Primative {
@@ -123,8 +126,8 @@ pub const unsafe fn extend_lifetime<'a, T>(t: &'a T) -> &'static T {
     unsafe { std::mem::transmute::<&'a T, &'static T>(t) }
 }
 
-pub static mut WIDTH: AtomicUsize = AtomicUsize::new(0);
-pub static mut HEIGHT: AtomicUsize = AtomicUsize::new(0);
+pub static WIDTH: AtomicUsize = AtomicUsize::new(0);
+pub static HEIGHT: AtomicUsize = AtomicUsize::new(0);
 
 pub fn ctx_width() -> usize {
     unsafe { WIDTH.load(Ordering::Relaxed) }
@@ -287,8 +290,6 @@ impl Context {
                 Primative::SVGUnsafe(pixmap, invert) => {
                     self.draw_svg(x, y, pixmap, *invert);
                 }
-                Primative::CustomAny { data, f } => f(self, cmd.area, data),
-                Primative::Custom(f) => f(self, cmd.area),
             }
         }
 
