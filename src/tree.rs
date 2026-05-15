@@ -73,6 +73,7 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
 
     if let Some(primitive) = &tree[id].primitive {
         let mut area = area;
+        //TODO: Why was padding not applying here before, shouldn't it be apart of the area/layout???
         if let Some(da) = tree[id].draw_area {
             area += da;
         }
