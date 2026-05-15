@@ -51,11 +51,4 @@ impl<'a> Widget<'a> for Rectangle {
     fn layout(&self) -> taffy::Style {
         self.layout.clone()
     }
-
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
-        commands.push(Command {
-            area,
-            primative: Primative::Ellipse(self.radius, self.style.border_color, self.style.background_color),
-        });
-    }
 }

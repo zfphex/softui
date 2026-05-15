@@ -1,9 +1,6 @@
 pub mod rectangle;
 pub use rectangle::*;
 
-pub mod list;
-pub use list::*;
-
 #[cfg(feature = "svg")]
 pub mod svg;
 
@@ -29,15 +26,6 @@ pub mod dwrite;
 #[cfg(target_os = "windows")]
 #[cfg(feature = "dwrite")]
 pub use dwrite::*;
-
-pub mod click;
-pub use click::*;
-
-pub mod input;
-pub use input::*;
-
-pub mod button;
-pub use button::*;
 
 pub mod str;
 
@@ -159,12 +147,7 @@ pub trait Sizing: Sized {
 }
 
 pub trait Widget<'a>: std::fmt::Debug {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect);
     fn layout(&self) -> TaffyLayout;
-    fn try_click(&mut self, ctx: &mut Context, area: Rect) {}
-    fn measure(&self, known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>) -> Size<f32> {
-        Size::ZERO
-    }
     fn style(&self) -> Option<Style> {
         None
     }
@@ -173,70 +156,19 @@ pub trait Widget<'a>: std::fmt::Debug {
     }
     //New retained layout
     fn primitive(&self) -> Option<Primative> {
-        None
+        unreachable!()
     }
     fn area_cell(&'a self) -> Option<&'a std::cell::Cell<Rect>> {
         None
     }
-    fn draw_area(&'a self) -> Option<Rect> {
+    fn draw_area(&'a self) -> Option<Size<f32>> {
         None
     }
-    fn on_click<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
-    where
-        Self: Sized,
-        F: FnMut() + 'a,
-    {
-        Click::new(self).on_click(button, func)
-    }
 
-    fn on_press<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
-    where
-        Self: Sized,
-        F: FnMut() + 'a,
-    {
-        Click::new(self).on_press(button, func)
-    }
-
-    fn on_release<F>(self, button: MouseButton, func: F) -> Click<'a, Self>
-    where
-        Self: Sized,
-        F: FnMut() + 'a,
-    {
-        Click::new(self).on_release(button, func)
-    }
-
-    fn on_hover<F>(self, func: F) -> Click<'a, Self>
-    where
-        Self: Sized,
-        F: FnMut() + 'a,
-    {
-        Click::new(self).on_hover(func)
-    }
-}
-
-impl<'a> Widget<'a> for &'a dyn Widget<'a> {
-    fn node(&self) -> Option<usize> {
-        (**self).node()
-    }
-
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
-        (**self).draw(commands, area)
-    }
-
-    fn layout(&self) -> TaffyLayout {
-        (**self).layout()
-    }
-
-    fn try_click(&mut self, ctx: &mut Context, area: Rect) {
-        //TODO: Since it's behind an immutable reference does this mean try_click will never work?
-    }
-
-    fn measure(&self, known_dimensions: Size<Option<f32>>, available_space: Size<AvailableSpace>) -> Size<f32> {
-        (**self).measure(known_dimensions, available_space)
-    }
-
-    fn style(&self) -> Option<Style> {
-        (**self).style()
+    //TODO: Atomic mouse state to remove the &mut ctx
+    fn clicked(&'a self, ctx: &mut Context) -> bool {
+        let area = self.area_cell().as_ref().unwrap().get();
+        clicked(ctx, area, Left)
     }
 }
 

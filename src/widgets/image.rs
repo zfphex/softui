@@ -86,16 +86,6 @@ pub struct ImageRef<'a> {
 }
 
 impl<'a> Widget<'a> for ImageRef<'a> {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
-        //TODO: Just assume the image exists for now.
-        let bitmap = unsafe { std::mem::transmute::<&'a [u8], &'static [u8]>(self.bitmap) };
-
-        commands.push(Command {
-            area,
-            primative: Primative::ImageUnsafe(bitmap, self.format),
-        });
-    }
-
     fn layout(&self) -> TaffyLayout {
         self.layout.clone()
     }

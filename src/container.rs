@@ -6,19 +6,52 @@ use taffy::{
     prelude::length,
 };
 
-pub fn div<'a>() -> Container<'a> {
+pub fn vstyle() -> TaffyLayout {
+    TaffyLayout {
+        size: Size {
+            width: Dimension::percent(1.0),
+            height: Dimension::percent(1.0),
+        },
+        flex_direction: FlexDirection::Column,
+        align_items: Some(AlignItems::Start),
+        ..Default::default()
+    }
+}
+
+pub fn hstyle() -> TaffyLayout {
+    TaffyLayout {
+        size: Size {
+            width: Dimension::percent(1.0),
+            height: Dimension::percent(1.0),
+        },
+        flex_direction: FlexDirection::Row,
+        align_items: Some(AlignItems::Start),
+        ..Default::default()
+    }
+}
+
+pub fn fitstyle() -> TaffyLayout {
+    TaffyLayout {
+        box_sizing: BoxSizing::ContentBox,
+        size: Size {
+            width: Dimension::auto(),
+            height: Dimension::auto(),
+        },
+        ..Default::default()
+    }
+}
+
+pub fn div<'a>() -> Container {
     Container::new(hstyle(), NodeKind::Flex)
 }
 
-pub struct Container<'a> {
+pub struct Container {
     pub node: usize,
     pub layout: TaffyLayout,
     pub style: Style,
-    pub handlers: Vec<(MouseButton, Action, Box<dyn FnMut(&mut Self) + 'a>)>,
-    pub list_view: Option<&'a [&'a dyn Widget<'a>]>,
 }
 
-impl<'a> Debug for Container<'a> {
+impl<'a> Debug for Container {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Container")
             .field("node", &self.node)
@@ -28,7 +61,7 @@ impl<'a> Debug for Container<'a> {
     }
 }
 
-impl<'a> Styling for Container<'a> {
+impl<'a> Styling for Container {
     fn style_mut(&mut self) -> &mut Style {
         &mut self.style
     }
@@ -44,7 +77,7 @@ impl<'a> Styling for Container<'a> {
     }
 }
 
-impl<'a> Container<'a> {
+impl<'a> Container {
     pub fn new(layout: TaffyLayout, kind: NodeKind) -> Self {
         let node = unsafe {
             TREE.alloc(Node {
@@ -59,21 +92,7 @@ impl<'a> Container<'a> {
             node,
             layout: layout.clone(),
             style: Style::new(),
-            handlers: Vec::new(),
-            list_view: None,
         }
-    }
-
-    pub fn add_child<T: IntoNode>(mut self, widget: T) -> Self {
-        tree::add_child(self.node, widget.into_node());
-        self
-    }
-
-    pub fn add_children<T: Widget<'a> + 'a>(mut self, widgets: Vec<T>) -> Self {
-        for widget in widgets {
-            tree::add_child(self.node, widget.into_node());
-        }
-        self
     }
 
     pub fn gap(mut self, gap: impl IntoF32) -> Self {
@@ -82,46 +101,6 @@ impl<'a> Container<'a> {
         unsafe { TREE[self.node].layout.gap = gap };
 
         self
-    }
-
-    pub fn on_hover(mut self, func: impl FnMut(&mut Self) + 'a) -> Self {
-        self.handlers.push((MouseButton::Left, Action::Hover, Box::new(func)));
-        self
-    }
-
-    //TODO: This is pretty awful.
-    pub fn on_click(mut self, button: MouseButton, f: impl FnMut(&mut Self) + 'a) -> Self {
-        self.handlers.push((button, Action::Clicked, Box::new(f)));
-        self
-    }
-
-    pub fn on_press(mut self, button: MouseButton, f: impl FnMut(&mut Self) + 'a) -> Self {
-        self.handlers.push((button, Action::Pressed, Box::new(f)));
-        self
-    }
-
-    pub fn on_release(mut self, button: MouseButton, f: impl FnMut(&mut Self) + 'a) -> Self {
-        self.handlers.push((button, Action::Released, Box::new(f)));
-        self
-    }
-
-    pub fn on_lose_focus(mut self, f: impl FnMut(&mut Self) + 'a) -> Self {
-        self.handlers.push((Left, Action::LostFocus, Box::new(f)));
-        self
-    }
-
-    fn try_click(&mut self, ctx: &mut Context, area: Rect) {
-        let handlers = core::mem::take(&mut self.handlers);
-        for (button, action, mut f) in handlers {
-            match action {
-                Action::Clicked if clicked(ctx, area, button) => f(self),
-                Action::Pressed if pressed(ctx, area, button) => f(self),
-                Action::Released if released(ctx, area, button) => f(self),
-                Action::Hover if hover(ctx, area) => f(self),
-                Action::LostFocus if lost_focus(ctx, area) => f(self),
-                _ => {}
-            }
-        }
     }
 
     pub fn wh(mut self, wh: impl IntoDimension) -> Self {
@@ -285,11 +264,7 @@ impl<'a> Container<'a> {
     }
 }
 
-impl<'a> Widget<'a> for Container<'a> {
-    fn try_click(&mut self, ctx: &mut Context, area: Rect) {
-        self.try_click(ctx, area);
-    }
-
+impl<'a> Widget<'a> for Container {
     fn style(&self) -> Option<Style> {
         Some(self.style)
     }
@@ -302,10 +277,18 @@ impl<'a> Widget<'a> for Container<'a> {
         Some(self.node)
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
-        commands.push(Command {
-            area,
-            primative: Primative::Ellipse(0, self.style.border_color, self.style.background_color),
-        });
+    fn primitive(&self) -> Option<Primative> {
+        Some(Primative::Ellipse(
+            0,
+            self.style.border_color,
+            self.style.background_color,
+        ))
     }
+
+    // fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
+    //     commands.push(Command {
+    //         area,
+    //         primative: Primative::Ellipse(0, self.style.border_color, self.style.background_color),
+    //     });
+    // }
 }

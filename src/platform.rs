@@ -384,6 +384,8 @@ pub mod macos {
         }
     }
 
+    use std::ops::AddAssign;
+
     use minifb::*;
 
     impl Window {
@@ -505,6 +507,15 @@ pub mod macos {
         pub y: usize,
         pub width: usize,
         pub height: usize,
+    }
+
+    impl AddAssign for Rect {
+        fn add_assign(&mut self, rhs: Self) {
+            self.x += rhs.x;
+            self.y += rhs.y;
+            self.width += rhs.width;
+            self.height += rhs.height;
+        }
     }
 
     impl Rect {

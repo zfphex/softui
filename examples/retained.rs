@@ -5,7 +5,10 @@ fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
     ctx.debug = true;
 
-    let button = button("label");
+    let accent = hex("#5856D7");
+    let background = hex("#121212");
+    let todos = text("todos").size(48).pb(12);
+    let what = text("What needs to be done?").fg(gray());
 
     loop {
         match ctx.event() {
@@ -13,26 +16,19 @@ fn main() {
             _ => {}
         }
 
-        //TODO: Atomic mouse state to remove the &mut ctx
-        if button.clicked(&mut ctx) {
-            println!("clicked");
+        if todos.clicked(&mut ctx) {
+            println!("todos")
         }
 
-        // let root = Container::new(hstyle(), NodeKind::Flex);
-        // let child = as_node(&button, root.node);
-        // tree::add_child(root.node, child);
+        if what.clicked(&mut ctx) {
+            println!("what")
+        }
 
-        // let root = reth!(button);
+        //TODO: The leaf nodes here have the wrong size.
+        // let root = v!(todos, what).hcenter();
 
-        //Since padding would have been applied during the text().draw() call
-        //and this new system just uses the primative this will not draw correctly.
-        //Kind of annoying to fix, have to add another Cell<Rect> that would store
-        //the padding and this would be combined with the taffy layout.
-        //This doesn't fix the other issue that there are conditional multiple primatives rendered sometimes.
-        //For example text can have a background rectangle and I don't want to remove that...
-        let root = retv!(
-            text("todos").size(48).pb(12),
-            text("What needs to be done?").size(18).p(32),
+        let root = v!(
+            todos,
         );
 
         draw_layout(&mut ctx, root);

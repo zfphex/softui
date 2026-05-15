@@ -12,11 +12,8 @@ pub use atomic_float::*;
 pub mod container;
 pub use container::*;
 
-pub mod macros;
-pub use macros::*;
-
-pub mod tree;
-pub use tree::*;
+pub mod layout;
+pub use layout::*;
 
 pub mod widgets;
 pub use widgets::*;
@@ -32,9 +29,6 @@ pub mod style;
 
 pub mod font;
 pub use font::*;
-
-pub mod retained;
-pub use retained::*;
 
 pub use platform::MouseButton::*;
 
@@ -204,14 +198,14 @@ impl Context {
         self.window.event_blocking()
     }
 
-    pub fn draw_layout<'a>(&mut self, root: Container<'a>, debug: bool) {
+    pub fn draw_layout<'a>(&mut self, root: Container, debug: bool) {
         unsafe {
             // The root must be a Container, which always has a pre-allocated node.
             let node: usize = root.node;
 
             //HACK: Currently the root node is not layed out correctly.
             //Also wild upcast here.
-            let root = std::mem::transmute::<Container<'a>, Container<'static>>(root);
+            // let root = std::mem::transmute::<Container<'a>, Container<'static>>(root);
             TREE[node].widget = Some(Box::new(root));
 
             let window_size = taffy::Size {
@@ -221,7 +215,7 @@ impl Context {
 
             taffy::compute_root_layout(&mut TREE, node.into(), window_size);
 
-            draw_tree(self, &mut TREE, node, 0.0, 0.0);
+            // draw_tree(self, &mut TREE, node, 0.0, 0.0);
 
             if debug && self.debug {
                 //Only print debug info for the first frame.
@@ -274,7 +268,7 @@ impl Context {
 
                     let window = self.window.area;
                     let buffer = &mut self.window.buffer;
-                    font::draw_text(text, font, x, y, *font_size, 0, 1.0, window, buffer, *color, false);
+                    font::draw_text(text, font, x, y, *font_size, 1.0, window, buffer, *color, false);
 
                     // self.draw_text_subpixel_new(&text, font, x, y, *font_size, 0, *color);
 
@@ -703,7 +697,6 @@ impl Context {
             x,
             y,
             font_size,
-            line_height,
             self.window.display_scale(),
             Rect::new(0, 0, self.window.width(), self.window.height()),
             &mut self.window.buffer,

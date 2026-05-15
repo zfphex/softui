@@ -35,17 +35,39 @@ pub struct Text<'a> {
     pub font_size: usize,
     pub layout: TaffyLayout,
     pub style: Style,
+    pub widget: WidgetData,
 }
 
 pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
+    let layout = TaffyLayout {
+        box_sizing: BoxSizing::ContentBox,
+        ..Default::default()
+    };
+
+    // let node = unsafe {
+    //     TREE.alloc(Node {
+    //         layout: layout.clone(),
+    //         kind: NodeKind::Text,
+    //         ..Default::default()
+    //     })
+    // };
+
     Text {
         text: text.into(),
         font_size: default_font_size(),
-        layout: TaffyLayout {
-            box_sizing: BoxSizing::ContentBox,
-            ..Default::default()
-        },
+        layout,
         style: Style::new().fg(white()),
+        widget: WidgetData {
+            area: std::cell::Cell::new(Rect::default()),
+            layout: TaffyLayout {
+                size: taffy::Size {
+                    width: taffy::style_helpers::length(20.0_f32),
+                    height: taffy::style_helpers::length(20.0_f32),
+                },
+                ..Default::default()
+            },
+            style: Style::new().bg(white()),
+        },
     }
 }
 
@@ -81,33 +103,15 @@ impl<'a> Widget<'a> for Text<'a> {
         }
     }
 
-    fn draw_area(&self) -> Option<Rect> {
-        let pad_left = self.layout.padding.left.into_raw().value();
-        let pad_top = self.layout.padding.top.into_raw().value();
-        let pad_right = self.layout.padding.right.into_raw().value();
-        let pad_bottom = self.layout.padding.bottom.into_raw().value();
-
-        Some(Rect {
-            x: pad_left as usize,
-            y: pad_top as usize,
-            width: pad_right as usize,
-            height: pad_bottom as usize,
-        })
+    fn area_cell(&'a self) -> Option<&'a std::cell::Cell<Rect>> {
+        Some(&self.widget.area)
     }
 
-    fn measure(&self, known: Size<Option<f32>>, available: Size<AvailableSpace>) -> Size<f32> {
-        //TOOD: This is likely incorrect.
-        let width = match available.width {
-            AvailableSpace::Definite(px) => px as usize,
-            AvailableSpace::MinContent => ctx_width(),
-            AvailableSpace::MaxContent => ctx_width(),
-        };
+    //TODO: Remove me
+    fn draw_area(&self) -> Option<Size<f32>> {
+        let width = ctx_width();
 
-        let height = match available.height {
-            AvailableSpace::Definite(px) => px as usize,
-            AvailableSpace::MinContent => ctx_height(),
-            AvailableSpace::MaxContent => ctx_height(),
-        };
+        let height = ctx_height();
 
         let area = font::draw_text(
             &self.text,
@@ -115,7 +119,6 @@ impl<'a> Widget<'a> for Text<'a> {
             0,
             0,
             self.font_size,
-            0,
             1.0, //TODO: display scale
             Rect::new(0, 0, width, height),
             &mut [],
@@ -127,29 +130,63 @@ impl<'a> Widget<'a> for Text<'a> {
             width: area.width as f32,
             height: area.height as f32,
         }
+        .into()
     }
 
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
-        commands.push(Command {
-            area,
-            primative: Primative::Ellipse(self.style.radius, None, self.style.background_color),
-        });
+    // fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
+    //     commands.push(Command {
+    //         area,
+    //         primative: Primative::Ellipse(self.style.radius, None, self.style.background_color),
+    //     });
 
-        if let Some(fg) = self.style.foreground_color {
-            let pad_left = self.layout.padding.left.into_raw().value();
-            let pad_top = self.layout.padding.top.into_raw().value();
-            let pad_right = self.layout.padding.right.into_raw().value();
-            let pad_bottom = self.layout.padding.bottom.into_raw().value();
+    //     if let Some(fg) = self.style.foreground_color {
+    //         let pad_left = self.layout.padding.left.into_raw().value();
+    //         let pad_top = self.layout.padding.top.into_raw().value();
+    //         let pad_right = self.layout.padding.right.into_raw().value();
+    //         let pad_bottom = self.layout.padding.bottom.into_raw().value();
 
-            commands.push(Command {
-                area: Rect {
-                    x: area.x + pad_left as usize,
-                    y: area.y + pad_top as usize,
-                    width: area.width + pad_right as usize,
-                    height: area.height + pad_bottom as usize,
-                },
-                primative: Primative::Text(self.text.to_string(), self.font_size, fg),
-            });
-        }
+    //         commands.push(Command {
+    //             area: Rect {
+    //                 x: area.x + pad_left as usize,
+    //                 y: area.y + pad_top as usize,
+    //                 width: area.width + pad_right as usize,
+    //                 height: area.height + pad_bottom as usize,
+    //             },
+    //             primative: Primative::Text(self.text.to_string(), self.font_size, fg),
+    //         });
+    //     }
+    // }
+}
+
+fn measure_text(text: &str, size: usize, known: Size<Option<f32>>, available: Size<AvailableSpace>) -> Size<f32> {
+    //TOOD: This is likely incorrect.
+    let width = match available.width {
+        AvailableSpace::Definite(px) => px as usize,
+        AvailableSpace::MinContent => ctx_width(),
+        AvailableSpace::MaxContent => ctx_width(),
+    };
+
+    let height = match available.height {
+        AvailableSpace::Definite(px) => px as usize,
+        AvailableSpace::MinContent => ctx_height(),
+        AvailableSpace::MaxContent => ctx_height(),
+    };
+
+    let area = font::draw_text(
+        &text,
+        default_font(),
+        0,
+        0,
+        size,
+        1.0, //TODO: display scale
+        Rect::new(0, 0, width, height),
+        &mut [],
+        white(),
+        true,
+    );
+
+    Size {
+        width: area.width as f32,
+        height: area.height as f32,
     }
 }

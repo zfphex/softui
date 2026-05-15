@@ -59,13 +59,10 @@ pub struct SvgRef<'a> {
 }
 
 impl<'a> Widget<'a> for SvgRef<'a> {
-    fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
+    fn primitive(&self) -> Option<Primative> {
         //TODO: Just assume the svg exists for now.
         let pixmap = unsafe { std::mem::transmute::<&'a Pixmap, &'static Pixmap>(self.pixmap) };
-        commands.push(Command {
-            area,
-            primative: Primative::SVGUnsafe(pixmap, self.invert),
-        });
+        Some(Primative::SVGUnsafe(pixmap, self.invert))
     }
 
     fn layout(&self) -> TaffyLayout {

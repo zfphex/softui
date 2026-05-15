@@ -1,8 +1,5 @@
 //! Font related logic
-//!
 use crate::*;
-
-pub fn calculate_font_area() {}
 
 //TODO: Allow the drawing text over multiple lines. Maybe draw text should return the y pos?
 //or maybe the buffer should just include all the text related code and the metrics should be static.
@@ -16,8 +13,6 @@ pub fn draw_text(
     x: usize,
     y: usize,
     font_size: usize,
-    //Zero is fine
-    line_height: usize,
     display_scale: f32,
     window: Rect,
     buffer: &mut [u32],
@@ -31,7 +26,8 @@ pub fn draw_text(
     let x = scale(x, display_scale);
     let y = scale(y, display_scale);
     let font_size = scale(font_size, display_scale);
-    let line_height = scale(line_height, display_scale);
+    // let line_height = scale(line_height, display_scale);
+    let line_height = 0;
 
     let mut area = Rect::new(x, y, 0, 0);
     let mut y = area.y;
