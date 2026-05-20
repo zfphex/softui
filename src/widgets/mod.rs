@@ -155,7 +155,6 @@ pub trait Widget<'a>: std::fmt::Debug {
         None
     }
     //New retained layout
-    #[track_caller]
     fn primitive(&self) -> Option<Primative> {
         unreachable!()
     }

@@ -49,7 +49,7 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
     }
 }
 
-pub fn draw_layout<'a>(ctx: &mut Context, root: Container) {
+pub fn draw_layout<'a>(ctx: &mut Context, root: &Container) {
     unsafe {
         let node: usize = root.node;
         let window_size = taffy::Size {
@@ -59,6 +59,7 @@ pub fn draw_layout<'a>(ctx: &mut Context, root: Container) {
 
         //This is what computes the layout.
         taffy::compute_root_layout(&mut TREE, node.into(), window_size);
+
         //This just draws the computed layout.
         draw_tree(ctx, &mut TREE, node, 0.0, 0.0);
 
@@ -75,13 +76,24 @@ pub fn draw_layout<'a>(ctx: &mut Context, root: Container) {
 pub fn as_node<'a, T: Widget<'a>>(widget: &'a T, parent: usize) -> usize {
     let tree = unsafe { core::mem::transmute::<&'static mut Tree<'static>, &'a mut Tree<'a>>(&mut TREE) };
 
-    if let Some(node) = widget.node() {
-        tree[node].layout = widget.layout();
-        tree[node].primitive = widget.primitive();
-        tree[node].area = widget.area_cell();
-        tree[node].draw_area = widget.draw_area();
-        return node;
+    //Root container;
+    if parent == usize::MAX {
+        return tree.alloc(Node {
+            layout: widget.layout(),
+            primitive: widget.primitive(),
+            area: widget.area_cell(),
+            draw_area: widget.draw_area(),
+            ..Default::default()
+        });
     }
+
+    // if let Some(node) = widget.node() {
+    // tree[node].layout = widget.layout();
+    // tree[node].primitive = widget.primitive();
+    // tree[node].area = widget.area_cell();
+    // tree[node].draw_area = widget.draw_area();
+    // return node;
+    // }
 
     let new_node = Node {
         layout: widget.layout(),
@@ -96,6 +108,18 @@ pub fn as_node<'a, T: Widget<'a>>(widget: &'a T, parent: usize) -> usize {
     } else {
         tree.alloc(new_node)
     }
+}
+
+#[macro_export]
+macro_rules! root {
+    ($($widget:expr),* $(,)?) => {{
+        let mut container = $crate::Container::new($crate::vstyle(), $crate::NodeKind::Flex);
+        container.node = $crate::as_node(&container, container.node);
+        $(
+            $crate::layout::add_child(container.node, $crate::as_node(&$widget, container.node));
+        )*
+        container
+    }}
 }
 
 #[macro_export]
@@ -142,6 +166,7 @@ macro_rules! rv {
     }}
 }
 
+// Use the highest bit as a flag for retained widgets.
 pub const RETAINED_FLAG: usize = 1 << (usize::BITS - 1);
 
 #[inline]
@@ -186,7 +211,6 @@ pub fn add_node(layout: TaffyLayout) -> usize {
     }
 }
 
-#[track_caller]
 pub fn add_child(parent: usize, child: usize) {
     unsafe {
         let Some(parent) = TREE.get_mut(parent) else {

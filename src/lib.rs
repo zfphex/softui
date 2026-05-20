@@ -312,7 +312,6 @@ impl Context {
     }
 
     #[inline]
-    #[track_caller]
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: u32) {
         let width = self.window.width();
         self.window.buffer[y * width + x] = color;

@@ -68,28 +68,32 @@ impl<'a> Styling for Container {
 
     fn fg(mut self, fg: impl IntoColor) -> Self {
         self.style.foreground_color = fg.into_color();
+        unsafe { TREE[self.node].primitive = self.primitive() };
         self
     }
 
     fn bg(mut self, bg: impl IntoColor) -> Self {
         self.style.background_color = bg.into_color();
+        unsafe { TREE[self.node].primitive = self.primitive() };
         self
     }
 }
 
 impl<'a> Container {
     pub fn new(layout: TaffyLayout, kind: NodeKind) -> Self {
-        let node = unsafe {
-            TREE.alloc(Node {
-                layout: layout.clone(),
-                widget: None,
-                kind,
-                ..Default::default()
-            })
-        };
+        //TODO: I think the node allocation should happen after since it's not retained.
+        // let node = unsafe {
+        //     TREE.alloc(Node {
+        //         layout: layout.clone(),
+        //         widget: None,
+        //         kind,
+        //         ..Default::default()
+        //     })
+        // };
 
         Self {
-            node,
+            //TODO: Use None here.
+            node: usize::MAX,
             layout: layout.clone(),
             style: Style::new(),
         }

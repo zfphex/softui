@@ -31,7 +31,7 @@ fn main() {
 
         layout::add_child(root.node, header.node);
 
-        draw_layout(&mut ctx, root);
+        draw_layout(&mut ctx, &root);
         ctx.draw_frame();
     }
 }
