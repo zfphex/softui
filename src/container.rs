@@ -95,6 +95,35 @@ impl<'a> Container {
         }
     }
 
+    pub fn new_retained(layout: TaffyLayout, kind: NodeKind) -> Self {
+        let node = unsafe {
+            TREE.alloc_retained(Node {
+                layout: layout.clone(),
+                widget: None,
+                kind,
+                ..Default::default()
+            })
+        };
+
+        Self {
+            node,
+            layout: layout.clone(),
+            style: Style::new(),
+        }
+    }
+
+    // pub fn add_child<T: IntoNode>(mut self, widget: T) -> Self {
+    //     tree::add_child(self.node, widget.into_node());
+    //     self
+    // }
+
+    // pub fn add_children<T: Widget<'a> + 'a>(mut self, widgets: Vec<T>) -> Self {
+    //     for widget in widgets {
+    //         tree::add_child(self.node, widget.into_node());
+    //     }
+    //     self
+    // }
+
     pub fn gap(mut self, gap: impl IntoF32) -> Self {
         let gap = length(gap.into_f32());
         self.layout.gap = gap;
@@ -262,6 +291,11 @@ impl<'a> Container {
         unsafe { TREE[self.node].layout = self.layout.clone() };
         self
     }
+
+    // pub fn add_node(mut self, node: usize) -> Self {
+    //     tree::add_child(self.node, node);
+    //     self
+    // }
 }
 
 impl<'a> Widget<'a> for Container {

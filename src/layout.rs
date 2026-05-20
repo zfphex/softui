@@ -72,12 +72,9 @@ pub fn draw_layout<'a>(ctx: &mut Context, root: Container) {
     }
 }
 
-pub fn as_node<'a, T: Widget<'a>>(widget: &'a T, node: usize) -> usize {
+pub fn as_node<'a, T: Widget<'a>>(widget: &'a T, parent: usize) -> usize {
     let tree = unsafe { core::mem::transmute::<&'static mut Tree<'static>, &'a mut Tree<'a>>(&mut TREE) };
 
-    //There is this weird part of the node allocation,
-    //where containers self allocate there own nodes.
-    //Idk if this is a good approach?
     if let Some(node) = widget.node() {
         tree[node].layout = widget.layout();
         tree[node].primitive = widget.primitive();
@@ -86,48 +83,27 @@ pub fn as_node<'a, T: Widget<'a>>(widget: &'a T, node: usize) -> usize {
         return node;
     }
 
-    tree.alloc(Node {
+    let new_node = Node {
         layout: widget.layout(),
         primitive: widget.primitive(),
         area: widget.area_cell(),
         draw_area: widget.draw_area(),
         ..Default::default()
-    })
-}
+    };
 
-pub fn alloc_con(con: &Container) -> usize {
-    unsafe {
-        TREE.alloc(Node {
-            layout: con.layout.clone(),
-            widget: None,
-            kind: NodeKind::Flex,
-            ..Default::default()
-        })
+    if is_retained(parent) {
+        tree.alloc_retained(new_node)
+    } else {
+        tree.alloc(new_node)
     }
-}
-
-#[macro_export]
-macro_rules! root {
-    ($($widget:expr),* $(,)?) => {{
-        let mut container = $crate::Container::new($crate::vstyle(), $crate::NodeKind::Flex);
-        let node = $crate::alloc_con(&container);
-        container.node.set(node);
-        $(
-            // $crate::layout::add_child(container.node, $crate::as_node(&$widget, container.node));
-            $crate::layout::add_child(node, $widget.alloc_node(node));
-        )*
-        container
-    }};
 }
 
 #[macro_export]
 macro_rules! h {
     ($($widget:expr),* $(,)?) => {{
         let container = $crate::Container::new($crate::hstyle(), $crate::NodeKind::Flex);
-        let node = container.node;
         $(
             $crate::layout::add_child(container.node, $crate::as_node(&$widget, container.node));
-            // $crate::layout::add_child(node, $widget.alloc_node(node));
         )*
         container
     }}
@@ -137,27 +113,43 @@ macro_rules! h {
 macro_rules! v {
     ($($widget:expr),* $(,)?) => {{
         let container = $crate::Container::new($crate::vstyle(), $crate::NodeKind::Flex);
-        let node = container.node;
         $(
             $crate::layout::add_child(container.node, $crate::as_node(&$widget, container.node));
-            // $crate::layout::add_child(node, $widget.alloc_node(node));
         )*
         container
     }}
 }
 
-// #[macro_export]
-// macro_rules! fit {
-//     ($($widget:expr),* $(,)?) => {{
-//         let container = $crate::Container::new($crate::fitstyle(), $crate::NodeKind::Fit);
-//         $(
-//             $crate::layout::add_child(container.node, $crate::as_node(&$widget, container.node));
-//         )*
-//         container
-//     }}
-// }
+#[macro_export]
+macro_rules! rh {
+    ($($widget:expr),* $(,)?) => {{
+        let container = $crate::Container::new_retained($crate::hstyle(), $crate::NodeKind::Flex);
+        $(
+            $crate::layout::add_child(container.node, $crate::as_node(&$widget, container.node));
+        )*
+        container
+    }}
+}
 
-#[derive(Debug, Copy, Clone, Default, PartialEq)]
+#[macro_export]
+macro_rules! rv {
+    ($($widget:expr),* $(,)?) => {{
+        let container = $crate::Container::new_retained($crate::vstyle(), $crate::NodeKind::Flex);
+        $(
+            $crate::layout::add_child(container.node, $crate::as_node(&$widget, container.node));
+        )*
+        container
+    }}
+}
+
+pub const RETAINED_FLAG: usize = 1 << (usize::BITS - 1);
+
+#[inline]
+pub fn is_retained(id: usize) -> bool {
+    id & RETAINED_FLAG != 0
+}
+
+#[derive(Debug, Copy, Clone, Default)]
 pub enum NodeKind {
     #[default]
     Flex,
@@ -182,9 +174,7 @@ pub struct Node<'a> {
     pub primitive: Option<Primative>,
     pub area: Option<&'a std::cell::Cell<Rect>>,
     pub draw_area: Option<Size<f32>>,
-    //Idk about this...
-    // pub text: &'a str,
-    // pub area_ptr: *mut Rect,
+    pub persistent: bool,
 }
 
 pub fn add_node(layout: TaffyLayout) -> usize {
@@ -208,13 +198,22 @@ pub fn add_child(parent: usize, child: usize) {
 
 pub struct Tree<'a> {
     pub items: UnsafeCell<Vec<Node<'a>>>,
+    pub retained: UnsafeCell<Vec<Node<'a>>>,
 }
 
 impl<'a> Tree<'a> {
     pub const fn new() -> Self {
         Self {
             items: UnsafeCell::new(Vec::new()),
+            retained: UnsafeCell::new(Vec::new()),
         }
+    }
+    pub fn alloc_retained(&self, mut item: Node<'a>) -> usize {
+        item.persistent = true;
+        let items = unsafe { &mut *self.retained.get() };
+        let id = items.len();
+        items.push(item);
+        id | RETAINED_FLAG
     }
     pub fn alloc(&self, item: Node<'a>) -> usize {
         let items = unsafe { &mut *self.items.get() };
@@ -225,32 +224,30 @@ impl<'a> Tree<'a> {
     pub fn clear(&self) {
         let items = unsafe { &mut *self.items.get() };
         items.clear();
+        let retained = unsafe { &mut *self.retained.get() };
+        for node in retained.iter_mut() {
+            node.children.clear();
+        }
     }
-    pub fn iter(&self) -> core::slice::Iter<'_, Node<'a>> {
-        let items = unsafe { &*self.items.get() };
-        items.iter()
+    pub fn node(&self, id: usize) -> &Node<'a> {
+        if is_retained(id) {
+            unsafe { &(&*self.retained.get())[id & !RETAINED_FLAG] }
+        } else {
+            unsafe { &(&*self.items.get())[id] }
+        }
     }
-    pub fn iter_mut(&self) -> core::slice::IterMut<'_, Node<'a>> {
-        let items = unsafe { &mut *self.items.get() };
-        items.iter_mut()
+    pub unsafe fn node_mut(&self, id: usize) -> &mut Node<'a> {
+        if is_retained(id) {
+            unsafe { &mut (&mut *self.retained.get())[id & !RETAINED_FLAG] }
+        } else {
+            unsafe { &mut (&mut *self.items.get())[id] }
+        }
     }
-    pub fn get(&self, index: usize) -> Option<&Node<'a>> {
-        unsafe { (&*self.items.get()).get(index) }
-    }
-    pub unsafe fn get_mut(&self, index: usize) -> Option<&mut Node<'a>> {
-        unsafe { (&mut *self.items.get()).get_mut(index) }
-    }
-    pub unsafe fn as_mut_slice(&self) -> &mut [Node<'a>] {
-        unsafe { (&mut *self.items.get()).as_mut_slice() }
-    }
-    pub fn len(&self) -> usize {
-        unsafe { (*self.items.get()).len() }
-    }
-    pub fn add_child(&self, parent: usize, child: usize) {
-        unsafe {
-            if let Some(parent) = self.get_mut(parent) {
-                parent.children.push(child);
-            }
+    pub unsafe fn get_mut(&self, id: usize) -> Option<&mut Node<'a>> {
+        if is_retained(id) {
+            unsafe { (&mut *self.retained.get()).get_mut(id & !RETAINED_FLAG) }
+        } else {
+            unsafe { (&mut *self.items.get()).get_mut(id) }
         }
     }
 }
@@ -259,7 +256,7 @@ impl<'a> Index<usize> for Tree<'a> {
     type Output = Node<'a>;
 
     fn index(&self, index: usize) -> &Self::Output {
-        unsafe { &(&*self.items.get())[index] }
+        self.node(index)
     }
 }
 
@@ -267,13 +264,14 @@ impl<'a> Debug for Tree<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Arena")
             .field("items", unsafe { &*self.items.get() })
+            .field("retained", unsafe { &*self.retained.get() })
             .finish()
     }
 }
 
 impl<'a> IndexMut<usize> for Tree<'a> {
     fn index_mut(&mut self, index: usize) -> &mut Node<'a> {
-        unsafe { &mut (&mut *self.items.get())[index] }
+        unsafe { self.node_mut(index) }
     }
 }
 
@@ -333,8 +331,6 @@ impl<'a> taffy::LayoutPartialTree for Tree<'a> {
                 (Display::Flex, true) => compute_flexbox_layout(tree, node_id, inputs),
                 (_, false) => {
                     let style = &node.layout;
-                    if node.kind == NodeKind::Text {}
-
                     //leagacy measure (this was inside closure)
                     // if let Some(widget) = &node.widget {
                     //     widget.measure(known_dimensions, available_space)

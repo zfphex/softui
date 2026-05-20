@@ -1,14 +1,16 @@
-#![allow(static_mut_refs)]
 use softui::*;
 
 fn main() {
     let mut ctx = unsafe { create_ctx("Softui", 800, 600) };
     ctx.debug = true;
 
-    let accent = hex("#5856D7");
-    let background = hex("#121212");
-    let todos = text("todos").size(48).pb(12);
-    let what = text("What needs to be done?").fg(gray());
+    let mut counter: usize = 0;
+    let mut frame: usize = 0;
+
+    let title = text("retained widgets").size(32).pb(8);
+    let subtitle = text("allocated once, reused every frame").size(16).pb(16);
+    let click_button = rect().wh(120);
+    let header = rv!(title, subtitle, click_button);
 
     loop {
         match ctx.event() {
@@ -16,20 +18,18 @@ fn main() {
             _ => {}
         }
 
-        if todos.clicked(&mut ctx) {
-            println!("todos")
+        if click_button.clicked(&mut ctx) {
+            counter += 1;
         }
 
-        if what.clicked(&mut ctx) {
-            println!("what")
-        }
-
-        //TODO: The leaf nodes here have the wrong size.
-        // let root = v!(todos, what).hcenter();
+        frame += 1;
 
         let root = v!(
-            todos,
+            text(format!("frame: {}", frame)).size(18).pb(4),
+            text(format!("counter: {}", counter)).size(18).pb(4),
         );
+
+        layout::add_child(root.node, header.node);
 
         draw_layout(&mut ctx, root);
         ctx.draw_frame();

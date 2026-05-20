@@ -155,6 +155,7 @@ pub trait Widget<'a>: std::fmt::Debug {
         None
     }
     //New retained layout
+    #[track_caller]
     fn primitive(&self) -> Option<Primative> {
         unreachable!()
     }
@@ -167,8 +168,11 @@ pub trait Widget<'a>: std::fmt::Debug {
 
     //TODO: Atomic mouse state to remove the &mut ctx
     fn clicked(&'a self, ctx: &mut Context) -> bool {
-        let area = self.area_cell().as_ref().unwrap().get();
-        clicked(ctx, area, Left)
+        if let Some(area) = self.area_cell().as_ref() {
+            clicked(ctx, area.get(), Left)
+        } else {
+            false
+        }
     }
 }
 

@@ -107,10 +107,8 @@ impl<'a> Widget<'a> for Text<'a> {
         Some(&self.widget.area)
     }
 
-    //TODO: Remove me
     fn draw_area(&self) -> Option<Size<f32>> {
         let width = ctx_width();
-
         let height = ctx_height();
 
         let area = font::draw_text(
@@ -132,6 +130,7 @@ impl<'a> Widget<'a> for Text<'a> {
         }
         .into()
     }
+
 
     // fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
     //     commands.push(Command {

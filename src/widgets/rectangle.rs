@@ -51,4 +51,8 @@ impl<'a> Widget<'a> for Rectangle {
     fn layout(&self) -> taffy::Style {
         self.layout.clone()
     }
+
+    fn primitive(&self) -> Option<Primative> {
+        Some(Primative::Ellipse(self.radius, None, None))
+    }
 }
