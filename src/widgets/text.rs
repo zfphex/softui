@@ -59,13 +59,7 @@ pub fn text<'a>(text: impl Into<Cow<'a, str>>) -> Text<'a> {
         style: Style::new().fg(white()),
         widget: WidgetData {
             area: std::cell::Cell::new(Rect::default()),
-            layout: TaffyLayout {
-                size: taffy::Size {
-                    width: taffy::style_helpers::length(20.0_f32),
-                    height: taffy::style_helpers::length(20.0_f32),
-                },
-                ..Default::default()
-            },
+            layout: TaffyLayout::DEFAULT,
             style: Style::new().bg(white()),
         },
     }
@@ -130,7 +124,6 @@ impl<'a> Widget<'a> for Text<'a> {
         }
         .into()
     }
-
 
     // fn draw(&self, commands: &mut Vec<Command>, area: Rect) {
     //     commands.push(Command {

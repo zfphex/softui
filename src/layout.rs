@@ -224,10 +224,6 @@ impl<'a> Tree<'a> {
     pub fn clear(&self) {
         let items = unsafe { &mut *self.items.get() };
         items.clear();
-        let retained = unsafe { &mut *self.retained.get() };
-        for node in retained.iter_mut() {
-            node.children.clear();
-        }
     }
     pub fn node(&self, id: usize) -> &Node<'a> {
         if is_retained(id) {

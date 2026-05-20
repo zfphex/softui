@@ -168,7 +168,7 @@ pub trait Widget<'a>: std::fmt::Debug {
 
     //TODO: Atomic mouse state to remove the &mut ctx
     fn clicked(&'a self, ctx: &mut Context) -> bool {
-        if let Some(area) = self.area_cell().as_ref() {
+        if let Some(area) = self.area_cell() {
             clicked(ctx, area.get(), Left)
         } else {
             false
