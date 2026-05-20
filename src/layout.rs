@@ -41,11 +41,16 @@ pub fn draw_tree(ctx: &mut crate::Context, tree: &mut Tree, id: usize, offset_x:
         })
     }
 
-    let len = tree[id].children.len();
-    let children = &mut tree[id].children.as_ptr();
-    for i in 0..len {
-        let child = unsafe { children.add(i) };
-        draw_tree(ctx, tree, unsafe { *child }, abs_x, abs_y);
+    let node = if is_retained(id) {
+        unsafe { (&mut *tree.retained.get()).get_mut(id & !RETAINED_FLAG) }
+    } else {
+        unsafe { (&mut *tree.items.get()).get_mut(id) }
+    };
+
+    if let Some(node) = node {
+        for child in &node.children {
+            draw_tree(ctx, tree, *child, abs_x, abs_y);
+        }
     }
 }
 
@@ -76,7 +81,7 @@ pub fn draw_layout<'a>(ctx: &mut Context, root: &Container) {
 pub fn as_node<'a, T: Widget<'a>>(widget: &'a T, parent: usize) -> usize {
     let tree = unsafe { core::mem::transmute::<&'static mut Tree<'static>, &'a mut Tree<'a>>(&mut TREE) };
 
-    //Root container;
+    //Immediate Container
     if parent == usize::MAX {
         return tree.alloc(Node {
             layout: widget.layout(),
@@ -87,13 +92,15 @@ pub fn as_node<'a, T: Widget<'a>>(widget: &'a T, parent: usize) -> usize {
         });
     }
 
-    // if let Some(node) = widget.node() {
-    // tree[node].layout = widget.layout();
-    // tree[node].primitive = widget.primitive();
-    // tree[node].area = widget.area_cell();
-    // tree[node].draw_area = widget.draw_area();
-    // return node;
-    // }
+    //Sometimes containers can be passed in with an existing retained node.
+    //Simply update the node state and don't re-allocate.
+    if let Some(node) = widget.node() {
+        tree[node].layout = widget.layout();
+        tree[node].primitive = widget.primitive();
+        tree[node].area = widget.area_cell();
+        tree[node].draw_area = widget.draw_area();
+        return node;
+    }
 
     let new_node = Node {
         layout: widget.layout(),
@@ -125,7 +132,8 @@ macro_rules! root {
 #[macro_export]
 macro_rules! h {
     ($($widget:expr),* $(,)?) => {{
-        let container = $crate::Container::new($crate::hstyle(), $crate::NodeKind::Flex);
+        let mut container = $crate::Container::new($crate::hstyle(), $crate::NodeKind::Flex);
+        container.node = $crate::as_node(&container, container.node);
         $(
             $crate::layout::add_child(container.node, $crate::as_node(&$widget, container.node));
         )*
@@ -136,7 +144,8 @@ macro_rules! h {
 #[macro_export]
 macro_rules! v {
     ($($widget:expr),* $(,)?) => {{
-        let container = $crate::Container::new($crate::vstyle(), $crate::NodeKind::Flex);
+        let mut container = $crate::Container::new($crate::vstyle(), $crate::NodeKind::Flex);
+        container.node = $crate::as_node(&container, container.node);
         $(
             $crate::layout::add_child(container.node, $crate::as_node(&$widget, container.node));
         )*
@@ -211,6 +220,7 @@ pub fn add_node(layout: TaffyLayout) -> usize {
     }
 }
 
+#[track_caller]
 pub fn add_child(parent: usize, child: usize) {
     unsafe {
         let Some(parent) = TREE.get_mut(parent) else {
